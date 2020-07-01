@@ -1,0 +1,302 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "Trace",
+    "properties": {
+        "name": {
+            "description": "Trace name",
+            "type": "string",
+            "minLength": 1
+        },
+        "description": {
+            "description": "General description of the trace",
+            "type": "string",
+            "minLength": 1
+        },
+        "createdAt": {
+            "description": "Trace creation timestamp",
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time"
+        },
+        "schemaVersion": {
+            "description": "Version of the schema used",
+            "type": "string",
+            "enum": [
+                "0.2"
+            ]
+        },
+        "wms": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "WMS name",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "version": {
+                    "description": "WMS version",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "url": {
+                    "description": "WMS url",
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri"
+                }
+            },
+            "required": [
+                "name",
+                "version"
+            ]
+        },
+        "workflow": {
+            "type": "object",
+            "properties": {
+                "makespan": {
+                    "description": "Workflow makespan in seconds",
+                    "type": "number"
+                },
+                "executedAt": {
+                    "description": "Workflow start execution timestamp",
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "date-time"
+                },
+                "machines": {
+                    "description": "Sets of workflow jobs",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "description": "Description of the machine (node) that ran the job",
+                        "type": "object",
+                        "properties": {
+                            "machine_code": {
+                                "description": "MD5 Hashcode for the Machine",
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "machine": {
+                                "type": "object",
+                                "properties": {
+                                    "system": {
+                                        "description": "Machine system",
+                                        "type": "string",
+                                        "enum": [
+                                            "linux",
+                                            "macos",
+                                            "windows"
+                                        ]
+                                    },
+                                    "architecture": {
+                                        "description": "Machine architecture",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "nodeName": {
+                                        "description": "Machine node name",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "release": {
+                                        "description": "Machine release",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "memory": {
+                                        "description": "Total machine's RAM memory in KB",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "cpu": {
+                                        "description": "Machine's CPU information",
+                                        "type": "object",
+                                        "properties": {
+                                            "count": {
+                                                "description": "Number of CPU cores",
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "speed": {
+                                                "description": "CPU speed in MHz",
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "vendor": {
+                                                "description": "CPU vendor",
+                                                "type": "string",
+                                                "minLength": 1
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "jobs": {
+                    "description": "Sets of workflow jobs",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "description": "Job name",
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "type": {
+                                "description": "Job type (whether it is a compute or an auxiliary job)",
+                                "type": "string",
+                                "enum": [
+                                    "compute",
+                                    "auxiliary"
+                                ]
+                            },
+                            "arguments": {
+                                "description": "Sets of job arguments",
+                                "type": "array",
+                                "items": {
+                                    "description": "A job argument",
+                                    "type": "string",
+                                    "minLength": 1
+                                }
+                            },
+                            "parents": {
+                                "description": "Sets of parent jobs",
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "description": "Id of the parent job",
+                                    "minLength": 1,
+                                    "pattern": "^[0-9a-zA-Z-_]*$"
+                                }
+                            },
+                            "files": {
+                                "description": "Sets of input/output data",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "A human-readable name for the file",
+                                            "type": "string",
+                                            "minLength": 1
+                                        },
+                                        "size": {
+                                            "description": "File size in KB",
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "link": {
+                                            "description": "Whether it is an input or output data",
+                                            "type": "string",
+                                            "enum": [
+                                                "input",
+                                                "output"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "size",
+                                        "link"
+                                    ]
+                                }
+                            },
+                            "runtime": {
+                                "description": "Job runtime in seconds",
+                                "type": "number"
+                            },
+                            "cores": {
+                                "description": "Number of cores required by the job",
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "avgCPU": {
+                                "description": "Average CPU utilization in %",
+                                "type": "number"
+                            },
+                            "bytesRead": {
+                                "description": "Total bytes read in KB",
+                                "type": "number"
+                            },
+                            "bytesWritten": {
+                                "description": "Total bytes written in KB",
+                                "type": "number"
+                            },
+                            "memory": {
+                                "description": "Memory (resident set) size of the process in KB",
+                                "type": "number"
+                            },
+                            "energy": {
+                                "description": "Total energy consumption in kWh",
+                                "type": "number"
+                            },
+                            "avgPower": {
+                                "description": "Average power consumption in W",
+                                "type": "number"
+                            },
+                            "machine": {
+                                "description": "MD5 hashcode representation of the machine",
+                                "type": "string",
+                                "minLength": 1
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "type",
+                            "runtime"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "makespan",
+                "executedAt",
+                "jobs",
+                "machines"
+            ]
+        },
+        "author": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Author name",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "email": {
+                    "description": "Author email",
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "email"
+                },
+                "institution": {
+                    "description": "Author institution",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "country": {
+                    "description": "Author country",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "required": [
+                "name",
+                "email"
+            ]
+        }
+    },
+    "required": [
+        "name",
+        "createdAt",
+        "schemaVersion",
+        "wms",
+        "workflow",
+        "author"
+    ]
+}
