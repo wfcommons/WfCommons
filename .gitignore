@@ -10,7 +10,6 @@ __pycache__/
 pip-log.txt
 pip-delete-this-directory.txt
 
-
 # Sphinx documentation
 docs/_build/
 
@@ -25,4 +24,8 @@ target/
 profile_default/
 ipython_config.py
 
+# PyCharm
+.idea
 
+# Virtual environment
+venv

@@ -30,7 +30,7 @@ def read_json(trace: str, logger: Optional[Logger] = None) -> JsonDict:
 	"""
 	if logger is None:
 		logger = logging.getLogger("workflowhub")
-	
+
 	with open(trace) as data:
 		data_json: JsonDict = json.load(data)
 		logger.info("parsed JSON trace: " + trace)

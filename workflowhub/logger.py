@@ -13,11 +13,11 @@ from logging import Logger
 
 DEFAULT_LOGGER = logging.getLogger("workflowhub")
 
-"""
-Logger configuration
-"""
 
 def configure_logger(logger) -> None:
+	"""
+	Logger configuration
+	"""
 	logger.setLevel(logging.DEBUG)
 
 	ch = logging.StreamHandler()
@@ -28,4 +28,3 @@ def configure_logger(logger) -> None:
 	)
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
-

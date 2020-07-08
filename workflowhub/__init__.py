@@ -8,7 +8,11 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+__version__ = "1.0"
+__author__ = 'WorkflowHub Team'
+
 from .logger import DEFAULT_LOGGER, configure_logger
+
 # Configure the default logger 'workflowhub'
 configure_logger(DEFAULT_LOGGER)
 

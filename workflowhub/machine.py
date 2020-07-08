@@ -12,20 +12,22 @@ import logging
 from typing import Dict, Any, Union, Optional
 from logging import Logger
 
+
 class Machine():
 	"""
 		Representation of one compute machine
 	"""
+
 	def __init__(self,
-			name: str,
-			cpu: Dict[str, Union[int, str]],
-			system: Optional[str],
-			architecture: Optional[str],
-			memory: Optional[int],
-			release: Optional[str],
-			hashcode: Optional[str],
-			logger: Optional[Logger] = None
-		) -> None:
+				 name: str,
+				 cpu: Dict[str, Union[int, str]],
+				 system: Optional[str],
+				 architecture: Optional[str],
+				 memory: Optional[int],
+				 release: Optional[str],
+				 hashcode: Optional[str],
+				 logger: Optional[Logger] = None
+				 ) -> None:
 		"""
 			A workflow trace.
 
@@ -64,7 +66,7 @@ class Machine():
 
 		self.cores: int = cpu['count']
 		self.speed: int = cpu['speed']
-		self.flops: int = cpu['count']*cpu['speed']*10^6
+		self.flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
 
 		self.logger.info("created machine: {0} with {1} cores and {2} FLOPS.".format(
 			self.name, self.cores, self.flops)

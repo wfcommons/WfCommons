@@ -16,6 +16,7 @@ import logging
 
 import networkx as nx
 import matplotlib.pyplot as plt
+
 limits = plt.axis('off')
 
 from typing import List, Iterable, Dict, Any, Union, Optional
@@ -28,10 +29,12 @@ from .job import Job
 from .types import JsonDict
 from .utils import read_json
 
+
 class Trace():
 	"""
 		Representation of one execution of one workflow on a set of machines
 	"""
+
 	def __init__(self, input_trace: str, schema: str, logger: Logger = None) -> None:
 		"""
 			Create an object that represents a workflow execution trace.
@@ -70,7 +73,7 @@ class Trace():
 		self.wms: Dict[str, str] = {
 			u: v for u, v in self.trace['wms'].items()
 		}
-		
+
 		# Author properties
 		self.author: Dict[str, str] = {
 			u: v for u, v in self.trace['author'].items()
@@ -80,18 +83,18 @@ class Trace():
 		## Global properties
 		self.executed_at: datetime = dateutil.parser.parse(self.trace['workflow']['executedAt'])
 		self.makespan: int = self.trace['workflow']['makespan']
-		
+
 		## Machines
 		self.machines: Dict[str, Machine] = {
 			machine['nodeName']: Machine(
-									name=machine['nodeName'],
-									cpu={k: v for k, v in machine['cpu'].items()},
-									system=machine.get('system', None),
-									architecture=machine.get('architecture', None),
-									memory=machine.get('memory', None),
-									release=machine.get('release', None),
-									hashcode=machine.get('machine_code', None),
-									logger=self.logger
+				name=machine['nodeName'],
+				cpu={k: v for k, v in machine['cpu'].items()},
+				system=machine.get('system', None),
+				architecture=machine.get('architecture', None),
+				memory=machine.get('memory', None),
+				release=machine.get('release', None),
+				hashcode=machine.get('machine_code', None),
+				logger=self.logger
 			) for machine in self.trace['workflow']['machines']
 		}
 
@@ -105,11 +108,11 @@ class Trace():
 			## Create the list of files associated to this job
 			list_files = job.get('files', [])
 			list_files = [File(
-							name=f['name'],
-							size=f['size'],
-							link=f['link'],
-							logger=self.logger
-						) for f in list_files]
+				name=f['name'],
+				size=f['size'],
+				link=f['link'],
+				logger=self.logger
+			) for f in list_files]
 
 			## Fetch back the machine associated to this job 
 			machine = job.get('machine', None)
@@ -131,7 +134,7 @@ class Trace():
 					energy=job.get('energy', None),
 					avg_power=job.get('avgPower', None),
 					priority=job.get('priority', None),
-					files=list_files, #TODO: sum all files read/written by this job
+					files=list_files,  # TODO: sum all files read/written by this job
 					logger=self.logger
 				)
 			)
@@ -141,7 +144,7 @@ class Trace():
 			for parent in job['parents']:
 				self.workflow.add_edge(parent, job['name'], weight=0)
 
-		# TODO: instead of attaching files to jobs, attach them to edges based on the link direction.
+	# TODO: instead of attaching files to jobs, attach them to edges based on the link direction.
 
 	def __iter__(self):
 		"""
@@ -170,7 +173,7 @@ class Trace():
 			:return: List of roots
 			:rtype: List[str]
 		"""
-		return [n for n,d in self.workflow.in_degree() if d == 0]
+		return [n for n, d in self.workflow.in_degree() if d == 0]
 
 	def leafs(self) -> List[str]:
 		"""
@@ -179,17 +182,17 @@ class Trace():
 			:rtype: List[str]
 		"""
 		return [n for n, d in self.workflow.out_degree() if d == 0]
-	
+
 	def write_dot(self, output: Optional[str] = None) -> None:
 		"""
 			Writes a dot file of the trace
 		"""
 		if not output:
 			output = "{0}.dot".format(self.name)
-		
+
 		nx.nx_agraph.write_dot(self.workflow, output)
 
-	#TODO: improve drawing for large traces
+	# TODO: improve drawing for large traces
 	def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
 		"""
 			Produces a image or a pdf file representing the trace
@@ -201,12 +204,13 @@ class Trace():
 
 		graphviz_found = importlib.util.find_spec('pygraphviz')
 		if graphviz_found is None:
-			self.logger.error("\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
+			self.logger.error(
+				"\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
 			return
 
 		pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
 		nx.draw(self.workflow, pos=pos, with_labels=False)
 		if not output:
 			output = "{0}.{1}".format(self.name, extension)
-		
+
 		plt.savefig(output)

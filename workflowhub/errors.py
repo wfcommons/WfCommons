@@ -8,11 +8,13 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+
 class TraceError(Exception):
 	"""
 		Represents the most basic error in the trace package of the WorkflowHub project
 	"""
 	pass
+
 
 class TraceNotValid(TraceError):
 	"""
