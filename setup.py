@@ -8,7 +8,7 @@ setup(
 	version="0.1",
 	author="WorkflowHub team",
 	author_email="support@workflowhub.org",
-	description="A package to manage scientific workflow traces",
+	description="Community Framework for Enabling Scientific Workflow Research and Education",
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	url="https://github.com/workflowhub/workflowhub",
