@@ -8,5 +8,4 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from .generator import WorkflowGenerator
-from .workflow import MontageRecipe
+from .workflow import Workflow

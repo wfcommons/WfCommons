@@ -8,29 +8,26 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import argparse
 import datetime
 import dateutil.parser
-import importlib
 import logging
 
 import networkx as nx
 import matplotlib.pyplot as plt
 
-limits = plt.axis('off')
-
-from typing import List, Iterable, Dict, Any, Union, Optional
+from typing import List, Dict, Optional
 from logging import Logger
 
-from .errors import TraceNotValid
-from .file import File
-from .machine import Machine
-from .job import Job
-from .types import JsonDict
-from .utils import read_json
+from workflowhub.common.file import File
+from workflowhub.common.machine import Machine
+from workflowhub.common.job import Job
+from workflowhub.types import JsonDict
+from workflowhub.utils import read_json
+
+limits = plt.axis('off')
 
 
-class Trace():
+class Trace:
 	"""
 		Representation of one execution of one workflow on a set of machines
 	"""
@@ -98,14 +95,14 @@ class Trace():
 			) for machine in self.trace['workflow']['machines']
 		}
 
-		## Jobs
+		# Jobs
 		self.workflow: nx.DiGraph = nx.DiGraph(name=self.name, makespan=self.makespan)
 		for job in self.trace['workflow']['jobs']:
 			# Required arguments are defined in the JSON scheme
 			# Here name, type and runtime are required
 			# By default the value is set to None if we do not find the value
 
-			## Create the list of files associated to this job
+			# Create the list of files associated to this job
 			list_files = job.get('files', [])
 			list_files = [File(
 				name=f['name'],
@@ -114,7 +111,7 @@ class Trace():
 				logger=self.logger
 			) for f in list_files]
 
-			## Fetch back the machine associated to this job 
+			# Fetch back the machine associated to this job
 			machine = job.get('machine', None)
 			machine = None if machine is None else self.machines[machine]
 
@@ -139,7 +136,7 @@ class Trace():
 				)
 			)
 
-		# TODO: handle the case of the output files of the leafs jobs (not taken into account yet)
+		# TODO: handle the case of the output files of the leaves jobs (not taken into account yet)
 		for job in self.trace['workflow']['jobs']:
 			for parent in job['parents']:
 				self.workflow.add_edge(parent, job['name'], weight=0)
@@ -192,25 +189,25 @@ class Trace():
 
 		nx.nx_agraph.write_dot(self.workflow, output)
 
-	# TODO: improve drawing for large traces
-	def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
-		"""
-			Produces a image or a pdf file representing the trace
-			:param output: Name of the output file
-			:type output: Optional[str]
-			:param extension: Name of the extension, pdf, png, svg.
-			:type output: str
-		"""
-
-		graphviz_found = importlib.util.find_spec('pygraphviz')
-		if graphviz_found is None:
-			self.logger.error(
-				"\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
-			return
-
-		pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
-		nx.draw(self.workflow, pos=pos, with_labels=False)
-		if not output:
-			output = "{0}.{1}".format(self.name, extension)
-
-		plt.savefig(output)
+	# # TODO: improve drawing for large traces
+	# def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
+	# 	"""
+	# 		Produces a image or a pdf file representing the trace
+	# 		:param output: Name of the output file
+	# 		:type output: Optional[str]
+	# 		:param extension: Name of the extension, pdf, png, svg.
+	# 		:type output: str
+	# 	"""
+	#
+	# 	graphviz_found = importlib.util.find_spec('pygraphviz')
+	# 	if graphviz_found is None:
+	# 		self.logger.error(
+	# 			"\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
+	# 		return
+	#
+	# 	pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
+	# 	nx.draw(self.workflow, pos=pos, with_labels=False)
+	# 	if not output:
+	# 		output = "{0}.{1}".format(self.name, extension)
+	#
+	# 	plt.savefig(output)

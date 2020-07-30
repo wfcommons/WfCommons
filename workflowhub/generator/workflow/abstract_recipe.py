@@ -8,9 +8,14 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from abc import ABC
+from abc import ABC, abstractmethod
+from ...common.workflow import Workflow
 
 
 class WorkflowRecipe(ABC):
-	def __init__(self, name=None):
+	def __init__(self, name: str = None) -> None:
 		self.name = name
+
+	@abstractmethod
+	def build_workflow(self) -> Workflow:
+		pass

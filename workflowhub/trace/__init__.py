@@ -8,5 +8,5 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from .generator import WorkflowGenerator
-from .workflow import MontageRecipe
+from .trace import Trace
+from .trace_analyzer import TraceAnalyzer

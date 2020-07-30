@@ -13,17 +13,12 @@ from logging import Logger
 from typing import Optional
 
 
-class File():
+class File:
 	"""
 		Representation of a file
 	"""
 
-	def __init__(self,
-				 name: str,
-				 size: int,
-				 link: str,
-				 logger: Optional[Logger] = None
-				 ) -> None:
+	def __init__(self, name: str, size: int, link: str, logger: Optional[Logger] = None) -> None:
 		"""
 			A file uses by jobs
 

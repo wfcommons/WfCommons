@@ -12,10 +12,10 @@ __version__ = "0.1"
 __author__ = 'WorkflowHub Team - https://workflowhub.org'
 __credits__ = 'University of Southern California, University of Hawaii at Manoa'
 
-# from .errors import TraceNotValid
-# from .types import JsonDict
-# from .utils import read_json
-# from .file import File
-# from .machine import Machine
-# from .job import Job
-# from .trace import Trace
+import logging
+
+from .generator import WorkflowGenerator, MontageRecipe
+from .trace import Trace, TraceAnalyzer
+from .types import OutputFormat
+
+logging.getLogger('workflowhub').addHandler(logging.NullHandler())

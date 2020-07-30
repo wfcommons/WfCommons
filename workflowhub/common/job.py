@@ -16,24 +16,14 @@ from .machine import Machine
 from .file import File
 
 
-class Job():
+class Job:
 	"""
 		Representation of a job
 	"""
 
-	def __init__(self,
-				 name: str,
-				 jtype: str,
-				 runtime: int,
-				 cores: int,
-				 machine: Optional[Machine],
-				 args: List[str],
-				 avg_cpu: Optional[float],
-				 bytes_read: Optional[int],
-				 bytes_written: Optional[int],
-				 memory: Optional[int],
-				 energy: Optional[int],
-				 avg_power: Optional[float],
+	def __init__(self, name: str, jtype: str, runtime: int, cores: int, machine: Optional[Machine], args: List[str],
+				 avg_cpu: Optional[float], bytes_read: Optional[int], bytes_written: Optional[int],
+				 memory: Optional[int], energy: Optional[int], avg_power: Optional[float],
 				 priority: Optional[int],
 				 files: List[File] = [],
 				 logger: Optional[Logger] = None

@@ -8,7 +8,12 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+from enum import Enum
 from typing import Dict, Any
 
 # Generic type for JSON output
 JsonDict = Dict[str, Any]
+
+
+class OutputFormat(Enum):
+	CSV = 1

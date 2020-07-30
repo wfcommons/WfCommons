@@ -8,5 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from .generator import WorkflowGenerator
-from .workflow import MontageRecipe
+
+class InvalidWorkflowTypeError(TypeError):
+	def __init__(self, message):
+		super().__init__(message)
