@@ -18,11 +18,11 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Optional
 from logging import Logger
 
-from workflowhub.common.file import File
-from workflowhub.common.machine import Machine
-from workflowhub.common.job import Job
-from workflowhub.types import JsonDict
-from workflowhub.utils import read_json
+from ..common.file import File
+from ..common.machine import Machine
+from ..common.job import Job
+from ..types import JsonDict
+from ..utils import read_json
 
 limits = plt.axis('off')
 
@@ -45,10 +45,7 @@ class Trace:
 			:param logger: the logger where to log information/warning or errors
 			:type logger: Logger
 		"""
-		if logger is None:
-			self.logger: Logger = logging.getLogger(__name__)
-		else:
-			self.logger = logger
+		self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
 		# Internal variables to be able to iterate direclty on a trace
 		self._n = 0
@@ -189,25 +186,25 @@ class Trace:
 
 		nx.nx_agraph.write_dot(self.workflow, output)
 
-	# # TODO: improve drawing for large traces
-	# def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
-	# 	"""
-	# 		Produces a image or a pdf file representing the trace
-	# 		:param output: Name of the output file
-	# 		:type output: Optional[str]
-	# 		:param extension: Name of the extension, pdf, png, svg.
-	# 		:type output: str
-	# 	"""
-	#
-	# 	graphviz_found = importlib.util.find_spec('pygraphviz')
-	# 	if graphviz_found is None:
-	# 		self.logger.error(
-	# 			"\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
-	# 		return
-	#
-	# 	pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
-	# 	nx.draw(self.workflow, pos=pos, with_labels=False)
-	# 	if not output:
-	# 		output = "{0}.{1}".format(self.name, extension)
-	#
-	# 	plt.savefig(output)
+# # TODO: improve drawing for large traces
+# def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
+# 	"""
+# 		Produces a image or a pdf file representing the trace
+# 		:param output: Name of the output file
+# 		:type output: Optional[str]
+# 		:param extension: Name of the extension, pdf, png, svg.
+# 		:type output: str
+# 	"""
+#
+# 	graphviz_found = importlib.util.find_spec('pygraphviz')
+# 	if graphviz_found is None:
+# 		self.logger.error(
+# 			"\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
+# 		return
+#
+# 	pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
+# 	nx.draw(self.workflow, pos=pos, with_labels=False)
+# 	if not output:
+# 		output = "{0}.{1}".format(self.name, extension)
+#
+# 	plt.savefig(output)
