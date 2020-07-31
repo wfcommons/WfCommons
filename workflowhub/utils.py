@@ -37,10 +37,10 @@ def read_json(trace_filename: str, logger: Optional[Logger] = None) -> JsonDict:
         return data_json
 
 
-def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
+def best_fit_distribution(data: List[float], simple: Optional[bool] = False, logger: Optional[Logger] = None):
     """
         :param data:
-        :param bins:
+        :param simple:
         :param logger: the logger uses to output debug information
         :return:
     """
@@ -56,11 +56,12 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
     best_params = (0.0, 1.0)
     best_sse = np.inf
 
-    distn_names: List[str] = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
-                              'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh', 'rdist',
-                              'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
+    distribution_names: List[str] = []
+    distribution_names = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
+                          'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
+                          'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
 
-    for dist_name in distn_names:
+    for dist_name in distribution_names:
         # Ignore warnings from data that can't be fit
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')

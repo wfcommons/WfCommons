@@ -14,7 +14,7 @@ __credits__ = 'University of Southern California, University of Hawaii at Manoa'
 
 import logging
 
-from .generator import WorkflowGenerator, MontageRecipe
+from .generator import WorkflowGenerator
 from .trace import Trace, TraceAnalyzer
 from .types import OutputFormat
 
