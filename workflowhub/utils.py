@@ -10,12 +10,13 @@
 
 import json
 import logging
+import math
 import scipy.stats
 import warnings
 import numpy as np
 
 from logging import Logger
-from typing import Optional, List, Tuple
+from typing import Optional, List
 from .types import JsonDict
 
 
@@ -36,22 +37,30 @@ def read_json(trace_filename: str, logger: Optional[Logger] = None) -> JsonDict:
 		return data_json
 
 
-def best_fit_distribution(data: List[float], bins: int = 100, logger: Optional[Logger] = None):
+def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
+	"""
+		:param data:
+		:param bins:
+		:param logger: the logger uses to output debug information
+		:return:
+	"""
 	if logger is None:
 		logger = logging.getLogger("workflowhub")
 
 	# get histogram of original data
-	y, x = np.histogram(data, bins=bins, density=True)
+	bins = math.ceil(len(data) / 20)
+	y, x = np.histogram(data, bins=bins)
 
 	# best holders
 	best_distribution = None
 	best_params = (0.0, 1.0)
 	best_sse = np.inf
 
-	dist_names: List[str] = ['alpha', 'beta', 'cosine', 'gamma', 'lognorm', 'norm', 'pareto', 'rayleigh', 't',
-							 'uniform', 'weibull_min', 'weibull_max']
+	distn_names: List[str] = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
+							  'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh', 'rdist',
+							  'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
 
-	for dist_name in dist_names:
+	for dist_name in distn_names:
 		# Ignore warnings from data that can't be fit
 		with warnings.catch_warnings():
 			warnings.filterwarnings('ignore')
@@ -69,4 +78,4 @@ def best_fit_distribution(data: List[float], bins: int = 100, logger: Optional[L
 				best_params = params
 				best_sse = sse
 
-	return best_distribution.name, best_params
+	return best_distribution, best_params
