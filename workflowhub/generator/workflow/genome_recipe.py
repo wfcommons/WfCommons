@@ -54,11 +54,11 @@ class GenomeRecipe(WorkflowRecipe):
         return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences, num_populations=num_populations,
                    size=None, num_jobs=None)
 
-    def build_workflow(self) -> Workflow:
+    def build_workflow(self, workflow_name: str = None) -> Workflow:
         """
-
+        :param workflow_name:
         """
-        workflow = Workflow(name=self.name + "-synthetic-trace", makespan=None)
+        workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
         job_id_counter: int = 1
 
         for _ in range(0, self.num_chromosomes):

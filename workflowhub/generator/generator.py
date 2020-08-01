@@ -23,8 +23,8 @@ class WorkflowGenerator:
         self.workflow_recipe: WorkflowRecipe = workflow_recipe
         self.workflows: List[Workflow] = []
 
-    def build_workflow(self) -> Workflow:
-        workflow: Workflow = self.workflow_recipe.build_workflow()
+    def build_workflow(self, workflow_name: str = None) -> Workflow:
+        workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
         return workflow
 

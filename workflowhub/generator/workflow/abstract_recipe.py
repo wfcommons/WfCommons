@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from ...common.file import File, FileLink
-from ...common.job import Job
+from ...common.job import Job, JobType
 from ...common.workflow import Workflow
 from ...utils import generate_rvs
 
@@ -30,7 +30,7 @@ class WorkflowRecipe(ABC):
         pass
 
     @abstractmethod
-    def build_workflow(self) -> Workflow:
+    def build_workflow(self, workflow_name: str = None) -> Workflow:
         pass
 
     def _generate_job(self, job_name: str, job_id: str, input_files: Optional[List[File]]) -> Job:
@@ -57,7 +57,7 @@ class WorkflowRecipe(ABC):
 
         return Job(
             name=job_id,
-            job_type='compute',
+            job_type=JobType.COMPUTE,
             runtime=runtime,
             machine=None,
             args=[],

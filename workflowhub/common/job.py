@@ -9,11 +9,17 @@
 # (at your option) any later version.
 
 import logging
+
+from enum import Enum
 from typing import List, Optional
 from logging import Logger
 
 from .machine import Machine
 from .file import File
+
+
+class JobType(Enum):
+    COMPUTE = 'compute'
 
 
 class Job:
@@ -23,7 +29,7 @@ class Job:
 
     def __init__(self,
                  name: str,
-                 job_type: str,
+                 job_type: JobType,
                  runtime: float,
                  cores: int,
                  machine: Optional[Machine],
@@ -44,7 +50,7 @@ class Job:
             :param name: the name of the job
             :type name: str
             :param job_type: the type of the job (whether it is a compute or an auxiliary job)
-            :type job_type: str
+            :type job_type: JobType
             :param runtime: Job runtime in seconds
             :type runtime: float
             :param cores: Number of cores required by the job
@@ -78,7 +84,7 @@ class Job:
             self.logger = logger
 
         self.name: str = name
-        self.type: str = job_type
+        self.type: JobType = job_type
         self.runtime: float = runtime
         self.cores: Optional[int] = cores
         self.args: List[str] = args

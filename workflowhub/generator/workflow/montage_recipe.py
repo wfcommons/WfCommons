@@ -40,7 +40,7 @@ class MontageRecipe(WorkflowRecipe):
 	def from_jobs(cls, num_bands: int, num_jobs: int) -> 'MontageRecipe':
 		return cls(num_bands=num_bands, size=None, degree=None, num_jobs=num_jobs)
 
-	def build_workflow(self) -> Workflow:
+	def build_workflow(self, workflow_name: str = None) -> Workflow:
 		if self.size:
 			pass
 		# print(self.recipe)
