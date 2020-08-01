@@ -9,7 +9,7 @@
 # (at your option) any later version.
 
 from os import path
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 from .trace import Trace
 from ..common.job import Job
 from ..utils import best_fit_distribution
@@ -63,7 +63,7 @@ class TraceAnalyzer:
                 'runtime': {
                     'min': min(runtime_list),
                     'max': max(runtime_list),
-                    'distribution': best_fit_distribution(runtime_list)
+                    'distribution': self._json_format_distribution_fit(best_fit_distribution(runtime_list))
                 },
                 'input': inputs_dict,
                 'output': outputs_dict
@@ -83,6 +83,13 @@ class TraceAnalyzer:
             dict_obj[ext]['min'] = min(dict_obj[ext]['data'])
             dict_obj[ext]['max'] = max(dict_obj[ext]['data'])
             if dict_obj[ext]['min'] != dict_obj[ext]['max']:
-                dict_obj[ext]['distribution'] = best_fit_distribution(dict_obj[ext]['data'], simple=True)
+                dict_obj[ext]['distribution'] = self._json_format_distribution_fit(
+                    best_fit_distribution(dict_obj[ext]['data']))
             if not include_raw_data:
                 del dict_obj[ext]['data']
+
+    def _json_format_distribution_fit(self, dist_tuple: Tuple):
+        formatted_entry = {'name': dist_tuple[0], 'params': []}
+        for p in dist_tuple[1]:
+            formatted_entry['params'].append(p)
+        return formatted_entry

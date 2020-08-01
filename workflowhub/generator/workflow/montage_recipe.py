@@ -8,7 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from typing import Optional
+from typing import Dict, Optional
 from .abstract_recipe import WorkflowRecipe
 from ...common.workflow import Workflow
 
@@ -43,4 +43,8 @@ class MontageRecipe(WorkflowRecipe):
 	def build_workflow(self) -> Workflow:
 		if self.size:
 			pass
-		return Workflow()
+		# print(self.recipe)
+		return Workflow('Montage')
+
+	def _workflow_recipe(self) -> Dict:
+		pass

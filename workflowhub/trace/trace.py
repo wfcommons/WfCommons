@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Optional
 from logging import Logger
 
-from ..common.file import File
+from ..common.file import File, FileLink
 from ..common.machine import Machine
 from ..common.job import Job
 from ..types import JsonDict
@@ -104,7 +104,7 @@ class Trace:
 			list_files = [File(
 				name=f['name'],
 				size=f['size'],
-				link=f['link'],
+				link=FileLink(f['link']),
 				logger=self.logger
 			) for f in list_files]
 
@@ -116,7 +116,7 @@ class Trace:
 				job['name'],
 				job=Job(
 					name=job['name'],
-					jtype=job['type'],
+					job_type=job['type'],
 					runtime=job['runtime'],
 					machine=machine,
 					args=job.get('arguments', None),
@@ -169,7 +169,7 @@ class Trace:
 		"""
 		return [n for n, d in self.workflow.in_degree() if d == 0]
 
-	def leafs(self) -> List[str]:
+	def leaves(self) -> List[str]:
 		"""
 			Return the leafs of the workflow (i.e., the tasks without any successors)
 			:return: List of leafs

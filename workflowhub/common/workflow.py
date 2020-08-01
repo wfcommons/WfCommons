@@ -8,6 +8,10 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-class Workflow:
-	def __init__(self, name: str) -> None:
-		pass
+import networkx as nx
+from typing import Optional
+
+
+class Workflow(nx.DiGraph):
+    def __init__(self, name: str, makespan: Optional[int]) -> None:
+        super().__init__(name=name, makespan=makespan)

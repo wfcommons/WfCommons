@@ -9,34 +9,41 @@
 # (at your option) any later version.
 
 import logging
+
+from enum import Enum
 from logging import Logger
 from typing import Optional
 
 
+class FileLink(Enum):
+    INPUT = "input"
+    OUTPUT = "output"
+
+
 class File:
-	"""
-		Representation of a file
-	"""
+    """
+        Representation of a file
+    """
 
-	def __init__(self, name: str, size: int, link: str, logger: Optional[Logger] = None) -> None:
-		"""
-			A file uses by jobs
+    def __init__(self, name: str, size: int, link: FileLink, logger: Optional[Logger] = None) -> None:
+        """
+            A file uses by jobs
 
-			:param name: the name of the file
-			:type name: str
-			:param name: File size in KB
-			:type name: int
-			:param name: Whether it is an input or output data (possible value: input or output)
-			:type name: str
-			:param logger: the logger where to log information/warning or errors
-			:type logger: Logger
-		"""
+            :param name: the name of the file
+            :type name: str
+            :param name: File size in KB
+            :type name: int
+            :param name: Whether it is an input or output data (possible value: input or output)
+            :type name: str
+            :param logger: the logger where to log information/warning or errors
+            :type logger: Logger
+        """
 
-		if logger is None:
-			self.logger: Logger = logging.getLogger(__name__)
-		else:
-			self.logger = logger
+        if logger is None:
+            self.logger: Logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
 
-		self.name: str = name
-		self.size: int = size
-		self.link: str = link
+        self.name: str = name
+        self.size: int = size
+        self.link: FileLink = link

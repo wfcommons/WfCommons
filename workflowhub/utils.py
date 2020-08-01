@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 
 from logging import Logger
-from typing import Optional, List
+from typing import Dict, Optional, List
 from .types import JsonDict
 
 
@@ -37,10 +37,9 @@ def read_json(trace_filename: str, logger: Optional[Logger] = None) -> JsonDict:
         return data_json
 
 
-def best_fit_distribution(data: List[float], simple: Optional[bool] = False, logger: Optional[Logger] = None):
+def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
     """
         :param data:
-        :param simple:
         :param logger: the logger uses to output debug information
         :return:
     """
@@ -56,10 +55,9 @@ def best_fit_distribution(data: List[float], simple: Optional[bool] = False, log
     best_params = (0.0, 1.0)
     best_sse = np.inf
 
-    distribution_names: List[str] = []
-    distribution_names = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
-                          'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
-                          'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
+    distribution_names: List[str] = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
+                                     'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
+                                     'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
 
     for dist_name in distribution_names:
         # Ignore warnings from data that can't be fit
@@ -75,8 +73,25 @@ def best_fit_distribution(data: List[float], simple: Optional[bool] = False, log
 
             # identify if this distribution is better
             if best_sse > sse > 0:
-                best_distribution = distribution
+                best_distribution = dist_name
                 best_params = params
                 best_sse = sse
 
     return best_distribution, best_params
+
+
+def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> float:
+    """
+    :param distribution:
+    :param min_value:
+    :param max_value:
+    """
+    if not distribution or distribution == "None":
+        return min_value
+
+    params = distribution['params']
+    kwargs = params[:-2]
+    rvs: float = getattr(scipy.stats, distribution['name']).rvs(*kwargs, loc=params[-2], scale=params[-1])
+    rvs = max(min_value, rvs)
+    rvs = min(max_value, rvs)
+    return rvs
