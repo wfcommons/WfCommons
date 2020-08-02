@@ -27,6 +27,7 @@ class WorkflowRecipe(ABC):
         self.num_jobs = num_jobs
         self.workflows: List[Workflow] = []
         self.jobs_files: Dict[str, List[File]] = {}
+        self.job_id_counter = 1
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict:
@@ -74,6 +75,11 @@ class WorkflowRecipe(ABC):
             files=self.jobs_files[job_id]
         )
 
+    def _generate_job_name(self, prefix: str) -> str:
+        job_name = "{}_{:08d}".format(prefix, self.job_id_counter)
+        self.job_id_counter += 1
+        return job_name
+
     def _generate_files(self, job_id: str, recipe: Dict[str, Any], link: FileLink):
         """
         :param job_id:
@@ -99,7 +105,7 @@ class WorkflowRecipe(ABC):
         file_size = int(generate_rvs(recipe[extension]['distribution'],
                                      recipe[extension]['min'],
                                      recipe[extension]['max']))
-        print("FILE: {} ({}) - {}".format(file_name, link, str(file_size)))
+        # print("FILE: {} ({}) - {}".format(file_name, link, str(file_size)))
         return File(name=file_name, size=file_size, link=link)
 
     def _get_files_by_job_and_link(self, job_name: str, link: FileLink) -> List[File]:

@@ -59,20 +59,19 @@ class GenomeRecipe(WorkflowRecipe):
         :param workflow_name:
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        job_id_counter: int = 1
+        self.job_id_counter: int = 1
 
         for _ in range(0, self.num_chromosomes):
             # individuals jobs
             individuals_jobs: List[Job] = []
             for _ in range(0, int(self.num_sequences / 1000)):
-                job_name = "individuals_{:08d}".format(job_id_counter)
+                job_name = self._generate_job_name("individuals")
                 individuals_job = self._generate_job('individuals', job_name, None)
                 individuals_jobs.append(individuals_job)
                 workflow.add_node(job_name, job=individuals_job)
-                job_id_counter += 1
 
             # individuals merge job
-            job_name = "individuals_merge_{:08d}".format(job_id_counter)
+            job_name = self._generate_job_name("individuals_merge")
             input_files = []
             for j in individuals_jobs:
                 input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
@@ -80,13 +79,11 @@ class GenomeRecipe(WorkflowRecipe):
             workflow.add_node(job_name, job=individuals_merge_job)
             for j in individuals_jobs:
                 workflow.add_edge(j.name, individuals_merge_job.name)
-            job_id_counter += 1
 
             # sifting job
-            job_name = "sifting_{:08d}".format(job_id_counter)
+            job_name = self._generate_job_name("sifting")
             sifting_job = self._generate_job('sifting', job_name, None)
             workflow.add_node(job_name, job=sifting_job)
-            job_id_counter += 1
 
             populations = ['ALL', 'AFR', 'AMR', 'EAS', 'EUR', 'GBR', 'SAS']
 
@@ -94,7 +91,7 @@ class GenomeRecipe(WorkflowRecipe):
             input_files = self._get_files_by_job_and_link(individuals_merge_job.name, FileLink.OUTPUT)
             input_files.extend(self._get_files_by_job_and_link(sifting_job.name, FileLink.OUTPUT))
             for p in range(0, self.num_populations):
-                job_name = "mutation_overlap_{:08d}".format(job_id_counter)
+                job_name = self._generate_job_name("mutation_overlap")
                 input_files.append(self._generate_file(populations[p],
                                                        self._workflow_recipe()['mutation_overlap']['input'],
                                                        FileLink.INPUT))
@@ -102,13 +99,12 @@ class GenomeRecipe(WorkflowRecipe):
                 workflow.add_node(job_name, job=mutation_overlap_job)
                 workflow.add_edge(sifting_job.name, job_name)
                 workflow.add_edge(individuals_merge_job.name, job_name)
-                job_id_counter += 1
 
             # frequency jobs
             input_files = self._get_files_by_job_and_link(individuals_merge_job.name, FileLink.OUTPUT)
             input_files.extend(self._get_files_by_job_and_link(sifting_job.name, FileLink.OUTPUT))
             for p in range(0, self.num_populations):
-                job_name = "frequency_{:08d}".format(job_id_counter)
+                job_name = self._generate_job_name("frequency")
                 input_files.append(self._generate_file(populations[p],
                                                        self._workflow_recipe()['frequency']['input'],
                                                        FileLink.INPUT))
@@ -116,7 +112,6 @@ class GenomeRecipe(WorkflowRecipe):
                 workflow.add_node(job_name, job=frequency_job)
                 workflow.add_edge(sifting_job.name, job_name)
                 workflow.add_edge(individuals_merge_job.name, job_name)
-                job_id_counter += 1
 
         self.workflows.append(workflow)
         return workflow
