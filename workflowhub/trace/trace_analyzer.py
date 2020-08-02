@@ -12,6 +12,7 @@ from os import path
 from typing import Any, Dict, List, Optional, Tuple
 from .trace import Trace
 from ..common.job import Job
+from ..common.file import FileLink
 from ..utils import best_fit_distribution
 
 
@@ -51,9 +52,9 @@ class TraceAnalyzer:
 
                 for file in job.files:
                     extension: str = path.splitext(file.name)[1] if '.' in file.name else file.name
-                    if file.link == 'input':
+                    if file.link == FileLink.INPUT:
                         self._append_file_to_dict(extension, inputs_dict, file.size)
-                    elif file.link == 'output':
+                    elif file.link == FileLink.OUTPUT:
                         self._append_file_to_dict(extension, outputs_dict, file.size)
 
             self._best_fit_distribution_for_file(inputs_dict, include_raw_data)
@@ -74,11 +75,20 @@ class TraceAnalyzer:
         return self.traces_summary
 
     def _append_file_to_dict(self, extension, dict_obj, file_size):
+        """
+        :param extension:
+        :param dict_obj:
+        :param file_size:
+        """
         if extension not in dict_obj:
             dict_obj[extension] = {'data': [], 'distribution': None}
         dict_obj[extension]['data'].append(file_size)
 
     def _best_fit_distribution_for_file(self, dict_obj, include_raw_data):
+        """
+        :param dict_obj:
+        :param include_raw_data:
+        """
         for ext in dict_obj:
             dict_obj[ext]['min'] = min(dict_obj[ext]['data'])
             dict_obj[ext]['max'] = max(dict_obj[ext]['data'])
@@ -89,6 +99,9 @@ class TraceAnalyzer:
                 del dict_obj[ext]['data']
 
     def _json_format_distribution_fit(self, dist_tuple: Tuple):
+        """
+        :param dist_tuple:
+        """
         formatted_entry = {'name': dist_tuple[0], 'params': []}
         for p in dist_tuple[1]:
             formatted_entry['params'].append(p)

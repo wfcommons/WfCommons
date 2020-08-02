@@ -9,5 +9,4 @@
 # (at your option) any later version.
 
 from .generator import WorkflowGenerator
-from .workflow import GenomeRecipe
-from .workflow import MontageRecipe
+from .workflow import CyclesRecipe, GenomeRecipe, MontageRecipe

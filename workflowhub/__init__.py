@@ -16,6 +16,5 @@ import logging
 
 from .generator import WorkflowGenerator
 from .trace import Trace, TraceAnalyzer
-from .types import OutputFormat
 
 logging.getLogger('workflowhub').addHandler(logging.NullHandler())

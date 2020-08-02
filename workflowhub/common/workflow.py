@@ -75,7 +75,7 @@ class Workflow(nx.DiGraph):
 
     def write_dot(self, dot_filename: str = None) -> str:
         """
-        Write a dot file of the workflow trace
+        Write a dot file of the workflow trace.
         :param dot_filename:
         """
         if not dot_filename:

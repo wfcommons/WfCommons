@@ -11,6 +11,7 @@
 import uuid
 
 from abc import ABC, abstractmethod
+from os import path
 from typing import Any, Dict, List, Optional
 
 from ...common.file import File, FileLink
@@ -20,8 +21,10 @@ from ...utils import generate_rvs
 
 
 class WorkflowRecipe(ABC):
-    def __init__(self, name: str = None) -> None:
+    def __init__(self, name: str, data_size: Optional[int], num_jobs: Optional[int]) -> None:
         self.name: str = name
+        self.data_size = data_size
+        self.num_jobs = num_jobs
         self.workflows: List[Workflow] = []
         self.jobs_files: Dict[str, List[File]] = {}
 
@@ -49,10 +52,9 @@ class WorkflowRecipe(ABC):
         self.jobs_files[job_id] = []
         if input_files:
             for f in input_files:
-                if f.link != FileLink.INPUT:
+                if f.link == FileLink.OUTPUT:
                     self.jobs_files[job_id].append(File(name=f.name, size=f.size, link=FileLink.INPUT))
-        else:
-            self._generate_files(job_id, job_recipe['input'], FileLink.INPUT)
+        self._generate_files(job_id, job_recipe['input'], FileLink.INPUT)
         self._generate_files(job_id, job_recipe['output'], FileLink.OUTPUT)
 
         return Job(
@@ -78,8 +80,14 @@ class WorkflowRecipe(ABC):
         :param recipe:
         :param link:
         """
+        extension_list: List[str] = []
+        for f in self.jobs_files[job_id]:
+            if f.link == link:
+                extension_list.append(path.splitext(f.name)[1] if '.' in f.name else f.name)
+
         for extension in recipe:
-            self.jobs_files[job_id].append(self._generate_file(extension, recipe, link))
+            if extension not in extension_list:
+                self.jobs_files[job_id].append(self._generate_file(extension, recipe, link))
 
     def _generate_file(self, extension: str, recipe: Dict[str, Any], link: FileLink):
         """

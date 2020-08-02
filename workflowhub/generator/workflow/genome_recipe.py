@@ -8,9 +8,8 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import networkx as nx
-
 from typing import Dict, List, Optional
+
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
 from ...common.job import Job
@@ -22,16 +21,17 @@ class GenomeRecipe(WorkflowRecipe):
                  num_chromosomes: Optional[int],
                  num_sequences: Optional[int],
                  num_populations: Optional[int],
-                 size: Optional[int],
+                 data_size: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
-        super().__init__("1000Genome")
+        """
+
+        """
+        super().__init__("1000Genome", data_size, num_jobs)
 
         self.num_chromosomes: int = num_chromosomes
         self.num_sequences: int = num_sequences
         self.num_populations: int = num_populations
-        self.size: int = size
-        self.num_jobs: int = num_jobs
 
     @classmethod
     def from_num_chromosomes(cls,
@@ -52,7 +52,7 @@ class GenomeRecipe(WorkflowRecipe):
             raise ValueError("The number of populations should be within the range [1,7].")
 
         return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences, num_populations=num_populations,
-                   size=None, num_jobs=None)
+                   data_size=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """
@@ -117,12 +117,6 @@ class GenomeRecipe(WorkflowRecipe):
                 workflow.add_edge(sifting_job.name, job_name)
                 workflow.add_edge(individuals_merge_job.name, job_name)
                 job_id_counter += 1
-
-        # TODO: remove printing below
-        for j in workflow.nodes:
-            print("JOB: {}".format(workflow.nodes[j]['job'].name))
-        output = "{0}.dot".format(self.name)
-        nx.nx_agraph.write_dot(workflow, output)
 
         self.workflows.append(workflow)
         return workflow

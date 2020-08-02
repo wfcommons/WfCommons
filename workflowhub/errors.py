@@ -10,14 +10,21 @@
 
 
 class TraceError(Exception):
-	"""
-		Represents the most basic error in the trace package of the WorkflowHub project
-	"""
-	pass
+    """
+    Represents the most basic error in the trace package of the WorkflowHub project
+    """
+    pass
 
 
 class TraceNotValid(TraceError):
-	"""
-		Error when the trace is not valided against the provided JSON schema
-	"""
-	pass
+    """
+    Error when the trace is not validated against the provided JSON schema
+    """
+    pass
+
+
+class InvalidWorkflowTypeError(TypeError):
+    """
+
+    """
+    pass

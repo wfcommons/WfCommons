@@ -13,7 +13,3 @@ from typing import Dict, Any
 
 # Generic type for JSON output
 JsonDict = Dict[str, Any]
-
-
-class OutputFormat(Enum):
-	CSV = 1

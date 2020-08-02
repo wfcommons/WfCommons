@@ -8,5 +8,6 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from.genome_recipe import GenomeRecipe
+from .cycles_recipe import CyclesRecipe
+from .genome_recipe import GenomeRecipe
 from .montage_recipe import MontageRecipe

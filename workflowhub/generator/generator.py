@@ -9,13 +9,16 @@
 # (at your option) any later version.
 
 from typing import List
-from .errors import InvalidWorkflowTypeError
 from .workflow.abstract_recipe import WorkflowRecipe
 from ..common.workflow import Workflow
+from ..errors import InvalidWorkflowTypeError
 
 
 class WorkflowGenerator:
     def __init__(self, workflow_recipe: WorkflowRecipe = None) -> None:
+        """
+        :param workflow_recipe:
+        """
         # sanity checks
         if not workflow_recipe or not isinstance(workflow_recipe, WorkflowRecipe):
             raise InvalidWorkflowTypeError("A WorkflowRecipe object should be provided.")
@@ -24,11 +27,17 @@ class WorkflowGenerator:
         self.workflows: List[Workflow] = []
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
+        """
+        :param workflow_name: workflow name
+        """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
         return workflow
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
+        """
+        :param num_workflows: number of worklfows to be generated
+        """
         workflows: List[Workflow] = []
         for _ in range(0, num_workflows):
             workflows.append(self.build_workflow())
