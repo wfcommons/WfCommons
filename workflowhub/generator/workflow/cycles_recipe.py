@@ -96,10 +96,11 @@ class CyclesRecipe(WorkflowRecipe):
                     workflow.add_node(job_name, job=fi_cycles_job)
                     job_id_counter += 1
 
-                    # fertilizer increase cycles job
+                    # fertilizer increase output parser cycles job
+                    input_files = self._get_files_by_job_and_link(fi_cycles_job.name, FileLink.OUTPUT)
                     job_name = "cycles_fertilizer_increase_output_parser_{:08d}".format(job_id_counter)
                     cycles_fi_output_job = self._generate_job('cycles_fertilizer_increase_output_parser', job_name,
-                                                              None)
+                                                              input_files)
                     workflow.add_node(job_name, job=cycles_fi_output_job)
                     cycles_fi_output_jobs.append(cycles_fi_output_job)
                     job_id_counter += 1
@@ -110,8 +111,11 @@ class CyclesRecipe(WorkflowRecipe):
                     workflow.add_edge(fi_cycles_job.name, cycles_fi_output_job.name)
 
                 # cycles output summary
+                input_files = []
+                for j in cycles_jobs:
+                    input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
                 job_name = "cycles_output_summary_{:08d}".format(job_id_counter)
-                cycles_output_summary_job = self._generate_job('cycles_output_summary', job_name, None)
+                cycles_output_summary_job = self._generate_job('cycles_output_summary', job_name, input_files)
                 workflow.add_node(job_name, job=cycles_output_summary_job)
                 job_id_counter += 1
                 for j in cycles_jobs:
@@ -119,9 +123,12 @@ class CyclesRecipe(WorkflowRecipe):
                 summary_jobs_per_crop[crop].append(cycles_output_summary_job)
 
                 # cycles fertilizer increase output summary
+                input_files = []
+                for j in cycles_fi_output_jobs:
+                    input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
                 job_name = "cycles_fertilizer_increase_output_summary_{:08d}".format(job_id_counter)
                 cycles_fi_output_summary_job = self._generate_job('cycles_fertilizer_increase_output_summary',
-                                                                  job_name, None)
+                                                                  job_name, input_files)
                 workflow.add_node(job_name, job=cycles_fi_output_summary_job)
                 job_id_counter += 1
                 for j in cycles_fi_output_jobs:
@@ -129,9 +136,11 @@ class CyclesRecipe(WorkflowRecipe):
 
         # cycles plots
         for crop in summary_jobs_per_crop:
-            # TODO: get input files from list
+            input_files = []
+            for j in summary_jobs_per_crop[crop]:
+                input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
             job_name = "cycles_plots_{:08d}".format(job_id_counter)
-            cycles_plots_job = self._generate_job('cycles_plots', job_name, None)
+            cycles_plots_job = self._generate_job('cycles_plots', job_name, input_files)
             workflow.add_node(job_name, job=cycles_plots_job)
             job_id_counter += 1
             for j in summary_jobs_per_crop[crop]:
