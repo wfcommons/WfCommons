@@ -78,7 +78,7 @@ class CyclesRecipe(WorkflowRecipe):
                 for _ in range(0, num_combinations):
                     # baseline cycles job
                     job_name = self._generate_job_name("baseline_cycles")
-                    baseline_cycles_job = self._generate_job('baseline_cycles', job_name, None)
+                    baseline_cycles_job = self._generate_job('baseline_cycles', job_name)
                     workflow.add_node(job_name, job=baseline_cycles_job)
                     input_files = self._get_files_by_job_and_link(baseline_cycles_job.name, FileLink.OUTPUT)
 

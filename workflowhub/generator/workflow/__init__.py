@@ -9,5 +9,6 @@
 # (at your option) any later version.
 
 from .cycles_recipe import CyclesRecipe
+from .epigenomics_recipe import EpigenomicsRecipe
 from .genome_recipe import GenomeRecipe
 from .montage_recipe import MontageRecipe

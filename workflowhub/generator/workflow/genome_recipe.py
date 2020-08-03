@@ -56,7 +56,8 @@ class GenomeRecipe(WorkflowRecipe):
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """
-        :param workflow_name:
+        Build a synthetic trace of a 1000Genome workflow.
+        :param workflow_name: workflow name
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
         self.job_id_counter: int = 1
@@ -66,7 +67,7 @@ class GenomeRecipe(WorkflowRecipe):
             individuals_jobs: List[Job] = []
             for _ in range(0, int(self.num_sequences / 1000)):
                 job_name = self._generate_job_name("individuals")
-                individuals_job = self._generate_job('individuals', job_name, None)
+                individuals_job = self._generate_job('individuals', job_name)
                 individuals_jobs.append(individuals_job)
                 workflow.add_node(job_name, job=individuals_job)
 
@@ -82,7 +83,7 @@ class GenomeRecipe(WorkflowRecipe):
 
             # sifting job
             job_name = self._generate_job_name("sifting")
-            sifting_job = self._generate_job('sifting', job_name, None)
+            sifting_job = self._generate_job('sifting', job_name)
             workflow.add_node(job_name, job=sifting_job)
 
             populations = ['ALL', 'AFR', 'AMR', 'EAS', 'EUR', 'GBR', 'SAS']
@@ -118,7 +119,7 @@ class GenomeRecipe(WorkflowRecipe):
 
     def _workflow_recipe(self) -> Dict:
         """
-
+        Recipe for generating synthetic traces of the 1000Genome workflow.
         """
         return {
             "individuals": {

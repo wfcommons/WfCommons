@@ -37,10 +37,13 @@ class WorkflowRecipe(ABC):
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         pass
 
-    def _generate_job(self, job_name: str, job_id: str, input_files: Optional[List[File]]) -> Job:
+    def _generate_job(self, job_name: str, job_id: str, input_files: List[File] = None,
+                      files_recipe: Dict[FileLink, Dict[str, int]] = None) -> Job:
         """
         :param job_name:
         :param job_id:
+        :param input_files:
+        :param files_recipe:
         """
         job_recipe = self._workflow_recipe()[job_name]
 
@@ -49,14 +52,16 @@ class WorkflowRecipe(ABC):
                                       job_recipe['runtime']['min'],
                                       job_recipe['runtime']['max'])
 
-        # files
+        # linking previous generated output files as input files
         self.jobs_files[job_id] = []
         if input_files:
             for f in input_files:
                 if f.link == FileLink.OUTPUT:
                     self.jobs_files[job_id].append(File(name=f.name, size=f.size, link=FileLink.INPUT))
-        self._generate_files(job_id, job_recipe['input'], FileLink.INPUT)
-        self._generate_files(job_id, job_recipe['output'], FileLink.OUTPUT)
+
+        # generate additional in/output files
+        self._generate_files(job_id, job_recipe['input'], FileLink.INPUT, files_recipe)
+        self._generate_files(job_id, job_recipe['output'], FileLink.OUTPUT, files_recipe)
 
         return Job(
             name=job_id,
@@ -80,11 +85,13 @@ class WorkflowRecipe(ABC):
         self.job_id_counter += 1
         return job_name
 
-    def _generate_files(self, job_id: str, recipe: Dict[str, Any], link: FileLink):
+    def _generate_files(self, job_id: str, recipe: Dict[str, Any], link: FileLink,
+                        files_recipe: Dict[FileLink, Dict[str, int]] = None):
         """
         :param job_id:
         :param recipe:
         :param link:
+        :param files_recipe:
         """
         extension_list: List[str] = []
         for f in self.jobs_files[job_id]:
@@ -93,7 +100,11 @@ class WorkflowRecipe(ABC):
 
         for extension in recipe:
             if extension not in extension_list:
-                self.jobs_files[job_id].append(self._generate_file(extension, recipe, link))
+                num_files = 1
+                if files_recipe and link in files_recipe and extension in files_recipe[link]:
+                    num_files = files_recipe[link][extension]
+                for _ in range(0, num_files):
+                    self.jobs_files[job_id].append(self._generate_file(extension, recipe, link))
 
     def _generate_file(self, extension: str, recipe: Dict[str, Any], link: FileLink):
         """
@@ -101,12 +112,11 @@ class WorkflowRecipe(ABC):
         :param recipe:
         :param link:
         """
-        file_name = str(uuid.uuid4()) + extension
-        file_size = int(generate_rvs(recipe[extension]['distribution'],
-                                     recipe[extension]['min'],
-                                     recipe[extension]['max']))
-        # print("FILE: {} ({}) - {}".format(file_name, link, str(file_size)))
-        return File(name=file_name, size=file_size, link=link)
+        return File(name=str(uuid.uuid4()) + extension,
+                    link=link,
+                    size=int(generate_rvs(recipe[extension]['distribution'],
+                                          recipe[extension]['min'],
+                                          recipe[extension]['max'])))
 
     def _get_files_by_job_and_link(self, job_name: str, link: FileLink) -> List[File]:
         """
