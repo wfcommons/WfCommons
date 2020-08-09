@@ -8,7 +8,7 @@ This Python package provides a collection of tools for:
 
 - Analyzing traces of actual workflow executions;
 - Producing recipes structures for creating workflow recipes for workflow generation; and
-- Generating synthetic realistic workflow traces;
+- Generating synthetic realistic workflow traces.
 
 ## Prerequisites
 
