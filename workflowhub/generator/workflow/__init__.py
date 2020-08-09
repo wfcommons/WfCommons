@@ -11,6 +11,6 @@
 from .cycles_recipe import CyclesRecipe
 from .epigenomics_recipe import EpigenomicsRecipe
 from .genome_recipe import GenomeRecipe
-from .montage_recipe import MontageRecipe
+from .montage_recipe import MontageRecipe, MontageDataset
 from .seismology_recipe import SeismologyRecipe
 from .soykb_recipe import SoyKBRecipe

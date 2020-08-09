@@ -21,9 +21,14 @@ from ...utils import generate_rvs
 
 
 class WorkflowRecipe(ABC):
-    def __init__(self, name: str, data_size: Optional[int], num_jobs: Optional[int]) -> None:
+    def __init__(self, name: str, data_footprint: Optional[int], num_jobs: Optional[int]) -> None:
+        """
+        :param name:
+        :param data_footprint:
+        :param num_jobs:
+        """
         self.name: str = name
-        self.data_size = data_size
+        self.data_footprint = data_footprint
         self.num_jobs = num_jobs
         self.workflows: List[Workflow] = []
         self.jobs_files: Dict[str, List[File]] = {}
@@ -35,6 +40,9 @@ class WorkflowRecipe(ABC):
 
     @abstractmethod
     def build_workflow(self, workflow_name: str = None) -> Workflow:
+        """
+        :param workflow_name:
+        """
         pass
 
     def _generate_job(self, job_name: str, job_id: str, input_files: List[File] = None,
@@ -48,9 +56,9 @@ class WorkflowRecipe(ABC):
         job_recipe = self._workflow_recipe()[job_name]
 
         # runtime
-        runtime: float = generate_rvs(job_recipe['runtime']['distribution'],
-                                      job_recipe['runtime']['min'],
-                                      job_recipe['runtime']['max'])
+        runtime: float = float(format(generate_rvs(job_recipe['runtime']['distribution'],
+                                                   job_recipe['runtime']['min'],
+                                                   job_recipe['runtime']['max']), '.3f'))
 
         # linking previous generated output files as input files
         self.jobs_files[job_id] = []
@@ -81,6 +89,9 @@ class WorkflowRecipe(ABC):
         )
 
     def _generate_job_name(self, prefix: str) -> str:
+        """
+        :param prefix:
+        """
         job_name = "{}_{:08d}".format(prefix, self.job_id_counter)
         self.job_id_counter += 1
         return job_name
@@ -118,13 +129,13 @@ class WorkflowRecipe(ABC):
                                           recipe[extension]['min'],
                                           recipe[extension]['max'])))
 
-    def _get_files_by_job_and_link(self, job_name: str, link: FileLink) -> List[File]:
+    def _get_files_by_job_and_link(self, job_id: str, link: FileLink) -> List[File]:
         """
-        :param job_name:
+        :param job_id:
         :param link:
         """
         files_list: List[File] = []
-        for f in self.jobs_files[job_name]:
+        for f in self.jobs_files[job_id]:
             if f.link == link:
                 files_list.append(f)
         return files_list

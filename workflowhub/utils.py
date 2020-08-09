@@ -15,6 +15,7 @@ import scipy.stats
 import warnings
 import numpy as np
 
+from enum import Enum
 from logging import Logger
 from typing import Dict, Optional, List
 from .types import JsonDict
@@ -95,3 +96,8 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
     rvs = max(min_value, rvs)
     rvs = min(max_value, rvs)
     return rvs
+
+
+class NoValue(Enum):
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.name)
