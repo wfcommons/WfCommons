@@ -11,6 +11,9 @@ provides a collection of tools for:
 - Generating synthetic realistic workflow traces;
 
 .. toctree::
-    :caption: Getting Started
-    :maxdepth: 2
+    :caption: Reference APIs
+    :maxdepth: 1
 
+    api_trace.rst
+    api_generator.rst
+    api_common.rst
