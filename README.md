@@ -2,8 +2,13 @@
 [![CodeFactor][codefactor-badge]][codefactor-link]
 
 <a href="https://workflowhub.org" target="_blank"><img src="https://workflowhub.org/assets/images/logo-horizontal.png" width="300" /></a>
+<br/>_A Community Framework for Enabling Scientific Workflow Research and Education_
 
-Community Framework for Enabling Scientific Workflow Research and Education
+This Python package provides a collection of tools for:
+
+- Analyzing traces of actual workflow executions;
+- Producing recipes structures for creating workflow recipes for workflow generation; and
+- Generating synthetic realistic workflow traces;
 
 ## Prerequisites
 
