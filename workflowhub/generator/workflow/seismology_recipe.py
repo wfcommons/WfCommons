@@ -19,17 +19,28 @@ from ...common.workflow import Workflow
 class SeismologyRecipe(WorkflowRecipe):
     def __init__(self,
                  num_pairs: Optional[int],
-                 data_size: Optional[int],
+                 data_footprint: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
         """
         :param num_pairs: The number of pair of signals to estimate earthquake STFs.
-        :param data_size:
+        :param data_footprint:
         :param num_jobs:
         """
-        super().__init__("Seismology", data_size, num_jobs)
+        super().__init__("Seismology", data_footprint, num_jobs)
 
         self.num_pairs: int = num_pairs
+
+    @classmethod
+    def from_num_jobs(cls, num_jobs: int) -> 'SeismologyRecipe':
+        """
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
+        """
+        if num_jobs < 2:
+            raise ValueError("The upper bound for the number of jobs should be at least 2.")
+
+        return cls(num_pairs=num_jobs - 1, data_footprint=None, num_jobs=num_jobs)
 
     @classmethod
     def from_num_pairs(cls, num_pairs: int) -> 'SeismologyRecipe':
@@ -39,7 +50,7 @@ class SeismologyRecipe(WorkflowRecipe):
         if num_pairs < 2:
             raise ValueError("The number of pairs should be at least 2.")
 
-        return cls(num_pairs=num_pairs, data_size=None, num_jobs=None)
+        return cls(num_pairs=num_pairs, data_footprint=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """

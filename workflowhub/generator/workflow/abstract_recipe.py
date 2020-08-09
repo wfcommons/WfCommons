@@ -38,6 +38,15 @@ class WorkflowRecipe(ABC):
     def _workflow_recipe(self) -> Dict:
         pass
 
+    @classmethod
+    @abstractmethod
+    def from_num_jobs(self, num_jobs: int) -> 'WorkflowRecipe':
+        """
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
+        """
+        pass
+
     @abstractmethod
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """

@@ -32,6 +32,7 @@ class WorkflowGenerator:
         """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
+        print("Generated a workflow with {} jobs".format(self.workflow_recipe.job_id_counter - 1))
         return workflow
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
