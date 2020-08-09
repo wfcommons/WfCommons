@@ -3,7 +3,7 @@
 
 <a href="https://workflowhub.org" target="_blank"><img src="https://workflowhub.org/assets/images/logo-horizontal.png" width="300" /></a>
 
-# A package to manage scientific workflows representation and traces
+Community Framework for Enabling Scientific Workflow Research and Education
 
 ## Prerequisites
 
