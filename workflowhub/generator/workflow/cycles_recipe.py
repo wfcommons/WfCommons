@@ -8,12 +8,12 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from itertools import combinations
 from typing import Dict, List, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
 from ...common.workflow import Workflow
+from ...utils import ncr
 
 
 class CyclesRecipe(WorkflowRecipe):
@@ -21,21 +21,66 @@ class CyclesRecipe(WorkflowRecipe):
                  num_points: Optional[int],
                  num_crops: Optional[int],
                  num_params: Optional[int],
-                 data_size: Optional[int],
+                 data_footprint: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
         """
-        :param num_points:
-        :param num_crops:
-        :param num_params:
-        :param data_size:
-        :param num_jobs:
+        :param num_points: The number of points of the spatial grid cell.
+        :type num_points: int
+        :param num_crops: The number of crops being evaluated.
+        :type num_crops: int
+        :param num_params: The number of parameter values from the simulation matrix.
+        :type num_params: int
+        :param data_footprint:
+        :type data_footprint: int
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
         """
-        super().__init__("Cycles", data_size, num_jobs)
+        super().__init__("Cycles", data_footprint, num_jobs)
 
         self.num_points: int = num_points
         self.num_crops: int = num_crops
         self.num_params: int = num_params
+
+    @classmethod
+    def from_num_jobs(cls, num_jobs: int) -> 'CyclesRecipe':
+        """
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
+        """
+        if num_jobs < 7:
+            raise ValueError("The upper bound for the number of jobs should be at least 7.")
+
+        num_points = 1
+        num_crops = 1
+        num_params = 4
+        remaining_jobs = num_jobs - 7
+
+        while remaining_jobs > 0:
+            added_job = False
+            cost_param = (ncr(num_params + 1, 4) - ncr(num_params, 4)) * 4 * num_crops * num_points
+            if remaining_jobs >= cost_param:
+                num_params += 1
+                remaining_jobs -= cost_param
+                added_job = True
+
+            cost_crop = ncr(num_params, 4) * 4 * num_points + 3
+            if remaining_jobs >= cost_crop:
+                num_crops += 1
+                remaining_jobs -= cost_crop
+                added_job = True
+
+            cost_point = ncr(num_params, 4) * 4 * num_crops + 3 * num_crops
+            if remaining_jobs >= cost_point and remaining_jobs >= num_jobs / 2:
+                num_points += 1
+                remaining_jobs -= cost_point
+                added_job = True
+
+            if not added_job:
+                break
+
+        return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
+                   num_jobs=num_jobs)
 
     @classmethod
     def from_points_and_crops(cls,
@@ -44,27 +89,32 @@ class CyclesRecipe(WorkflowRecipe):
                               num_params: int,
                               ) -> 'CyclesRecipe':
         """
-        :param num_points:
-        :param num_crops:
-        :param num_params:
+        :param num_points: The number of points of the spatial grid cell.
+        :type num_points: int
+        :param num_crops: The number of crops being evaluated.
+        :type num_crops: int
+        :param num_params: The number of parameter values from the simulation matrix.
+        :type num_params: int
         """
         if num_points < 1:
             raise ValueError("The number of points should be 1 or higher.")
         if num_crops < 1:
             raise ValueError("The number of crops should be 1 or higher.")
-        if num_params < 1:
+        if num_params < 4:
             raise ValueError("The number of params should be 4 or higher.")
 
-        return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_size=None, num_jobs=None)
+        return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
+                   num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
-        """
-        Build a synthetic trace of a Cycles workflow.
-        :param workflow_name: workflow name
+        """Build a synthetic trace of a Cycles workflow.
+
+        :param workflow_name: The workflow name
+        :type workflow_name: int
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
         self.job_id_counter: int = 1
-        num_combinations = len(list(combinations(list(range(0, self.num_params)), 4)))
+        num_combinations = ncr(self.num_params, 4)
         summary_jobs_per_crop = {}
 
         for _ in range(0, self.num_points):
@@ -143,9 +193,7 @@ class CyclesRecipe(WorkflowRecipe):
         return workflow
 
     def _workflow_recipe(self) -> Dict:
-        """
-        Recipe for generating synthetic traces of the Cycles workflow.
-        """
+        """Recipe for generating synthetic traces of the Cycles workflow."""
         return {
             "baseline_cycles": {
                 "runtime": {

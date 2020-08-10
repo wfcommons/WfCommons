@@ -14,11 +14,18 @@ import math
 import scipy.stats
 import warnings
 import numpy as np
+import operator as op
 
 from enum import Enum
+from functools import reduce
 from logging import Logger
 from typing import Dict, Optional, List
 from .types import JsonDict
+
+
+class NoValue(Enum):
+    def __repr__(self):
+        return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
 def read_json(trace_filename: str, logger: Optional[Logger] = None) -> JsonDict:
@@ -98,6 +105,12 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
     return rvs
 
 
-class NoValue(Enum):
-    def __repr__(self):
-        return '<%s.%s>' % (self.__class__.__name__, self.name)
+def ncr(n, r):
+    """
+    :param n:
+    :param r:
+    """
+    r = min(r, n - r)
+    numerator = reduce(op.mul, range(n, n - r, -1), 1)
+    denominator = reduce(op.mul, range(1, r + 1), 1)
+    return numerator // denominator
