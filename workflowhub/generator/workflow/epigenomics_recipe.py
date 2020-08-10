@@ -8,7 +8,10 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from typing import Dict, List, Optional
+import math
+import random
+
+from typing import Dict, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
@@ -20,21 +23,44 @@ class EpigenomicsRecipe(WorkflowRecipe):
                  num_sequence_files: Optional[int],
                  num_lines: Optional[int],
                  bin_size: Optional[int],
-                 data_size: Optional[int],
+                 data_footprint: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
         """
-        :param num_sequence_files:
-        :param num_lines:
-        :param bin_size:
-        :param data_size:
+        :param num_sequence_files: Number of FASTQ files processed by the workflow.
+        :param num_lines: Number of lines in each FASTQ file.
+        :param bin_size: Number of DNA and protein sequence information to be processed by each computational task.
+        :param data_footprint:
         :param num_jobs:
         """
-        super().__init__("Epigenomics", data_size, num_jobs)
+        super().__init__("Epigenomics", data_footprint, num_jobs)
 
         self.num_sequence_files: int = num_sequence_files
         self.num_lines: int = num_lines
         self.bin_size: int = bin_size
+
+    @classmethod
+    def from_num_jobs(cls, num_jobs: int) -> 'EpigenomicsRecipe':
+        """
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
+        """
+        if num_jobs < 9:
+            raise ValueError("The upper bound for the number of jobs should be at least 9.")
+
+        num_sequence_files = random.randint(1, int(math.ceil((num_jobs - 5) / 12)))
+        remaining_jobs = num_jobs - (6 * num_sequence_files) - 3
+        num_lines = 1
+
+        while remaining_jobs > 0:
+            if remaining_jobs >= 4 * num_sequence_files:
+                num_lines += 1
+                remaining_jobs -= 4 * num_sequence_files
+            else:
+                break
+
+        return cls(num_sequence_files=num_sequence_files, num_lines=num_lines * 10, bin_size=10,
+                   data_footprint=None, num_jobs=num_jobs)
 
     @classmethod
     def from_sequences(cls,
@@ -43,14 +69,14 @@ class EpigenomicsRecipe(WorkflowRecipe):
                        bin_size: int,
                        ) -> 'EpigenomicsRecipe':
         """
-        :param num_sequence_files:
-        :param num_lines:
-        :param bin_size:
+        :param num_sequence_files: Number of FASTQ files processed by the workflow.
+        :param num_lines: Number of lines in each FASTQ file.
+        :param bin_size: Number of DNA and protein sequence information to be processed by each computational task.
         """
         if num_sequence_files < 1:
             raise ValueError("The number of sequence files should be at least 1.")
-        if num_lines < 100:
-            raise ValueError("The number of lines in per sequence file should be at least 100.")
+        if num_lines < 10:
+            raise ValueError("The number of lines in per sequence file should be at least 10.")
         if bin_size < 10:
             raise ValueError("The bin size should be at least 10.")
 
