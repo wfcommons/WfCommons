@@ -50,7 +50,7 @@ class SoyKBRecipe(WorkflowRecipe):
         if num_jobs < 14:
             raise ValueError("The upper bound for the number of jobs should be at least 14.")
 
-        num_chromosomes = random.randint(1, min(math.ceil((num_jobs - 14) / 2), 22))
+        num_chromosomes = 1 if num_jobs == 14 else random.randint(1, min(math.ceil((num_jobs - 14) / 2), 22))
         remaining_jobs = num_jobs - (2 * num_chromosomes) - 12
         num_fastq_files = 1
 
