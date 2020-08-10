@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import math
+import random
 
 from typing import Dict, List, Optional
 
@@ -22,37 +23,67 @@ class SoyKBRecipe(WorkflowRecipe):
     def __init__(self,
                  num_fastq_files: Optional[int],
                  num_chromosomes: Optional[int],
-                 data_size: Optional[int],
+                 data_footprint: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
         """
-        :param num_fastq_files: number of FASTQ files to be analyzed
-        :param num_chromosomes: number of chromossomes
-        :param data_size:
-        :param num_jobs:
+        :param num_fastq_files: The number of FASTQ files to be analyzed.
+        :type num_fastq_files: int
+        :param num_chromosomes: The number of chromossomes.
+        :type num_chromosomes: int
+        :param data_footprint:
+        :type data_footprint: int
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :type num_jobs: int
         """
-        super().__init__("SoyKB", data_size, num_jobs)
+        super().__init__("SoyKB", data_footprint, num_jobs)
 
         self.num_fastq_files = num_fastq_files
         self.num_chromosomes = num_chromosomes
 
     @classmethod
+    def from_num_jobs(cls, num_jobs: int) -> 'SoyKBRecipe':
+        """
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 14).
+        :type num_jobs: int
+        """
+        if num_jobs < 14:
+            raise ValueError("The upper bound for the number of jobs should be at least 14.")
+
+        num_chromosomes = random.randint(1, min(math.ceil((num_jobs - 14) / 2), 22))
+        remaining_jobs = num_jobs - (2 * num_chromosomes) - 12
+        num_fastq_files = 1
+
+        while remaining_jobs > 0:
+            if remaining_jobs >= num_chromosomes + 6:
+                num_fastq_files += 1
+                remaining_jobs -= num_chromosomes + 6
+            else:
+                break
+
+        return cls(num_fastq_files=num_fastq_files * 2, num_chromosomes=num_chromosomes, data_footprint=None,
+                   num_jobs=num_jobs)
+
+    @classmethod
     def from_sequences(cls, num_fastq_files: int, num_chromosomes: int) -> 'SoyKBRecipe':
         """
-        :param num_fastq_files: number of FASTQ files to be analyzed
-        :param num_chromosomes: number of chromossomes
+        :param num_fastq_files: The number of FASTQ files to be analyzed (at least 2).
+        :type num_fastq_files: int
+        :param num_chromosomes: The number of chromossomes (range [1,22].
+        :type num_chromosomes: int
         """
         if num_fastq_files < 2 or num_fastq_files % 2 != 0:
             raise ValueError("The number of FASTQ files should be at least 2 and should be an even number.")
-        if num_chromosomes < 1:
-            raise ValueError("The number of chromosomes should be at least 1.")
+        if num_chromosomes < 1 or num_chromosomes > 22:
+            raise ValueError("The number of chromosomes should be within range [1, 22].")
 
-        return cls(num_fastq_files=num_fastq_files, num_chromosomes=num_chromosomes, data_size=None, num_jobs=None)
+        return cls(num_fastq_files=num_fastq_files, num_chromosomes=num_chromosomes, data_footprint=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
-        """
-        Build a synthetic trace of a SoyKB workflow.
-        :param workflow_name: workflow name
+        """Build a synthetic trace of a SoyKB workflow.
+
+        :param workflow_name: The workflow name.
+        :type workflow_name: str
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
         self.job_id_counter: int = 1
@@ -176,9 +207,7 @@ class SoyKBRecipe(WorkflowRecipe):
         return workflow
 
     def _workflow_recipe(self) -> Dict:
-        """
-        Recipe for generating synthetic traces of the SoyKB workflow.
-        """
+        """Recipe for generating synthetic traces of the SoyKB workflow."""
         return {
             "alignment_to_reference": {
                 "runtime": {

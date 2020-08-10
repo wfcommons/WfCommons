@@ -34,7 +34,7 @@ class SeismologyRecipe(WorkflowRecipe):
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'SeismologyRecipe':
         """
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 2).
         :type num_jobs: int
         """
         if num_jobs < 2:
@@ -45,7 +45,8 @@ class SeismologyRecipe(WorkflowRecipe):
     @classmethod
     def from_num_pairs(cls, num_pairs: int) -> 'SeismologyRecipe':
         """
-        :param num_pairs: The number of pair of signals to estimate earthquake STFs.
+        :param num_pairs: The number of pair of signals to estimate earthquake STFs (at least 2).
+        :type num_pairs: int
         """
         if num_pairs < 2:
             raise ValueError("The number of pairs should be at least 2.")

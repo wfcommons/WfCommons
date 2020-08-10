@@ -80,7 +80,7 @@ class EpigenomicsRecipe(WorkflowRecipe):
         if bin_size < 10:
             raise ValueError("The bin size should be at least 10.")
 
-        return cls(num_sequence_files=num_sequence_files, num_lines=num_lines, bin_size=bin_size, data_size=None,
+        return cls(num_sequence_files=num_sequence_files, num_lines=num_lines, bin_size=bin_size, data_footprint=None,
                    num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
