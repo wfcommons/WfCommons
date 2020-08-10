@@ -18,6 +18,7 @@ class WorkflowGenerator:
     def __init__(self, workflow_recipe: WorkflowRecipe = None) -> None:
         """
         :param workflow_recipe:
+        :type workflow_recipe: WorkflowRecipe
         """
         # sanity checks
         if not workflow_recipe or not isinstance(workflow_recipe, WorkflowRecipe):
@@ -28,7 +29,8 @@ class WorkflowGenerator:
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """
-        :param workflow_name: workflow name
+        :param workflow_name: The workflow name.
+        :type workflow_name: str
         """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
@@ -37,7 +39,8 @@ class WorkflowGenerator:
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
         """
-        :param num_workflows: number of worklfows to be generated
+        :param num_workflows: The number of workflows to be generated.
+        :type num_workflows: int
         """
         workflows: List[Workflow] = []
         for _ in range(0, num_workflows):

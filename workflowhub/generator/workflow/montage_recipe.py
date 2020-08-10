@@ -29,7 +29,7 @@ class MontageRecipe(WorkflowRecipe):
                  dataset: MontageDataset,
                  num_bands: int,
                  degree: Optional[float],
-                 data_size: Optional[int],
+                 data_footprint: Optional[int],
                  num_jobs: Optional[int]
                  ) -> None:
         """
@@ -39,12 +39,12 @@ class MontageRecipe(WorkflowRecipe):
         :type num_bands: int
         :param degree: the size (in degrees) to be used for the width/height of the final mosaic.
         :type degree: float
-        :param data_size:
-        :type data_size: int
+        :param data_footprint:
+        :type data_footprint: int
         :param num_jobs:
         :type num_jobs: int
         """
-        super().__init__("Montage", data_size, num_jobs)
+        super().__init__("Montage", data_footprint, num_jobs)
 
         if not isinstance(dataset, MontageDataset):
             raise TypeError("the dataset should be an instance of MontageDataset object.")
@@ -67,13 +67,32 @@ class MontageRecipe(WorkflowRecipe):
         }
 
     @classmethod
+    def from_num_jobs(cls, num_jobs: int) -> 'MontageRecipe':
+        """Generate a Montage synthetic workflow trace with up to the number of jobs defined.
+
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 133).
+        :type num_jobs: int
+        """
+        if num_jobs < 133:
+            raise ValueError("The upper bound for the number of jobs should be at least 133.")
+
+        dataset = MontageDataset.DSS
+        num_bands = 1
+        degree = 0.5
+        remaining_jobs = num_jobs - 7
+
+        # while remaining_jobs > 0:
+
+        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=num_jobs)
+
+    @classmethod
     def from_degree(cls, dataset: MontageDataset, num_bands: int, degree: float) -> 'MontageRecipe':
         """
         :param dataset: the dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
-        :param num_bands: the number of bands (e.g., red, blue, and green) used by the workflow.
+        :param num_bands: the number of bands (e.g., red, blue, and green) used by the workflow (at least 1).
         :type num_bands: int
-        :param degree: the size (in degrees) to be used for the width/height of the final mosaic.
+        :param degree: the size (in degrees) to be used for the width/height of the final mosaic (at least 0.5).
         :type degree: float
         """
         if num_bands < 1:
@@ -81,7 +100,7 @@ class MontageRecipe(WorkflowRecipe):
         if degree < 0.5:
             raise ValueError("The workflow degree should be at least 0.5.")
 
-        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_size=None, num_jobs=None)
+        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Build a synthetic trace of a Montage workflow.

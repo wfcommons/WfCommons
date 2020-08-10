@@ -43,7 +43,8 @@ class SoyKBRecipe(WorkflowRecipe):
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'SoyKBRecipe':
-        """
+        """Generate a SoyKB synthetic workflow trace with up to the number of jobs defined.
+
         :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 14).
         :type num_jobs: int
         """

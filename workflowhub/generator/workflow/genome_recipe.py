@@ -45,8 +45,9 @@ class GenomeRecipe(WorkflowRecipe):
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'GenomeRecipe':
-        """
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        """Generate a 1000Genome synthetic workflow trace with up to the number of jobs defined.
+
+        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 5).
         :type num_jobs: int
         """
         if num_jobs < 5:

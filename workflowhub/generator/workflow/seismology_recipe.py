@@ -33,7 +33,8 @@ class SeismologyRecipe(WorkflowRecipe):
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'SeismologyRecipe':
-        """
+        """Generate a Seismology synthetic workflow trace with up to the number of jobs defined.
+
         :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 2).
         :type num_jobs: int
         """

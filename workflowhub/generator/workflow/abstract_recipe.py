@@ -21,11 +21,16 @@ from ...utils import generate_rvs
 
 
 class WorkflowRecipe(ABC):
+    """An abstract class for defining recipes for creating synthetic workflow traces."""
+
     def __init__(self, name: str, data_footprint: Optional[int], num_jobs: Optional[int]) -> None:
         """
         :param name:
+        :type name: str
         :param data_footprint:
+        :type data_footprint: int
         :param num_jobs:
+        :type num_jobs: int
         """
         self.name: str = name
         self.data_footprint = data_footprint
@@ -36,30 +41,36 @@ class WorkflowRecipe(ABC):
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict:
-        """
-        """
+        """Recipe for generating synthetic traces for a workflow."""
 
     @classmethod
     @abstractmethod
-    def from_num_jobs(self, num_jobs: int) -> 'WorkflowRecipe':
-        """
+    def from_num_jobs(cls, num_jobs: int) -> 'WorkflowRecipe':
+        """Generate a synthetic workflow trace with up to the number of jobs defined.
+
         :param num_jobs: The upper bound for the total number of jobs in the worklfow.
         :type num_jobs: int
         """
 
     @abstractmethod
     def build_workflow(self, workflow_name: str = None) -> Workflow:
-        """
-        :param workflow_name:
+        """Build a synthetic trace of a workflow.
+
+        :param workflow_name: The workflow name.
+        :type workflow_name: str
         """
 
     def _generate_job(self, job_name: str, job_id: str, input_files: List[File] = None,
                       files_recipe: Dict[FileLink, Dict[str, int]] = None) -> Job:
         """
         :param job_name:
+        :type job_name: str
         :param job_id:
+        :type job_id: str
         :param input_files:
+        :type input_files: List[File]
         :param files_recipe:
+        :type files_recipe: Dict[FileLink, Dict[str, int]]
         """
         job_recipe = self._workflow_recipe()[job_name]
 
