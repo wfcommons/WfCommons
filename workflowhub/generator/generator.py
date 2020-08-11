@@ -15,7 +15,6 @@ from typing import List, Optional
 
 from .workflow.abstract_recipe import WorkflowRecipe
 from ..common.workflow import Workflow
-from ..errors import InvalidWorkflowTypeError
 
 
 class WorkflowGenerator:
@@ -33,7 +32,7 @@ class WorkflowGenerator:
         """Create an object of the workflow generator."""
         # sanity checks
         if not workflow_recipe or not isinstance(workflow_recipe, WorkflowRecipe):
-            raise InvalidWorkflowTypeError("A WorkflowRecipe object should be provided.")
+            raise TypeError("A WorkflowRecipe object should be provided.")
 
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.workflow_recipe: WorkflowRecipe = workflow_recipe

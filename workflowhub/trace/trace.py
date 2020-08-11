@@ -23,7 +23,6 @@ from ..common.file import File, FileLink
 from ..common.machine import Machine, MachineSystem
 from ..common.job import Job, JobType
 from ..common.workflow import Workflow
-from ..types import JsonDict
 from ..utils import read_json
 
 limits = plt.axis('off')

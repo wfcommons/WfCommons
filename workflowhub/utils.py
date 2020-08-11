@@ -19,8 +19,7 @@ import operator as op
 from enum import Enum
 from functools import reduce
 from logging import Logger
-from typing import Dict, Optional, List, Tuple
-from .types import JsonDict
+from typing import Any, Dict, Optional, List, Tuple
 
 
 class NoValue(Enum):
@@ -28,7 +27,7 @@ class NoValue(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
-def read_json(trace_filename: str) -> JsonDict:
+def read_json(trace_filename: str) -> Dict[str, Any]:
     """Read the JSON from the file path.
 
     :param trace_filename: The absolute path of the trace file.
