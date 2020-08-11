@@ -23,24 +23,21 @@ class FileLink(NoValue):
 
 
 class File:
-    """Representation of a file."""
+    """Representation of a file.
+
+    :param name: The name of the file.
+    :type name: str
+    :param size: File size in KB.
+    :type size: int
+    :param link: Type of file link.
+    :type link: FileLink
+    :param logger: The logger where to log information/warning or errors.
+    :type logger: Logger
+    """
 
     def __init__(self, name: str, size: int, link: FileLink, logger: Optional[Logger] = None) -> None:
-        """A file used by jobs.
-
-        :param name: the name of the file
-        :type name: str
-        :param name: File size in KB
-        :type name: int
-        :param name: Whether it is an input or output data (possible value: input or output)
-        :type name: str
-        :param logger: the logger where to log information/warning or errors
-        :type logger: Logger
-        """
-        if logger is None:
-            self.logger: Logger = logging.getLogger(__name__)
-        else:
-            self.logger = logger
+        """A file used by jobs."""
+        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
         self.name: str = name
         self.size: int = size

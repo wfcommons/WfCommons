@@ -9,65 +9,75 @@
 # (at your option) any later version.
 
 import logging
-from typing import Dict, Any, Union, Optional
+
+from typing import Dict, Union, Optional
 from logging import Logger
 
+from ..utils import NoValue
 
-class Machine():
-	"""
-		Representation of one compute machine
-	"""
 
-	def __init__(self,
-				 name: str,
-				 cpu: Dict[str, Union[int, str]],
-				 system: Optional[str],
-				 architecture: Optional[str],
-				 memory: Optional[int],
-				 release: Optional[str],
-				 hashcode: Optional[str],
-				 logger: Optional[Logger] = None
-				 ) -> None:
-		"""
-			A workflow trace.
+class MachineSystem(NoValue):
+    """Machine system type."""
+    LINUX = 'linux'
+    MACOS = 'macos'
+    WINDOWS = 'windows'
 
-			:param name: Machine node name
-			:type name: Optional[str]
-			:param cpu: a dictionnary containing information about the CPU specification. 
-				- Must at least contains two fields: 
-					- count: int (Number of CPU cores)
-					- speed: int (CPU speed of each core in MHz)
-			:type cpu: Dict[str, Union[int, str]]
-			:param system: Machine system (linux, macos, windows)
-			:type system: Optional[str]
-			:param architecture: Machine architecture (e.g., x86_64, ppc)
-			:type architecture: Optional[str]
-			:param memory: Total machine's RAM memory in KB
-			:type memory: Optional[int]
-			:param release: Machine release
-			:type release: Optional[str]
-			:param hashcode: MD5 Hashcode for the Machine
-			:type hashcode: Optional[str]
-			:param logger: the logger where to log information/warning or errors
-			:type logger: Optional[Logger]
-		"""
-		if logger is None:
-			self.logger: Logger = logging.getLogger(__name__)
-		else:
-			self.logger = logger
 
-		self.name: str = name
-		self.cpu: Dict[str, Union[int, str]] = cpu
-		self.system: str = system
-		self.architecture: str = architecture
-		self.memory: int = memory
-		self.release: str = release
-		self.hashcode = hashcode
+class Machine:
+    """Representation of one compute machine.
 
-		self.cores: int = cpu['count']
-		self.speed: int = cpu['speed']
-		self.flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
+    :param name: Machine node name.
+    :type name: str
+    :param cpu: A dictionary containing information about the CPU specification.
+                Must at least contains two fields: *count* (number of CPU cores)
+                and speed (CPU speed of each core in MHz).
 
-		self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
-			self.name, self.cores, self.flops)
-		)
+                .. code-block:: python
+
+                    cpu = {
+                        'count': 48,
+                        'speed': 1200
+                    }
+
+    :type cpu: Dict[str, Union[int, str]]
+    :param system: Machine system (linux, macos, windows).
+    :type system: MachineSystem
+    :param architecture: Machine architecture (e.g., x86_64, ppc).
+    :type architecture: str
+    :param memory: Total machine's RAM memory in KB.
+    :type memory: int
+    :param release: Machine release.
+    :type release: str
+    :param hashcode: MD5 Hashcode for the Machine.
+    :type hashcode: str
+    :param logger: The logger where to log information/warning or errors.
+    :type logger: Optional[Logger]
+    """
+
+    def __init__(self,
+                 name: str,
+                 cpu: Dict[str, Union[int, str]],
+                 system: Optional[MachineSystem],
+                 architecture: Optional[str],
+                 memory: Optional[int],
+                 release: Optional[str],
+                 hashcode: Optional[str],
+                 logger: Optional[Logger] = None
+                 ) -> None:
+        """A machine from a workflow."""
+        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
+        self.name: str = name
+        self.cpu: Dict[str, Union[int, str]] = cpu
+        self.system: MachineSystem = system
+        self.architecture: str = architecture
+        self.memory: int = memory
+        self.release: str = release
+        self.hashcode = hashcode
+
+        self.cores: int = cpu['count']
+        self.speed: int = cpu['speed']
+        self.flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
+
+        self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
+            self.name, self.cores, self.flops)
+        )

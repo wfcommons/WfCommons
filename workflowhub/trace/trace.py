@@ -20,7 +20,7 @@ from typing import List, Dict, Optional
 from logging import Logger
 
 from ..common.file import File, FileLink
-from ..common.machine import Machine
+from ..common.machine import Machine, MachineSystem
 from ..common.job import Job, JobType
 from ..common.workflow import Workflow
 from ..types import JsonDict
@@ -85,7 +85,7 @@ class Trace:
             machine['nodeName']: Machine(
                 name=machine['nodeName'],
                 cpu={k: v for k, v in machine['cpu'].items()},
-                system=machine.get('system', None),
+                system=MachineSystem(machine.get('system', None)),
                 architecture=machine.get('architecture', None),
                 memory=machine.get('memory', None),
                 release=machine.get('release', None),

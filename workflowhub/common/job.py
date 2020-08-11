@@ -10,21 +10,52 @@
 
 import logging
 
-from enum import Enum
 from typing import List, Optional
 from logging import Logger
 
 from .machine import Machine
 from .file import File
+from ..utils import NoValue
 
 
-class JobType(Enum):
+class JobType(NoValue):
+    """Job type."""
     COMPUTE = 'compute'
 
 
 class Job:
-    """
-        Representation of a job
+    """Representation of a job.
+
+    :param name: The name of the job.
+    :type name: str
+    :param job_type: The type of the job.
+    :type job_type: JobType
+    :param runtime: Job runtime in seconds.
+    :type runtime: float
+    :param cores: Number of cores required by the job.
+    :type cores: int
+    :param machine: Machine on which is the job has been executed.
+    :type machine: Machine
+    :param args: List of job arguments.
+    :type args: List[str]
+    :param avg_cpu: Average CPU utilization in %.
+    :type avg_cpu: float
+    :param bytes_read: Total bytes read in KB.
+    :type bytes_read: int
+    :param bytes_written: Total bytes written in KB.
+    :type bytes_written: int
+    :param memory: Memory (resident set) size of the process in KB.
+    :type memory: int
+    :param energy: Total energy consumption in kWh.
+    :type energy: int
+    :param avg_power: Average power consumption in W.
+    :type avg_power: float
+    :param priority: Job priority.
+    :type priority: int
+    :param files: List of input/output files used by the job.
+    :type files: List[File]
+    :param logger: The logger where to log information/warning or errors.
+    :type logger: Logger
     """
 
     def __init__(self,
@@ -44,45 +75,8 @@ class Job:
                  files: List[File] = [],
                  logger: Optional[Logger] = None
                  ) -> None:
-        """
-            A job in a workflow.
-
-            :param name: the name of the job
-            :type name: str
-            :param job_type: the type of the job (whether it is a compute or an auxiliary job)
-            :type job_type: JobType
-            :param runtime: Job runtime in seconds
-            :type runtime: float
-            :param cores: Number of cores required by the job
-            :type cores: int
-            :param machine: Machine on which is the job has been executed
-            :type machine: Machine
-            :param args: List of job arguments
-            :type args: List[str]
-            :param avg_cpu: Average CPU utilization in %
-            :type avg_cpu: Optional[float]
-            :param bytes_read: Total bytes read in KB
-            :type bytes_read: Optional[int]
-            :param bytes_written: Total bytes written in KB
-            :type bytes_written: Optional[int]
-            :param memory: Memory (resident set) size of the process in KB
-            :type memory: Optional[int]
-            :param energy: Total energy consumption in kWh
-            :type energy: Optional[int]
-            :param avg_energy: Average power consumption in W
-            :type avg_energy: Optional[float]
-            :param priority:
-            :type priority: Optional[int]
-            :param files: List of input/output files used by the job
-            :type files: List[File]
-            :param logger: the logger where to log information/warning or errors
-            :type logger: Logger
-        """
-        if logger is None:
-            self.logger: Logger = logging.getLogger(__name__)
-        else:
-            self.logger = logger
-
+        """A job in a workflow."""
+        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.name: str = name
         self.type: JobType = job_type
         self.runtime: float = runtime

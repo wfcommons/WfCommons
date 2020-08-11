@@ -18,12 +18,25 @@ from ..common.job import Job
 
 
 class Workflow(nx.DiGraph):
+    """
+    Representation of a workflow. The workflow representation is an extension of the
+    `NetworkX DiGraph class <https://networkx.github.io/documentation/stable/reference/classes/digraph.html>`_.
+
+    :param name: Workflow name.
+    :type name: str
+    :param makespan: Workflow makespan in seconds.
+    :type makespan: int
+    """
+
     def __init__(self, name: str, makespan: Optional[int]) -> None:
+        """Create an object of a workflow representation."""
         super().__init__(name=name, makespan=makespan)
 
-    def write_json(self, json_filename: str = None) -> str:
-        """
-        :param json_filename:
+    def write_json(self, json_filename: Optional[str] = None) -> None:
+        """Write a JSON file of the workflow trace.
+
+        :param json_filename: JSON output file name.
+        :type json_filename: str
         """
         workflow_json = {
             'name': self.name,
@@ -71,15 +84,12 @@ class Workflow(nx.DiGraph):
         with open(json_filename, 'w') as outfile:
             outfile.write(json.dumps(workflow_json, indent=4))
 
-        return json_filename
+    def write_dot(self, dot_filename: str = None) -> None:
+        """Write a dot file of the workflow trace.
 
-    def write_dot(self, dot_filename: str = None) -> str:
-        """
-        Write a dot file of the workflow trace.
-        :param dot_filename:
+        :param dot_filename: DOT output file name.
+        :type dot_filename: str
         """
         if not dot_filename:
             dot_filename = "{}.dot".format(self.name.lower())
-
         nx.nx_agraph.write_dot(self, dot_filename)
-        return dot_filename
