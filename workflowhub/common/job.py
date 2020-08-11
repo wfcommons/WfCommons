@@ -97,6 +97,6 @@ class Job:
         self.files: List[File] = files
         self.machine: Machine = machine
 
-        self.logger.info("created {0} job {1}: runtime => {2} secondes.".format(
+        self.logger.debug("created {0} job {1}: runtime => {2} secondes.".format(
             self.type, self.name, self.runtime)
         )

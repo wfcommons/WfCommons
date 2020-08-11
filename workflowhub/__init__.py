@@ -15,6 +15,6 @@ __credits__ = 'University of Southern California, University of Hawaii at Manoa'
 import logging
 
 from .generator import WorkflowGenerator
-from .trace import Trace, TraceAnalyzer
+from .trace import Trace, TraceAnalyzer, TraceElement
 
 logging.getLogger('workflowhub').addHandler(logging.NullHandler())

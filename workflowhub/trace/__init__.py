@@ -9,4 +9,4 @@
 # (at your option) any later version.
 
 from .trace import Trace
-from .trace_analyzer import TraceAnalyzer
+from .trace_analyzer import TraceAnalyzer, TraceElement

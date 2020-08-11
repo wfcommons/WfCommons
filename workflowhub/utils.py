@@ -19,7 +19,7 @@ import operator as op
 from enum import Enum
 from functools import reduce
 from logging import Logger
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from .types import JsonDict
 
 
@@ -28,28 +28,30 @@ class NoValue(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
-def read_json(trace_filename: str, logger: Optional[Logger] = None) -> JsonDict:
-    """
-        Reads the json from the file path.
-        returns the json object loaded with json data from the file
-        :param trace_filename:
-        :param logger: the logger uses to output debug information
-        :return: json object
-    """
-    if logger is None:
-        logger = logging.getLogger("workflowhub")
+def read_json(trace_filename: str) -> JsonDict:
+    """Read the JSON from the file path.
 
+    :param trace_filename: The absolute path of the trace file.
+    :type trace_filename: str
+
+    :return: The json object loaded with json data from the file
+    :rtype: JsonDict
+    """
     with open(trace_filename) as data:
         data_json: JsonDict = json.load(data)
-        logger.info("parsed JSON trace: " + trace_filename)
         return data_json
 
 
-def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
-    """
-        :param data:
-        :param logger: the logger uses to output debug information
-        :return:
+def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) -> Tuple:
+    """Fit a list of values to a distribution.
+
+    :param data: List of values to be fitted to a distribution.
+    :type data: List[float]
+    :param logger: The logger uses to output debug information.
+    :type logger: Logger
+
+    :return: The name of the distribution and its parameters.
+    :rtype: Tuple
     """
     if logger is None:
         logger = logging.getLogger("workflowhub")
@@ -85,14 +87,22 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None):
                 best_params = params
                 best_sse = sse
 
+    logger.debug('Best distribution fit: {}'.format(best_distribution))
     return best_distribution, best_params
 
 
 def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> float:
-    """
-    :param distribution:
-    :param min_value:
-    :param max_value:
+    """Generate a random variable from a distribution.
+
+    :param distribution: Distribution dictionary (name and parameters).
+    :type distribution: Dict
+    :param min_value: Minimum value accepted as a random variable.
+    :type min_value: float
+    :param max_value: Maximum value accepted as a random variable.
+    :type max_value: float
+
+    :return: Random variable generated from a distribution.
+    :rtype: float
     """
     if not distribution or distribution == "None":
         return min_value
@@ -105,10 +115,16 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
     return rvs
 
 
-def ncr(n, r):
-    """
-    :param n:
-    :param r:
+def ncr(n: int, r: int) -> int:
+    """Calculate the number of combinations.
+
+    :param n: The number of items.
+    :type n: int
+    :param r: The number of items being chosen at a time.
+    type r: int
+
+    :return: The number of combinations.
+    :rtype: int
     """
     r = min(r, n - r)
     numerator = reduce(op.mul, range(n, n - r, -1), 1)

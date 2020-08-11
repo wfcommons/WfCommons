@@ -68,6 +68,6 @@ class Machine():
 		self.speed: int = cpu['speed']
 		self.flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
 
-		self.logger.info("created machine: {0} with {1} cores and {2} FLOPS.".format(
+		self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
 			self.name, self.cores, self.flops)
 		)

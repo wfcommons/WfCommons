@@ -53,6 +53,7 @@ class Trace:
         self._order = None
 
         self.trace: JsonDict = read_json(input_trace)
+        logger.info("Read a JSON trace: " + input_trace)
         self.schema: JsonDict = read_json(schema)
 
         # TODO: validate the JSON data against the trace provided and raise a TraceNotValid() of not valid
