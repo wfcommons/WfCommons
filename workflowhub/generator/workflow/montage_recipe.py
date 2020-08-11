@@ -24,7 +24,60 @@ class MontageDataset(NoValue):
     DSS = 'dss'
 
 
-class MontageRecipe(WorkflowRecipe):
+class _MontageJobRatios:
+    jobs_ratios = {
+        # (min, increase_rate, stddev)
+        MontageDataset.TWOMASS: {
+            'mProject': (68, 44, 21),
+            'mDiffFit': (414, 112, 52),
+            'mBackground': (68, 23, 4)
+        },
+        MontageDataset.DSS: {
+            'mProject': (4, 4, 4),
+            'mDiffFit': (120, 134, 118),
+            'mBackground': (4, 4, 4)
+        }
+    }
+
+    def _get_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset) -> int:
+        """
+        :param job_name:
+        :type job_name: str
+        :param degree:
+        :type degree: float
+        :param dataset:
+        :type dataset: MontageDataset
+        """
+        job_recipe = self.jobs_ratios[dataset][job_name]
+        factor = math.ceil((degree - 0.5) * 10)
+        return int(
+            job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
+
+    def _get_max_rate_increase(self, job_name: str, dataset: MontageDataset) -> int:
+        """
+        :param job_name:
+        :type job_name: str
+        :param dataset:
+        :type dataset: MontageDataset
+        """
+        job_recipe = self.jobs_ratios[dataset][job_name]
+        return job_recipe[1] + job_recipe[2]
+
+    def _get_max_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset):
+        """
+                :param job_name:
+                :type job_name: str
+                :param degree:
+                :type degree: float
+                :param dataset:
+                :type dataset: MontageDataset
+                """
+        job_recipe = self.jobs_ratios[dataset][job_name]
+        factor = math.ceil((degree - 0.5) * 10)
+        return job_recipe[0] + (job_recipe[1] + job_recipe[2]) * factor
+
+
+class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
     def __init__(self,
                  dataset: MontageDataset,
                  num_bands: int,
@@ -52,19 +105,6 @@ class MontageRecipe(WorkflowRecipe):
         self.dataset: MontageDataset = dataset
         self.num_bands: Optional[int] = num_bands
         self.degree: Optional[float] = float(format(degree, '.1f'))
-        self.jobs_ratios = {
-            # (min, increase_rate, stddev)
-            MontageDataset.TWOMASS: {
-                'mProject': (68, 44, 21),
-                'mDiffFit': (414, 112, 52),
-                'mBackground': (68, 23, 4)
-            },
-            MontageDataset.DSS: {
-                'mProject': (4, 4, 4),
-                'mDiffFit': (120, 134, 118),
-                'mBackground': (4, 4, 4)
-            }
-        }
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'MontageRecipe':
@@ -76,12 +116,30 @@ class MontageRecipe(WorkflowRecipe):
         if num_jobs < 133:
             raise ValueError("The upper bound for the number of jobs should be at least 133.")
 
-        dataset = MontageDataset.DSS
+        dataset = MontageDataset.DSS if num_jobs < 555 else random.choice(list(MontageDataset))
+        base_num_jobs = 133 if dataset == MontageDataset.DSS else 555
         num_bands = 1
         degree = 0.5
-        remaining_jobs = num_jobs - 7
+        remaining_jobs = num_jobs - base_num_jobs
 
-        # while remaining_jobs > 0:
+        while remaining_jobs > 0:
+            added_job = False
+            cost_degree = (cls._get_max_rate_increase(cls, 'mProject', dataset) * 2
+                           + cls._get_max_rate_increase(cls, 'mDiffFit', dataset) + 5) * num_bands
+            if remaining_jobs >= cost_degree:
+                degree += 0.1
+                remaining_jobs -= cost_degree
+                added_job = True
+
+            cost_band = cls._get_max_num_jobs(cls, 'mProject', degree, dataset) * 2 \
+                        + cls._get_max_num_jobs(cls, 'mDiffFit', degree, dataset) + 5
+            if num_bands < 3 and cost_band <= remaining_jobs / 2:
+                num_bands += 1
+                remaining_jobs -= cost_band
+                added_job = True
+
+            if not added_job:
+                break
 
         return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=num_jobs)
 
@@ -117,7 +175,7 @@ class MontageRecipe(WorkflowRecipe):
         for _ in range(0, self.num_bands):
             # mProject jobs
             mproject_jobs = []
-            for _ in range(0, self._get_num_jobs('mProject')):
+            for _ in range(0, self._get_num_jobs('mProject', self.degree, self.dataset)):
                 job_name = self._generate_job_name('mProject')
                 mproject_job = self._generate_job('mProject', job_name,
                                                   files_recipe={FileLink.OUTPUT: {'.fits': 2}})
@@ -127,7 +185,7 @@ class MontageRecipe(WorkflowRecipe):
             # mDiffFit jobs
             count = 0
             mdiff_jobs = []
-            for _ in range(0, self._get_num_jobs('mDiffFit')):
+            for _ in range(0, self._get_num_jobs('mDiffFit', self.degree, self.dataset)):
                 input_files = []
                 job_name = self._generate_job_name('mDiffFit')
                 if count < len(mproject_jobs) - 1:
@@ -215,15 +273,15 @@ class MontageRecipe(WorkflowRecipe):
         self.workflows.append(workflow)
         return workflow
 
-    def _get_num_jobs(self, job_name: str) -> int:
-        """
-        :param job_name:
-        :type job_name: str
-        """
-        job_recipe = self.jobs_ratios[self.dataset][job_name]
-        factor = math.ceil((self.degree - 0.5) * 10)
-        return int(
-            job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
+    # def _get_num_jobs(self, job_name: str) -> int:
+    #     """
+    #     :param job_name:
+    #     :type job_name: str
+    #     """
+    #     job_recipe = self.jobs_ratios[self.dataset][job_name]
+    #     factor = math.ceil((self.degree - 0.5) * 10)
+    #     return int(
+    #         job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
 
     def _workflow_recipe(self) -> Dict:
         """Recipe for generating synthetic traces of the SoyKB workflow."""
