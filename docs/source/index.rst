@@ -14,6 +14,7 @@ provides a collection of tools for:
     :caption: User Guide
     :maxdepth: 2
 
+    analyzing_traces.rst
     generating_workflows.rst
 
 .. toctree::
