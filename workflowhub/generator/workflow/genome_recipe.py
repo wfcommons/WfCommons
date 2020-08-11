@@ -17,25 +17,28 @@ from ...common.workflow import Workflow
 
 
 class GenomeRecipe(WorkflowRecipe):
+    """A 1000Genome workflow recipe class for creating synthetic workflow traces.
+
+    :param num_chromosomes: The number of chromosomes evaluated in the workflow execution.
+    :type num_chromosomes: int
+    :param num_sequences: The number of sequences per chromosome file.
+    :type num_sequences: int
+    :param num_populations: The number of populations being evaluated.
+    :type num_populations: int
+    :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
+    :type data_footprint: int
+    :param num_jobs: The upper bound for the total number of jobs in the workflow.
+    :type num_jobs: int
+    """
+
     def __init__(self,
-                 num_chromosomes: Optional[int],
-                 num_sequences: Optional[int],
-                 num_populations: Optional[int],
-                 data_footprint: Optional[int],
-                 num_jobs: Optional[int]
+                 num_chromosomes: Optional[int] = 1,
+                 num_sequences: Optional[int] = 1,
+                 num_populations: Optional[int] = 1,
+                 data_footprint: Optional[int] = 0,
+                 num_jobs: Optional[int] = 5
                  ) -> None:
-        """
-        :param num_chromosomes:
-        :type num_chromosomes: int
-        :param num_sequences:
-        :type num_sequences: int
-        :param num_populations:
-        :type num_populations: int
-        :param data_footprint:
-        :type data_footprint: int
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
-        :type num_jobs: int
-        """
+        """Create an object of the 1000Genome workflow recipe."""
         super().__init__("1000Genome", data_footprint, num_jobs)
 
         self.num_chromosomes: int = num_chromosomes
@@ -45,10 +48,16 @@ class GenomeRecipe(WorkflowRecipe):
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'GenomeRecipe':
-        """Generate a 1000Genome synthetic workflow trace with up to the number of jobs defined.
+        """
+        Instantiate a 1000Genome workflow recipe that will generate synthetic workflows up to
+        the total number of jobs provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 5).
+        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 5).
         :type num_jobs: int
+
+        :return: A 1000Genome workflow recipe object that will generate synthetic workflows up
+                 to the total number of jobs provided.
+        :rtype: GenomeRecipe
         """
         if num_jobs < 5:
             raise ValueError("The upper bound for the number of jobs should be at least 5.")
@@ -91,12 +100,19 @@ class GenomeRecipe(WorkflowRecipe):
                              num_populations: int,
                              ) -> 'GenomeRecipe':
         """
-        :param num_chromosomes:
+        Instantiate a 1000Genome workflow recipe that will generate synthetic workflows using
+        the defined number of chromosomes, sequences, and populations.
+
+        :param num_chromosomes: The number of chromosomes evaluated in the workflow execution.
         :type num_chromosomes: int
-        :param num_sequences:
+        :param num_sequences: The number of sequences per chromosome file.
         :type num_sequences: int
-        :param num_populations:
+        :param num_populations: The number of populations being evaluated.
         :type num_populations: int
+
+        :return: A 1000Genome workflow recipe object that will generate synthetic workflows
+                 using the defined number of chromosomes, sequences, and populations.
+        :rtype: GenomeRecipe
         """
         if num_chromosomes < 1 or num_chromosomes > 22:
             raise ValueError("The number of chromosomes should be within the range [1,22].")
@@ -109,10 +125,13 @@ class GenomeRecipe(WorkflowRecipe):
                    data_footprint=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
-        """Build a synthetic trace of a 1000Genome workflow.
+        """Generate a synthetic workflow trace of a 1000Genome workflow.
 
-        :param workflow_name: the of the workflow
-        :type workflow_name: str
+        :param workflow_name: The workflow name
+        :type workflow_name: int
+
+        :return: A synthetic workflow trace object.
+        :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
         self.job_id_counter: int = 1
@@ -167,9 +186,13 @@ class GenomeRecipe(WorkflowRecipe):
         return workflow
 
     def _get_populations_files_recipe(self, index: int) -> Dict[FileLink, Dict[str, int]]:
-        """
-        :param index:
+        """Get the recipe for generating a population file.
+
+        :param index: Index of the population in the list.
         :type index: int
+
+        :return: Recipe for generating a population file.
+        :rtype: Dict[FileLink, Dict[str, int]]
         """
         recipe = {FileLink.INPUT: {}}
         idx_count = 0
@@ -182,7 +205,13 @@ class GenomeRecipe(WorkflowRecipe):
         return recipe
 
     def _workflow_recipe(self) -> Dict:
-        """Recipe for generating synthetic traces of the 1000Genome workflow."""
+        """
+        Recipe for generating synthetic traces of the 1000Genome workflow. Recipes can be
+        generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
+
+        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :rtype: Dict[str, Any]
+        """
         return {
             "individuals": {
                 "runtime": {

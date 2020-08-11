@@ -27,9 +27,9 @@ class WorkflowRecipe(ABC):
 
     :param name: The workflow recipe name.
     :type name: str
-    :param data_footprint: The upper bound for the worklfow total data footprint (in bytes).
+    :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+    :param num_jobs: The upper bound for the total number of jobs in the workflow.
     :type num_jobs: int
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
@@ -62,7 +62,7 @@ class WorkflowRecipe(ABC):
         Instantiate a workflow recipe that will generate synthetic workflows up to the
         total number of jobs provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow.
+        :param num_jobs: The upper bound for the total number of jobs in the workflow.
         :type num_jobs: int
 
         :return: A workflow recipe object that will generate synthetic workflows up to

@@ -11,7 +11,7 @@
 import math
 import random
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
@@ -20,11 +20,13 @@ from ...utils import NoValue
 
 
 class MontageDataset(NoValue):
+    """An enumeration of Montage datasets."""
     TWOMASS = '2mass'
     DSS = 'dss'
 
 
 class _MontageJobRatios:
+    """An auxiliary class for generating Montage jobs."""
     jobs_ratios = {
         # (min, increase_rate, stddev)
         MontageDataset.TWOMASS: {
@@ -40,13 +42,17 @@ class _MontageJobRatios:
     }
 
     def _get_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset) -> int:
-        """
-        :param job_name:
+        """Get a random number of jobs to be generated for a job prefix and workflow degree.
+
+        :param job_name: The job name prefix.
         :type job_name: str
-        :param degree:
+        :param degree: The size (in degrees) to be used for the width/height of the final mosaic.
         :type degree: float
-        :param dataset:
+        :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
+
+        :return: A random number of jobs to be generated for a job prefix and workflow degree.
+        :rtype: int
         """
         job_recipe = self.jobs_ratios[dataset][job_name]
         factor = math.ceil((degree - 0.5) * 10)
@@ -54,49 +60,63 @@ class _MontageJobRatios:
             job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
 
     def _get_max_rate_increase(self, job_name: str, dataset: MontageDataset) -> int:
-        """
-        :param job_name:
+        """Get the maximum rate of increase for a job prefix by increasing the workflow degree.
+
+        :param job_name: The job name prefix.
         :type job_name: str
-        :param dataset:
+        :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
+
+        :return: The maximum rate of increase for a job prefix by increasing the workflow degree.
+        :rtype: int
         """
         job_recipe = self.jobs_ratios[dataset][job_name]
         return job_recipe[1] + job_recipe[2]
 
-    def _get_max_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset):
+    def _get_max_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset) -> int:
+        """Get the maximum number of jobs that can be generated for a defined job.
+
+        :param job_name: The job name prefix.
+        :type job_name: str
+        :param degree: The size (in degrees) to be used for the width/height of the final mosaic.
+        :type degree: float
+        :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
+        :type dataset: MontageDataset
+
+        :return: The maximum number of jobs that can be generated for a defined job.
+        :rtype: int
         """
-                :param job_name:
-                :type job_name: str
-                :param degree:
-                :type degree: float
-                :param dataset:
-                :type dataset: MontageDataset
-                """
         job_recipe = self.jobs_ratios[dataset][job_name]
         factor = math.ceil((degree - 0.5) * 10)
         return job_recipe[0] + (job_recipe[1] + job_recipe[2]) * factor
 
 
 class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
+    """
+    A Montage workflow recipe class for creating synthetic workflow traces. In this
+    workflow recipe, traces will follow different recipes for different
+    :class:`~workflowhub.generator.workflow.montage_recipe.MontageDataset`.
+
+    :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
+    :type dataset: MontageDataset
+    :param num_bands: The number of bands (e.g., red, blue, and green) used by the workflow.
+    :type num_bands: int
+    :param degree: The size (in degrees) to be used for the width/height of the final mosaic.
+    :type degree: float
+    :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
+    :type data_footprint: int
+    :param num_jobs: The upper bound for the total number of jobs in the workflow.
+    :type num_jobs: int
+    """
+
     def __init__(self,
-                 dataset: MontageDataset,
-                 num_bands: int,
-                 degree: Optional[float],
-                 data_footprint: Optional[int],
-                 num_jobs: Optional[int]
+                 dataset: Optional[MontageDataset] = MontageDataset.DSS,
+                 num_bands: Optional[int] = 1,
+                 degree: Optional[float] = 0.5,
+                 data_footprint: Optional[int] = 0,
+                 num_jobs: Optional[int] = 133
                  ) -> None:
-        """
-        :param dataset: the dataset to use for the mosaic (e.g., 2mass, dss).
-        :type dataset: MontageDataset
-        :param num_bands: the number of bands (e.g., red, blue, and green) used by the workflow.
-        :type num_bands: int
-        :param degree: the size (in degrees) to be used for the width/height of the final mosaic.
-        :type degree: float
-        :param data_footprint:
-        :type data_footprint: int
-        :param num_jobs:
-        :type num_jobs: int
-        """
+        """Create an object of the Montage workflow recipe."""
         super().__init__("Montage", data_footprint, num_jobs)
 
         if not isinstance(dataset, MontageDataset):
@@ -108,10 +128,16 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
 
     @classmethod
     def from_num_jobs(cls, num_jobs: int) -> 'MontageRecipe':
-        """Generate a Montage synthetic workflow trace with up to the number of jobs defined.
+        """
+        Instantiate a Montage workflow recipe that will generate synthetic workflows up to
+        the total number of jobs provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the worklfow (at least 133).
+        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 133).
         :type num_jobs: int
+
+        :return: A Montage workflow recipe object that will generate synthetic workflows up
+                 to the total number of jobs provided.
+        :rtype: MontageRecipe
         """
         if num_jobs < 133:
             raise ValueError("The upper bound for the number of jobs should be at least 133.")
@@ -146,12 +172,19 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
     @classmethod
     def from_degree(cls, dataset: MontageDataset, num_bands: int, degree: float) -> 'MontageRecipe':
         """
-        :param dataset: the dataset to use for the mosaic (e.g., 2mass, dss).
+        Instantiate a Montage workflow recipe that will generate synthetic workflows using
+        the defined dataset, number of bands, and degree.
+
+        :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
-        :param num_bands: the number of bands (e.g., red, blue, and green) used by the workflow (at least 1).
+        :param num_bands: The number of bands (e.g., red, blue, and green) used by the workflow (at least 1).
         :type num_bands: int
-        :param degree: the size (in degrees) to be used for the width/height of the final mosaic (at least 0.5).
+        :param degree: The size (in degrees) to be used for the width/height of the final mosaic (at least 0.5).
         :type degree: float
+
+        :return: A Montage workflow recipe object that will generate synthetic workflows
+                 using the defined dataset, number of bands, and degree.
+        :rtype: MontageRecipe
         """
         if num_bands < 1:
             raise ValueError("The number of mosaic bands should be at least 1.")
@@ -161,10 +194,13 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
-        """Build a synthetic trace of a Montage workflow.
+        """Generate a synthetic workflow trace of a Montage workflow.
 
-        :param workflow_name: workflow name
-        :type workflow_name: str
+        :param workflow_name: The workflow name
+        :type workflow_name: int
+
+        :return: A synthetic workflow trace object.
+        :rtype: Workflow
         """
         workflow = Workflow(
             name=self.name + "-" + self.dataset.value + "-synthetic-trace" if not workflow_name else workflow_name,
@@ -274,7 +310,13 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         return workflow
 
     def _workflow_recipe(self) -> Dict:
-        """Recipe for generating synthetic traces of the SoyKB workflow."""
+        """
+        Recipe for generating synthetic traces of the Montage workflow. Recipes can be
+        generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
+
+        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :rtype: Dict[str, Any]
+        """
         if self.dataset == MontageDataset.TWOMASS:
             return {
                 "mProject": {
