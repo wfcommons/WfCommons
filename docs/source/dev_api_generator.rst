@@ -11,6 +11,9 @@ workflowhub.generator.generator
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
+
 
 workflowhub.generator.workflow.abstract\_recipe
 -----------------------------------------------
@@ -19,6 +22,7 @@ workflowhub.generator.workflow.abstract\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
 
 workflowhub.generator.workflow.cycles\_recipe
 ---------------------------------------------
@@ -27,6 +31,8 @@ workflowhub.generator.workflow.cycles\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
 
 workflowhub.generator.workflow.epigenomics\_recipe
 --------------------------------------------------
@@ -35,6 +41,8 @@ workflowhub.generator.workflow.epigenomics\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
 
 workflowhub.generator.workflow.genome\_recipe
 ---------------------------------------------
@@ -43,6 +51,8 @@ workflowhub.generator.workflow.genome\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
 
 workflowhub.generator.workflow.montage\_recipe
 ----------------------------------------------
@@ -51,6 +61,8 @@ workflowhub.generator.workflow.montage\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
 
 workflowhub.generator.workflow.seismology\_recipe
 -------------------------------------------------
@@ -59,6 +71,8 @@ workflowhub.generator.workflow.seismology\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:
 
 workflowhub.generator.workflow.soykb\_recipe
 --------------------------------------------
@@ -67,3 +81,5 @@ workflowhub.generator.workflow.soykb\_recipe
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
+   :noindex:

@@ -8,39 +8,63 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from typing import List
+import logging
+
+from logging import Logger
+from typing import List, Optional
+
 from .workflow.abstract_recipe import WorkflowRecipe
 from ..common.workflow import Workflow
 from ..errors import InvalidWorkflowTypeError
 
 
 class WorkflowGenerator:
-    def __init__(self, workflow_recipe: WorkflowRecipe = None) -> None:
-        """
-        :param workflow_recipe:
-        :type workflow_recipe: WorkflowRecipe
-        """
+    """
+    A generator of synthetic workflow traces based on workflow recipes obtained from the
+    analysis of real workflow execution traces.
+
+    :param workflow_recipe: The workflow recipe to be used for this generator.
+    :type workflow_recipe: WorkflowRecipe
+    :param logger: The logger where to log information/warning or errors (optional).
+    :type logger: Logger
+    """
+
+    def __init__(self, workflow_recipe: WorkflowRecipe, logger: Optional[Logger] = None) -> None:
+        """Create an object of the workflow generator."""
         # sanity checks
         if not workflow_recipe or not isinstance(workflow_recipe, WorkflowRecipe):
             raise InvalidWorkflowTypeError("A WorkflowRecipe object should be provided.")
 
+        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.workflow_recipe: WorkflowRecipe = workflow_recipe
         self.workflows: List[Workflow] = []
 
-    def build_workflow(self, workflow_name: str = None) -> Workflow:
+    def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
+        Generate a synthetic workflow trace based on the workflow recipe used to instantiate
+        the generator.
+
         :param workflow_name: The workflow name.
         :type workflow_name: str
+
+        :return: A synthetic workflow trace object.
+        :rtype: Workflow
         """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
-        print("Generated a workflow with {} jobs".format(self.workflow_recipe.job_id_counter - 1))
+        self.logger.info("Generated a synthetic workflow with {} jobs".format(self.workflow_recipe.job_id_counter - 1))
         return workflow
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
         """
+        Generate a number of synthetic workflow traces based on the workflow recipe used to
+        instantiate the generator.
+
         :param num_workflows: The number of workflows to be generated.
         :type num_workflows: int
+
+        :return: A list of synthetic workflow trace objects.
+        :rtype: List[Workflow]
         """
         workflows: List[Workflow] = []
         for _ in range(0, num_workflows):

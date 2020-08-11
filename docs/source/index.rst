@@ -20,6 +20,5 @@ provides a collection of tools for:
     :caption: API Reference
     :maxdepth: 1
 
-    api_trace.rst
-    api_generator.rst
-    api_common.rst
+    user_api_reference.rst
+    dev_api_reference.rst

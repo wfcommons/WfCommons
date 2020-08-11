@@ -121,7 +121,7 @@ def ncr(n: int, r: int) -> int:
     :param n: The number of items.
     :type n: int
     :param r: The number of items being chosen at a time.
-    type r: int
+    :type r: int
 
     :return: The number of combinations.
     :rtype: int

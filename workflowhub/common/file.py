@@ -17,6 +17,7 @@ from ..utils import NoValue
 
 
 class FileLink(NoValue):
+    """Type of file link."""
     INPUT = "input"
     OUTPUT = "output"
 

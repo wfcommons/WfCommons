@@ -8,6 +8,7 @@ workflowhub.common.file
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
 
 workflowhub.common.job
 ----------------------
@@ -16,6 +17,7 @@ workflowhub.common.job
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
 
 workflowhub.common.machine
 --------------------------
@@ -24,6 +26,7 @@ workflowhub.common.machine
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
 
 workflowhub.common.workflow
 ---------------------------
@@ -32,3 +35,4 @@ workflowhub.common.workflow
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:
