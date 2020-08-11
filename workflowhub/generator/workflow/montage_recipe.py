@@ -273,16 +273,6 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         self.workflows.append(workflow)
         return workflow
 
-    # def _get_num_jobs(self, job_name: str) -> int:
-    #     """
-    #     :param job_name:
-    #     :type job_name: str
-    #     """
-    #     job_recipe = self.jobs_ratios[self.dataset][job_name]
-    #     factor = math.ceil((self.degree - 0.5) * 10)
-    #     return int(
-    #         job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
-
     def _workflow_recipe(self) -> Dict:
         """Recipe for generating synthetic traces of the SoyKB workflow."""
         if self.dataset == MontageDataset.TWOMASS:
