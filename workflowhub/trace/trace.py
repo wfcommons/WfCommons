@@ -30,26 +30,25 @@ limits = plt.axis('off')
 
 
 class Trace:
-    """
-        Representation of one execution of one workflow on a set of machines
+    """Representation of one execution of one workflow on a set of machines
+
+    .. code-block:: python
+
+        Trace(input_trace = 'trace.json', schema = 'schema.json')
+
+    :param input_trace: The JSON trace.
+    :type input_trace: str
+    :param schema: The JSON schema that defines the trace.
+    :type schema: str
+    :param logger: The logger where to log information/warning or errors.
+    :type logger: Logger
     """
 
     def __init__(self, input_trace: str, schema: str, logger: Logger = None) -> None:
-        """
-            Create an object that represents a workflow execution trace.
-            .. code-block:: python
-                Trace(input_trace = "trace.json", schema = "schema.json")
-
-            :param input_trace: the JSON trace
-            :type input_trace: str
-            :param schema: the JSON schema that defines the trace
-            :type schema: str
-            :param logger: the logger where to log information/warning or errors
-            :type logger: Logger
-        """
+        """Create an object that represents a workflow execution trace."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
-        # Internal variables to be able to iterate direclty on a trace
+        # Internal variables to be able to iterate directly on a trace
         self._n = 0
         self._order = None
 
@@ -76,11 +75,11 @@ class Trace:
         }
 
         # Workflow properties
-        ## Global properties
+        # Global properties
         self.executed_at: datetime = dateutil.parser.parse(self.trace['workflow']['executedAt'])
         self.makespan: int = self.trace['workflow']['makespan']
 
-        ## Machines
+        # Machines
         self.machines: Dict[str, Machine] = {
             machine['nodeName']: Machine(
                 name=machine['nodeName'],
@@ -140,21 +139,20 @@ class Trace:
             for parent in job['parents']:
                 self.workflow.add_edge(parent, job['name'], weight=0)
 
-    # TODO: instead of attaching files to jobs, attach them to edges based on the link direction.
+        # TODO: instead of attaching files to jobs, attach them to edges based on the link direction.
+        self.logger.info('Parsed a trace with {} jobs'.format(len(self.workflow.nodes)))
 
     def __iter__(self):
-        """
-            Produce an iterator based on a topological sort (e.g., scheduling order)
-        """
+        """Produce an iterator based on a topological sort (e.g., scheduling order)"""
         self._n = 0
         self._order = list(nx.topological_sort(self.workflow))
         return self
 
     def __next__(self) -> str:
-        """
-            Return the next jon from a topological sort
-            :return: job ID
-            :rtype: str
+        """Return the next job from a topological sort.
+
+        :return: job ID
+        :rtype: str
         """
         if self._n < len(self.workflow):
             val = self._order[self._n]
@@ -164,37 +162,38 @@ class Trace:
             raise StopIteration
 
     def roots(self) -> List[str]:
-        """
-            Return the roots of the workflow (i.e., the tasks without any predecessors)
-            :return: List of roots
-            :rtype: List[str]
+        """Get the roots of the workflow (i.e., the tasks without any predecessors).
+
+        :return: List of roots
+        :rtype: List[str]
         """
         return [n for n, d in self.workflow.in_degree() if d == 0]
 
     def leaves(self) -> List[str]:
-        """
-            Return the leafs of the workflow (i.e., the tasks without any successors)
-            :return: List of leafs
-            :rtype: List[str]
+        """Get the leaves of the workflow (i.e., the tasks without any successors).
+
+        :return: List of leaves
+        :rtype: List[str]
         """
         return [n for n, d in self.workflow.out_degree() if d == 0]
 
     def write_dot(self, output: Optional[str] = None) -> None:
-        """
-            Writes a dot file of the trace
+        """Write a dot file of the trace.
+
+        :param output: The output ``dot`` file name (optional).
+        :type output: str
         """
         self.workflow.write_dot(output)
 
     # # TODO: improve drawing for large traces
     def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
-        """
-            Produces a image or a pdf file representing the trace
-            :param output: Name of the output file
-            :type output: Optional[str]
-            :param extension: Name of the extension, pdf, png, svg.
-            :type output: str
-        """
+        """Produce an image or a pdf file representing the trace.
 
+        :param output: Name of the output file.
+        :type output: str
+        :param extension: Type of the file extension (``pdf``, ``png``, or ``svg``).
+        :type output: str
+        """
         graphviz_found = importlib.util.find_spec('pygraphviz')
         if graphviz_found is None:
             self.logger.error(
@@ -204,6 +203,6 @@ class Trace:
         pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
         nx.draw(self.workflow, pos=pos, with_labels=False)
         if not output:
-            output = "{0}.{1}".format(self.name, extension)
+            output = "{0}.{1}".format(self.name.lower(), extension)
 
         plt.savefig(output)
