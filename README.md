@@ -1,3 +1,4 @@
+[![Travis][travis-badge]][travis-link]
 [![License: LGPL v3][license-badge]](LICENSE)
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![Documentation Status][rtd-badge]][rtd-link]
@@ -21,6 +22,8 @@ dependencies just run `pip3 install -r requirements.txt`.
 
 To run a simple test using a trace call `test.json` just type: `python3 main.py`
 
+[travis-badge]:        https://travis-ci.org/workflowhub/workflowhub.svg?branch=master
+[travis-link]:         https://travis-ci.org/workflowhub/workflowhub
 [license-badge]:       https://img.shields.io/badge/License-LGPL%20v3-blue.svg
 [codefactor-badge]:    https://www.codefactor.io/repository/github/workflowhub/workflowhub/badge
 [codefactor-link]:     https://www.codefactor.io/repository/github/workflowhub/workflowhub

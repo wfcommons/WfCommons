@@ -63,21 +63,21 @@ class SchemaValidator:
             self.logger.info('Using schema file: {}'.format(schema_file))
             return json.loads(open(schema_file).read())
 
-        else:
-            schema_path = os.getcwd() + '/workflowhub-schema.json'
-            if os.path.exists(schema_path):
-                self.logger.info('Using schema file: {}'.format(schema_path))
-                return json.loads(open(schema_path).read())
-            else:
-                # fetching latest schema file from GitHub repository
-                url = 'https://raw.githubusercontent.com/workflowhub/workflow-schema/master/workflowhub-schema.json'
-                response = requests.get(url)
-                schema = json.loads(response.content)
-                with open(schema_path, 'w') as outfile:
-                    json.dump(schema, outfile)
-                self.logger.info(
-                    'Using latest schema file from GitHub repository (saved local copy into {}).'.format(schema_path))
-                return schema
+        # looking for local copy of schema file
+        schema_path = os.getcwd() + '/workflowhub-schema.json'
+        if os.path.exists(schema_path):
+            self.logger.info('Using schema file: {}'.format(schema_path))
+            return json.loads(open(schema_path).read())
+
+        # fetching latest schema file from GitHub repository
+        url = 'https://raw.githubusercontent.com/workflowhub/workflow-schema/master/workflowhub-schema.json'
+        response = requests.get(url)
+        schema = json.loads(response.content)
+        with open(schema_path, 'w') as outfile:
+            json.dump(schema, outfile)
+        self.logger.info(
+            'Using latest schema file from GitHub repository (saved local copy into {}).'.format(schema_path))
+        return schema
 
     def _syntax_validation(self, data: Dict[str, Any]):
         """Validate the JSON workflow execution trace against the schema.
