@@ -23,7 +23,8 @@ class SchemaValidator:
     Validate JSON files against WorkflowHub schema. If schema file path is not
     provided, it will look for a local copy of the WorkflowHub schema, and if
     not available it will fetch the latest schema from the
-    `schema GitHub <https://github.com/workflowhub/workflow-schema>`_ repository.
+    `WorkflowHub schema GitHub <https://github.com/workflowhub/workflow-schema>`_
+    repository.
 
     :param schema_file: JSON schema file path.
     :type schema_file: str

@@ -1,0 +1,26 @@
+language: python
+
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+
+before_install:
+  - env
+
+install:
+  - echo "install"
+
+before_script:
+  - echo "Before script"
+
+script:
+  - echo "Script"
+
+notifications:
+  email:
+    recipients:
+      - rafsilva@isi.edu
+    on_success: change
+    on_failure: always
