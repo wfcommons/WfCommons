@@ -22,6 +22,6 @@ script:
 notifications:
   email:
     recipients:
-      - rafsilva@isi.edu
+      - builds@workflowhub.org
     on_success: change
     on_failure: always
