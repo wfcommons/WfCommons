@@ -16,9 +16,10 @@ import logging
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from typing import List, Dict, Optional
 from logging import Logger
+from typing import Any, Dict, List, Optional
 
+from .schema import SchemaValidator
 from ..common.file import File, FileLink
 from ..common.machine import Machine, MachineSystem
 from ..common.job import Job, JobType
@@ -33,17 +34,17 @@ class Trace:
 
     .. code-block:: python
 
-        Trace(input_trace = 'trace.json', schema = 'schema.json')
+        Trace(input_trace = 'trace.json')
 
     :param input_trace: The JSON trace.
     :type input_trace: str
-    :param schema: The JSON schema that defines the trace.
-    :type schema: str
+    :param schema_file: The path to the JSON schema that defines the trace.
+    :type schema_file: str
     :param logger: The logger where to log information/warning or errors.
     :type logger: Logger
     """
 
-    def __init__(self, input_trace: str, schema: str, logger: Logger = None) -> None:
+    def __init__(self, input_trace: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow execution trace."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
@@ -51,12 +52,12 @@ class Trace:
         self._n = 0
         self._order = None
 
-        self.trace: JsonDict = read_json(input_trace)
+        self.trace: Dict[str, Any] = read_json(input_trace)
         logger.info("Read a JSON trace: " + input_trace)
-        self.schema: JsonDict = read_json(schema)
 
-        # TODO: validate the JSON data against the trace provided and raise a TraceNotValid() of not valid
-        # TODO: implement sanity checks: for example, compare number of bytesRead/written to the sum of input/output files sizes etc
+        # validate trace
+        schema_validator = SchemaValidator(schema_file)
+        schema_validator.validate_trace(self.trace)
 
         # Basic global properties
         self.name: str = self.trace['name']

@@ -34,11 +34,10 @@ def read_json(trace_filename: str) -> Dict[str, Any]:
     :type trace_filename: str
 
     :return: The json object loaded with json data from the file
-    :rtype: JsonDict
+    :rtype: Dict[str, Any]
     """
     with open(trace_filename) as data:
-        data_json: JsonDict = json.load(data)
-        return data_json
+        return json.load(data)
 
 
 def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) -> Tuple:

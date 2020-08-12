@@ -1,6 +1,15 @@
 workflowhub.trace
 =================
 
+workflowhub.trace.schema
+---------------------------------
+
+.. automodule:: workflowhub.trace.schema
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 workflowhub.trace.trace
 -----------------------
 

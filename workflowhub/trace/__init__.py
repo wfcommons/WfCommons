@@ -8,5 +8,6 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+from .schema import SchemaValidator
 from .trace import Trace
 from .trace_analyzer import TraceAnalyzer, TraceElement
