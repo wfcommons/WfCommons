@@ -10,9 +10,27 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import codecs
 import os
+import os.path
 import sphinx_rtd_theme
 import sys
+
+
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
 
 sys.path.insert(0, os.path.abspath('../..'))
 sys.setrecursionlimit(1500)
@@ -24,9 +42,9 @@ copyright = '2020, WorkflowHub Team'
 author = 'WorkflowHub Team'
 
 # The short X.Y version
-version = '0.1-dev'
+version = get_version("../../workflowhub/__init__.py")
 # The full version, including alpha/beta/rc tags
-release = '0.1-dev'
+release = get_version("../../workflowhub/__init__.py")
 
 # -- General configuration ---------------------------------------------------
 

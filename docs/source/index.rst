@@ -10,6 +10,14 @@ provides a collection of tools for:
   generation; and
 - Generating synthetic realistic workflow traces.
 
+----
+
+.. toctree::
+    :caption: Quickstart
+    :maxdepth: 2
+
+    quickstart_installation.rst
+
 .. toctree::
     :caption: User Guide
     :maxdepth: 2

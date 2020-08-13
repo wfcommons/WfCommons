@@ -26,8 +26,6 @@ from ..common.job import Job, JobType
 from ..common.workflow import Workflow
 from ..utils import read_json
 
-limits = plt.axis('off')
-
 
 class Trace:
     """Representation of one execution of one workflow on a set of machines
