@@ -1,3 +1,5 @@
+.. _traces-label:
+
 Analyzing Traces
 ================
 

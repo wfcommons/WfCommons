@@ -1,3 +1,5 @@
+.. _workflowhub-generator-label:
+
 workflowhub.generator
 =====================
 
