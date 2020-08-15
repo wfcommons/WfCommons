@@ -1,7 +1,7 @@
 The WorkflowHub
 ===============
 
-.. figure::  images/workflowhub.pdf
+.. figure::  images/workflowhub.png
    :align:   center
 
    The WorkflowHub conceptual architecture.
