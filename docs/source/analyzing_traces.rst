@@ -3,11 +3,25 @@
 Analyzing Traces
 ================
 
+Workflow execution traces have been widely used to profile and characterize
+workflow executions, and to build distributions of workflow execution behaviors,
+which are used to evaluate methods and techniques in simulation or in real
+conditions.
+
+The first axis of the WorkflowHub project targets the analysis of actual workflow
+execution traces (i.e., the workflow execution profile data and characterizations)
+in order to build **recipes** of workflow applications. These recipes contain
+the necessary information for generating synthetic, yet realistic, workflow
+traces that resemble the structure and distribution of the original workflow
+executions.
+
+
+
 Examples
 --------
 
 The following example shows the analysis of a set of traces, stored in a local folder,
-of a Seismology workflow. In the example, ::
+of a Seismology workflow. In this example, ::
 
     from workflowhub import Trace, TraceAnalyzer
     from os import listdir

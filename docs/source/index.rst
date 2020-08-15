@@ -22,6 +22,7 @@ provides a collection of tools for:
     :caption: User Guide
     :maxdepth: 2
 
+    introduction.rst
     analyzing_traces.rst
     generating_workflows.rst
 
