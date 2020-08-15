@@ -65,6 +65,9 @@ class WorkflowGenerator:
         :return: A list of synthetic workflow trace objects.
         :rtype: List[Workflow]
         """
+        if num_workflows < 1:
+            raise ValueError("The number of workflows should be at least 1.")
+
         workflows: List[Workflow] = []
         for _ in range(0, num_workflows):
             workflows.append(self.build_workflow())

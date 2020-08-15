@@ -76,6 +76,15 @@ rules defined in the workflow recipe, and jobs runtime, and input and output
 data sizes are generated according to distributions obtained from actual workflow
 execution traces (see :ref:`traces-label`).
 
+Each generated trace is a represented as a :class:`~workflowhub.common.workflow.Workflow`
+object (which in itself is an extension of the
+`NetworkX DiGraph <https://networkx.github.io/documentation/stable/reference/classes/digraph.html>`_
+class). The :class:`~workflowhub.common.workflow.Workflow` class provides two
+methods for writing the generated workflow trace into files:
+
+- :meth:`~workflowhub.common.workflow.Workflow.write_dot`: write a DOT file of a workflow trace.
+- :meth:`~workflowhub.common.workflow.Workflow.write_json`: write a JSON file of a workflow trace.
+
 Examples
 --------
 
@@ -101,3 +110,25 @@ synthetic trace to a JSON file. ::
     # writing the synthetic workflow trace into a JSON file
     workflow.write_json('seismology-workflow.json')
 
+
+The example below generates a number of *Cycles* (agroecosystem) synthetic
+workflow traces based on the upper bound number of jobs allowed per workflow. ::
+
+    from workflowhub import WorkflowGenerator
+    from workflowhub.generator import CyclesRecipe
+
+    # creating a Cycles workflow recipe based on the number of jobs per workflow
+    recipe = CyclesRecipe.from_num_jobs(num_jobs=1000)
+
+    # creating an instance of the workflow generator with the
+    # Cycles workflow recipe
+    generator = WorkflowGenerator(recipe)
+
+    # generating 10 synthetic workflow traces of the Cycles workflow
+    workflows_list = generator.build_workflows(num_workflows=10)
+
+    # writing each synthetic workflow trace into a JSON file
+    count = 1
+    for workflow in workflows_list:
+        workflow.write_json('cycles-workflow-{:02}.json'.format(count))
+        count += 1
