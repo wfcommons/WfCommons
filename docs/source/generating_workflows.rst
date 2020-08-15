@@ -59,6 +59,22 @@ The current list of available workflow recipes include:
 Generating Synthetic Workflows
 ------------------------------
 
+Synthetic workflow traces are generated using the
+:class:`~workflowhub.generator.generator.WorkflowGenerator` class. This
+class takes as input a :class:`~workflowhub.generator.workflow.abstract_recipe.WorkflowRecipe`
+object (see above), and provides two methods for generating synthetic
+workflow traces:
+
+- :meth:`~workflowhub.generator.generator.WorkflowGenerator.build_workflow`: generates a single synthetic workflow
+  trace based on the workflow recipe used to instantiate the generator.
+- :meth:`~workflowhub.generator.generator.WorkflowGenerator.build_workflows`: generates a number of synthetic workflow
+  traces based on the workflow recipe used to instantiate the generator.
+
+The build methods use the workflow recipe for generating realistic synthetic
+workflow traces, in which the workflow structure follows workflow composition
+rules defined in the workflow recipe, and jobs runtime, and input and output
+data sizes are generated according to distributions obtained from actual workflow
+execution traces (see :ref:`traces-label`).
 
 Examples
 --------
