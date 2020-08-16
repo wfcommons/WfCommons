@@ -29,6 +29,13 @@ be loaded using the :class:`~workflowhub.trace.trace.Trace` class: ::
     from workflowhub import Trace
     trace = Trace(input_trace='/path/to/trace/file.json')
 
+The :class:`~workflowhub.trace.trace.Trace` class provides a number of
+methods for interacting with the workflow trace, including:
+
+- :meth:`~workflowhub.trace.trace.Trace.draw`: produces an image or a pdf file representing the trace.
+- :meth:`~workflowhub.trace.trace.Trace.leaves`: gets the leaves of the workflow (i.e., the tasks without any successors).
+- :meth:`~workflowhub.trace.trace.Trace.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
+- :meth:`~workflowhub.trace.trace.Trace.write_dot`: writes a dot file of the trace.
 
 Examples
 --------

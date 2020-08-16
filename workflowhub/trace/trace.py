@@ -37,6 +37,11 @@ class Trace:
     :param input_trace: The JSON trace.
     :type input_trace: str
     :param schema_file: The path to the JSON schema that defines the trace.
+                        If no schema file is provided, it will look for a local
+                        copy of the WorkflowHub schema, and if not available
+                        it will fetch the latest schema from the
+                        `WorkflowHub schema GitHub <https://github.com/workflowhub/workflow-schema>`_
+                        repository.
     :type schema_file: str
     :param logger: The logger where to log information/warning or errors.
     :type logger: Logger
