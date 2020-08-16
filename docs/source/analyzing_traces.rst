@@ -15,6 +15,19 @@ the necessary information for generating synthetic, yet realistic, workflow
 traces that resemble the structure and distribution of the original workflow
 executions.
 
+Workflow Execution Traces
+-------------------------
+
+A workflow execution trace represents an actual execution of a scientific
+workflow on a distributed platform (e.g., clouds, grids, HPC, etc.). In the
+WorkflowHub project, a trace is represented in a JSON file following the
+schema described in :ref:`json-format-label` section. This Python package
+provides a *trace loader* tool for importing workflow execution traces
+for analysis. For instance, the code snippet below shows how a trace can
+be loaded using the :class:`~workflowhub.trace.trace.Trace` class: ::
+
+    from workflowhub import Trace
+    trace = Trace(input_trace='/path/to/trace/file.json')
 
 
 Examples

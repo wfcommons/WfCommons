@@ -7,6 +7,7 @@ The WorkflowHub
    The WorkflowHub conceptual architecture.
 
 
+.. _json-format-label:
 
 The WorkflowHub JSON Format
 ---------------------------
