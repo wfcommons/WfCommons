@@ -37,6 +37,27 @@ methods for interacting with the workflow trace, including:
 - :meth:`~workflowhub.trace.trace.Trace.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
 - :meth:`~workflowhub.trace.trace.Trace.write_dot`: writes a dot file of the trace.
 
+The Trace Analyzer
+------------------
+
+The :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer` class provides
+a number of tools for analyzing collection of workflow execution traces. The
+goal of the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer` is to
+perform analyzes of one or multiple workflow execution traces, and build
+summaries of the analyzes per workflow' job type prefix.
+
+.. note::
+
+    Although any workflow execution trace represented as a
+    :class:`~workflowhub.trace.trace.Trace` object (i.e., compatible with
+    :ref:`json-format-label`) can be appended to the
+    :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`, we strongly
+    recommend that only traces of a single workflow application type be
+    appended to an analyzer object. You may though create several analyzer
+    objects per workflow application.
+
+
+
 Examples
 --------
 

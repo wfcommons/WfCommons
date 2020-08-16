@@ -56,8 +56,8 @@ The current list of available workflow recipes include:
 - :class:`~workflowhub.generator.workflow.seismology_recipe.SeismologyRecipe`: :code:`from workflowhub.generator import SeismologyRecipe`
 - :class:`~workflowhub.generator.workflow.soykb_recipe.SoyKBRecipe`: :code:`from workflowhub.generator import SoyKBRecipe`
 
-Generating Synthetic Workflows
-------------------------------
+The Workflow Generator
+----------------------
 
 Synthetic workflow traces are generated using the
 :class:`~workflowhub.generator.generator.WorkflowGenerator` class. This
