@@ -56,13 +56,53 @@ summaries of the analyzes per workflow' job type prefix.
     appended to an analyzer object. You may though create several analyzer
     objects per workflow application.
 
+The :meth:`~workflowhub.trace.trace_analyzer.TraceAnalyzer.append_trace` method
+allows you to include traces for analysis. The
+:meth:`~workflowhub.trace.trace_analyzer.TraceAnalyzer.build_summary` method
+processes all appended traces. The method applies probability distributions fitting
+to a series of data to find the *best* (i.e., minimizes the mean square error)
+probability distribution that represents the analyzed data. The method returns
+a summary of the analysis of traces in the form of a Python dictionary object in
+which keys are job prefixes (provided when invoking the method) and values
+describe the best probability distribution fit for jobs' runtime, and input and
+output data file sizes. The code excerpt below shows an example of an analysis
+summary showing the best fit probability distribution for runtime of the
+:code:`individuals` jobs (1000Genome workflow): ::
 
+    "individuals": {
+        "runtime": {
+            "min": 48.846,
+            "max": 192.232,
+            "distribution": {
+                "name": "skewnorm",
+                "params": [
+                    11115267.652937062,
+                    -2.9628504044929433e-05,
+                    56.03957070238482
+                ]
+            }
+        },
+        ...
+    }
+
+Workflow analysis summaries can then be used to develop :ref:`workflow-recipe-label`,
+in which themselves are used to :ref:`generate realistic synthetic workflow traces
+<generating-workflows-label>`.
+
+Probability distribution fits can also be plotted by using the
+:meth:`~workflowhub.trace.trace_analyzer.TraceAnalyzer.generate_fit_plots` or
+:meth:`~workflowhub.trace.trace_analyzer.TraceAnalyzer.generate_all_fit_plots`
+methods -- plots will be saved as :code:`png` files.
 
 Examples
 --------
 
 The following example shows the analysis of a set of traces, stored in a local folder,
-of a Seismology workflow. In this example, ::
+of a Seismology workflow. In this example, we seek for finding the best probability
+distribution fitting for job *prefixes* of the Seismology workflow
+(:code:`sG1IterDecon`, and :code:`wrapper_siftSTFByMisfit`), and generate all fit
+plots (runtime, and input and output files) into the :code:`fits` folder using
+:code:`seismology` as a prefix for each generated plot: ::
 
     from workflowhub import Trace, TraceAnalyzer
     from os import listdir
@@ -87,4 +127,4 @@ of a Seismology workflow. In this example, ::
     traces_summary = analyzer.build_summary(workflow_jobs, include_raw_data=True)
 
     # generating all fit plots (runtime, and input and output files)
-    analyzer.generate_all_fit_plots()
+    analyzer.generate_all_fit_plots(outfile_prefix='fits/seismology')

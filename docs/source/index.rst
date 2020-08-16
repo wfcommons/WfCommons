@@ -10,6 +10,11 @@ provides a collection of tools for:
   generation; and
 - Generating synthetic realistic workflow traces.
 
+.. figure::  images/workflowhub.png
+   :align:   center
+
+   The WorkflowHub conceptual architecture.
+
 ----
 
 .. toctree::

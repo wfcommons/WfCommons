@@ -1,3 +1,5 @@
+.. _generating-workflows-label:
+
 Generating Workflows
 ====================
 
@@ -10,6 +12,8 @@ and output file sizes.
 The resulting workflows are represented in the WorkflowHub JSON format, which
 is already supported by simulation frameworks such as
 `WRENCH <https://wrench-project.org>`_.
+
+.. _workflow-recipe-label:
 
 Workflow Recipes
 ----------------
