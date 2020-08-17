@@ -15,6 +15,10 @@ the necessary information for generating synthetic, yet realistic, workflow
 traces that resemble the structure and distribution of the original workflow
 executions.
 
+A `list of workflow execution traces <https://workflowhub.org/traces.html>`_
+that are compatible with :ref:`json-format-label` is kept constantly updated
+in our project website.
+
 Workflow Execution Traces
 -------------------------
 
