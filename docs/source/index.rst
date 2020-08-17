@@ -17,6 +17,18 @@ provides a collection of tools for:
 
 ----
 
+Support
+=======
+
+WorkflowHub's source code is available on `GitHub <http://github.com/workflowhub/workflowhub>`_.
+Our preferred channel to report a bug or request a feature is via WorkflowHub's
+Github `Issues Track <https://github.com/workflowhub/workflowhub/issues>`_.
+
+You can also reach the WorkflowHub team via our support email:
+support@workflowhub.org.
+
+----
+
 .. toctree::
     :caption: Quickstart
     :maxdepth: 2
