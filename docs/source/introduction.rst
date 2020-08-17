@@ -18,17 +18,23 @@ integrates the three axis of the WorkflowHub project:
 The *first axis* (**Workflow Traces**) of the WorkflowHub project targets the
 collection and curation of open access production workflow executions from
 various scientific applications shared in a common trace format (i.e.,
-:ref:`json-format-label`).
+:ref:`json-format-label`). We keep a `list of workflow execution traces
+<https://workflowhub.org/traces.html>`_ in our project website.
 
 The *second axis* (**Workflow Generator**) of the WorkflowHub project targets
 the generation of realistic synthetic workflow traces based on workflow execution
-profiles extracted from execution traces.
+profiles extracted from execution traces. We are constantly seeking for additional
+workflow execution traces for refining or developing new workflow recipes for
+the WorkflowHub's workflow generator.
 
 The *third axis* (**Workflow Simulator**) of the WorkflowHub project fosters the
 use of simulation for the development, evaluation, and verification of scheduling
 and resource provisioning algorithms (e.g., multi-objective function optimization,
 etc.), evaluation of current and emerging computing platforms (e.g., clouds, IoT,
-extreme scale, etc.), among others.
+extreme scale, etc.), among others. We keep a `list of open source workflow
+management systems simulators and simulation frameworks
+<https://workflowhub.org/simulator.html>`_ that provide support for the WorkflowHub
+JSON format in our project website.
 
 This Python package provides a collection of tools for:
 
