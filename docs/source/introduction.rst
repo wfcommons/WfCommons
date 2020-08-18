@@ -51,7 +51,7 @@ The WorkflowHub JSON Format
 The WorkflowHub project uses a common format for representing workflow execution
 traces and generated synthetic workflows traces, so that workflow simulators and
 simulation frameworks (that provide support for WorkflowHub format) can use
-such traces interchangeably. This common format uses a JSON specification defined
+such traces interchangeably. This common format uses a JSON specification
 available in the
 `WorkflowHub JSON schema GitHub <https://github.com/workflowhub/workflow-schema>`_
 repository. The current version of the WorkflowHub Python package uses the schema
