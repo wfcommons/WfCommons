@@ -16,7 +16,7 @@ This Python package provides a collection of tools for:
 ## Installation
 
 WorkflowHub is available on [PyPI](https://pypi.org/project/workflowhub).
-WorkflowHub requires Python3.3+ and has been tested on Linux and macOS.
+WorkflowHub requires Python3.5+ and has been tested on Linux and macOS.
 
 ### Installation using pip
 

@@ -11,7 +11,7 @@ before_install:
   - env
 
 install:
-  - echo "install"
+  - pip install .
 
 before_script:
   - echo "Before script"
