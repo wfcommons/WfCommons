@@ -18,6 +18,25 @@ This Python package provides a collection of tools for:
 WorkflowHub is available on [PyPI](https://pypi.org/project/workflowhub).
 WorkflowHub requires Python3.5+ and has been tested on Linux and macOS.
 
+### Requirements
+
+#### Graphviz
+WorkflowHub uses _pygraphviz_ and thus needs the graphviz package installed (version 2.16 or later).
+You can install graphviz easily on Linux with your favorite package manager,
+for example for Debian-based distributions:
+```
+sudo apt-get install graphviz libgraphviz-dev
+```
+and for RedHat-based distributions:
+```
+sudo yum install python-devel graphviz-devel
+```
+
+On macOS you can use `brew` package manager:
+```
+brew install graphviz
+```
+
 ### Installation using pip
 
 While `pip` can be used to install WorkflowHub, we suggest the following
