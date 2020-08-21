@@ -15,17 +15,21 @@ You can install graphviz easily on Linux with your favorite package manager,
 for example for Debian-based distributions:
 
 .. code-block:: bash
+
     $ sudo apt-get install graphviz libgraphviz-dev
 
 
 and for RedHat-based distributions:
 
 .. code-block:: bash
+
     $ sudo yum install python-devel graphviz-devel
 
 
 On macOS you can use :code:`brew` package manager:
+
 .. code-block:: bash
+
     $ brew install graphviz
 
 
