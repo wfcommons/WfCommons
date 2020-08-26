@@ -203,7 +203,7 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         :rtype: Workflow
         """
         workflow = Workflow(
-            name=self.name + "-" + self.dataset.value + "-synthetic-trace" if not workflow_name else workflow_name,
+            name=self.name + "-" + str(self.dataset.value) + "-synthetic-trace" if not workflow_name else workflow_name,
             makespan=None)
         self.job_id_counter: int = 1
         madd_jobs = []
@@ -229,15 +229,20 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
                     input_files.extend(self._get_files_by_job_and_link(mproject_jobs[count + 1].name, FileLink.OUTPUT))
                     workflow.add_edge(mproject_jobs[count].name, job_name)
                     workflow.add_edge(mproject_jobs[count + 1].name, job_name)
+                    count += 1
                 else:
+                    previous_index = -1
                     for _ in range(0, 2):
-                        index = random.randint(0, len(mproject_jobs) - 1)
+                        while True:
+                            index = random.randint(0, len(mproject_jobs) - 1)
+                            if index != previous_index:
+                                break
+                        previous_index = index
                         input_files.extend(self._get_files_by_job_and_link(mproject_jobs[index].name, FileLink.OUTPUT))
                         workflow.add_edge(mproject_jobs[index].name, job_name)
                 mdiff_job = self._generate_job('mDiffFit', job_name, input_files=input_files)
                 workflow.add_node(job_name, job=mdiff_job)
                 mdiff_jobs.append(mdiff_job)
-                count += 1
 
             # mConcatFit job
             input_files = []
