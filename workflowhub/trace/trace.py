@@ -56,7 +56,7 @@ class Trace:
         self._order = None
 
         self.trace: Dict[str, Any] = read_json(input_trace)
-        logger.info("Read a JSON trace: " + input_trace)
+        self.logger.info("Read a JSON trace: " + input_trace)
 
         # validate trace
         schema_validator = SchemaValidator(schema_file)
