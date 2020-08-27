@@ -15,7 +15,7 @@ import networkx as nx
 
 from typing import Optional
 from ..common.job import Job
-
+from ..version import __version__
 
 class Workflow(nx.DiGraph):
     """
@@ -30,7 +30,9 @@ class Workflow(nx.DiGraph):
 
     def __init__(self, name: str, makespan: Optional[int]) -> None:
         """Create an object of a workflow representation."""
-        super().__init__(name=name, makespan=makespan)
+        self.makespan = makespan
+        self.executedat = datetime.datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
+        super().__init__(name=name, makespan=self.makespan, executedat=self.executedat)
 
     def write_json(self, json_filename: Optional[str] = None) -> None:
         """Write a JSON file of the workflow trace.
@@ -47,7 +49,24 @@ class Workflow(nx.DiGraph):
                 'name': str(getpass.getuser()),
                 'email': 'support@workflowhub.org'
             },
+            'wms': {
+                'name': 'WorkflowHub',
+                'version': str(__version__),
+                'url': 'https://workflowhub.readthedocs.io/en/v{}/'.format(__version__)
+            },
             'workflow': {
+                'executedAt': self.executedat,
+                'makespan': 0.0 if not self.makespan else self.makespan,
+                'machines': [
+                    {
+                        'nodeName': 'fake-1',
+                        'system': 'linux', 
+                        'cpu': {
+                            'count': 1, 
+                            'speed': 1
+                        }
+                    }
+                ],
                 'jobs': []
             }
         }
