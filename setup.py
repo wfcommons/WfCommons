@@ -19,22 +19,15 @@ def read(rel_path):
     with codecs.open(os.path.join(here, rel_path), 'r') as fp:
         return fp.read()
 
-
-def get_version(rel_path):
-    for line in read(rel_path).splitlines():
-        if line.startswith('__version__'):
-            delim = '"' if '"' in line else "'"
-            return line.split(delim)[1]
-    else:
-        raise RuntimeError("Unable to find version string.")
-
-
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
+# Fetch the version
+exec(open('workflowhub/version.py').read())
+
 setup(
     name='workflowhub',
-    version=get_version("workflowhub/__init__.py"),
+    version=str(__version__),
     license='GPLv3',
     author='WorkflowHub team',
     author_email='support@workflowhub.org',
