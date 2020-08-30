@@ -27,69 +27,70 @@ class CyclesRecipe(WorkflowRecipe):
     :type num_params: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
+
     def __init__(self,
                  num_points: Optional[int] = 1,
                  num_crops: Optional[int] = 1,
                  num_params: Optional[int] = 4,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 7
+                 num_tasks: Optional[int] = 7
                  ) -> None:
         """Create an object of the Cycles workflow recipe."""
-        super().__init__("Cycles", data_footprint, num_jobs)
+        super().__init__("Cycles", data_footprint, num_tasks)
 
         self.num_points: int = num_points
         self.num_crops: int = num_crops
         self.num_params: int = num_params
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'CyclesRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'CyclesRecipe':
         """
         Instantiate a Cycles workflow recipe that will generate synthetic workflows up to
-        the total number of jobs provided.
+        the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 7).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 7).
+        :type num_tasks: int
 
         :return: A Cycles workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: CyclesRecipe
         """
-        if num_jobs < 7:
-            raise ValueError("The upper bound for the number of jobs should be at least 7.")
+        if num_tasks < 7:
+            raise ValueError("The upper bound for the number of tasks should be at least 7.")
 
         num_points = 1
         num_crops = 1
         num_params = 4
-        remaining_jobs = num_jobs - 7
+        remaining_tasks = num_tasks - 7
 
-        while remaining_jobs > 0:
-            added_job = False
+        while remaining_tasks > 0:
+            added_task = False
             cost_param = (ncr(num_params + 1, 4) - ncr(num_params, 4)) * 4 * num_crops * num_points
-            if remaining_jobs >= cost_param:
+            if remaining_tasks >= cost_param:
                 num_params += 1
-                remaining_jobs -= cost_param
-                added_job = True
+                remaining_tasks -= cost_param
+                added_task = True
 
             cost_crop = ncr(num_params, 4) * 4 * num_points + 3
-            if remaining_jobs >= cost_crop:
+            if remaining_tasks >= cost_crop:
                 num_crops += 1
-                remaining_jobs -= cost_crop
-                added_job = True
+                remaining_tasks -= cost_crop
+                added_task = True
 
             cost_point = ncr(num_params, 4) * 4 * num_crops + 3 * num_crops
-            if remaining_jobs >= cost_point and remaining_jobs >= num_jobs / 2:
+            if remaining_tasks >= cost_point and remaining_tasks >= num_tasks / 2:
                 num_points += 1
-                remaining_jobs -= cost_point
-                added_job = True
+                remaining_tasks -= cost_point
+                added_task = True
 
-            if not added_job:
+            if not added_task:
                 break
 
         return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
-                   num_jobs=num_jobs)
+                   num_tasks=num_tasks)
 
     @classmethod
     def from_points_and_crops(cls,
@@ -120,7 +121,7 @@ class CyclesRecipe(WorkflowRecipe):
             raise ValueError("The number of params should be 4 or higher.")
 
         return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
-                   num_jobs=None)
+                   num_tasks=None)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a Cycles workflow.
@@ -132,81 +133,81 @@ class CyclesRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        self.job_id_counter: int = 1
+        self.task_id_counter: int = 1
         num_combinations = ncr(self.num_params, 4)
-        summary_jobs_per_crop = {}
+        summary_tasks_per_crop = {}
 
         for _ in range(0, self.num_points):
             for crop in range(0, self.num_crops):
-                if crop not in summary_jobs_per_crop:
-                    summary_jobs_per_crop[crop] = []
+                if crop not in summary_tasks_per_crop:
+                    summary_tasks_per_crop[crop] = []
 
-                cycles_jobs = []
-                cycles_fi_output_jobs = []
+                cycles_tasks = []
+                cycles_fi_output_tasks = []
 
                 for _ in range(0, num_combinations):
-                    # baseline cycles job
-                    job_name = self._generate_job_name("baseline_cycles")
-                    baseline_cycles_job = self._generate_job('baseline_cycles', job_name)
-                    workflow.add_node(job_name, job=baseline_cycles_job)
-                    input_files = self._get_files_by_job_and_link(baseline_cycles_job.name, FileLink.OUTPUT)
+                    # baseline cycles task
+                    task_name = self._generate_task_name("baseline_cycles")
+                    baseline_cycles_task = self._generate_task('baseline_cycles', task_name)
+                    workflow.add_node(task_name, task=baseline_cycles_task)
+                    input_files = self._get_files_by_task_and_link(baseline_cycles_task.name, FileLink.OUTPUT)
 
-                    # cycles job
-                    job_name = self._generate_job_name("cycles")
-                    cycles_job = self._generate_job('cycles', job_name, input_files)
-                    workflow.add_node(job_name, job=cycles_job)
-                    cycles_jobs.append(cycles_job)
+                    # cycles task
+                    task_name = self._generate_task_name("cycles")
+                    cycles_task = self._generate_task('cycles', task_name, input_files)
+                    workflow.add_node(task_name, task=cycles_task)
+                    cycles_tasks.append(cycles_task)
 
-                    # fertilizer increase cycles job
-                    job_name = self._generate_job_name("fertilizer_increase_cycles")
-                    fi_cycles_job = self._generate_job('fertilizer_increase_cycles', job_name, input_files)
-                    workflow.add_node(job_name, job=fi_cycles_job)
+                    # fertilizer increase cycles task
+                    task_name = self._generate_task_name("fertilizer_increase_cycles")
+                    fi_cycles_task = self._generate_task('fertilizer_increase_cycles', task_name, input_files)
+                    workflow.add_node(task_name, task=fi_cycles_task)
 
-                    # fertilizer increase output parser cycles job
-                    input_files = self._get_files_by_job_and_link(fi_cycles_job.name, FileLink.OUTPUT)
-                    job_name = self._generate_job_name("cycles_fertilizer_increase_output_parser")
-                    cycles_fi_output_job = self._generate_job('cycles_fertilizer_increase_output_parser', job_name,
-                                                              input_files)
-                    workflow.add_node(job_name, job=cycles_fi_output_job)
-                    cycles_fi_output_jobs.append(cycles_fi_output_job)
+                    # fertilizer increase output parser cycles task
+                    input_files = self._get_files_by_task_and_link(fi_cycles_task.name, FileLink.OUTPUT)
+                    task_name = self._generate_task_name("cycles_fertilizer_increase_output_parser")
+                    cycles_fi_output_task = self._generate_task('cycles_fertilizer_increase_output_parser', task_name,
+                                                                input_files)
+                    workflow.add_node(task_name, task=cycles_fi_output_task)
+                    cycles_fi_output_tasks.append(cycles_fi_output_task)
 
                     # add dependencies
-                    workflow.add_edge(baseline_cycles_job.name, cycles_job.name)
-                    workflow.add_edge(baseline_cycles_job.name, fi_cycles_job.name)
-                    workflow.add_edge(fi_cycles_job.name, cycles_fi_output_job.name)
+                    workflow.add_edge(baseline_cycles_task.name, cycles_task.name)
+                    workflow.add_edge(baseline_cycles_task.name, fi_cycles_task.name)
+                    workflow.add_edge(fi_cycles_task.name, cycles_fi_output_task.name)
 
                 # cycles output summary
                 input_files = []
-                for j in cycles_jobs:
-                    input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
-                job_name = self._generate_job_name("cycles_output_summary")
-                cycles_output_summary_job = self._generate_job('cycles_output_summary', job_name, input_files)
-                workflow.add_node(job_name, job=cycles_output_summary_job)
-                for j in cycles_jobs:
-                    workflow.add_edge(j.name, cycles_output_summary_job.name)
-                summary_jobs_per_crop[crop].append(cycles_output_summary_job)
+                for j in cycles_tasks:
+                    input_files.extend(self._get_files_by_task_and_link(j.name, FileLink.OUTPUT))
+                task_name = self._generate_task_name("cycles_output_summary")
+                cycles_output_summary_task = self._generate_task('cycles_output_summary', task_name, input_files)
+                workflow.add_node(task_name, task=cycles_output_summary_task)
+                for j in cycles_tasks:
+                    workflow.add_edge(j.name, cycles_output_summary_task.name)
+                summary_tasks_per_crop[crop].append(cycles_output_summary_task)
 
                 # cycles fertilizer increase output summary
                 input_files = []
-                for j in cycles_fi_output_jobs:
-                    input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
-                job_name = self._generate_job_name("cycles_fertilizer_increase_output_summary")
-                cycles_fi_output_summary_job = self._generate_job('cycles_fertilizer_increase_output_summary',
-                                                                  job_name, input_files)
-                workflow.add_node(job_name, job=cycles_fi_output_summary_job)
-                for j in cycles_fi_output_jobs:
-                    workflow.add_edge(j.name, cycles_fi_output_summary_job.name)
+                for j in cycles_fi_output_tasks:
+                    input_files.extend(self._get_files_by_task_and_link(j.name, FileLink.OUTPUT))
+                task_name = self._generate_task_name("cycles_fertilizer_increase_output_summary")
+                cycles_fi_output_summary_task = self._generate_task('cycles_fertilizer_increase_output_summary',
+                                                                    task_name, input_files)
+                workflow.add_node(task_name, task=cycles_fi_output_summary_task)
+                for j in cycles_fi_output_tasks:
+                    workflow.add_edge(j.name, cycles_fi_output_summary_task.name)
 
         # cycles plots
-        for crop in summary_jobs_per_crop:
+        for crop in summary_tasks_per_crop:
             input_files = []
-            for j in summary_jobs_per_crop[crop]:
-                input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
-            job_name = self._generate_job_name("cycles_plots")
-            cycles_plots_job = self._generate_job('cycles_plots', job_name, input_files)
-            workflow.add_node(job_name, job=cycles_plots_job)
-            for j in summary_jobs_per_crop[crop]:
-                workflow.add_edge(j.name, cycles_plots_job.name)
+            for j in summary_tasks_per_crop[crop]:
+                input_files.extend(self._get_files_by_task_and_link(j.name, FileLink.OUTPUT))
+            task_name = self._generate_task_name("cycles_plots")
+            cycles_plots_task = self._generate_task('cycles_plots', task_name, input_files)
+            workflow.add_node(task_name, task=cycles_plots_task)
+            for j in summary_tasks_per_crop[crop]:
+                workflow.add_edge(j.name, cycles_plots_task.name)
 
         self.workflows.append(workflow)
         return workflow
@@ -216,7 +217,7 @@ class CyclesRecipe(WorkflowRecipe):
         Recipe for generating synthetic traces of the Cycles workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         return {

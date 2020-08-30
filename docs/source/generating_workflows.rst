@@ -7,7 +7,7 @@ The second axis of the WorkflowHub project targets the generation of realistic
 synthetic workflow traces with a variety of characteristics. The
 :class:`~workflowhub.generator.generator.WorkflowGenerator` class uses recipes
 of workflows (as described in :ref:`traces-label`) for creating many different
-synthetic workflows based on distributions of workflow job runtime, and input
+synthetic workflows based on distributions of workflow task runtime, and input
 and output file sizes.
 The resulting workflows are represented in the WorkflowHub JSON format, which
 is already supported by simulation frameworks such as
@@ -34,19 +34,19 @@ of the Epigenomics and 1000Genome workflows: ::
     genome_recipe = GenomeRecipe.from_num_chromosomes(num_chromosomes=3, num_sequences=10000, num_populations=1)
 
 
-All workflow recipes also provide a common method (:code:`from_num_jobs`) for
+All workflow recipes also provide a common method (:code:`from_num_tasks`) for
 instantiating a :class:`~workflowhub.generator.workflow.abstract_recipe.WorkflowRecipe`
 object as follows: ::
 
     from workflowhub.generator import EpigenomicsRecipe, GenomeRecipe
 
     # creating an Epigenomics workflow recipe
-    epigenomics_recipe = EpigenomicsRecipe.from_num_jobs(num_jobs=9)
+    epigenomics_recipe = EpigenomicsRecipe.from_num_tasks(num_tasks=9)
 
     # creating a 1000Genome workflow recipe
-    genome_recipe = GenomeRecipe.from_num_jobs(num_jobs=5)
+    genome_recipe = GenomeRecipe.from_num_tasks(num_tasks=5)
 
-Note that :code:`num_jobs` defines the upper bound for the total number of jobs in the
+Note that :code:`num_tasks` defines the upper bound for the total number of tasks in the
 workflow, and that each workflow recipe may define different lower bound values so
 that the workflow structure is guaranteed. Please, refer to the :ref:`documentation of
 each workflow recipe <workflowhub-generator-label>` for the lower bound values.
@@ -76,7 +76,7 @@ workflow traces:
 
 The build methods use the workflow recipe for generating realistic synthetic
 workflow traces, in which the workflow structure follows workflow composition
-rules defined in the workflow recipe, and jobs runtime, and input and output
+rules defined in the workflow recipe, and tasks runtime, and input and output
 data sizes are generated according to distributions obtained from actual workflow
 execution traces (see :ref:`traces-label`).
 
@@ -116,13 +116,13 @@ synthetic trace to a JSON file. ::
 
 
 The example below generates a number of *Cycles* (agroecosystem) synthetic
-workflow traces based on the upper bound number of jobs allowed per workflow. ::
+workflow traces based on the upper bound number of tasks allowed per workflow. ::
 
     from workflowhub import WorkflowGenerator
     from workflowhub.generator import CyclesRecipe
 
-    # creating a Cycles workflow recipe based on the number of jobs per workflow
-    recipe = CyclesRecipe.from_num_jobs(num_jobs=1000)
+    # creating a Cycles workflow recipe based on the number of tasks per workflow
+    recipe = CyclesRecipe.from_num_tasks(num_tasks=1000)
 
     # creating an instance of the workflow generator with the
     # Cycles workflow recipe

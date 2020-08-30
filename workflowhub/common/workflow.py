@@ -14,7 +14,7 @@ import json
 import networkx as nx
 
 from typing import Optional
-from ..common.job import Job
+from ..common.task import Task
 from ..version import __version__
 
 class Workflow(nx.DiGraph):
@@ -71,30 +71,30 @@ class Workflow(nx.DiGraph):
             }
         }
 
-        # generate jobs parents and children
-        jobs_dependencies = {}
+        # generate tasks parents and children
+        tasks_dependencies = {}
         for edge in self.edges:
-            for job_name in edge:
-                if job_name not in jobs_dependencies:
-                    jobs_dependencies[job_name] = {'parents': [], 'children': []}
-            jobs_dependencies[edge[0]]['children'].append(edge[1])
-            jobs_dependencies[edge[1]]['parents'].append(edge[0])
+            for task_name in edge:
+                if task_name not in tasks_dependencies:
+                    tasks_dependencies[task_name] = {'parents': [], 'children': []}
+            tasks_dependencies[edge[0]]['children'].append(edge[1])
+            tasks_dependencies[edge[1]]['parents'].append(edge[0])
 
-        # add jobs to the workflow json object
+        # add tasks to the workflow json object
         for node in self.nodes:
-            job: Job = self.nodes[node]['job']
-            job_files = []
-            for f in job.files:
-                job_files.append({'link': f.link.value,
+            task: Task = self.nodes[node]['task']
+            task_files = []
+            for f in task.files:
+                task_files.append({'link': f.link.value,
                                   'name': f.name,
                                   'size': f.size})
 
-            workflow_json['workflow']['jobs'].append({'name': job.name,
-                                                      'type': job.type.value,
-                                                      'runtime': job.runtime,
-                                                      'parents': jobs_dependencies[job.name]['parents'],
-                                                      'children': jobs_dependencies[job.name]['children'],
-                                                      'files': job_files
+            workflow_json['workflow']['jobs'].append({'name': task.name,
+                                                      'type': task.type.value,
+                                                      'runtime': task.runtime,
+                                                      'parents': tasks_dependencies[task.name]['parents'],
+                                                      'children': tasks_dependencies[task.name]['children'],
+                                                      'files': task_files
                                                       })
 
         # write to file

@@ -10,10 +10,10 @@ workflowhub.common.file
    :show-inheritance:
    :private-members:
 
-workflowhub.common.job
+workflowhub.common.task
 ----------------------
 
-.. automodule:: workflowhub.common.job
+.. automodule:: workflowhub.common.task
    :members:
    :undoc-members:
    :show-inheritance:

@@ -36,7 +36,7 @@ class File:
     """
 
     def __init__(self, name: str, size: int, link: FileLink, logger: Optional[Logger] = None) -> None:
-        """A file used by jobs."""
+        """A file used by tasks."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
         self.name: str = name

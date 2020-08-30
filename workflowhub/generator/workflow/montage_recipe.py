@@ -25,9 +25,9 @@ class MontageDataset(NoValue):
     DSS = 'dss'
 
 
-class _MontageJobRatios:
-    """An auxiliary class for generating Montage jobs."""
-    jobs_ratios = {
+class _MontagetaskRatios:
+    """An auxiliary class for generating Montage tasks."""
+    tasks_ratios = {
         # (min, increase_rate, stddev)
         MontageDataset.TWOMASS: {
             'mProject': (68, 44, 21),
@@ -41,57 +41,57 @@ class _MontageJobRatios:
         }
     }
 
-    def _get_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset) -> int:
-        """Get a random number of jobs to be generated for a job prefix and workflow degree.
+    def _get_num_tasks(self, task_name: str, degree: float, dataset: MontageDataset) -> int:
+        """Get a random number of tasks to be generated for a task prefix and workflow degree.
 
-        :param job_name: The job name prefix.
-        :type job_name: str
+        :param task_name: The task name prefix.
+        :type task_name: str
         :param degree: The size (in degrees) to be used for the width/height of the final mosaic.
         :type degree: float
         :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
 
-        :return: A random number of jobs to be generated for a job prefix and workflow degree.
+        :return: A random number of tasks to be generated for a task prefix and workflow degree.
         :rtype: int
         """
-        job_recipe = self.jobs_ratios[dataset][job_name]
+        task_recipe = self.tasks_ratios[dataset][task_name]
         factor = math.ceil((degree - 0.5) * 10)
         return int(
-            job_recipe[0] + random.randint(job_recipe[1] - job_recipe[2], job_recipe[1] + job_recipe[2]) * factor)
+            task_recipe[0] + random.randint(task_recipe[1] - task_recipe[2], task_recipe[1] + task_recipe[2]) * factor)
 
-    def _get_max_rate_increase(self, job_name: str, dataset: MontageDataset) -> int:
-        """Get the maximum rate of increase for a job prefix by increasing the workflow degree.
+    def _get_max_rate_increase(self, task_name: str, dataset: MontageDataset) -> int:
+        """Get the maximum rate of increase for a task prefix by increasing the workflow degree.
 
-        :param job_name: The job name prefix.
-        :type job_name: str
+        :param task_name: The task name prefix.
+        :type task_name: str
         :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
 
-        :return: The maximum rate of increase for a job prefix by increasing the workflow degree.
+        :return: The maximum rate of increase for a task prefix by increasing the workflow degree.
         :rtype: int
         """
-        job_recipe = self.jobs_ratios[dataset][job_name]
-        return job_recipe[1] + job_recipe[2]
+        task_recipe = self.tasks_ratios[dataset][task_name]
+        return task_recipe[1] + task_recipe[2]
 
-    def _get_max_num_jobs(self, job_name: str, degree: float, dataset: MontageDataset) -> int:
-        """Get the maximum number of jobs that can be generated for a defined job.
+    def _get_max_num_tasks(self, task_name: str, degree: float, dataset: MontageDataset) -> int:
+        """Get the maximum number of tasks that can be generated for a defined task.
 
-        :param job_name: The job name prefix.
-        :type job_name: str
+        :param task_name: The task name prefix.
+        :type task_name: str
         :param degree: The size (in degrees) to be used for the width/height of the final mosaic.
         :type degree: float
         :param dataset: The dataset to use for the mosaic (e.g., 2mass, dss).
         :type dataset: MontageDataset
 
-        :return: The maximum number of jobs that can be generated for a defined job.
+        :return: The maximum number of tasks that can be generated for a defined task.
         :rtype: int
         """
-        job_recipe = self.jobs_ratios[dataset][job_name]
+        task_recipe = self.tasks_ratios[dataset][task_name]
         factor = math.ceil((degree - 0.5) * 10)
-        return job_recipe[0] + (job_recipe[1] + job_recipe[2]) * factor
+        return task_recipe[0] + (task_recipe[1] + task_recipe[2]) * factor
 
 
-class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
+class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
     """
     A Montage workflow recipe class for creating synthetic workflow traces. In this
     workflow recipe, traces will follow different recipes for different
@@ -105,8 +105,8 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
     :type degree: float
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
 
     def __init__(self,
@@ -114,10 +114,10 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
                  num_bands: Optional[int] = 1,
                  degree: Optional[float] = 0.5,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 133
+                 num_tasks: Optional[int] = 133
                  ) -> None:
         """Create an object of the Montage workflow recipe."""
-        super().__init__("Montage", data_footprint, num_jobs)
+        super().__init__("Montage", data_footprint, num_tasks)
 
         if not isinstance(dataset, MontageDataset):
             raise TypeError("the dataset should be an instance of MontageDataset object.")
@@ -127,47 +127,47 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         self.degree: Optional[float] = float(format(degree, '.1f'))
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'MontageRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'MontageRecipe':
         """
         Instantiate a Montage workflow recipe that will generate synthetic workflows up to
-        the total number of jobs provided.
+        the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 133).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 133).
+        :type num_tasks: int
 
         :return: A Montage workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: MontageRecipe
         """
-        if num_jobs < 133:
-            raise ValueError("The upper bound for the number of jobs should be at least 133.")
+        if num_tasks < 133:
+            raise ValueError("The upper bound for the number of tasks should be at least 133.")
 
-        dataset = MontageDataset.DSS if num_jobs < 555 else random.choice(list(MontageDataset))
-        base_num_jobs = 133 if dataset == MontageDataset.DSS else 555
+        dataset = MontageDataset.DSS if num_tasks < 555 else random.choice(list(MontageDataset))
+        base_num_tasks = 133 if dataset == MontageDataset.DSS else 555
         num_bands = 1
         degree = 0.5
-        remaining_jobs = num_jobs - base_num_jobs
+        remaining_tasks = num_tasks - base_num_tasks
 
-        while remaining_jobs > 0:
-            added_job = False
+        while remaining_tasks > 0:
+            added_task = False
             cost_degree = (cls._get_max_rate_increase(cls, 'mProject', dataset) * 2
                            + cls._get_max_rate_increase(cls, 'mDiffFit', dataset) + 5) * num_bands
-            if remaining_jobs >= cost_degree:
+            if remaining_tasks >= cost_degree:
                 degree += 0.1
-                remaining_jobs -= cost_degree
-                added_job = True
+                remaining_tasks -= cost_degree
+                added_task = True
 
-            cost_band = cls._get_max_num_jobs(cls, 'mProject', degree, dataset) * 2 \
-                        + cls._get_max_num_jobs(cls, 'mDiffFit', degree, dataset) + 5
-            if num_bands < 3 and cost_band <= remaining_jobs / 2:
+            cost_band = cls._get_max_num_tasks(cls, 'mProject', degree, dataset) * 2 \
+                        + cls._get_max_num_tasks(cls, 'mDiffFit', degree, dataset) + 5
+            if num_bands < 3 and cost_band <= remaining_tasks / 2:
                 num_bands += 1
-                remaining_jobs -= cost_band
-                added_job = True
+                remaining_tasks -= cost_band
+                added_task = True
 
-            if not added_job:
+            if not added_task:
                 break
 
-        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=num_jobs)
+        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_tasks=num_tasks)
 
     @classmethod
     def from_degree(cls, dataset: MontageDataset, num_bands: int, degree: float) -> 'MontageRecipe':
@@ -191,7 +191,7 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         if degree < 0.5:
             raise ValueError("The workflow degree should be at least 0.5.")
 
-        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_jobs=None)
+        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_tasks=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of a Montage workflow.
@@ -205,111 +205,113 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         workflow = Workflow(
             name=self.name + "-" + str(self.dataset.value) + "-synthetic-trace" if not workflow_name else workflow_name,
             makespan=None)
-        self.job_id_counter: int = 1
-        madd_jobs = []
+        self.task_id_counter: int = 1
+        madd_tasks = []
 
         for _ in range(0, self.num_bands):
-            # mProject jobs
-            mproject_jobs = []
-            for _ in range(0, self._get_num_jobs('mProject', self.degree, self.dataset)):
-                job_name = self._generate_job_name('mProject')
-                mproject_job = self._generate_job('mProject', job_name,
-                                                  files_recipe={FileLink.OUTPUT: {'.fits': 2}})
-                workflow.add_node(job_name, job=mproject_job)
-                mproject_jobs.append(mproject_job)
+            # mProject tasks
+            mproject_tasks = []
+            for _ in range(0, self._get_num_tasks('mProject', self.degree, self.dataset)):
+                task_name = self._generate_task_name('mProject')
+                mproject_task = self._generate_task('mProject', task_name,
+                                                    files_recipe={FileLink.OUTPUT: {'.fits': 2}})
+                workflow.add_node(task_name, task=mproject_task)
+                mproject_tasks.append(mproject_task)
 
-            # mDiffFit jobs
+            # mDiffFit tasks
             count = 0
-            mdiff_jobs = []
-            for _ in range(0, self._get_num_jobs('mDiffFit', self.degree, self.dataset)):
+            mdiff_tasks = []
+            for _ in range(0, self._get_num_tasks('mDiffFit', self.degree, self.dataset)):
                 input_files = []
-                job_name = self._generate_job_name('mDiffFit')
-                if count < len(mproject_jobs) - 1:
-                    input_files.extend(self._get_files_by_job_and_link(mproject_jobs[count].name, FileLink.OUTPUT))
-                    input_files.extend(self._get_files_by_job_and_link(mproject_jobs[count + 1].name, FileLink.OUTPUT))
-                    workflow.add_edge(mproject_jobs[count].name, job_name)
-                    workflow.add_edge(mproject_jobs[count + 1].name, job_name)
+                task_name = self._generate_task_name('mDiffFit')
+                if count < len(mproject_tasks) - 1:
+                    input_files.extend(self._get_files_by_task_and_link(mproject_tasks[count].name, FileLink.OUTPUT))
+                    input_files.extend(
+                        self._get_files_by_task_and_link(mproject_tasks[count + 1].name, FileLink.OUTPUT))
+                    workflow.add_edge(mproject_tasks[count].name, task_name)
+                    workflow.add_edge(mproject_tasks[count + 1].name, task_name)
                     count += 1
                 else:
                     previous_index = -1
                     for _ in range(0, 2):
                         while True:
-                            index = random.randint(0, len(mproject_jobs) - 1)
+                            index = random.randint(0, len(mproject_tasks) - 1)
                             if index != previous_index:
                                 break
                         previous_index = index
-                        input_files.extend(self._get_files_by_job_and_link(mproject_jobs[index].name, FileLink.OUTPUT))
-                        workflow.add_edge(mproject_jobs[index].name, job_name)
-                mdiff_job = self._generate_job('mDiffFit', job_name, input_files=input_files)
-                workflow.add_node(job_name, job=mdiff_job)
-                mdiff_jobs.append(mdiff_job)
+                        input_files.extend(
+                            self._get_files_by_task_and_link(mproject_tasks[index].name, FileLink.OUTPUT))
+                        workflow.add_edge(mproject_tasks[index].name, task_name)
+                mdiff_task = self._generate_task('mDiffFit', task_name, input_files=input_files)
+                workflow.add_node(task_name, task=mdiff_task)
+                mdiff_tasks.append(mdiff_task)
 
-            # mConcatFit job
+            # mConcatFit task
             input_files = []
-            job_name = self._generate_job_name('mConcatFit')
-            for mdiff_job in mdiff_jobs:
-                input_files.extend(self._get_files_by_job_and_link(mdiff_job.name, FileLink.OUTPUT))
-                workflow.add_edge(mdiff_job.name, job_name)
-            mconcat_job = self._generate_job('mConcatFit', job_name, input_files=input_files)
-            workflow.add_node(job_name, job=mconcat_job)
+            task_name = self._generate_task_name('mConcatFit')
+            for mdiff_task in mdiff_tasks:
+                input_files.extend(self._get_files_by_task_and_link(mdiff_task.name, FileLink.OUTPUT))
+                workflow.add_edge(mdiff_task.name, task_name)
+            mconcat_task = self._generate_task('mConcatFit', task_name, input_files=input_files)
+            workflow.add_node(task_name, task=mconcat_task)
 
-            # mBgModel job
-            job_name = self._generate_job_name('mBgModel')
-            mbgmodel_job = self._generate_job('mBgModel', job_name,
-                                              input_files=self._get_files_by_job_and_link(mconcat_job.name,
-                                                                                          FileLink.OUTPUT))
-            workflow.add_node(job_name, job=mbgmodel_job)
-            workflow.add_edge(mconcat_job.name, job_name)
+            # mBgModel task
+            task_name = self._generate_task_name('mBgModel')
+            mbgmodel_task = self._generate_task('mBgModel', task_name,
+                                                input_files=self._get_files_by_task_and_link(mconcat_task.name,
+                                                                                             FileLink.OUTPUT))
+            workflow.add_node(task_name, task=mbgmodel_task)
+            workflow.add_edge(mconcat_task.name, task_name)
 
-            # mBackground jobs
-            mbg_jobs = []
-            for job in mproject_jobs:
-                input_files = self._get_files_by_job_and_link(job.name, FileLink.OUTPUT)
-                input_files.extend(self._get_files_by_job_and_link(mbgmodel_job.name, FileLink.OUTPUT))
-                job_name = self._generate_job_name('mBackground')
-                mbg_job = self._generate_job('mBackground', job_name, input_files=input_files,
-                                             files_recipe={FileLink.OUTPUT: {'.fits': 2}})
-                workflow.add_node(job_name, job=mbg_job)
-                workflow.add_edge(mbgmodel_job.name, job_name)
-                mbg_jobs.append(mbg_job)
+            # mBackground tasks
+            mbg_tasks = []
+            for task in mproject_tasks:
+                input_files = self._get_files_by_task_and_link(task.name, FileLink.OUTPUT)
+                input_files.extend(self._get_files_by_task_and_link(mbgmodel_task.name, FileLink.OUTPUT))
+                task_name = self._generate_task_name('mBackground')
+                mbg_task = self._generate_task('mBackground', task_name, input_files=input_files,
+                                               files_recipe={FileLink.OUTPUT: {'.fits': 2}})
+                workflow.add_node(task_name, task=mbg_task)
+                workflow.add_edge(mbgmodel_task.name, task_name)
+                mbg_tasks.append(mbg_task)
 
-            # mImgtbl job
-            job_name = self._generate_job_name('mImgtbl')
+            # mImgtbl task
+            task_name = self._generate_task_name('mImgtbl')
             input_files = []
-            for job in mbg_jobs:
-                input_files.append(self._get_files_by_job_and_link(job.name, FileLink.OUTPUT)[0])
-                workflow.add_edge(job.name, job_name)
-            mimg_job = self._generate_job('mImgtbl', job_name, input_files=input_files)
-            workflow.add_node(job_name, job=mimg_job)
+            for task in mbg_tasks:
+                input_files.append(self._get_files_by_task_and_link(task.name, FileLink.OUTPUT)[0])
+                workflow.add_edge(task.name, task_name)
+            mimg_task = self._generate_task('mImgtbl', task_name, input_files=input_files)
+            workflow.add_node(task_name, task=mimg_task)
 
-            # mAdd job
-            job_name = self._generate_job_name('mAdd')
+            # mAdd task
+            task_name = self._generate_task_name('mAdd')
             input_files = []
-            for job in mbg_jobs:
-                input_files.extend(self._get_files_by_job_and_link(job.name, FileLink.OUTPUT))
-            madd_job = self._generate_job('mAdd', job_name, input_files=input_files,
-                                          files_recipe={FileLink.OUTPUT: {'.fits': 2}})
-            workflow.add_node(job_name, job=madd_job)
-            workflow.add_edge(mimg_job.name, job_name)
-            madd_jobs.append(madd_job)
+            for task in mbg_tasks:
+                input_files.extend(self._get_files_by_task_and_link(task.name, FileLink.OUTPUT))
+            madd_task = self._generate_task('mAdd', task_name, input_files=input_files,
+                                            files_recipe={FileLink.OUTPUT: {'.fits': 2}})
+            workflow.add_node(task_name, task=madd_task)
+            workflow.add_edge(mimg_task.name, task_name)
+            madd_tasks.append(madd_task)
 
-            # mViewer job
-            job_name = self._generate_job_name('mViewer')
-            mviewer_job = self._generate_job('mViewer', job_name,
-                                             input_files=[self._get_files_by_job_and_link(madd_job.name,
-                                                                                          FileLink.OUTPUT)[1]])
-            workflow.add_node(job_name, job=mviewer_job)
-            workflow.add_edge(madd_job.name, job_name)
+            # mViewer task
+            task_name = self._generate_task_name('mViewer')
+            mviewer_task = self._generate_task('mViewer', task_name,
+                                               input_files=[self._get_files_by_task_and_link(madd_task.name,
+                                                                                             FileLink.OUTPUT)[1]])
+            workflow.add_node(task_name, task=mviewer_task)
+            workflow.add_edge(madd_task.name, task_name)
 
-        # colored mViewer job
-        if len(madd_jobs) > 1:
-            job_name = self._generate_job_name('mViewer')
+        # colored mViewer task
+        if len(madd_tasks) > 1:
+            task_name = self._generate_task_name('mViewer')
             input_files = []
-            for job in madd_jobs:
-                input_files.append(self._get_files_by_job_and_link(job.name, FileLink.OUTPUT)[1])
-                workflow.add_edge(job.name, job_name)
-            mviewer_job = self._generate_job('mViewer', job_name, input_files=input_files)
-            workflow.add_node(job_name, job=mviewer_job)
+            for task in madd_tasks:
+                input_files.append(self._get_files_by_task_and_link(task.name, FileLink.OUTPUT)[1])
+                workflow.add_edge(task.name, task_name)
+            mviewer_task = self._generate_task('mViewer', task_name, input_files=input_files)
+            workflow.add_node(task_name, task=mviewer_task)
 
         self.workflows.append(workflow)
         return workflow
@@ -319,7 +321,7 @@ class MontageRecipe(WorkflowRecipe, _MontageJobRatios):
         Recipe for generating synthetic traces of the Montage workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         if self.dataset == MontageDataset.TWOMASS:

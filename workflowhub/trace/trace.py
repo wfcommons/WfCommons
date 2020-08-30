@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 from .schema import SchemaValidator
 from ..common.file import File, FileLink
 from ..common.machine import Machine, MachineSystem
-from ..common.job import Job, JobType
+from ..common.task import Task, TaskType
 from ..common.workflow import Workflow
 from ..utils import read_json
 
@@ -97,15 +97,15 @@ class Trace:
             ) for machine in self.trace['workflow']['machines']
         }
 
-        # Jobs
+        # Tasks
         self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
-        for job in self.trace['workflow']['jobs']:
+        for task in self.trace['workflow']['jobs']:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
             # By default the value is set to None if we do not find the value
 
-            # Create the list of files associated to this job
-            list_files = job.get('files', [])
+            # Create the list of files associated to this task
+            list_files = task.get('files', [])
             list_files = [File(
                 name=f['name'],
                 size=f['size'],
@@ -113,38 +113,38 @@ class Trace:
                 logger=self.logger
             ) for f in list_files]
 
-            # Fetch back the machine associated to this job
-            machine = job.get('machine', None)
+            # Fetch back the machine associated to this task
+            machine = task.get('machine', None)
             machine = None if machine is None else self.machines[machine]
 
             self.workflow.add_node(
-                job['name'],
-                job=Job(
-                    name=job['name'],
-                    job_type=JobType(job['type']),
-                    runtime=job['runtime'],
+                task['name'],
+                task=Task(
+                    name=task['name'],
+                    task_type=TaskType(task['type']),
+                    runtime=task['runtime'],
                     machine=machine,
-                    args=job.get('arguments', None),
-                    cores=job.get('cores', None),
-                    avg_cpu=job.get('avgCPU', None),
-                    bytes_read=job.get('bytesRead', None),
-                    bytes_written=job.get('bytesWritten', None),
-                    memory=job.get('memory', None),
-                    energy=job.get('energy', None),
-                    avg_power=job.get('avgPower', None),
-                    priority=job.get('priority', None),
-                    files=list_files,  # TODO: sum all files read/written by this job
+                    args=task.get('arguments', None),
+                    cores=task.get('cores', None),
+                    avg_cpu=task.get('avgCPU', None),
+                    bytes_read=task.get('bytesRead', None),
+                    bytes_written=task.get('bytesWritten', None),
+                    memory=task.get('memory', None),
+                    energy=task.get('energy', None),
+                    avg_power=task.get('avgPower', None),
+                    priority=task.get('priority', None),
+                    files=list_files,  # TODO: sum all files read/written by this task
                     logger=self.logger
                 )
             )
 
-        # TODO: handle the case of the output files of the leaves jobs (not taken into account yet)
-        for job in self.trace['workflow']['jobs']:
-            for parent in job['parents']:
-                self.workflow.add_edge(parent, job['name'], weight=0)
+        # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
+        for task in self.trace['workflow']['jobs']:
+            for parent in task['parents']:
+                self.workflow.add_edge(parent, task['name'], weight=0)
 
-        # TODO: instead of attaching files to jobs, attach them to edges based on the link direction.
-        self.logger.info('Parsed a trace with {} jobs'.format(len(self.workflow.nodes)))
+        # TODO: instead of attaching files to tasks, attach them to edges based on the link direction.
+        self.logger.info('Parsed a trace with {} tasks'.format(len(self.workflow.nodes)))
 
     def __iter__(self):
         """Produce an iterator based on a topological sort (e.g., scheduling order)"""
@@ -153,9 +153,9 @@ class Trace:
         return self
 
     def __next__(self) -> str:
-        """Return the next job from a topological sort.
+        """Return the next task from a topological sort.
 
-        :return: job ID
+        :return: task ID
         :rtype: str
         """
         if self._n < len(self.workflow):

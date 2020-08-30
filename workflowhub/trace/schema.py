@@ -111,22 +111,22 @@ class SchemaValidator:
         else:
             self.logger.debug('Skipping machines processing.')
 
-        job_ids = []
+        tasks_ids = []
         for j in data['workflow']['jobs']:
-            job_ids.append(j['name'])
+            tasks_ids.append(j['name'])
             if 'machine' in j and j['machine'] not in machine_ids:
                 self.logger.error('Machine "{}" is not declared in the list of machines.'.format(j['machine']))
                 has_error = True
 
-        # since jobs may be declared out of order, their dependencies are only verified here
+        # since tasks may be declared out of order, their dependencies are only verified here
         for j in data['workflow']['jobs']:
             for p in j['parents']:
-                if p not in job_ids:
+                if p not in tasks_ids:
                     self.logger.error(
-                        'Parent job "{}}" is not declared in the list of workflow jobs.'.format(p['parentId']))
+                        'Parent task "{}}" is not declared in the list of workflow tasks.'.format(p['parentId']))
                     has_error = True
 
-        self.logger.debug('The workflow has {} jobs.'.format(len(job_ids)))
+        self.logger.debug('The workflow has {} tasks.'.format(len(tasks_ids)))
         self.logger.debug('The workflow has {} machines.'.format(len(machine_ids)))
 
         if has_error:

@@ -29,8 +29,8 @@ class EpigenomicsRecipe(WorkflowRecipe):
     :type bin_size: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
 
     def __init__(self,
@@ -38,44 +38,44 @@ class EpigenomicsRecipe(WorkflowRecipe):
                  num_lines: Optional[int] = 10,
                  bin_size: Optional[int] = 10,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 9
+                 num_tasks: Optional[int] = 9
                  ) -> None:
         """Create an object of the Epigenomics workflow recipe."""
-        super().__init__("Epigenomics", data_footprint, num_jobs)
+        super().__init__("Epigenomics", data_footprint, num_tasks)
 
         self.num_sequence_files: int = num_sequence_files
         self.num_lines: int = num_lines
         self.bin_size: int = bin_size
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'EpigenomicsRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'EpigenomicsRecipe':
         """
         Instantiate an Epigenomics workflow recipe that will generate synthetic workflows
-        up to the total number of jobs provided.
+        up to the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 9).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 9).
+        :type num_tasks: int
 
         :return: An Epigenomics workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: EpigenomicsRecipe
         """
-        if num_jobs < 9:
-            raise ValueError("The upper bound for the number of jobs should be at least 9.")
+        if num_tasks < 9:
+            raise ValueError("The upper bound for the number of tasks should be at least 9.")
 
-        num_sequence_files = random.randint(1, int(math.ceil((num_jobs - 5) / 12)))
-        remaining_jobs = num_jobs - (6 * num_sequence_files) - 3
+        num_sequence_files = random.randint(1, int(math.ceil((num_tasks - 5) / 12)))
+        remaining_tasks = num_tasks - (6 * num_sequence_files) - 3
         num_lines = 1
 
-        while remaining_jobs > 0:
-            if remaining_jobs >= 4 * num_sequence_files:
+        while remaining_tasks > 0:
+            if remaining_tasks >= 4 * num_sequence_files:
                 num_lines += 1
-                remaining_jobs -= 4 * num_sequence_files
+                remaining_tasks -= 4 * num_sequence_files
             else:
                 break
 
         return cls(num_sequence_files=num_sequence_files, num_lines=num_lines * 10, bin_size=10,
-                   data_footprint=None, num_jobs=num_jobs)
+                   data_footprint=None, num_tasks=num_tasks)
 
     @classmethod
     def from_sequences(cls,
@@ -106,7 +106,7 @@ class EpigenomicsRecipe(WorkflowRecipe):
             raise ValueError("The bin size should be at least 10.")
 
         return cls(num_sequence_files=num_sequence_files, num_lines=num_lines, bin_size=bin_size, data_footprint=None,
-                   num_jobs=None)
+                   num_tasks=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of an Epigenomics workflow.
@@ -118,87 +118,87 @@ class EpigenomicsRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        self.job_id_counter: int = 1
+        self.task_id_counter: int = 1
 
-        map_merge_jobs = []
+        map_merge_tasks = []
 
         for _ in range(0, self.num_sequence_files):
-            map_jobs = []
+            map_tasks = []
 
-            # fastqsplit job
+            # fastqsplit task
             num_pipelines = int(self.num_lines / self.bin_size)
-            job_name = self._generate_job_name("fastqSplit")
-            fastqsplit_job = self._generate_job('fastqSplit', job_name,
-                                                files_recipe={FileLink.OUTPUT: {".sfq": num_pipelines}})
-            workflow.add_node(job_name, job=fastqsplit_job)
+            task_name = self._generate_task_name("fastqSplit")
+            fastqsplit_task = self._generate_task('fastqSplit', task_name,
+                                                  files_recipe={FileLink.OUTPUT: {".sfq": num_pipelines}})
+            workflow.add_node(task_name, task=fastqsplit_task)
 
             for seq in range(0, num_pipelines):
-                # filterContams job
-                input_files = [fastqsplit_job.files[seq + 1]]
-                job_name = self._generate_job_name("filterContams")
-                filtercontams_job = self._generate_job('filterContams', job_name, input_files)
-                workflow.add_node(job_name, job=filtercontams_job)
-                workflow.add_edge(fastqsplit_job.name, filtercontams_job.name)
+                # filterContams task
+                input_files = [fastqsplit_task.files[seq + 1]]
+                task_name = self._generate_task_name("filterContams")
+                filtercontams_task = self._generate_task('filterContams', task_name, input_files)
+                workflow.add_node(task_name, task=filtercontams_task)
+                workflow.add_edge(fastqsplit_task.name, filtercontams_task.name)
 
-                # sol2sanger job
-                input_files = [filtercontams_job.files[1]]
-                job_name = self._generate_job_name("sol2sanger")
-                sol2sanger_job = self._generate_job('sol2sanger', job_name, input_files)
-                workflow.add_node(job_name, job=sol2sanger_job)
-                workflow.add_edge(filtercontams_job.name, sol2sanger_job.name)
+                # sol2sanger task
+                input_files = [filtercontams_task.files[1]]
+                task_name = self._generate_task_name("sol2sanger")
+                sol2sanger_task = self._generate_task('sol2sanger', task_name, input_files)
+                workflow.add_node(task_name, task=sol2sanger_task)
+                workflow.add_edge(filtercontams_task.name, sol2sanger_task.name)
 
-                # fast2bfq job
-                input_files = [sol2sanger_job.files[3]]
-                job_name = self._generate_job_name("fast2bfq")
-                fast2bfq_job = self._generate_job('fast2bfq', job_name, input_files)
-                workflow.add_node(job_name, job=fast2bfq_job)
-                workflow.add_edge(sol2sanger_job.name, fast2bfq_job.name)
+                # fast2bfq task
+                input_files = [sol2sanger_task.files[3]]
+                task_name = self._generate_task_name("fast2bfq")
+                fast2bfq_task = self._generate_task('fast2bfq', task_name, input_files)
+                workflow.add_node(task_name, task=fast2bfq_task)
+                workflow.add_edge(sol2sanger_task.name, fast2bfq_task.name)
 
-                # map job
-                input_files = [fast2bfq_job.files[3]]
-                job_name = self._generate_job_name("map")
-                map_job = self._generate_job('map_', job_name, input_files)
-                workflow.add_node(job_name, job=map_job)
-                workflow.add_edge(fast2bfq_job.name, map_job.name)
-                map_jobs.append(map_job)
+                # map task
+                input_files = [fast2bfq_task.files[3]]
+                task_name = self._generate_task_name("map")
+                map_task = self._generate_task('map_', task_name, input_files)
+                workflow.add_node(task_name, task=map_task)
+                workflow.add_edge(fast2bfq_task.name, map_task.name)
+                map_tasks.append(map_task)
 
-            # map merge job (per sequence file)
+            # map merge task (per sequence file)
             input_files = []
-            for j in map_jobs:
+            for j in map_tasks:
                 input_files.append(j.files[4])
-            job_name = self._generate_job_name("mapMerge")
-            map_merge_job = self._generate_job('mapMerge', job_name, input_files)
-            workflow.add_node(job_name, job=map_merge_job)
-            for j in map_jobs:
-                workflow.add_edge(j.name, map_merge_job.name)
-            map_merge_jobs.append(map_merge_job)
+            task_name = self._generate_task_name("mapMerge")
+            map_merge_task = self._generate_task('mapMerge', task_name, input_files)
+            workflow.add_node(task_name, task=map_merge_task)
+            for j in map_tasks:
+                workflow.add_edge(j.name, map_merge_task.name)
+            map_merge_tasks.append(map_merge_task)
 
-        # map merge job
+        # map merge task
         input_files = []
-        for j in map_merge_jobs:
+        for j in map_merge_tasks:
             for f in j.files:
                 if f.link == FileLink.OUTPUT:
                     input_files.append(f)
-        job_name = self._generate_job_name("mapMerge")
-        map_merge_job = self._generate_job('mapMerge', job_name, input_files)
-        workflow.add_node(job_name, job=map_merge_job)
-        for j in map_merge_jobs:
-            workflow.add_edge(j.name, map_merge_job.name)
-        map_merge_jobs.append(map_merge_job)
+        task_name = self._generate_task_name("mapMerge")
+        map_merge_task = self._generate_task('mapMerge', task_name, input_files)
+        workflow.add_node(task_name, task=map_merge_task)
+        for j in map_merge_tasks:
+            workflow.add_edge(j.name, map_merge_task.name)
+        map_merge_tasks.append(map_merge_task)
 
-        # chr21 job
-        input_files = [map_merge_job.files[len(map_merge_jobs) + 1]]
-        job_name = self._generate_job_name("chr21")
-        chr21_job = self._generate_job('chr21', job_name, input_files)
-        workflow.add_node(job_name, job=chr21_job)
-        workflow.add_edge(map_merge_job.name, chr21_job.name)
+        # chr21 task
+        input_files = [map_merge_task.files[len(map_merge_tasks) + 1]]
+        task_name = self._generate_task_name("chr21")
+        chr21_task = self._generate_task('chr21', task_name, input_files)
+        workflow.add_node(task_name, task=chr21_task)
+        workflow.add_edge(map_merge_task.name, chr21_task.name)
 
-        # pileup job
-        input_files = [chr21_job.files[3]]
-        job_name = self._generate_job_name("pileup")
-        pileup_job = self._generate_job('pileup', job_name, input_files)
-        workflow.add_node(job_name, job=pileup_job)
-        workflow.add_edge(chr21_job.name, pileup_job.name)
+        # pileup task
+        input_files = [chr21_task.files[3]]
+        task_name = self._generate_task_name("pileup")
+        pileup_task = self._generate_task('pileup', task_name, input_files)
+        workflow.add_node(task_name, task=pileup_task)
+        workflow.add_edge(chr21_task.name, pileup_task.name)
 
         self.workflows.append(workflow)
         return workflow
@@ -208,7 +208,7 @@ class EpigenomicsRecipe(WorkflowRecipe):
         Recipe for generating synthetic traces of the Epigenomics workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         return {

@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
-from ...common.job import Job
+from ...common.task import Task
 from ...common.workflow import Workflow
 
 
@@ -27,8 +27,8 @@ class GenomeRecipe(WorkflowRecipe):
     :type num_populations: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
 
     def __init__(self,
@@ -36,10 +36,10 @@ class GenomeRecipe(WorkflowRecipe):
                  num_sequences: Optional[int] = 1,
                  num_populations: Optional[int] = 1,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 5
+                 num_tasks: Optional[int] = 5
                  ) -> None:
         """Create an object of the 1000Genome workflow recipe."""
-        super().__init__("1000Genome", data_footprint, num_jobs)
+        super().__init__("1000Genome", data_footprint, num_tasks)
 
         self.num_chromosomes: int = num_chromosomes
         self.num_sequences: int = num_sequences
@@ -47,51 +47,51 @@ class GenomeRecipe(WorkflowRecipe):
         self.populations = ['ALL', 'AFR', 'AMR', 'EAS', 'EUR', 'GBR', 'SAS']
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'GenomeRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'GenomeRecipe':
         """
         Instantiate a 1000Genome workflow recipe that will generate synthetic workflows up to
-        the total number of jobs provided.
+        the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 5).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 5).
+        :type num_tasks: int
 
         :return: A 1000Genome workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: GenomeRecipe
         """
-        if num_jobs < 5:
-            raise ValueError("The upper bound for the number of jobs should be at least 5.")
+        if num_tasks < 5:
+            raise ValueError("The upper bound for the number of tasks should be at least 5.")
 
         num_chromosomes = 1
         num_sequences = 1
         num_populations = 1
-        remaining_jobs = num_jobs - 5
+        remaining_tasks = num_tasks - 5
 
-        while remaining_jobs > 0:
-            added_job = False
-            if num_sequences <= num_populations or 2 > remaining_jobs >= num_chromosomes:
+        while remaining_tasks > 0:
+            added_task = False
+            if num_sequences <= num_populations or 2 > remaining_tasks >= num_chromosomes:
                 num_sequences += 1
-                remaining_jobs -= 1
-                added_job = True
-            if 7 > num_populations < num_sequences + 1 and remaining_jobs >= 2:
+                remaining_tasks -= 1
+                added_task = True
+            if 7 > num_populations < num_sequences + 1 and remaining_tasks >= 2:
                 num_populations += 1
-                remaining_jobs -= 2
-                added_job = True
-            if not added_job:
-                jobs_per_branch = 2 + num_populations * 2 + num_sequences
-                if num_populations == 7 and num_chromosomes < 22 and remaining_jobs >= jobs_per_branch:
+                remaining_tasks -= 2
+                added_task = True
+            if not added_task:
+                tasks_per_branch = 2 + num_populations * 2 + num_sequences
+                if num_populations == 7 and num_chromosomes < 22 and remaining_tasks >= tasks_per_branch:
                     num_chromosomes += 1
-                    remaining_jobs -= jobs_per_branch
-                elif jobs_per_branch > remaining_jobs >= num_chromosomes or \
-                        remaining_jobs >= num_chromosomes:
+                    remaining_tasks -= tasks_per_branch
+                elif tasks_per_branch > remaining_tasks >= num_chromosomes or \
+                        remaining_tasks >= num_chromosomes:
                     num_sequences += 1
-                    remaining_jobs -= num_chromosomes
-                    jobs_per_branch += 1
+                    remaining_tasks -= num_chromosomes
+                    tasks_per_branch += 1
                 else:
                     break
 
         return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences * 1000, num_populations=num_populations,
-                   data_footprint=None, num_jobs=num_jobs)
+                   data_footprint=None, num_tasks=num_tasks)
 
     @classmethod
     def from_num_chromosomes(cls,
@@ -122,7 +122,7 @@ class GenomeRecipe(WorkflowRecipe):
             raise ValueError("The number of populations should be within the range [1,7].")
 
         return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences, num_populations=num_populations,
-                   data_footprint=None, num_jobs=None)
+                   data_footprint=None, num_tasks=None)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of a 1000Genome workflow.
@@ -134,53 +134,53 @@ class GenomeRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        self.job_id_counter: int = 1
+        self.task_id_counter: int = 1
 
         for _ in range(0, self.num_chromosomes):
-            # individuals jobs
-            individuals_jobs: List[Job] = []
+            # individuals tasks
+            individuals_tasks: List[Task] = []
             for _ in range(0, int(self.num_sequences / 1000)):
-                job_name = self._generate_job_name("individuals")
-                individuals_job = self._generate_job('individuals', job_name)
-                individuals_jobs.append(individuals_job)
-                workflow.add_node(job_name, job=individuals_job)
+                task_name = self._generate_task_name("individuals")
+                individuals_task = self._generate_task('individuals', task_name)
+                individuals_tasks.append(individuals_task)
+                workflow.add_node(task_name, task=individuals_task)
 
-            # individuals merge job
-            job_name = self._generate_job_name("individuals_merge")
+            # individuals merge task
+            task_name = self._generate_task_name("individuals_merge")
             input_files = []
-            for j in individuals_jobs:
-                input_files.extend(self._get_files_by_job_and_link(j.name, FileLink.OUTPUT))
-            individuals_merge_job = self._generate_job('individuals_merge', job_name, input_files)
-            workflow.add_node(job_name, job=individuals_merge_job)
-            for j in individuals_jobs:
-                workflow.add_edge(j.name, individuals_merge_job.name)
+            for j in individuals_tasks:
+                input_files.extend(self._get_files_by_task_and_link(j.name, FileLink.OUTPUT))
+            individuals_merge_task = self._generate_task('individuals_merge', task_name, input_files)
+            workflow.add_node(task_name, task=individuals_merge_task)
+            for j in individuals_tasks:
+                workflow.add_edge(j.name, individuals_merge_task.name)
 
-            # sifting job
-            job_name = self._generate_job_name("sifting")
-            sifting_job = self._generate_job('sifting', job_name)
-            workflow.add_node(job_name, job=sifting_job)
+            # sifting task
+            task_name = self._generate_task_name("sifting")
+            sifting_task = self._generate_task('sifting', task_name)
+            workflow.add_node(task_name, task=sifting_task)
 
-            # mutation overlap jobs
-            input_files = self._get_files_by_job_and_link(individuals_merge_job.name, FileLink.OUTPUT)
-            input_files.extend(self._get_files_by_job_and_link(sifting_job.name, FileLink.OUTPUT))
+            # mutation overlap tasks
+            input_files = self._get_files_by_task_and_link(individuals_merge_task.name, FileLink.OUTPUT)
+            input_files.extend(self._get_files_by_task_and_link(sifting_task.name, FileLink.OUTPUT))
             for p in range(0, self.num_populations):
-                job_name = self._generate_job_name("mutation_overlap")
-                mutation_overlap_job = self._generate_job('mutation_overlap', job_name, input_files,
-                                                          files_recipe=self._get_populations_files_recipe(p))
-                workflow.add_node(job_name, job=mutation_overlap_job)
-                workflow.add_edge(sifting_job.name, job_name)
-                workflow.add_edge(individuals_merge_job.name, job_name)
+                task_name = self._generate_task_name("mutation_overlap")
+                mutation_overlap_task = self._generate_task('mutation_overlap', task_name, input_files,
+                                                            files_recipe=self._get_populations_files_recipe(p))
+                workflow.add_node(task_name, task=mutation_overlap_task)
+                workflow.add_edge(sifting_task.name, task_name)
+                workflow.add_edge(individuals_merge_task.name, task_name)
 
-            # frequency jobs
-            input_files = self._get_files_by_job_and_link(individuals_merge_job.name, FileLink.OUTPUT)
-            input_files.extend(self._get_files_by_job_and_link(sifting_job.name, FileLink.OUTPUT))
+            # frequency tasks
+            input_files = self._get_files_by_task_and_link(individuals_merge_task.name, FileLink.OUTPUT)
+            input_files.extend(self._get_files_by_task_and_link(sifting_task.name, FileLink.OUTPUT))
             for p in range(0, self.num_populations):
-                job_name = self._generate_job_name("frequency")
-                frequency_job = self._generate_job('frequency', job_name, input_files,
-                                                   files_recipe=self._get_populations_files_recipe(p))
-                workflow.add_node(job_name, job=frequency_job)
-                workflow.add_edge(sifting_job.name, job_name)
-                workflow.add_edge(individuals_merge_job.name, job_name)
+                task_name = self._generate_task_name("frequency")
+                frequency_task = self._generate_task('frequency', task_name, input_files,
+                                                     files_recipe=self._get_populations_files_recipe(p))
+                workflow.add_node(task_name, task=frequency_task)
+                workflow.add_edge(sifting_task.name, task_name)
+                workflow.add_edge(individuals_merge_task.name, task_name)
 
         self.workflows.append(workflow)
         return workflow
@@ -209,7 +209,7 @@ class GenomeRecipe(WorkflowRecipe):
         Recipe for generating synthetic traces of the 1000Genome workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         return {

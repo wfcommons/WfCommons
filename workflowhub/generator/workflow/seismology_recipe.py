@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
-from ...common.job import Job
+from ...common.task import Task
 from ...common.workflow import Workflow
 
 
@@ -23,36 +23,37 @@ class SeismologyRecipe(WorkflowRecipe):
     :type num_pairs: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
+
     def __init__(self,
                  num_pairs: Optional[int] = 2,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 3
+                 num_tasks: Optional[int] = 3
                  ) -> None:
         """Create an object of the Seismology workflow recipe."""
-        super().__init__("Seismology", data_footprint, num_jobs)
+        super().__init__("Seismology", data_footprint, num_tasks)
 
         self.num_pairs: int = num_pairs
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'SeismologyRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'SeismologyRecipe':
         """
         Instantiate a Seismology workflow recipe that will generate synthetic workflows up to
-        the total number of jobs provided.
+        the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 3).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 3).
+        :type num_tasks: int
 
         :return: A Seismology workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: SeismologyRecipe
         """
-        if num_jobs < 3:
-            raise ValueError("The upper bound for the number of jobs should be at least 3.")
+        if num_tasks < 3:
+            raise ValueError("The upper bound for the number of tasks should be at least 3.")
 
-        return cls(num_pairs=num_jobs - 1, data_footprint=None, num_jobs=num_jobs)
+        return cls(num_pairs=num_tasks - 1, data_footprint=None, num_tasks=num_tasks)
 
     @classmethod
     def from_num_pairs(cls, num_pairs: int) -> 'SeismologyRecipe':
@@ -70,7 +71,7 @@ class SeismologyRecipe(WorkflowRecipe):
         if num_pairs < 2:
             raise ValueError("The number of pairs should be at least 2.")
 
-        return cls(num_pairs=num_pairs, data_footprint=None, num_jobs=None)
+        return cls(num_pairs=num_pairs, data_footprint=None, num_tasks=None)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a Seismology workflow.
@@ -82,28 +83,29 @@ class SeismologyRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        self.job_id_counter: int = 1
-        sg1iterdecon_jobs: List[Job] = []
+        self.task_id_counter: int = 1
+        sg1iterdecon_tasks: List[Task] = []
 
         for _ in range(0, self.num_pairs):
-            # sG1IterDecon job
-            job_name = self._generate_job_name("sG1IterDecon")
-            sg1iterdecon_job = self._generate_job('sG1IterDecon', job_name, files_recipe={FileLink.INPUT: {".lht": 2}})
-            sg1iterdecon_jobs.append(sg1iterdecon_job)
-            workflow.add_node(job_name, job=sg1iterdecon_job)
+            # sG1IterDecon task
+            task_name = self._generate_task_name("sG1IterDecon")
+            sg1iterdecon_task = self._generate_task('sG1IterDecon', task_name,
+                                                    files_recipe={FileLink.INPUT: {".lht": 2}})
+            sg1iterdecon_tasks.append(sg1iterdecon_task)
+            workflow.add_node(task_name, task=sg1iterdecon_task)
 
-        # wrapper_siftSTFByMisfit job
+        # wrapper_siftSTFByMisfit task
         input_files = []
-        for j in sg1iterdecon_jobs:
+        for j in sg1iterdecon_tasks:
             for f in j.files:
                 if f.link == FileLink.OUTPUT:
                     input_files.append(f)
 
-        job_name = self._generate_job_name('wrapper_siftSTFByMisfit')
-        wrapper_job = self._generate_job('wrapper_siftSTFByMisfit', job_name, input_files)
-        workflow.add_node(job_name, job=wrapper_job)
-        for j in sg1iterdecon_jobs:
-            workflow.add_edge(j.name, wrapper_job.name)
+        task_name = self._generate_task_name('wrapper_siftSTFByMisfit')
+        wrapper_task = self._generate_task('wrapper_siftSTFByMisfit', task_name, input_files)
+        workflow.add_node(task_name, task=wrapper_task)
+        for j in sg1iterdecon_tasks:
+            workflow.add_edge(j.name, wrapper_task.name)
 
         self.workflows.append(workflow)
         return workflow
@@ -113,7 +115,7 @@ class SeismologyRecipe(WorkflowRecipe):
         Recipe for generating synthetic traces of the Seismology workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         return {

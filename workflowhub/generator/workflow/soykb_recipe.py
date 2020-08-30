@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
-from ...common.job import Job
+from ...common.task import Task
 from ...common.workflow import Workflow
 
 
@@ -28,51 +28,51 @@ class SoyKBRecipe(WorkflowRecipe):
     :type num_chromosomes: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
-    :param num_jobs: The upper bound for the total number of jobs in the workflow.
-    :type num_jobs: int
+    :param num_tasks: The upper bound for the total number of tasks in the workflow.
+    :type num_tasks: int
     """
 
     def __init__(self,
                  num_fastq_files: Optional[int] = 2,
                  num_chromosomes: Optional[int] = 1,
                  data_footprint: Optional[int] = 0,
-                 num_jobs: Optional[int] = 14
+                 num_tasks: Optional[int] = 14
                  ) -> None:
         """Create an object of the SoyKB workflow recipe."""
-        super().__init__("SoyKB", data_footprint, num_jobs)
+        super().__init__("SoyKB", data_footprint, num_tasks)
 
         self.num_fastq_files = num_fastq_files
         self.num_chromosomes = num_chromosomes
 
     @classmethod
-    def from_num_jobs(cls, num_jobs: int) -> 'SoyKBRecipe':
+    def from_num_tasks(cls, num_tasks: int) -> 'SoyKBRecipe':
         """
         Instantiate a SoyKB workflow recipe that will generate synthetic workflows up to
-        the total number of jobs provided.
+        the total number of tasks provided.
 
-        :param num_jobs: The upper bound for the total number of jobs in the workflow (at least 14).
-        :type num_jobs: int
+        :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 14).
+        :type num_tasks: int
 
         :return: A SoyKB workflow recipe object that will generate synthetic workflows up
-                 to the total number of jobs provided.
+                 to the total number of tasks provided.
         :rtype: SoyKBRecipe
         """
-        if num_jobs < 14:
-            raise ValueError("The upper bound for the number of jobs should be at least 14.")
+        if num_tasks < 14:
+            raise ValueError("The upper bound for the number of tasks should be at least 14.")
 
-        num_chromosomes = 1 if num_jobs == 14 else random.randint(1, min(math.ceil((num_jobs - 14) / 2), 22))
-        remaining_jobs = num_jobs - (2 * num_chromosomes) - 12
+        num_chromosomes = 1 if num_tasks == 14 else random.randint(1, min(math.ceil((num_tasks - 14) / 2), 22))
+        remaining_tasks = num_tasks - (2 * num_chromosomes) - 12
         num_fastq_files = 1
 
-        while remaining_jobs > 0:
-            if remaining_jobs >= num_chromosomes + 6:
+        while remaining_tasks > 0:
+            if remaining_tasks >= num_chromosomes + 6:
                 num_fastq_files += 1
-                remaining_jobs -= num_chromosomes + 6
+                remaining_tasks -= num_chromosomes + 6
             else:
                 break
 
         return cls(num_fastq_files=num_fastq_files * 2, num_chromosomes=num_chromosomes, data_footprint=None,
-                   num_jobs=num_jobs)
+                   num_tasks=num_tasks)
 
     @classmethod
     def from_sequences(cls, num_fastq_files: int, num_chromosomes: int) -> 'SoyKBRecipe':
@@ -94,7 +94,8 @@ class SoyKBRecipe(WorkflowRecipe):
         if num_chromosomes < 1 or num_chromosomes > 22:
             raise ValueError("The number of chromosomes should be within range [1, 22].")
 
-        return cls(num_fastq_files=num_fastq_files, num_chromosomes=num_chromosomes, data_footprint=None, num_jobs=None)
+        return cls(num_fastq_files=num_fastq_files, num_chromosomes=num_chromosomes, data_footprint=None,
+                   num_tasks=None)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a SoyKB workflow.
@@ -106,122 +107,122 @@ class SoyKBRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        self.job_id_counter: int = 1
-        haplotype_caller_jobs: Dict[int, List[Job]] = {}
-        genotype_gvcfs_jobs: List[Job] = []
+        self.task_id_counter: int = 1
+        haplotype_caller_tasks: Dict[int, List[Task]] = {}
+        genotype_gvcfs_tasks: List[Task] = []
 
         num_pipelines: int = math.ceil(self.num_fastq_files / 2)
 
         for _ in range(0, num_pipelines):
-            # align to reference job
-            job_name = self._generate_job_name('alignment_to_reference')
-            atr_job = self._generate_job('alignment_to_reference', job_name,
-                                         files_recipe={FileLink.INPUT: {".fastq": 2}})
-            workflow.add_node(job_name, job=atr_job)
+            # align to reference task
+            task_name = self._generate_task_name('alignment_to_reference')
+            atr_task = self._generate_task('alignment_to_reference', task_name,
+                                           files_recipe={FileLink.INPUT: {".fastq": 2}})
+            workflow.add_node(task_name, task=atr_task)
 
-            # sort sam job
-            job_name = self._generate_job_name('sort_sam')
-            sort_sam_job = self._generate_job('sort_sam', job_name, input_files=[atr_job.files[12]])
-            workflow.add_node(job_name, job=sort_sam_job)
-            workflow.add_edge(atr_job.name, sort_sam_job.name)
+            # sort sam task
+            task_name = self._generate_task_name('sort_sam')
+            sort_sam_task = self._generate_task('sort_sam', task_name, input_files=[atr_task.files[12]])
+            workflow.add_node(task_name, task=sort_sam_task)
+            workflow.add_edge(atr_task.name, sort_sam_task.name)
 
-            # dedup job
-            job_name = self._generate_job_name('dedup')
-            dedup_job = self._generate_job('dedup', job_name,
-                                           input_files=[sort_sam_job.files[2], sort_sam_job.files[3]])
-            workflow.add_node(job_name, job=dedup_job)
-            workflow.add_edge(sort_sam_job.name, dedup_job.name)
+            # dedup task
+            task_name = self._generate_task_name('dedup')
+            dedup_task = self._generate_task('dedup', task_name,
+                                             input_files=[sort_sam_task.files[2], sort_sam_task.files[3]])
+            workflow.add_node(task_name, task=dedup_task)
+            workflow.add_edge(sort_sam_task.name, dedup_task.name)
 
-            # add replace job
-            job_name = self._generate_job_name('add_replace')
-            add_replace_job = self._generate_job('add_replace', job_name,
-                                                 input_files=[dedup_job.files[3], dedup_job.files[4]])
-            workflow.add_node(job_name, job=add_replace_job)
-            workflow.add_edge(dedup_job.name, add_replace_job.name)
+            # add replace task
+            task_name = self._generate_task_name('add_replace')
+            add_replace_task = self._generate_task('add_replace', task_name,
+                                                   input_files=[dedup_task.files[3], dedup_task.files[4]])
+            workflow.add_node(task_name, task=add_replace_task)
+            workflow.add_edge(dedup_task.name, add_replace_task.name)
 
-            # realign target creator replace job
-            job_name = self._generate_job_name('realign_target_creator')
-            rtc_job = self._generate_job('realign_target_creator', job_name,
-                                         input_files=[add_replace_job.files[3], add_replace_job.files[4]])
-            workflow.add_node(job_name, job=rtc_job)
-            workflow.add_edge(add_replace_job.name, rtc_job.name)
+            # realign target creator replace task
+            task_name = self._generate_task_name('realign_target_creator')
+            rtc_task = self._generate_task('realign_target_creator', task_name,
+                                           input_files=[add_replace_task.files[3], add_replace_task.files[4]])
+            workflow.add_node(task_name, task=rtc_task)
+            workflow.add_edge(add_replace_task.name, rtc_task.name)
 
-            # indel realign job
-            job_name = self._generate_job_name('indel_realign')
-            indel_realign_job = self._generate_job('indel_realign', job_name, input_files=[rtc_job.files[12]])
-            workflow.add_node(job_name, job=indel_realign_job)
-            workflow.add_edge(rtc_job.name, indel_realign_job.name)
+            # indel realign task
+            task_name = self._generate_task_name('indel_realign')
+            indel_realign_task = self._generate_task('indel_realign', task_name, input_files=[rtc_task.files[12]])
+            workflow.add_node(task_name, task=indel_realign_task)
+            workflow.add_edge(rtc_task.name, indel_realign_task.name)
 
             for ch in range(0, self.num_chromosomes):
-                # haplotype caller job
-                job_name = self._generate_job_name('haplotype_caller')
-                haplotype_caller_job = self._generate_job('haplotype_caller', job_name,
-                                                          input_files=[indel_realign_job.files[13],
-                                                                       indel_realign_job.files[14]])
-                workflow.add_node(job_name, job=haplotype_caller_job)
-                workflow.add_edge(indel_realign_job.name, haplotype_caller_job.name)
-                if ch not in haplotype_caller_jobs:
-                    haplotype_caller_jobs[ch] = []
-                haplotype_caller_jobs[ch].append(haplotype_caller_job)
+                # haplotype caller task
+                task_name = self._generate_task_name('haplotype_caller')
+                haplotype_caller_task = self._generate_task('haplotype_caller', task_name,
+                                                            input_files=[indel_realign_task.files[13],
+                                                                         indel_realign_task.files[14]])
+                workflow.add_node(task_name, task=haplotype_caller_task)
+                workflow.add_edge(indel_realign_task.name, haplotype_caller_task.name)
+                if ch not in haplotype_caller_tasks:
+                    haplotype_caller_tasks[ch] = []
+                haplotype_caller_tasks[ch].append(haplotype_caller_task)
 
-        for ch in haplotype_caller_jobs:
-            # genotype gvcfs job
-            job_name = self._generate_job_name('genotype_gvcfs')
+        for ch in haplotype_caller_tasks:
+            # genotype gvcfs task
+            task_name = self._generate_task_name('genotype_gvcfs')
             input_files = []
-            for job in haplotype_caller_jobs[ch]:
-                workflow.add_edge(job.name, job_name)
-                input_files.append(job.files[12])
-                input_files.append(job.files[13])
-            genotype_gvcfs_job = self._generate_job('genotype_gvcfs', job_name, input_files=input_files)
-            workflow.add_node(job_name, job=genotype_gvcfs_job)
-            genotype_gvcfs_jobs.append(genotype_gvcfs_job)
+            for task in haplotype_caller_tasks[ch]:
+                workflow.add_edge(task.name, task_name)
+                input_files.append(task.files[12])
+                input_files.append(task.files[13])
+            genotype_gvcfs_task = self._generate_task('genotype_gvcfs', task_name, input_files=input_files)
+            workflow.add_node(task_name, task=genotype_gvcfs_task)
+            genotype_gvcfs_tasks.append(genotype_gvcfs_task)
 
-        # merge gcvf job
-        job_name = self._generate_job_name('merge_gcvf')
+        # merge gcvf task
+        task_name = self._generate_task_name('merge_gcvf')
         input_files = []
-        for ch in haplotype_caller_jobs:
-            for job in haplotype_caller_jobs[ch]:
-                workflow.add_edge(job.name, job_name)
-                input_files.append(job.files[12])
-                input_files.append(job.files[13])
-        merge_gcvf_job = self._generate_job('merge_gcvf', job_name, input_files=input_files)
-        workflow.add_node(job_name, job=merge_gcvf_job)
+        for ch in haplotype_caller_tasks:
+            for task in haplotype_caller_tasks[ch]:
+                workflow.add_edge(task.name, task_name)
+                input_files.append(task.files[12])
+                input_files.append(task.files[13])
+        merge_gcvf_task = self._generate_task('merge_gcvf', task_name, input_files=input_files)
+        workflow.add_node(task_name, task=merge_gcvf_task)
 
-        # combine variants job
-        job_name = self._generate_job_name('combine_variants')
+        # combine variants task
+        task_name = self._generate_task_name('combine_variants')
         input_files = []
-        for job in genotype_gvcfs_jobs:
-            workflow.add_edge(job.name, job_name)
-            input_files.extend(self._get_files_by_job_and_link(job.name, FileLink.OUTPUT))
-        combine_variants_job = self._generate_job('combine_variants', job_name, input_files=input_files)
-        workflow.add_node(job_name, job=combine_variants_job)
+        for task in genotype_gvcfs_tasks:
+            workflow.add_edge(task.name, task_name)
+            input_files.extend(self._get_files_by_task_and_link(task.name, FileLink.OUTPUT))
+        combine_variants_task = self._generate_task('combine_variants', task_name, input_files=input_files)
+        workflow.add_node(task_name, task=combine_variants_task)
 
-        # select variants indel job
-        input_files = self._get_files_by_job_and_link(combine_variants_job.name, FileLink.OUTPUT)
-        job_name = self._generate_job_name('select_variants_indel')
-        svi_job = self._generate_job('select_variants_indel', job_name, input_files=input_files)
-        workflow.add_node(job_name, job=svi_job)
-        workflow.add_edge(combine_variants_job.name, svi_job.name)
+        # select variants indel task
+        input_files = self._get_files_by_task_and_link(combine_variants_task.name, FileLink.OUTPUT)
+        task_name = self._generate_task_name('select_variants_indel')
+        svi_task = self._generate_task('select_variants_indel', task_name, input_files=input_files)
+        workflow.add_node(task_name, task=svi_task)
+        workflow.add_edge(combine_variants_task.name, svi_task.name)
 
-        # select variants snp job
-        job_name = self._generate_job_name('select_variants_snp')
-        svs_job = self._generate_job('select_variants_snp', job_name, input_files=input_files)
-        workflow.add_node(job_name, job=svs_job)
-        workflow.add_edge(combine_variants_job.name, svs_job.name)
+        # select variants snp task
+        task_name = self._generate_task_name('select_variants_snp')
+        svs_task = self._generate_task('select_variants_snp', task_name, input_files=input_files)
+        workflow.add_node(task_name, task=svs_task)
+        workflow.add_edge(combine_variants_task.name, svs_task.name)
 
-        # filtering indel job
-        job_name = self._generate_job_name('filtering_indel')
-        fi_job = self._generate_job('filtering_indel', job_name,
-                                    input_files=self._get_files_by_job_and_link(svi_job.name, FileLink.OUTPUT))
-        workflow.add_node(job_name, job=fi_job)
-        workflow.add_edge(svi_job.name, fi_job.name)
+        # filtering indel task
+        task_name = self._generate_task_name('filtering_indel')
+        fi_task = self._generate_task('filtering_indel', task_name,
+                                      input_files=self._get_files_by_task_and_link(svi_task.name, FileLink.OUTPUT))
+        workflow.add_node(task_name, task=fi_task)
+        workflow.add_edge(svi_task.name, fi_task.name)
 
-        # filtering indel job
-        job_name = self._generate_job_name('filtering_snp')
-        fs_job = self._generate_job('filtering_snp', job_name,
-                                    input_files=self._get_files_by_job_and_link(svs_job.name, FileLink.OUTPUT))
-        workflow.add_node(job_name, job=fs_job)
-        workflow.add_edge(svs_job.name, fs_job.name)
+        # filtering indel task
+        task_name = self._generate_task_name('filtering_snp')
+        fs_task = self._generate_task('filtering_snp', task_name,
+                                      input_files=self._get_files_by_task_and_link(svs_task.name, FileLink.OUTPUT))
+        workflow.add_node(task_name, task=fs_task)
+        workflow.add_edge(svs_task.name, fs_task.name)
 
         self.workflows.append(workflow)
         return workflow
@@ -231,7 +232,7 @@ class SoyKBRecipe(WorkflowRecipe):
         Recipe for generating synthetic traces of the SoyKB workflow. Recipes can be
         generated by using the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer`.
 
-        :return: A recipe in the form of a dictionary in which keys are job prefixes.
+        :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
         return {

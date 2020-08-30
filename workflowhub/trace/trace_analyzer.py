@@ -19,7 +19,7 @@ from os import path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .trace import Trace
-from ..common.job import Job
+from ..common.task import Task
 from ..common.file import FileLink
 from ..utils import best_fit_distribution, NoValue
 
@@ -41,7 +41,7 @@ class TraceAnalyzer:
         """Create an object of the trace analyzer."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.traces: List[Trace] = []
-        self.jobs_summary: Dict[str, List:Job] = {}
+        self.tasks_summary: Dict[str, List:[Task]] = {}
         self.traces_summary: Dict[str, Dict[str, Any]] = {}
 
     def append_trace(self, trace: Trace) -> None:
@@ -58,47 +58,48 @@ class TraceAnalyzer:
         """
         if trace not in self.traces:
             self.traces.append(trace)
-            self.logger.debug('Appended trace: {} ({} jobs)'.format(trace.name, len(trace.workflow.nodes)))
+            self.logger.debug('Appended trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
 
-    def build_summary(self, jobs_list: List[str], include_raw_data: Optional[bool] = True) -> Dict[str, Dict[str, Any]]:
-        """Analyzes appended traces and produce a summary of the analysis per job prefix.
+    def build_summary(self, tasks_list: List[str], include_raw_data: Optional[bool] = True) -> Dict[
+        str, Dict[str, Any]]:
+        """Analyzes appended traces and produce a summary of the analysis per task prefix.
 
         .. code-block:: python
 
-            workflow_jobs = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
-            traces_summary = trace_analyzer.build_summary(workflow_jobs, include_raw_data=False)
+            workflow_tasks = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
+            traces_summary = trace_analyzer.build_summary(workflow_tasks, include_raw_data=False)
 
-        :param jobs_list: List of workflow jobs prefix (e.g., mProject, sol2sanger, add_replace)
-        :type jobs_list: List[str]
+        :param tasks_list: List of workflow tasks prefix (e.g., mProject, sol2sanger, add_replace)
+        :type tasks_list: List[str]
         :param include_raw_data: Whether to include the raw data in the trace summary.
         :type include_raw_data: bool
 
-        :return: A summary of the analysis of traces in the form of a dictionary in which keys are job prefixes.
+        :return: A summary of the analysis of traces in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Dict[str, Any]]
         """
         self.logger.debug('Building summary for {} traces'.format(len(self.traces)))
 
-        # build jobs summary
+        # build tasks summary
         for trace in self.traces:
-            self.logger.debug('Parsing trace: {} ({} jobs)'.format(trace.name, len(trace.workflow.nodes)))
+            self.logger.debug('Parsing trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
             for node in trace.workflow.nodes.data():
-                job: Job = node[1]['job']
-                job_name: str = [j for j in jobs_list if j in job.name][0]
+                task: Task = node[1]['task']
+                task_name: str = [j for j in tasks_list if j in task.name][0]
 
-                if job_name not in self.jobs_summary:
-                    self.jobs_summary[job_name] = []
-                self.jobs_summary[job_name].append(job)
+                if task_name not in self.tasks_summary:
+                    self.tasks_summary[task_name] = []
+                self.tasks_summary[task_name].append(task)
 
         # build traces summary
-        for job_name in self.jobs_summary:
+        for task_name in self.tasks_summary:
             runtime_list: List[float] = []
             inputs_dict: Dict[str, Any] = {}
             outputs_dict: Dict[str, Any] = {}
 
-            for job in self.jobs_summary[job_name]:
-                runtime_list.append(job.runtime)
+            for task in self.tasks_summary[task_name]:
+                runtime_list.append(task.runtime)
 
-                for file in job.files:
+                for file in task.files:
                     extension: str = path.splitext(file.name)[1] if '.' in file.name else file.name
                     if file.link == FileLink.INPUT:
                         _append_file_to_dict(extension, inputs_dict, file.size)
@@ -108,7 +109,7 @@ class TraceAnalyzer:
             _best_fit_distribution_for_file(inputs_dict, include_raw_data)
             _best_fit_distribution_for_file(outputs_dict, include_raw_data)
 
-            self.traces_summary[job_name] = {
+            self.traces_summary[task_name] = {
                 'runtime': {
                     'min': min(runtime_list),
                     'max': max(runtime_list),
@@ -118,7 +119,7 @@ class TraceAnalyzer:
                 'output': outputs_dict
             }
             if include_raw_data:
-                self.traces_summary[job_name]['runtime']['data'] = runtime_list
+                self.traces_summary[task_name]['runtime']['data'] = runtime_list
 
         return self.traces_summary
 
@@ -135,17 +136,17 @@ class TraceAnalyzer:
         self.logger.info('Generating fit plots ({}).'.format(trace_element.value[0]))
         outfile_prefix = outfile_prefix + '_' if outfile_prefix else ''
 
-        for job_summary in self.traces_summary:
-            outfile = outfile_prefix + job_summary.lower() + '-' + trace_element.value[0]
-            el = self.traces_summary[job_summary][trace_element.value[0]]
+        for task_summary in self.traces_summary:
+            outfile = outfile_prefix + task_summary.lower() + '-' + trace_element.value[0]
+            el = self.traces_summary[task_summary][trace_element.value[0]]
 
             if trace_element == TraceElement.RUNTIME:
-                _generate_fit_plots(el, job_summary + ' (' + trace_element.value[0] + ')',
+                _generate_fit_plots(el, task_summary + ' (' + trace_element.value[0] + ')',
                                     xlabel=trace_element.value[1], outfile=outfile + '.png', logger=self.logger)
             else:
                 for k in el:
                     ext = k if '.' not in k else k[1:]
-                    _generate_fit_plots(el[k], job_summary + ' (' + trace_element.value[0] + '): ' + ext,
+                    _generate_fit_plots(el[k], task_summary + ' (' + trace_element.value[0] + '): ' + ext,
                                         xlabel=trace_element.value[1], outfile=outfile + '-' + ext + '.png',
                                         logger=self.logger)
 
@@ -209,7 +210,8 @@ def _json_format_distribution_fit(dist_tuple: Tuple) -> Dict[str, Any]:
     return formatted_entry
 
 
-def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_size: Optional[int] = None, logger: Optional[Logger] = None) -> None:
+def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_size: Optional[int] = None,
+                        logger: Optional[Logger] = None) -> None:
     """Produce a fit plot as an image for an entry of a trace element generated by the summary analysis.
 
     :param el: Entry of a trace element generated by the summary analysis.

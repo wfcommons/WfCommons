@@ -48,7 +48,7 @@ The :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer` class provides
 a number of tools for analyzing collection of workflow execution traces. The
 goal of the :class:`~workflowhub.trace.trace_analyzer.TraceAnalyzer` is to
 perform analyzes of one or multiple workflow execution traces, and build
-summaries of the analyzes per workflow' job type prefix.
+summaries of the analyzes per workflow' task type prefix.
 
 .. note::
 
@@ -67,11 +67,11 @@ processes all appended traces. The method applies probability distributions fitt
 to a series of data to find the *best* (i.e., minimizes the mean square error)
 probability distribution that represents the analyzed data. The method returns
 a summary of the analysis of traces in the form of a Python dictionary object in
-which keys are job prefixes (provided when invoking the method) and values
-describe the best probability distribution fit for jobs' runtime, and input and
+which keys are task prefixes (provided when invoking the method) and values
+describe the best probability distribution fit for tasks' runtime, and input and
 output data file sizes. The code excerpt below shows an example of an analysis
 summary showing the best fit probability distribution for runtime of the
-:code:`individuals` jobs (1000Genome workflow): ::
+:code:`individuals` tasks (1000Genome workflow): ::
 
     "individuals": {
         "runtime": {
@@ -103,7 +103,7 @@ Examples
 
 The following example shows the analysis of a set of traces, stored in a local folder,
 of a Seismology workflow. In this example, we seek for finding the best probability
-distribution fitting for job *prefixes* of the Seismology workflow
+distribution fitting for task *prefixes* of the Seismology workflow
 (:code:`sG1IterDecon`, and :code:`wrapper_siftSTFByMisfit`), and generate all fit
 plots (runtime, and input and output files) into the :code:`fits` folder using
 :code:`seismology` as a prefix for each generated plot: ::
@@ -124,11 +124,11 @@ plots (runtime, and input and output files) into the :code:`fits` folder using
         trace = Trace(input_trace=TRACES_PATH + trace_file)
         analyzer.append_trace(trace)
 
-    # list of workflow job name prefixes to be analyzed in each trace
-    workflow_jobs = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
+    # list of workflow task name prefixes to be analyzed in each trace
+    workflow_tasks = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
 
     # building the trace summary
-    traces_summary = analyzer.build_summary(workflow_jobs, include_raw_data=True)
+    traces_summary = analyzer.build_summary(workflow_tasks, include_raw_data=True)
 
     # generating all fit plots (runtime, and input and output files)
     analyzer.generate_all_fit_plots(outfile_prefix='fits/seismology')

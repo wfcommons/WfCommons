@@ -18,25 +18,25 @@ from .file import File
 from ..utils import NoValue
 
 
-class JobType(NoValue):
-    """Job type."""
+class TaskType(NoValue):
+    """Task type."""
     COMPUTE = 'compute'
 
 
-class Job:
-    """Representation of a job.
+class Task:
+    """Representation of a task.
 
-    :param name: The name of the job.
+    :param name: The name of the task.
     :type name: str
-    :param job_type: The type of the job.
-    :type job_type: JobType
-    :param runtime: Job runtime in seconds.
+    :param task_type: The type of the task.
+    :type task_type: TaskType
+    :param runtime: Task runtime in seconds.
     :type runtime: float
-    :param cores: Number of cores required by the job.
+    :param cores: Number of cores required by the task.
     :type cores: int
-    :param machine: Machine on which is the job has been executed.
+    :param machine: Machine on which is the task has been executed.
     :type machine: Machine
-    :param args: List of job arguments.
+    :param args: List of task arguments.
     :type args: List[str]
     :param avg_cpu: Average CPU utilization in %.
     :type avg_cpu: float
@@ -50,9 +50,9 @@ class Job:
     :type energy: int
     :param avg_power: Average power consumption in W.
     :type avg_power: float
-    :param priority: Job priority.
+    :param priority: Task priority.
     :type priority: int
-    :param files: List of input/output files used by the job.
+    :param files: List of input/output files used by the task.
     :type files: List[File]
     :param logger: The logger where to log information/warning or errors.
     :type logger: Logger
@@ -60,7 +60,7 @@ class Job:
 
     def __init__(self,
                  name: str,
-                 job_type: JobType,
+                 task_type: TaskType,
                  runtime: float,
                  cores: int,
                  machine: Optional[Machine],
@@ -75,10 +75,10 @@ class Job:
                  files: List[File] = [],
                  logger: Optional[Logger] = None
                  ) -> None:
-        """A job in a workflow."""
+        """A task in a workflow."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.name: str = name
-        self.type: JobType = job_type
+        self.type: TaskType = task_type
         self.runtime: float = runtime
         self.cores: Optional[int] = cores
         self.args: List[str] = args
@@ -91,6 +91,6 @@ class Job:
         self.files: List[File] = files
         self.machine: Machine = machine
 
-        self.logger.debug("created {0} job {1}: runtime => {2} secondes.".format(
+        self.logger.debug("created {0} task {1}: runtime => {2} secondes.".format(
             self.type, self.name, self.runtime)
         )
