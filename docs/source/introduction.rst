@@ -2,7 +2,7 @@ The WorkflowHub Project
 =======================
 
 The `WorkflowHub project <http://workflowhub.org>`_ is a community framework
-for enabling scientific workflow research and education by providing foundational
+for enabling scientific workflow research and development by providing foundational
 tools for analyzing workflow execution traces, and generating synthetic, yet
 realistic, workflow traces that can be used to develop new techniques, algorithms
 and systems that can overcome the challenges of efficient and robust execution of

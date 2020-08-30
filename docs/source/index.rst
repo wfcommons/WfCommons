@@ -4,7 +4,7 @@ WorkflowHub
 |pypi-badge| |travis-badge| |license-badge|
 
 `WorkflowHub <https://workflowhub.org>`__ is a community framework for
-enabling scientific workflow research and education. This Python package
+enabling scientific workflow research and development. This Python package
 provides a collection of tools for:
 
 - Analyzing traces of actual workflow executions;
