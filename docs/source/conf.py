@@ -28,9 +28,9 @@ copyright = '2020, WorkflowHub Team'
 author = 'WorkflowHub Team'
 
 # The short X.Y version
-version = get_version("workflowhub/__init__.py")
+version = str(__version__)
 # The full version, including alpha/beta/rc tags
-release = get_version("workflowhub/__init__.py")
+release = str(__version__)
 
 # -- General configuration ---------------------------------------------------
 
