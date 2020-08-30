@@ -5,7 +5,7 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 
 <a href="https://workflowhub.org" target="_blank"><img src="https://workflowhub.org/assets/images/logo-horizontal.png" width="300" /></a>
-<br/>_A Community Framework for Enabling Scientific Workflow Research and Education_
+<br/>_A Community Framework for Enabling Scientific Workflow Research and Development_
 
 This Python package provides a collection of tools for:
 
