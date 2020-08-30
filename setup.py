@@ -8,16 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import codecs
-import os.path
-
 from setuptools import setup, find_packages
-
-
-def read(rel_path):
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
-        return fp.read()
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
