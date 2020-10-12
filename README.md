@@ -61,6 +61,30 @@ $ cd workflowhub
 $ pip install .
 ```
 
+## Get in Touch
+
+The main channel to reach the WorkflowHub team is via the support email: 
+[support@workflowhub.org](mailto:support@workflowhub.org).
+
+**Bug Report / Feature Request:** our preferred channel to report a bug or request a feature is via  
+WorkflowHub's [Github Issues Track](https://github.com/workflowhub/workflowhub/issues).
+
+
+## Citing WorkflowHub
+When citing WRENCH, please use the following paper. You should also actually read 
+that paper, as it provides a recent and general overview on the framework.
+
+```
+@inproceedings{ferreiradasilva2020works,
+  title = {WorkflowHub: Community Framework for Enabling Scientific Workflow Research and Development},
+  author = {Ferreira da Silva, Rafael and Pottier, Lo\"ic and Coleman, Tain\~a and Deelman, Ewa and Casanova, Henri},
+  booktitle = {15th Workshop on Workflows in Support of Large-Scale Science (WORKS'20)},
+  year = {2020},
+  pages = {},
+  doi = {}
+}
+```
+
 [travis-badge]:        https://travis-ci.org/workflowhub/workflowhub.svg?branch=master
 [travis-link]:         https://travis-ci.org/workflowhub/workflowhub
 [pypi-badge]:          https://badge.fury.io/py/workflowhub.svg
