@@ -78,10 +78,10 @@ that paper, as it provides a recent and general overview on the framework.
 @inproceedings{ferreiradasilva2020works,
   title = {WorkflowHub: Community Framework for Enabling Scientific Workflow Research and Development},
   author = {Ferreira da Silva, Rafael and Pottier, Lo\"ic and Coleman, Tain\~a and Deelman, Ewa and Casanova, Henri},
-  booktitle = {15th Workshop on Workflows in Support of Large-Scale Science (WORKS'20)},
+  booktitle = {2020 IEEE/ACM Workflows in Support of Large-Scale Science (WORKS)},
   year = {2020},
-  pages = {},
-  doi = {}
+  pages = {49--56},
+  doi = {10.1109/WORKS51914.2020.00012}
 }
 ```
 
