@@ -97,15 +97,15 @@ class PegasusLogsParser(LogsParser):
 
         if not os.path.exists(braindump_file):
             raise OSError('Unable to find braindump.txt file in:\n\t' + self.submit_dir)
-        else:
-            with open(braindump_file) as f:
-                for line in f:
-                    if line.startswith('planner_version'):
-                        self.wms_version = line.split()[1]
-                    elif line.startswith('pegasus_wf_name'):
-                        self.trace_name = line.split()[1]
-                    elif line.startswith('timestamp'):
-                        self.executed_at = line.split()[1]
+
+        with open(braindump_file) as f:
+            for line in f:
+                if line.startswith('planner_version'):
+                    self.wms_version = line.split()[1]
+                elif line.startswith('pegasus_wf_name'):
+                    self.trace_name = line.split()[1]
+                elif line.startswith('timestamp'):
+                    self.executed_at = line.split()[1]
 
         # sanity checks
         if not self.wms_version:
