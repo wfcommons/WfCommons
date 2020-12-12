@@ -43,6 +43,7 @@ support@workflowhub.org.
     :maxdepth: 2
 
     introduction.rst
+    parsing_logs.rst
     analyzing_traces.rst
     generating_workflows.rst
 

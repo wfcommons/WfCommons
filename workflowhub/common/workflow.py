@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import datetime
 import getpass
 import json
 import networkx as nx
 
+from datetime import datetime
 from typing import Optional
 from ..common.task import Task
 from ..version import __version__
+
 
 class Workflow(nx.DiGraph):
     """
@@ -24,15 +25,39 @@ class Workflow(nx.DiGraph):
 
     :param name: Workflow name.
     :type name: str
+    :param description: Workflow trace description.
+    :type description: str
+    :param wms_name: WMS name.
+    :type wms_name: str
+    :param wms_version: WMS version.
+    :type wms_version: str
+    :param wms_url: URL for the WMS website.
+    :type wms_url: str
+    :param executed_at: Workflow start timestamp in the ISO 8601 format.
+    :type executed_at: str
     :param makespan: Workflow makespan in seconds.
     :type makespan: int
     """
 
-    def __init__(self, name: str, makespan: Optional[int]) -> None:
+    def __init__(self,
+                 name: str,
+                 description: Optional[str] = None,
+                 wms_name: Optional[str] = None,
+                 wms_version: Optional[str] = None,
+                 wms_url: Optional[str] = None,
+                 executed_at: Optional[str] = None,
+                 makespan: Optional[int] = 0.0
+                 ) -> None:
         """Create an object of a workflow representation."""
+        self.description = description if description else 'Trace generated with WorkflowHub - https://workflowhub.org'
+        self.created_at = str(datetime.utcnow().isoformat())
+        self.schema_version = '1.0'
+        self.wms_name = 'WorkflowHub' if not wms_name else wms_name
+        self.wms_version = str(__version__) if not wms_version else wms_version
+        self.wms_url = 'https://workflowhub.readthedocs.io/en/v{}/'.format(__version__) if not wms_url else wms_url
+        self.executed_at = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z") if not executed_at else executed_at
         self.makespan = makespan
-        self.executedat = datetime.datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
-        super().__init__(name=name, makespan=self.makespan, executedat=self.executedat)
+        super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
     def write_json(self, json_filename: Optional[str] = None) -> None:
         """Write a JSON file of the workflow trace.
@@ -40,34 +65,29 @@ class Workflow(nx.DiGraph):
         :param json_filename: JSON output file name.
         :type json_filename: str
         """
+        workflow_machines = []
+        machines_list = []
+        workflow_tasks = []
+
         workflow_json = {
             'name': self.name,
-            'description': 'Trace generated with WorkflowHub - https://workflowhub.org',
-            'createdAt': str(datetime.datetime.utcnow().isoformat()),
-            'schemaVersion': '1.0',
+            'description': self.description,
+            'createdAt': self.created_at,
+            'schemaVersion': self.schema_version,
             'author': {
                 'name': str(getpass.getuser()),
                 'email': 'support@workflowhub.org'
             },
             'wms': {
-                'name': 'WorkflowHub',
-                'version': str(__version__),
-                'url': 'https://workflowhub.readthedocs.io/en/v{}/'.format(__version__)
+                'name': self.wms_name,
+                'version': self.wms_version,
+                'url': self.wms_url
             },
             'workflow': {
-                'executedAt': self.executedat,
-                'makespan': 0.0 if not self.makespan else self.makespan,
-                'machines': [
-                    {
-                        'nodeName': 'fake-1',
-                        'system': 'linux', 
-                        'cpu': {
-                            'count': 1, 
-                            'speed': 1
-                        }
-                    }
-                ],
-                'jobs': []
+                'executedAt': self.executed_at,
+                'makespan': self.makespan,
+                'jobs': workflow_tasks,
+                'machines': workflow_machines
             }
         }
 
@@ -83,19 +103,18 @@ class Workflow(nx.DiGraph):
         # add tasks to the workflow json object
         for node in self.nodes:
             task: Task = self.nodes[node]['task']
-            task_files = []
-            for f in task.files:
-                task_files.append({'link': f.link.value,
-                                  'name': f.name,
-                                  'size': f.size})
+            task_obj = task.as_dict()
 
-            workflow_json['workflow']['jobs'].append({'name': task.name,
-                                                      'type': task.type.value,
-                                                      'runtime': task.runtime,
-                                                      'parents': tasks_dependencies[task.name]['parents'],
-                                                      'children': tasks_dependencies[task.name]['children'],
-                                                      'files': task_files
-                                                      })
+            # manage task dependencies
+            task_obj['parents'] = tasks_dependencies[task.name]['parents']
+            task_obj['children'] = tasks_dependencies[task.name]['children']
+
+            workflow_tasks.append(task_obj)
+
+            # add machines to the workflow json object
+            if task.machine and task.machine.name not in machines_list:
+                machines_list.append(task.machine.name)
+                workflow_machines.append(task.machine.as_dict())
 
         # write to file
         if not json_filename:

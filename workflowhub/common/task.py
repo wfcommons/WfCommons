@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -10,7 +10,7 @@
 
 import logging
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 from logging import Logger
 
 from .machine import Machine
@@ -21,6 +21,8 @@ from ..utils import NoValue
 class TaskType(NoValue):
     """Task type."""
     COMPUTE = 'compute'
+    AUXILIARY = 'auxiliary'
+    TRANSFER = 'transfer'
 
 
 class Task:
@@ -63,15 +65,15 @@ class Task:
                  task_type: TaskType,
                  runtime: float,
                  cores: int,
-                 machine: Optional[Machine],
-                 args: List[str],
-                 avg_cpu: Optional[float],
-                 bytes_read: Optional[int],
-                 bytes_written: Optional[int],
-                 memory: Optional[int],
-                 energy: Optional[int],
-                 avg_power: Optional[float],
-                 priority: Optional[int],
+                 machine: Optional[Machine] = None,
+                 args: List[str] = [],
+                 avg_cpu: Optional[float] = None,
+                 bytes_read: Optional[int] = None,
+                 bytes_written: Optional[int] = None,
+                 memory: Optional[int] = None,
+                 energy: Optional[int] = None,
+                 avg_power: Optional[float] = None,
+                 priority: Optional[int] = None,
                  files: List[File] = [],
                  logger: Optional[Logger] = None
                  ) -> None:
@@ -90,7 +92,49 @@ class Task:
         self.avg_power: Optional[float] = avg_power
         self.files: List[File] = files
         self.machine: Machine = machine
+        self.priority = priority
 
-        self.logger.debug("created {0} task {1}: runtime => {2} secondes.".format(
+        self.logger.debug("created {0} task {1}: runtime => {2} seconds.".format(
             self.type, self.name, self.runtime)
         )
+
+    def as_dict(self) -> Dict:
+        """A JSON representation of the task.
+
+        :return: A JSON object representation of the task.
+        :rtype: Dict
+        """
+        task_files = []
+        for f in self.files:
+            task_files.append(f.as_dict())
+
+        task_obj = {
+            'name': self.name,
+            'type': self.type.value,
+            'runtime': self.runtime,
+            'parents': [],
+            'children': [],
+            'files': task_files,
+        }
+        if self.cores:
+            task_obj['cores'] = self.cores
+        if self.avg_cpu:
+            task_obj['avgCPU'] = self.avg_cpu
+        if self.bytes_read:
+            task_obj['bytesRead'] = self.bytes_read
+        if self.bytes_written:
+            task_obj['bytesWritten'] = self.bytes_written
+        if self.memory:
+            task_obj['memory'] = self.memory
+        if self.energy:
+            task_obj['energy'] = self.energy
+        if self.avg_power:
+            task_obj['avgPower'] = self.avg_power
+        if self.priority:
+            task_obj['priority'] = self.priority
+        if self.args:
+            task_obj['arguments'] = self.args
+        if self.machine:
+            task_obj['machine'] = self.machine.name
+
+        return task_obj

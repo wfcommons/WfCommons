@@ -16,3 +16,11 @@ workflowhub.trace.trace\_analyzer
    :members:
    :undoc-members:
    :show-inheritance:
+
+workflowhub.trace.logs.pegasus
+---------------------------------
+
+.. automodule:: workflowhub.trace.logs.pegasus
+   :members:
+   :undoc-members:
+   :show-inheritance:

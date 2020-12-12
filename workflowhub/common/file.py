@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,7 +11,7 @@
 import logging
 
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional
 
 from ..utils import NoValue
 
@@ -42,3 +42,15 @@ class File:
         self.name: str = name
         self.size: int = size
         self.link: FileLink = link
+
+    def as_dict(self) -> Dict:
+        """A JSON representation of the file.
+
+        :return: A JSON object representation of the file.
+        :rtype: Dict
+        """
+        return {
+            'link': self.link.value,
+            'name': self.name,
+            'size': self.size
+        }

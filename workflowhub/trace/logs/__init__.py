@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from .logs import PegasusLogsParser
-from .schema import SchemaValidator
-from .trace import Trace
-from .trace_analyzer import TraceAnalyzer, TraceElement
+from .pegasus import PegasusLogsParser

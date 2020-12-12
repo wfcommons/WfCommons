@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,33 +51,56 @@ class Machine:
     :param hashcode: MD5 Hashcode for the Machine.
     :type hashcode: str
     :param logger: The logger where to log information/warning or errors.
-    :type logger: Optional[Logger]
+    :type logger: Logger
     """
 
     def __init__(self,
                  name: str,
                  cpu: Dict[str, Union[int, str]],
-                 system: Optional[MachineSystem],
-                 architecture: Optional[str],
-                 memory: Optional[int],
-                 release: Optional[str],
-                 hashcode: Optional[str],
+                 system: Optional[MachineSystem] = None,
+                 architecture: Optional[str] = None,
+                 memory: Optional[int] = None,
+                 release: Optional[str] = None,
+                 hashcode: Optional[str] = None,
                  logger: Optional[Logger] = None
                  ) -> None:
         """A machine from a workflow."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.name: str = name
-        self.cpu: Dict[str, Union[int, str]] = cpu
         self.system: MachineSystem = system
         self.architecture: str = architecture
         self.memory: int = memory
         self.release: str = release
         self.hashcode = hashcode
 
-        self.cores: int = cpu['count']
-        self.speed: int = cpu['speed']
-        self.flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
+        self.cpu_cores: int = cpu['count']
+        self.cpu_speed: int = cpu['speed']
+        self.cpu_flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
+        self.cpu_vendor: str = cpu['vendor']
 
         self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
-            self.name, self.cores, self.flops)
+            self.name, self.cpu_cores, self.cpu_flops)
         )
+
+    def as_dict(self) -> Dict:
+        """A JSON representation of the machine.
+
+        :return: A JSON object representation of the machine.
+        :rtype: Dict
+        """
+        machine = {"nodeName": self.name}
+        if self.system:
+            machine['system'] = self.system.value
+        if self.architecture:
+            machine['architecture'] = self.architecture
+        if self.memory:
+            machine['memory'] = self.memory
+        if self.release:
+            machine['release'] = self.release
+        if self.cpu_cores:
+            machine['cpu'] = {'count': self.cpu_cores}
+        if self.cpu_speed:
+            machine['cpu']['speed'] = self.cpu_speed
+        if self.cpu_vendor:
+            machine['cpu']['vendor'] = self.cpu_vendor
+        return machine
