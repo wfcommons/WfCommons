@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -162,8 +162,8 @@ class Trace:
             val = self._order[self._n]
             self._n += 1
             return val
-        else:
-            raise StopIteration
+
+        raise StopIteration
 
     def roots(self) -> List[str]:
         """Get the roots of the workflow (i.e., the tasks without any predecessors).
