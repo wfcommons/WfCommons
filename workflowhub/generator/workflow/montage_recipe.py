@@ -289,6 +289,7 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
             input_files = []
             for task in mbg_tasks:
                 input_files.extend(self._get_files_by_task_and_link(task.name, FileLink.OUTPUT))
+            input_files.extend(self._get_files_by_task_and_link(mimg_task.name, FileLink.OUTPUT))
             madd_task = self._generate_task('mAdd', task_name, input_files=input_files,
                                             files_recipe={FileLink.OUTPUT: {'.fits': 2}})
             workflow.add_node(task_name, task=madd_task)
