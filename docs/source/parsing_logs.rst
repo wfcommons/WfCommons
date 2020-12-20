@@ -38,3 +38,10 @@ class: ::
 
     # writing the workflow trace to a JSON file
     workflow.write_json('workflow.json')
+
+.. note::
+
+    By default, the :class:`~workflowhub.trace.logs.pegasus.PegasusLogsParser`
+    class assumes that the submit dir is from a Pegasus execution with version 5.0 or later.
+    To enable parsing of Pegasus execution logs from version 4.9 or earlier, the option
+    :code:`legacy=True` should be used.
