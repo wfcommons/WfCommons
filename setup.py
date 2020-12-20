@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,13 +36,13 @@ setup(
         'python-dateutil',
         'requests',
         'scipy',
-        'setuptools'
+        'setuptools',
+        'pyyaml'
     ],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -54,5 +54,5 @@ setup(
         'Topic :: Documentation :: Sphinx',
         'Topic :: System :: Distributed Computing'
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
 )
