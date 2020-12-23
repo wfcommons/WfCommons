@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,17 +55,24 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
         logger = logging.getLogger("workflowhub")
 
     # get histogram of original data
-    bins = math.ceil(len(data) / 20)
-    y, x = np.histogram(data, bins=bins)
+    bins = math.ceil(len(data) / 10)
+    normalized = (data - np.min(data)) / (np.max(data) - np.min(data))
+    y, x = np.histogram(normalized, bins=bins)
+    if np.max(y) - np.min(y) > 0:
+        y = (y - np.min(y)) / (np.max(y) - np.min(y))
+    else:
+        y = np.zeros(len(y))
 
     # best holders
     best_distribution = None
     best_params = (0.0, 1.0)
     best_sse = np.inf
 
-    distribution_names: List[str] = ['alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'cosine', 'dgamma', 'dweibull',
-                                     'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
-                                     'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald']
+    distribution_names: List[str] = [
+        'alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'dgamma', 'dweibull',
+        'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
+        'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald'
+    ]
 
     for dist_name in distribution_names:
         # Ignore warnings from data that can't be fit
@@ -107,10 +114,8 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
 
     params = distribution['params']
     kwargs = params[:-2]
-    rvs: float = getattr(scipy.stats, distribution['name']).rvs(*kwargs, loc=params[-2], scale=params[-1])
-    rvs = max(min_value, rvs)
-    rvs = min(max_value, rvs)
-    return rvs
+    rvs: float = max(0.00001, getattr(scipy.stats, distribution['name']).rvs(*kwargs, loc=params[-2], scale=params[-1]))
+    return rvs * max_value
 
 
 def ncr(n: int, r: int) -> int:

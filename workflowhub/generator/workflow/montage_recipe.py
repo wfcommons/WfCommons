@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -332,21 +332,23 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0,
                         "max": 57.262,
                         "distribution": {
-                            "name": "levy",
+                            "name": "rdist",
                             "params": [
-                                -0.15150224852116434,
-                                0.4809103177780148
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "pareto",
+                                "name": "trapz",
                                 "params": [
-                                    1.8196769868584715,
-                                    -6.007916450615754,
-                                    6.00791645038787
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 0,
@@ -354,11 +356,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "skewnorm",
+                                "name": "trapz",
                                 "params": [
-                                    716480.4263935913,
-                                    -0.001656034010816449,
-                                    216.06420975997213
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 277,
@@ -368,10 +371,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "wald",
+                                "name": "trapz",
                                 "params": [
-                                    -3.1461335409126936,
-                                    10.477207652909453
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 0,
@@ -384,23 +389,24 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.034,
                         "max": 46.525,
                         "distribution": {
-                            "name": "beta",
+                            "name": "trapz",
                             "params": [
-                                0.23296662250780056,
-                                463.2955191436929,
-                                -1.903355217182212e-25,
-                                7569.50090953193
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.25284525166127914,
-                                    -2.582591851437144e-24,
-                                    2.575606368744306
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 3329280,
@@ -408,11 +414,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "skewnorm",
+                                "name": "trapz",
                                 "params": [
-                                    1237686.3336703498,
-                                    -0.001774478204270763,
-                                    403.3634536136634
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 277,
@@ -422,10 +429,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".txt": {
                             "distribution": {
-                                "name": "cosine",
+                                "name": "trapz",
                                 "params": [
-                                    145.09419965704984,
-                                    262.43239120561213
+                                    0.9999999999999999,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.1999999999999997
                                 ]
                             },
                             "min": 51,
@@ -440,19 +449,21 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "distribution": {
                             "name": "alpha",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                1.2778785050926098,
+                                0.0026112519417539615,
+                                1.016860859112349e-28
                             ]
                         }
                     },
                     "input": {
                         ".txt": {
                             "distribution": {
-                                "name": "cosine",
+                                "name": "trapz",
                                 "params": [
-                                    145.09419965704984,
-                                    262.43239120561213
+                                    0.9999999999999999,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.1999999999999997
                                 ]
                             },
                             "min": 51,
@@ -460,10 +471,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 54340,
@@ -473,10 +485,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 85697,
@@ -489,21 +502,21 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 20.192,
                         "max": 110.529,
                         "distribution": {
-                            "name": "chi2",
+                            "name": "alpha",
                             "params": [
-                                1.1039936299618875,
-                                11.999999999999996,
-                                0.7951785715324731
+                                1.2778785050926098,
+                                0.0026112519417539615,
+                                1.016860859112349e-28
                             ]
                         }
                     },
                     "input": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "wald",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    -0.20124498465895155,
+                                    0.8921350717519062
                                 ]
                             },
                             "min": 29868,
@@ -513,10 +526,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 4456,
@@ -529,22 +543,22 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.248,
                         "max": 35.961,
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.5358816399287538,
-                                -1.4066448661907127e-27,
-                                2.1683579540323255
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         }
                     },
                     "input": {
                         ".tbl": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "argus",
                                 "params": [
-                                    0.641451719035309,
-                                    -2.9474746116185896e-25,
-                                    1.7270349932893398
+                                    0.001068783803578997,
+                                    -0.7613584836504788,
+                                    1.762949700574905
                                 ]
                             },
                             "min": 4456,
@@ -552,11 +566,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.5112505246020871,
-                                    -7.107963785483312e-26,
-                                    1.7971380184922583
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 3329280,
@@ -566,11 +581,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.5112505246020871,
-                                    -7.107963785483312e-26,
-                                    1.7971380184922583
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 3329280,
@@ -583,22 +599,22 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.443,
                         "max": 1.762,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "argus",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                1.599540430972508,
+                                -0.5837001726233696,
+                                1.703310458550342
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "pareto",
+                                "name": "argus",
                                 "params": [
-                                    0.035118926741593066,
-                                    -4.052883707888093e-10,
-                                    1.2661614222770254e-10
+                                    3.2933769655349454e-05,
+                                    -0.7548970959763688,
+                                    1.7565070770756739
                                 ]
                             },
                             "min": 3329280,
@@ -606,10 +622,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 13060,
@@ -619,10 +636,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 35772,
@@ -635,22 +653,22 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.945,
                         "max": 11.53,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.5112505246020871,
-                                    -7.107963785483312e-26,
-                                    1.7971380184922583
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 3329280,
@@ -658,10 +676,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 35772,
@@ -669,10 +688,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "argus",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.599540430972508,
+                                    -0.5837001726233696,
+                                    1.703310458550342
                                 ]
                             },
                             "min": 275,
@@ -682,11 +702,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    147.5069177473742,
-                                    -15.577840787811667,
-                                    4067.4805108518813
+                                    -0.11142536390545808,
+                                    1.1114253639054583
                                 ]
                             },
                             "min": 25922880,
@@ -699,22 +718,20 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 1.581,
                         "max": 57.913,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                156.35362804649196,
-                                -9.944864151497804,
-                                4056.665627724218
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    147.5069177473742,
-                                    -15.577840787811667,
-                                    4067.4805108518813
+                                    -0.11142536390545808,
+                                    1.1114253639054583
                                 ]
                             },
                             "min": 25922880,
@@ -724,11 +741,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".jpg": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    156.35362804649196,
-                                    -9.944864151497804,
-                                    4056.665627724218
+                                    -0.2258070520586602,
+                                    1.2258070520586604
                                 ]
                             },
                             "min": 1596605,
@@ -745,20 +761,20 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 160.278,
                         "max": 1263.481,
                         "distribution": {
-                            "name": "levy",
+                            "name": "norm",
                             "params": [
-                                -0.6390031069644855,
-                                2.982938876769154
+                                0.24390243902439016,
+                                0.3080861027885597
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "norm",
                                 "params": [
-                                    -0.44487345435352355,
-                                    1.4573579709548934
+                                    0.17857142857142852,
+                                    0.24722094830113317
                                 ]
                             },
                             "min": 5658400,
@@ -766,11 +782,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "chi2",
+                                "name": "trapz",
                                 "params": [
-                                    1.4241375536238945,
-                                    -1.9183330928674237e-28,
-                                    53.810520087279485
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 277,
@@ -780,11 +797,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "argus",
                                 "params": [
-                                    0.7954321183916364,
-                                    -2.855192723746931e-27,
-                                    1.78687751430719
+                                    4.086534319237248e-05,
+                                    -0.7451098956925004,
+                                    1.7519458788854392
                                 ]
                             },
                             "min": 15373440,
@@ -797,22 +814,23 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.004,
                         "max": 33.974,
                         "distribution": {
-                            "name": "chi",
+                            "name": "rdist",
                             "params": [
-                                0.04869951514418973,
-                                -1.4034132380060528e-24,
-                                593.2476321870599
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.5320355812304265,
-                                    -1.4818265388258437e-24,
-                                    3.2180437671262156
+                                    0.9999999999999999,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.1999999999999997
                                 ]
                             },
                             "min": 15373440,
@@ -820,11 +838,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "skewnorm",
+                                "name": "trapz",
                                 "params": [
-                                    6310795.774193881,
-                                    -0.0002866866728582616,
-                                    316.70527916668425
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 277,
@@ -836,9 +855,9 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                             "distribution": {
                                 "name": "rdist",
                                 "params": [
-                                    2.127543340939409,
-                                    33.03674854892499,
-                                    36.97398780340566
+                                    1.750426650564894,
+                                    0.9999999999999998,
+                                    2.3624681987884834e-16
                                 ]
                             },
                             "min": 50,
@@ -851,11 +870,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.181,
                         "max": 1.754,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
@@ -864,9 +882,9 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                             "distribution": {
                                 "name": "rdist",
                                 "params": [
-                                    2.127543340939409,
-                                    33.03674854892499,
-                                    36.97398780340566
+                                    1.750426650564894,
+                                    0.9999999999999998,
+                                    2.3624681987884834e-16
                                 ]
                             },
                             "min": 50,
@@ -874,10 +892,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "arcsine",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    -0.2258070520586602,
+                                    1.2258070520586604
                                 ]
                             },
                             "min": 1160,
@@ -887,10 +905,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "arcsine",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    -0.2258070520586602,
+                                    1.2258070520586604
                                 ]
                             },
                             "min": 1457,
@@ -903,22 +921,20 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.563,
                         "max": 6.696,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".tbl": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "arcsine",
                                 "params": [
-                                    0.11751004387257374,
-                                    5.999999999999999,
-                                    0.010205255332337211
+                                    -0.11142536390545808,
+                                    1.1114253639054583
                                 ]
                             },
                             "min": 1457,
@@ -928,10 +944,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "arcsine",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    -0.2258070520586602,
+                                    1.2258070520586604
                                 ]
                             },
                             "min": 276,
@@ -944,22 +960,22 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.592,
                         "max": 114.103,
                         "distribution": {
-                            "name": "fisk",
+                            "name": "arcsine",
                             "params": [
-                                0.7217049725251219,
-                                -2.553644182656991e-27,
-                                3.0795613361399266
+                                -0.09352298518197324,
+                                1.0935229851819734
                             ]
                         }
                     },
                     "input": {
                         ".tbl": {
                             "distribution": {
-                                "name": "chi2",
+                                "name": "trapz",
                                 "params": [
-                                    1.4241375580566633,
-                                    -3.280049988544237e-28,
-                                    47.100934050350965
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 276,
@@ -967,11 +983,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "argus",
                                 "params": [
-                                    0.7954321183916364,
-                                    -2.855192723746931e-27,
-                                    1.78687751430719
+                                    4.086534319237248e-05,
+                                    -0.7451098956925004,
+                                    1.7519458788854392
                                 ]
                             },
                             "min": 15373440,
@@ -981,11 +997,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "argus",
                                 "params": [
-                                    0.7954321183916364,
-                                    -2.855192723746931e-27,
-                                    1.78687751430719
+                                    4.086534319237248e-05,
+                                    -0.7451098956925004,
+                                    1.7519458788854392
                                 ]
                             },
                             "min": 15373440,
@@ -998,22 +1014,22 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.152,
                         "max": 0.389,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "trapz",
                                 "params": [
-                                    0.14660276617638068,
-                                    -1.20171432950012e-27,
-                                    2.262211223349796
+                                    1.0,
+                                    1.0,
+                                    -0.10500000000000001,
+                                    1.2
                                 ]
                             },
                             "min": 15373440,
@@ -1021,10 +1037,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 940,
@@ -1034,10 +1051,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 2594,
@@ -1050,22 +1068,21 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 0.523,
                         "max": 23.162,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                147.5069177473742,
-                                -15.577840787811667,
-                                4067.4805108518813
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "fisk",
+                                "name": "argus",
                                 "params": [
-                                    0.7954321183916364,
-                                    -2.855192723746931e-27,
-                                    1.78687751430719
+                                    4.086534319237248e-05,
+                                    -0.7451098956925004,
+                                    1.7519458788854392
                                 ]
                             },
                             "min": 15373440,
@@ -1073,10 +1090,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".tbl": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "alpha",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.2778785050926098,
+                                    0.0026112519417539615,
+                                    1.016860859112349e-28
                                 ]
                             },
                             "min": 2594,
@@ -1084,10 +1102,11 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         },
                         ".hdr": {
                             "distribution": {
-                                "name": "levy",
+                                "name": "argus",
                                 "params": [
-                                    11.99999999999986,
-                                    1.5547041057555974e-13
+                                    1.599540430972508,
+                                    -0.5837001726233696,
+                                    1.703310458550342
                                 ]
                             },
                             "min": 275,
@@ -1097,11 +1116,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".fits": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    147.5069177473742,
-                                    -15.577840787811667,
-                                    4067.4805108518813
+                                    -0.11142536390545808,
+                                    1.1114253639054583
                                 ]
                             },
                             "min": 25922880,
@@ -1114,22 +1132,20 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                         "min": 1.423,
                         "max": 68.368,
                         "distribution": {
-                            "name": "alpha",
+                            "name": "arcsine",
                             "params": [
-                                156.35362804649196,
-                                -9.944864151497804,
-                                4056.665627724218
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         }
                     },
                     "input": {
                         ".fits": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    147.5069177473742,
-                                    -15.577840787811667,
-                                    4067.4805108518813
+                                    -0.11142536390545808,
+                                    1.1114253639054583
                                 ]
                             },
                             "min": 25922880,
@@ -1139,11 +1155,10 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                     "output": {
                         ".jpg": {
                             "distribution": {
-                                "name": "alpha",
+                                "name": "arcsine",
                                 "params": [
-                                    156.35362804649196,
-                                    -9.944864151497804,
-                                    4056.665627724218
+                                    -0.2258070520586602,
+                                    1.2258070520586604
                                 ]
                             },
                             "min": 983389,

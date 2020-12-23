@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -226,11 +226,11 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 1.597,
                     "max": 110.598,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "argus",
                         "params": [
-                            8.047751262283954e-09,
-                            -1.2756014938873586,
-                            2.6812435906886023
+                            5.734652014997823e-05,
+                            -0.6805728508716575,
+                            1.6811901314620572
                         ]
                     }
                 },
@@ -242,11 +242,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".weather": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.48810346862081644,
-                                -2.2156889517666317e-25,
-                                2.1061107035081923
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 480096,
@@ -254,11 +255,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".operation": {
                         "distribution": {
-                            "name": "chi2",
+                            "name": "rdist",
                             "params": [
-                                1.5264675653031392,
-                                -9.478040328613063e-27,
-                                335.0447820745495
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 673,
@@ -283,11 +284,11 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".dat": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                3.9109273745053685e-13,
-                                -60.360981337099844,
-                                7636.433793237831
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 1056,
@@ -295,11 +296,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".csv": {
                         "distribution": {
-                            "name": "rdist",
+                            "name": "trapz",
                             "params": [
-                                1.9882276133785874,
-                                279.0769359502969,
-                                279.07693595029696
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 275,
@@ -307,11 +309,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".zip": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.4312876961814035,
-                                -4.30712563367272e-26,
-                                2.0427130739715498
+                                4.427079012898356e-05,
+                                -0.7120439234477358,
+                                1.712710243275252
                             ]
                         },
                         "min": 2267492,
@@ -324,11 +326,11 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 1.277,
                     "max": 101.596,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "argus",
                         "params": [
-                            8.484516484670589e-09,
-                            -1.2578651677609312,
-                            2.4675320024710006
+                            2.4601472008810825e-05,
+                            -0.760671189673141,
+                            1.761325389492184
                         ]
                     }
                 },
@@ -340,11 +342,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".weather": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.48810346862081644,
-                                -2.2156889517666317e-25,
-                                2.1061107035081923
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 480096,
@@ -352,11 +355,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".operation": {
                         "distribution": {
-                            "name": "chi2",
+                            "name": "rdist",
                             "params": [
-                                1.5264675653031392,
-                                -9.478040328613063e-27,
-                                335.0447820745495
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 673,
@@ -386,11 +389,11 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".zip": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.48427962013577297,
-                                -1.99155154789682e-28,
-                                2.0977079850885403
+                                3.76005481127054e-05,
+                                -0.6638469786758867,
+                                1.6644768181414857
                             ]
                         },
                         "min": 2928100,
@@ -398,11 +401,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".dat": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                3.9109273745053685e-13,
-                                -60.360981337099844,
-                                7636.433793237831
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 1056,
@@ -410,11 +413,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".csv": {
                         "distribution": {
-                            "name": "rdist",
+                            "name": "trapz",
                             "params": [
-                                1.9882276133785874,
-                                279.0769359502969,
-                                279.07693595029696
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 275,
@@ -427,11 +431,11 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 1.258,
                     "max": 101.229,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "argus",
                         "params": [
-                            1.0434096097164159e-08,
-                            -1.2790233222623084,
-                            2.4991241569098097
+                            0.00024090845979553212,
+                            -0.7571715014318916,
+                            1.757837187249918
                         ]
                     }
                 },
@@ -443,11 +447,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".weather": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.48810346862081644,
-                                -2.2156889517666317e-25,
-                                2.1061107035081923
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 480096,
@@ -455,11 +460,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".operation": {
                         "distribution": {
-                            "name": "chi2",
+                            "name": "rdist",
                             "params": [
-                                1.5264675653031392,
-                                -9.478040328613063e-27,
-                                335.0447820745495
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 673,
@@ -489,10 +494,12 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".csv": {
                         "distribution": {
-                            "name": "cosine",
+                            "name": "trapz",
                             "params": [
-                                83.23949362619993,
-                                152.0767648343908
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 274,
@@ -500,11 +507,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".dat": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                3.9109273745053685e-13,
-                                -60.360981337099844,
-                                7636.433793237831
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 1056,
@@ -512,11 +519,11 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".zip": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.33716386282358723,
-                                -1.0674750103622264e-27,
-                                2.1701869928746937
+                                5.012766959293754e-05,
+                                -0.6684439199051191,
+                                1.6690337988564448
                             ]
                         },
                         "min": 2928677,
@@ -529,11 +536,12 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 0.035,
                     "max": 1.235,
                     "distribution": {
-                        "name": "pareto",
+                        "name": "trapz",
                         "params": [
-                            3.178595938028368,
-                            -0.5759653856097273,
-                            0.5759653845181962
+                            1.0,
+                            1.0,
+                            -0.10500000000000001,
+                            1.2
                         ]
                     }
                 },
@@ -545,11 +553,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".csv": {
                         "distribution": {
-                            "name": "skewnorm",
+                            "name": "trapz",
                             "params": [
-                                1833079.2807219662,
-                                -0.0006331045037050451,
-                                218.08284593142628
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 274,
@@ -559,11 +568,11 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".csv": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.5770664167941257,
-                                -5.756194313327051e-26,
-                                1.6405791319945826
+                                0.0002218467867105605,
+                                -0.7480684549751317,
+                                1.7487201180830585
                             ]
                         },
                         "min": 8224,
@@ -576,12 +585,10 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 0.048,
                     "max": 0.39,
                     "distribution": {
-                        "name": "beta",
+                        "name": "norm",
                         "params": [
-                            0.19383300430623274,
-                            200.14346240436433,
-                            -1.1535111701525267e-29,
-                            2746.191287764276
+                            0.08688656476267097,
+                            0.2572832376513094
                         ]
                     }
                 },
@@ -593,11 +600,12 @@ class CyclesRecipe(WorkflowRecipe):
                     },
                     ".csv": {
                         "distribution": {
-                            "name": "rdist",
+                            "name": "trapz",
                             "params": [
-                                1.9882276133785874,
-                                279.0769359502969,
-                                279.07693595029696
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 275,
@@ -607,11 +615,11 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".csv": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.6824174018857059,
-                                -1.7507576397743858e-28,
-                                1.9958963207829474
+                                1.7504259613885509,
+                                1.0,
+                                4.589985375327013e-23
                             ]
                         },
                         "min": 74996,
@@ -624,22 +632,22 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 0.045,
                     "max": 0.538,
                     "distribution": {
-                        "name": "chi",
+                        "name": "argus",
                         "params": [
-                            0.15755388349696192,
-                            -2.6271332657183503e-27,
-                            81.67483343483318
+                            0.0001699057370632583,
+                            -0.703883277161877,
+                            1.7272982844402591
                         ]
                     }
                 },
                 "input": {
                     ".csv": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.5770664167941257,
-                                -5.756194313327051e-26,
-                                1.6405791319945826
+                                0.0002218467867105605,
+                                -0.7480684549751317,
+                                1.7487201180830585
                             ]
                         },
                         "min": 8224,
@@ -649,11 +657,11 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".csv": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.6824174018857059,
-                                -1.7507576397743858e-28,
-                                1.9958963207829474
+                                1.7504259613885509,
+                                1.0,
+                                4.589985375327013e-23
                             ]
                         },
                         "min": 122964,
@@ -666,22 +674,23 @@ class CyclesRecipe(WorkflowRecipe):
                     "min": 123.38,
                     "max": 514.566,
                     "distribution": {
-                        "name": "fisk",
+                        "name": "beta",
                         "params": [
-                            0.07143329405623092,
-                            11.999999999999998,
-                            5.486627664253447
+                            0.11165228211118816,
+                            0.32785735039410685,
+                            -0.09952333240693918,
+                            1.0995233324069393
                         ]
                     }
                 },
                 "input": {
                     ".csv": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.6824174018857059,
-                                -1.7507576397743858e-28,
-                                1.9958963207829474
+                                1.7504259613885509,
+                                1.0,
+                                4.589985375327013e-23
                             ]
                         },
                         "min": 74996,
@@ -691,10 +700,10 @@ class CyclesRecipe(WorkflowRecipe):
                 "output": {
                     ".gif": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "norm",
                             "params": [
-                                9.99996901653408,
-                                9.326668509495445e-05
+                                0.35,
+                                0.36784847423905404
                             ]
                         },
                         "min": 2126304,

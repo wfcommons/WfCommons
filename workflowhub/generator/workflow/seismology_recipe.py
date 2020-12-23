@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,22 +124,23 @@ class SeismologyRecipe(WorkflowRecipe):
                     "min": 0.087,
                     "max": 5.615,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "argus",
                         "params": [
-                            2.8535577839854487e-09,
-                            -0.6968250029499959,
-                            1.0879675561652093
+                            3.2918805879481845e-05,
+                            -0.7183748055932565,
+                            1.7191511240068986
                         ]
                     }
                 },
                 "input": {
                     ".lht": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.4312877358390993,
-                                -5.198983213279189e-26,
-                                2.042713032349936
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 1024,
@@ -149,11 +150,12 @@ class SeismologyRecipe(WorkflowRecipe):
                 "output": {
                     ".stf": {
                         "distribution": {
-                            "name": "argus",
+                            "name": "trapz",
                             "params": [
-                                1.3444573433417438e-05,
-                                -2922.408647942764,
-                                6738.674391937242
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 1144,
@@ -166,22 +168,22 @@ class SeismologyRecipe(WorkflowRecipe):
                     "min": 0.089,
                     "max": 1.351,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "arcsine",
                         "params": [
-                            201.5475957749603,
-                            -19.73655588794835,
-                            6194.796244344304
+                            -0.2258070520586602,
+                            1.2258070520586604
                         ]
                     }
                 },
                 "input": {
                     ".stf": {
                         "distribution": {
-                            "name": "argus",
+                            "name": "trapz",
                             "params": [
-                                1.3444573433417438e-05,
-                                -2922.408647942764,
-                                6738.674391937242
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 1144,
@@ -201,10 +203,10 @@ class SeismologyRecipe(WorkflowRecipe):
                 "output": {
                     ".gz": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "arcsine",
                             "params": [
-                                10.99999999999958,
-                                4.1986078970425886e-13
+                                -0.2258070520586602,
+                                1.2258070520586604
                             ]
                         },
                         "min": 63471,

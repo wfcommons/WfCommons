@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -241,11 +241,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 3.305,
                     "max": 133.207,
                     "distribution": {
-                        "name": "triang",
+                        "name": "rdist",
                         "params": [
-                            0.9999998742580727,
-                            -6.69821864227278,
-                            61.698354505102785
+                            1.0497506699055814,
+                            0.8751735665957343,
+                            0.5778762692984372
                         ]
                     }
                 },
@@ -302,11 +302,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                0.9999996526041718,
-                                -8.777652386868017,
-                                83.77775048163616
+                                1.7477959990252214,
+                                1.0,
+                                3.9893803094996296e-22
                             ]
                         },
                         "min": 60,
@@ -326,10 +326,10 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 2.082,
                     "max": 89.242,
                     "distribution": {
-                        "name": "rayleigh",
+                        "name": "arcsine",
                         "params": [
-                            -2.2525914610825772,
-                            17.64291114779886
+                            -0.09850603366048286,
+                            1.098506033660483
                         ]
                     }
                 },
@@ -363,11 +363,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 3.169,
                     "max": 152.024,
                     "distribution": {
-                        "name": "triang",
+                        "name": "rdist",
                         "params": [
-                            0.9999992247026201,
-                            -8.076384057650046,
-                            77.07646956305474
+                            1.056503552352268,
+                            0.8880507079714015,
+                            0.5907534106741043
                         ]
                     }
                 },
@@ -396,11 +396,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.2109632398612863,
-                                -2.836686397932103e-26,
-                                2.129201183155014
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 37467,
@@ -413,11 +413,10 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 3.382,
                     "max": 139.801,
                     "distribution": {
-                        "name": "argus",
+                        "name": "arcsine",
                         "params": [
-                            1.1554901234434413e-05,
-                            -14.968557591139366,
-                            64.32949317987402
+                            -0.09850603366048286,
+                            1.098506033660483
                         ]
                     }
                 },
@@ -434,11 +433,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.2109632398612863,
-                                -2.836686397932103e-26,
-                                2.129201183155014
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 37467,
@@ -448,11 +447,12 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "beta",
                             "params": [
-                                0.5130616667328313,
-                                -4.421427043482214e-27,
-                                1.9064184774937238
+                                0.028007929445023696,
+                                0.16801064212397998,
+                                -0.08122143521923508,
+                                1.0812214352192353
                             ]
                         },
                         "min": 37953,
@@ -470,11 +470,10 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 78.698,
                     "max": 474.546,
                     "distribution": {
-                        "name": "fisk",
+                        "name": "arcsine",
                         "params": [
-                            0.42030582758525614,
-                            -3.368844328154359e-28,
-                            2.1958097887228156
+                            -0.08648046099196244,
+                            1.0864804609919627
                         ]
                     }
                 },
@@ -531,11 +530,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "beta",
                             "params": [
-                                0.5130616667328313,
-                                -4.421427043482214e-27,
-                                1.9064184774937238
+                                0.028007929445023696,
+                                0.16801064212397998,
+                                -0.08122143521923508,
+                                1.0812214352192353
                             ]
                         },
                         "min": 37953,
@@ -543,11 +543,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                0.9999996526041718,
-                                -8.777652386868017,
-                                83.77775048163616
+                                1.7477959990252214,
+                                1.0,
+                                3.9893803094996296e-22
                             ]
                         },
                         "min": 60,
@@ -567,11 +567,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 5.589,
                     "max": 154.005,
                     "distribution": {
-                        "name": "gamma",
+                        "name": "rdist",
                         "params": [
-                            0.6031493832274422,
-                            4.999999999999999,
-                            10.062244059815622
+                            1.054143443775926,
+                            0.8779716509043156,
+                            0.6087408816735466
                         ]
                     }
                 },
@@ -633,11 +633,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "beta",
                             "params": [
-                                0.5130616667328313,
-                                -4.421427043482214e-27,
-                                1.9064184774937238
+                                0.028007929445023696,
+                                0.16801064212397998,
+                                -0.08122143521923508,
+                                1.0812214352192353
                             ]
                         },
                         "min": 37953,
@@ -645,11 +646,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "triang",
+                            "name": "rdist",
                             "params": [
-                                0.9999996526041718,
-                                -8.777652386868017,
-                                83.77775048163616
+                                1.7477959990252214,
+                                1.0,
+                                3.9893803094996296e-22
                             ]
                         },
                         "min": 60,
@@ -664,11 +665,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.5702069492082148,
-                                -1.2181023359846581e-29,
-                                2.328292348760873
+                                1.0354552049234393,
+                                0.9230820838539932,
+                                0.5764154171873266
                             ]
                         },
                         "min": 39550,
@@ -681,12 +682,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 30.011,
                     "max": 709.504,
                     "distribution": {
-                        "name": "trapz",
+                        "name": "argus",
                         "params": [
-                            1.0,
-                            1.0,
-                            -14.805000000000001,
-                            169.2
+                            0.0008690793369530592,
+                            -0.6114566529512571,
+                            1.6139824159282967
                         ]
                     }
                 },
@@ -713,11 +713,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".bam": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.6414526843394122,
-                                -6.597458275218181e-26,
-                                1.7270338535457088
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 39550,
@@ -755,11 +756,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "skewnorm",
+                            "name": "trapz",
                             "params": [
-                                810640.4518672728,
-                                -0.0010687481525930745,
-                                157.76819262166055
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 60,
@@ -769,11 +771,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.7384603818061779,
-                                -5.18486550777156e-25,
-                                2.7633104484562185
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 59037,
@@ -781,11 +783,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.5112505250138766,
-                                -7.03556641822723e-26,
-                                1.7971380170612603
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 28447,
@@ -798,21 +801,22 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 2562.381,
                     "max": 37861.356,
                     "distribution": {
-                        "name": "levy",
+                        "name": "dgamma",
                         "params": [
-                            9.99999999999741,
-                            5.729323848066606e-13
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.7384603818061779,
-                                -5.18486550777156e-25,
-                                2.7633104484562185
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 59037,
@@ -820,11 +824,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.5112505250138766,
-                                -7.03556641822723e-26,
-                                1.7971380170612603
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 28447,
@@ -842,10 +847,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -878,10 +884,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".list": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 1700,
@@ -901,10 +908,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".idx": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 28886,
@@ -912,10 +920,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 104389,
@@ -928,21 +937,21 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 95.618,
                     "max": 899.232,
                     "distribution": {
-                        "name": "levy",
+                        "name": "arcsine",
                         "params": [
-                            -1.237686094683259,
-                            5.73897660455604
+                            -0.09850603366048286,
+                            1.098506033660483
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.7384603818061779,
-                                -5.18486550777156e-25,
-                                2.7633104484562185
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 59037,
@@ -950,11 +959,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.5112505250138766,
-                                -7.03556641822723e-26,
-                                1.7971380170612603
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 28447,
@@ -962,10 +972,12 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "uniform",
+                            "name": "trapz",
                             "params": [
-                                0.0,
-                                100.0
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 60,
@@ -1020,11 +1032,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.4153135006398344,
-                                -1.574105802483078e-26,
-                                2.0711234595178167
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 59101,
@@ -1032,11 +1044,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.2532229840213113,
-                                -5.220068867146425e-26,
-                                2.1172225587125273
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 28496,
@@ -1049,22 +1061,22 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 4.156,
                     "max": 163.914,
                     "distribution": {
-                        "name": "dweibull",
+                        "name": "dgamma",
                         "params": [
-                            0.7108618995255725,
-                            9.999999999999996,
-                            0.052673745569323874
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.4153135006398344,
-                                -1.574105802483078e-26,
-                                2.0711234595178167
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 59101,
@@ -1072,11 +1084,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.2532229840213113,
-                                -5.220068867146425e-26,
-                                2.1172225587125273
+                                1.7504259269384672,
+                                0.9999999999938114,
+                                6.18860928332036e-12
                             ]
                         },
                         "min": 28496,
@@ -1084,10 +1096,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -1142,10 +1155,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 70314,
@@ -1153,10 +1167,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 28576,
@@ -1169,20 +1184,22 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 50.953,
                     "max": 197.487,
                     "distribution": {
-                        "name": "levy",
+                        "name": "dgamma",
                         "params": [
-                            9.99999999999741,
-                            5.729323848066606e-13
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 70314,
@@ -1235,10 +1252,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -1248,10 +1266,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 71866,
@@ -1264,11 +1283,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 4.264,
                     "max": 67.509,
                     "distribution": {
-                        "name": "dweibull",
+                        "name": "dgamma",
                         "params": [
-                            0.7108618995255725,
-                            9.999999999999996,
-                            0.052673745569323874
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
@@ -1320,10 +1339,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 71866,
@@ -1331,10 +1351,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -1344,10 +1365,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 74686,
@@ -1355,10 +1377,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 28545,
@@ -1371,20 +1394,22 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 48.59,
                     "max": 207.667,
                     "distribution": {
-                        "name": "levy",
+                        "name": "dgamma",
                         "params": [
-                            9.99999999999741,
-                            5.729323848066606e-13
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 70314,
@@ -1437,10 +1462,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -1450,10 +1476,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 67140,
@@ -1466,11 +1493,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     "min": 4.028,
                     "max": 338.588,
                     "distribution": {
-                        "name": "dweibull",
+                        "name": "dgamma",
                         "params": [
-                            0.7108618995255725,
-                            9.999999999999996,
-                            0.052673745569323874
+                            0.19307932052443602,
+                            0.9999999999999999,
+                            1.3015975328465914
                         ]
                     }
                 },
@@ -1487,10 +1514,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 67140,
@@ -1533,10 +1561,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 60,
@@ -1546,10 +1575,11 @@ class SoyKBRecipe(WorkflowRecipe):
                 "output": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 69861,
@@ -1557,10 +1587,11 @@ class SoyKBRecipe(WorkflowRecipe):
                     },
                     ".idx": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dgamma",
                             "params": [
-                                9.99999999999741,
-                                5.729323848066606e-13
+                                0.19307932052443602,
+                                0.9999999999999999,
+                                1.3015975328465914
                             ]
                         },
                         "min": 28575,

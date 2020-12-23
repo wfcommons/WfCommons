@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -218,11 +218,11 @@ class GenomeRecipe(WorkflowRecipe):
                     "min": 48.846,
                     "max": 192.232,
                     "distribution": {
-                        "name": "skewnorm",
+                        "name": "argus",
                         "params": [
-                            11115267.652937062,
-                            -2.9628504044929433e-05,
-                            56.03957070238482
+                            5.195366960167635e-05,
+                            -0.6923240599242786,
+                            1.6948569025371873
                         ]
                     }
                 },
@@ -234,11 +234,12 @@ class GenomeRecipe(WorkflowRecipe):
                     },
                     ".vcf": {
                         "distribution": {
-                            "name": "alpha",
+                            "name": "trapz",
                             "params": [
-                                3.377581164717659,
-                                -1.7883202273916273e-16,
-                                8.56622206451036e-16
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
                             ]
                         },
                         "min": 1014213207,
@@ -248,10 +249,11 @@ class GenomeRecipe(WorkflowRecipe):
                 "output": {
                     ".gz": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "argus",
                             "params": [
-                                -1.0888749504987145,
-                                6.952913441525787
+                                0.0024394427876728523,
+                                -0.411542131610374,
+                                1.4125981096726774
                             ]
                         },
                         "min": 27275,
@@ -264,22 +266,22 @@ class GenomeRecipe(WorkflowRecipe):
                     "min": 34.471,
                     "max": 157.346,
                     "distribution": {
-                        "name": "trapz",
+                        "name": "rdist",
                         "params": [
-                            1.0,
-                            1.0,
-                            -8.190000000000001,
-                            105.6
+                            1.0381380525174126,
+                            0.8856734445741212,
+                            0.6098113756086041
                         ]
                     }
                 },
                 "input": {
                     ".gz": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "argus",
                             "params": [
-                                -1.0888749504987145,
-                                6.952913441525787
+                                0.0024394427876728523,
+                                -0.411542131610374,
+                                1.4125981096726774
                             ]
                         },
                         "min": 27275,
@@ -289,11 +291,10 @@ class GenomeRecipe(WorkflowRecipe):
                 "output": {
                     ".gz": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "norm",
                             "params": [
-                                0.5579424462170595,
-                                -7.62317369524941e-27,
-                                2.3113046845460117
+                                0.1810699588477366,
+                                0.26861113455666213
                             ]
                         },
                         "min": 24180,
@@ -306,21 +307,22 @@ class GenomeRecipe(WorkflowRecipe):
                     "min": 0.293,
                     "max": 22.686,
                     "distribution": {
-                        "name": "chi2",
+                        "name": "norm",
                         "params": [
-                            1.3512954025717425,
-                            0.9999999999999999,
-                            1.9181211494208956
+                            0.20370370370370366,
+                            0.2753559549391278
                         ]
                     }
                 },
                 "input": {
                     ".vcf": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "trapz",
                             "params": [
-                                -1.6067534129634995,
-                                9.125715788595995
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 267806263,
@@ -330,10 +332,11 @@ class GenomeRecipe(WorkflowRecipe):
                 "output": {
                     ".txt": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "dweibull",
                             "params": [
-                                -1.2088789973902925,
-                                4.40384271471094
+                                1.727468520735635,
+                                0.1982279794020313,
+                                0.29839665578862673
                             ]
                         },
                         "min": 231958,
@@ -346,22 +349,22 @@ class GenomeRecipe(WorkflowRecipe):
                     "min": 1.61,
                     "max": 92.154,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "argus",
                         "params": [
-                            1.7105772737618344e-07,
-                            -1.5157641888455222,
-                            2.675317958811103
+                            0.00026192730594807505,
+                            -0.7075548744414277,
+                            1.7102271901418185
                         ]
                     }
                 },
                 "input": {
                     ".gz": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.6569480734384281,
-                                -5.5283127064899054e-27,
-                                1.9520478968194923
+                                0.0016194733607993123,
+                                -0.6111579247282823,
+                                1.613914274425801
                             ]
                         },
                         "min": 24180,
@@ -369,11 +372,11 @@ class GenomeRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.42634352667168895,
-                                -3.39060287009396e-26,
-                                3.095939096458289
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 20078,
@@ -418,11 +421,12 @@ class GenomeRecipe(WorkflowRecipe):
                 "output": {
                     ".gz": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.1415750994331953,
-                                -1.5084913431314967e-26,
-                                2.267414573651914
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 136896,
@@ -435,21 +439,22 @@ class GenomeRecipe(WorkflowRecipe):
                     "min": 76.023,
                     "max": 238.26,
                     "distribution": {
-                        "name": "levy",
+                        "name": "dweibull",
                         "params": [
-                            -0.8146765116317367,
-                            3.4571998225851384
+                            1.3710340206922134,
+                            0.1939059617308234,
+                            0.23184013931258757
                         ]
                     }
                 },
                 "input": {
                     ".gz": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.6569480734384281,
-                                -5.5283127064899054e-27,
-                                1.9520478968194923
+                                0.0016194733607993123,
+                                -0.6111579247282823,
+                                1.613914274425801
                             ]
                         },
                         "min": 24180,
@@ -457,11 +462,11 @@ class GenomeRecipe(WorkflowRecipe):
                     },
                     ".txt": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.42634352667168895,
-                                -3.39060287009396e-26,
-                                3.095939096458289
+                                1.750426650564894,
+                                0.9999999999999998,
+                                2.3624681987884834e-16
                             ]
                         },
                         "min": 20078,
@@ -506,10 +511,11 @@ class GenomeRecipe(WorkflowRecipe):
                 "output": {
                     ".gz": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "argus",
                             "params": [
-                                -0.13019549190430535,
-                                0.4034357322776298
+                                0.0013405464361447438,
+                                -0.5587070759363937,
+                                1.561653731136413
                             ]
                         },
                         "min": 217409,

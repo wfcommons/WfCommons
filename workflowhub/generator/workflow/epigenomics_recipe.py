@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -217,11 +217,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 2.115,
                     "max": 120.272,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "arcsine",
                         "params": [
-                            1.2037882387638316e-08,
-                            0.0013824676778065785,
-                            1.4109916687079997
+                            -0.3035999774381156,
+                            1.3035999774381157
                         ]
                     }
                 },
@@ -238,11 +237,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".map": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "wald",
                             "params": [
-                                0.404004449642449,
-                                7.999999999999998,
-                                0.29643222001452685
+                                -0.17493471523909687,
+                                0.7756671015273009
                             ]
                         },
                         "min": 8974436,
@@ -252,11 +250,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".map": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "wald",
                             "params": [
-                                0.404004449642449,
-                                7.999999999999998,
-                                0.29643222001452685
+                                -0.17493471523909687,
+                                0.7756671015273009
                             ]
                         },
                         "min": 8974436,
@@ -269,11 +266,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 0.033,
                     "max": 10.513,
                     "distribution": {
-                        "name": "chi2",
+                        "name": "argus",
                         "params": [
-                            1.3386691664974841,
-                            -5.708893978145665e-28,
-                            1.851059388057558
+                            0.0013172190571931008,
+                            -0.6255630820469653,
+                            1.6268274262928797
                         ]
                     }
                 },
@@ -290,11 +287,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".fq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.7956524584974147,
-                                -1.1631471106725046e-27,
-                                1.7866384876482693
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 290449,
@@ -304,11 +302,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".bfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.18924491041245323,
-                                -8.340735410821612e-28,
-                                2.241150785198654
+                                0.00020234879528656372,
+                                -0.6526074074243076,
+                                1.6539075869135396
                             ]
                         },
                         "min": 71135,
@@ -321,20 +319,23 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 1.344,
                     "max": 878.473,
                     "distribution": {
-                        "name": "wald",
+                        "name": "rdist",
                         "params": [
-                            -0.9319555092279244,
-                            12.701940366609303
+                            1.75042596138855,
+                            1.0,
+                            1.4743823168866782e-24
                         ]
                     }
                 },
                 "input": {
                     ".sfq": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "beta",
                             "params": [
-                                11.54431127713843,
-                                1.7294835205944359
+                                0.38998784207990245,
+                                0.3731068582609596,
+                                -0.09952333251102002,
+                                1.0995233325110203
                             ]
                         },
                         "min": 109431824,
@@ -344,11 +345,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".sfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.6096730655283322,
-                                -1.196048242820172e-25,
-                                1.8460713490852902
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 385300,
@@ -361,22 +363,23 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 0.067,
                     "max": 47.417,
                     "distribution": {
-                        "name": "fisk",
+                        "name": "argus",
                         "params": [
-                            0.6541872041823478,
-                            -4.336127245482357e-28,
-                            1.938539282462673
+                            0.000119419805378591,
+                            -0.6267937401576169,
+                            1.6280498175034972
                         ]
                     }
                 },
                 "input": {
                     ".sfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.6096730655283322,
-                                -1.196048242820172e-25,
-                                1.8460713490852902
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 385300,
@@ -386,11 +389,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".sfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.577065936564831,
-                                -1.0559908824984039e-26,
-                                1.6405796858668555
+                                0.00017206648550145397,
+                                -0.7476097341288013,
+                                1.7490421045139302
                             ]
                         },
                         "min": 379368,
@@ -403,11 +406,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 1.574,
                     "max": 37.253,
                     "distribution": {
-                        "name": "alpha",
+                        "name": "arcsine",
                         "params": [
-                            2.5566780151876478e-08,
-                            -0.00023397333904237204,
-                            2.2836168403441324
+                            -0.09850603366048286,
+                            1.098506033660483
                         ]
                     }
                 },
@@ -424,11 +426,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".map": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.36608100003038957,
-                                -3.21850679716644e-26,
-                                2.6277130589314748
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 17429,
@@ -438,11 +441,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".map": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "rdist",
                             "params": [
-                                0.46489086906995225,
-                                1.9999999999999998,
-                                1.555519982565344
+                                1.6552925257207445,
+                                0.9629629570958356,
+                                0.03703704290416444
                             ]
                         },
                         "min": 8972748,
@@ -455,12 +458,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 24.836,
                     "max": 122.642,
                     "distribution": {
-                        "name": "trapz",
+                        "name": "dweibull",
                         "params": [
-                            1.0,
-                            1.0,
-                            -7.245000000000001,
-                            82.8
+                            1.3729294023668532,
+                            0.18900496465089503,
+                            0.2220995526444095
                         ]
                     }
                 },
@@ -477,11 +479,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".bfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.18924491041245323,
-                                -8.340735410821612e-28,
-                                2.241150785198654
+                                0.00020234879528656372,
+                                -0.6526074074243076,
+                                1.6539075869135396
                             ]
                         },
                         "min": 71135,
@@ -496,10 +498,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".map": {
                         "distribution": {
-                            "name": "levy",
+                            "name": "trapz",
                             "params": [
-                                -0.3008407597354944,
-                                0.9942059115945362
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 17429,
@@ -512,12 +516,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 23.112,
                     "max": 99.597,
                     "distribution": {
-                        "name": "beta",
+                        "name": "arcsine",
                         "params": [
-                            1.312969391453295,
-                            0.7331939054064136,
-                            -8.103797068931092,
-                            33.1037970689311
+                            -0.11142536390545808,
+                            1.1114253639054583
                         ]
                     }
                 },
@@ -534,11 +536,10 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".map": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "wald",
                             "params": [
-                                0.404004449642449,
-                                7.999999999999998,
-                                0.29643222001452685
+                                -0.17493471523909687,
+                                0.7756671015273009
                             ]
                         },
                         "min": 8974436,
@@ -553,11 +554,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".pileup": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "dgamma",
                             "params": [
-                                0.404004449642449,
-                                7.999999999999998,
-                                0.29643222001452685
+                                45.77906786660549,
+                                0.5490748835177965,
+                                0.010065796180024893
                             ]
                         },
                         "min": 4595783,
@@ -570,11 +571,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     "min": 0.024,
                     "max": 28.568,
                     "distribution": {
-                        "name": "chi2",
+                        "name": "argus",
                         "params": [
-                            0.5991026813436918,
-                            -1.0785002971672537e-26,
-                            3.083881675199752
+                            0.00047854815637565084,
+                            -0.6360141902251384,
+                            1.6372643378490337
                         ]
                     }
                 },
@@ -591,11 +592,11 @@ class EpigenomicsRecipe(WorkflowRecipe):
                     },
                     ".sfq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "argus",
                             "params": [
-                                0.577065936564831,
-                                -1.0559908824984039e-26,
-                                1.6405796858668555
+                                0.00017206648550145397,
+                                -0.7476097341288013,
+                                1.7490421045139302
                             ]
                         },
                         "min": 379368,
@@ -605,11 +606,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
                 "output": {
                     ".fq": {
                         "distribution": {
-                            "name": "fisk",
+                            "name": "trapz",
                             "params": [
-                                0.7956524584974147,
-                                -1.1631471106725046e-27,
-                                1.7866384876482693
+                                1.0,
+                                1.0,
+                                -0.10500000000000001,
+                                1.2
                             ]
                         },
                         "min": 290449,

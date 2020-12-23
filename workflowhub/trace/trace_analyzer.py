@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -237,8 +237,9 @@ def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_si
     scale = params[-1]
 
     raw_data = el['data']
-    bins = math.ceil(len(raw_data) / 20)
-    y, x = numpy.histogram(raw_data, bins=bins, density=True)
+    bins = math.ceil(len(raw_data) / 10)
+    normalized = (raw_data - numpy.min(raw_data)) / (numpy.max(raw_data) - numpy.min(raw_data))
+    y, x = numpy.histogram(normalized, bins=bins, density=True)
 
     if font_size:
         old_font_size = pyplot.rcParams["font.size"]
@@ -247,7 +248,7 @@ def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_si
     pyplot.grid(True)
     pyplot.plot(x, distribution.cdf(x, *kwargs, loc=loc, scale=scale), 'r-', lw=2, alpha=0.6,
                 label=distribution.name)
-    pyplot.hist(raw_data, bins=bins, density=True, cumulative=True)
+    pyplot.hist(normalized, bins=bins, density=True, cumulative=True)
 
     pyplot.title(title)
     pyplot.xlabel(xlabel)
