@@ -59,6 +59,7 @@ The current list of available workflow recipes include:
 - :class:`~workflowhub.generator.workflow.montage_recipe.MontageRecipe`: :code:`from workflowhub.generator import MontageRecipe`
 - :class:`~workflowhub.generator.workflow.seismology_recipe.SeismologyRecipe`: :code:`from workflowhub.generator import SeismologyRecipe`
 - :class:`~workflowhub.generator.workflow.soykb_recipe.SoyKBRecipe`: :code:`from workflowhub.generator import SoyKBRecipe`
+- :class:`~workflowhub.generator.workflow.srasearch_recipe.SRASearchRecipe`: :code:`from workflowhub.generator import SRASearchRecipe`
 
 The Workflow Generator
 ----------------------
