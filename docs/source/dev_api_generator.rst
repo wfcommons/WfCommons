@@ -83,3 +83,13 @@ workflowhub.generator.workflow.soykb\_recipe
    :show-inheritance:
    :private-members:
    :noindex:
+
+workflowhub.generator.workflow.srasearch\_recipe
+--------------------------------------------
+
+.. automodule:: workflowhub.generator.workflow.srasearch_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
