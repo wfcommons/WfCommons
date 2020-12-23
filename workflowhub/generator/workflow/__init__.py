@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,3 +14,4 @@ from .genome_recipe import GenomeRecipe
 from .montage_recipe import MontageRecipe, MontageDataset
 from .seismology_recipe import SeismologyRecipe
 from .soykb_recipe import SoyKBRecipe
+from .srasearch_recipe import SRASearchRecipe
