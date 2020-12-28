@@ -10,14 +10,14 @@ Requirements
 Graphviz
 ^^^^^^^^
 
-WorkflowHub uses `pygraphviz <https://pygraphviz.github.io/documentation/latest/install.html>`_ and thus needs the `graphviz <https://www.graphviz.org/>`_ package installed (version 2.16 or later).
-You can install graphviz easily on Linux with your favorite package manager,
+WorkflowHub uses `pygraphviz <https://pygraphviz.github.io/documentation/latest/install.html>`_
+and thus needs the `graphviz <https://www.graphviz.org/>`_ package installed (version 2.16
+or later). You can install graphviz easily on Linux with your favorite package manager,
 for example for Debian-based distributions:
 
 .. code-block:: bash
 
     $ sudo apt-get install graphviz libgraphviz-dev
-
 
 and for RedHat-based distributions:
 
@@ -25,8 +25,7 @@ and for RedHat-based distributions:
 
     $ sudo yum install python-devel graphviz-devel
 
-
-On macOS you can use :code:`brew` package manager:
+On macOS you can use the :code:`brew` package manager:
 
 .. code-block:: bash
 

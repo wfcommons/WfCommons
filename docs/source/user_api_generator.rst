@@ -63,7 +63,7 @@ workflowhub.generator.workflow.soykb\_recipe
    :show-inheritance:
 
 workflowhub.generator.workflow.srasearch\_recipe
---------------------------------------------
+------------------------------------------------
 
 .. automodule:: workflowhub.generator.workflow.srasearch_recipe
    :members:

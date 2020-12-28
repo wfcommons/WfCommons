@@ -20,16 +20,31 @@ from ...common.workflow import Workflow
 class LogsParser(ABC):
     """An abstract class of logs parser for creating workflow traces.
 
+    :param wms_name: Name of the workflow system.
+    :type wms_name: str
+    :param wms_url: URL for the workflow system.
+    :type wms_url: str
     :param description: Workflow trace description.
     :type description: str
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
-    def __init__(self, description: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+    def __init__(self,
+                 wms_name: str,
+                 wms_url: Optional[str] = None,
+                 description: Optional[str] = None,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object of the logs parser."""
         self.logger = logging.getLogger(__name__) if logger is None else logger
         self.description = description
+        self.wms_name = wms_name
+        self.wms_url = wms_url
+        self.workflow = None
+        self.workflow_name = None
+        self.schema_version = None
+        self.executed_at = None
+        self.makespan = None
 
     @abstractmethod
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:

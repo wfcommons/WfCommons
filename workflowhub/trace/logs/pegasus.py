@@ -41,13 +41,14 @@ class PegasusLogsParser(LogsParser):
     :type logger: Logger
     """
 
-    def __init__(self, submit_dir: str,
+    def __init__(self,
+                 submit_dir: str,
                  description: Optional[str] = None,
                  ignore_auxiliary: Optional[bool] = True,
                  legacy: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the pegasus log parser."""
-        super().__init__(description, logger)
+        super().__init__('Pegasus', 'https://pegasus.isi.edu', description, logger)
 
         # Sanity check
         if not os.path.isdir(submit_dir):
@@ -59,13 +60,6 @@ class PegasusLogsParser(LogsParser):
         self.submit_dir = submit_dir
         self.legacy = legacy
         self.ignore_auxiliary = ignore_auxiliary
-        self.workflow = None
-        self.workflow_name = None
-        self.schema_version = None
-        self.wms_name = 'Pegasus'
-        self.wms_url = 'https://pegasus.isi.edu'
-        self.executed_at = None
-        self.makespan = None
         self.files_map = {}
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:

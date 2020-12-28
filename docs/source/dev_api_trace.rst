@@ -2,7 +2,7 @@ workflowhub.trace
 =================
 
 workflowhub.trace.schema
----------------------------------
+------------------------
 
 .. automodule:: workflowhub.trace.schema
    :members:
@@ -40,8 +40,18 @@ workflowhub.trace.logs.abstract\_logs\_parser
    :private-members:
    :noindex:
 
+workflowhub.trace.logs.makeflow
+-------------------------------
+
+.. automodule:: workflowhub.trace.logs.makeflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 workflowhub.trace.logs.pegasus
----------------------------------------------
+------------------------------
 
 .. automodule:: workflowhub.trace.logs.pegasus
    :members:

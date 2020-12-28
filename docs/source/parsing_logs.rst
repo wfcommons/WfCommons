@@ -7,10 +7,46 @@ The most common way for obtaining traces from actual workflow executions is to p
 execution logs. As part of the WorkflowHub project, we are constantly developing
 parsers for commonly used workflow management systems.
 
-Each parser class is derived from the :class:`~workflowhub.trace.logs.abstract_logs_parser.LogsParser`
-class. Thus, each parser provides a
+Each parser class is derived from the abstract
+:class:`~workflowhub.trace.logs.abstract_logs_parser.LogsParser` class. Thus, each
+parser provides a
 :meth:`~workflowhub.trace.logs.abstract_logs_parser.LogsParser.build_workflow`
 method.
+
+Makeflow
+--------
+
+`Makeflow <http://ccl.cse.nd.edu/software/makeflow/>`_ is a workflow system for
+executing large complex workflows on clusters, clouds, and grids. The Makeflow
+language is similar to traditional Make, so if you can write a Makefile, then you
+can write a Makeflow. A workflow can be just a few commands chained together, or
+it can be a complex application consisting of thousands of tasks. It can have an
+arbitrary DAG structure and is not limited to specific patterns. Makeflow is used
+on a daily basis to execute complex scientific applications in fields such as data
+mining, high energy physics, image processing, and bioinformatics. It has run on
+campus clusters, the Open Science Grid, NSF XSEDE machines, NCSA Blue Waters, and
+Amazon Web Services. Makeflow logs provide time-stamped event traces from these
+executions. The following example shows the analysis of Makeflow execution logs,
+stored in a local folder (execution dir), for a workflow execution using the
+:class:`~workflowhub.trace.logs.makeflow.MakeflowLogsParser` class: ::
+
+    from workflowhub.trace import MakeflowLogsParser
+
+    # creating the parser for the Makeflow workflow
+    parser = MakeflowLogsParser(execution_dir='/path/to/makeflow/execution/dir/blast/chameleon-small-001/'
+                                resource_monitor_logs_dir='/path/to/makeflow/resource/monitor/logs/dir')
+
+    # generating the workflow trace object
+    workflow = parser.build_workflow('workflow-test')
+
+    # writing the workflow trace to a JSON file
+    workflow.write_json('workflow.json')
+
+.. note::
+    The :class:`~workflowhub.trace.logs.makeflow.MakeflowLogsParser` class requires
+    that Makeflow workflows to run with the
+    `Resource Monitor <https://cctools.readthedocs.io/en/latest/resource_monitor/>`_
+    tool (e.g., execute the workflow using the :code:`--monitor=logs`).
 
 Pegasus WMS
 -----------
@@ -39,9 +75,8 @@ class: ::
     # writing the workflow trace to a JSON file
     workflow.write_json('workflow.json')
 
-.. note::
-
+.. warning::
     By default, the :class:`~workflowhub.trace.logs.pegasus.PegasusLogsParser`
-    class assumes that the submit dir is from a Pegasus execution with version 5.0 or later.
-    To enable parsing of Pegasus execution logs from version 4.9 or earlier, the option
-    :code:`legacy=True` should be used.
+    class assumes that the submit dir is from a Pegasus execution with **version 5.0**
+    or later. To enable parsing of Pegasus execution logs from version 4.9 or earlier,
+    the option :code:`legacy=True` should be used.

@@ -85,7 +85,7 @@ workflowhub.generator.workflow.soykb\_recipe
    :noindex:
 
 workflowhub.generator.workflow.srasearch\_recipe
---------------------------------------------
+------------------------------------------------
 
 .. automodule:: workflowhub.generator.workflow.srasearch_recipe
    :members:
