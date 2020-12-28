@@ -1,4 +1,4 @@
-[![Travis][travis-badge]][travis-link]
+[![Build][build-badge]][build-link]
 [![PyPI version][pypi-badge]][pypi-link]
 [![License: LGPL v3][license-badge]](LICENSE)
 [![CodeFactor][codefactor-badge]][codefactor-link]
@@ -85,8 +85,8 @@ that paper, as it provides a recent and general overview on the framework.
 }
 ```
 
-[travis-badge]:        https://travis-ci.org/workflowhub/workflowhub.svg?branch=master
-[travis-link]:         https://travis-ci.org/workflowhub/workflowhub
+[build-badge]:        https://github.com/workflowhub/workflowhub/workflows/Build/badge.svg
+[build-link]:         https://github.com/workflowhub/workflowhub/actions
 [pypi-badge]:          https://badge.fury.io/py/workflowhub.svg
 [pypi-link]:           https://badge.fury.io/py/workflowhub
 [license-badge]:       https://img.shields.io/badge/License-LGPL%20v3-blue.svg
