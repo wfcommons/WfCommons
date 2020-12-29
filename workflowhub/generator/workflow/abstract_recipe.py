@@ -114,8 +114,11 @@ class WorkflowRecipe(ABC):
         :rtype: Workflow
         """
 
-    def _generate_task(self, task_name: str, task_id: str, input_files: Optional[List[File]] = None,
-                       files_recipe: Optional[Dict[FileLink, Dict[str, int]]] = None) -> Task:
+    def _generate_task(self, task_name: str,
+                       task_id: str,
+                       input_files: Optional[List[File]] = None,
+                       files_recipe: Optional[Dict[FileLink, Dict[str, int]]] = None
+                       ) -> Task:
         """Generate a synthetic task.
 
         :param task_name: task name.

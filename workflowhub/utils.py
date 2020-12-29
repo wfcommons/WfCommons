@@ -114,7 +114,7 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
 
     params = distribution['params']
     kwargs = params[:-2]
-    rvs: float = max(0.00001, getattr(scipy.stats, distribution['name']).rvs(*kwargs, loc=params[-2], scale=params[-1]))
+    rvs: float = max(0.1, getattr(scipy.stats, distribution['name']).rvs(*kwargs, loc=params[-2], scale=params[-1]))
     return rvs * max_value
 
 
