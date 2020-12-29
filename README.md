@@ -85,8 +85,8 @@ that paper, as it provides a recent and general overview on the framework.
 }
 ```
 
-[build-badge]:        https://github.com/workflowhub/workflowhub/workflows/Build/badge.svg
-[build-link]:         https://github.com/workflowhub/workflowhub/actions
+[build-badge]:         https://github.com/workflowhub/workflowhub/workflows/Build/badge.svg
+[build-link]:          https://github.com/workflowhub/workflowhub/actions
 [pypi-badge]:          https://badge.fury.io/py/workflowhub.svg
 [pypi-link]:           https://badge.fury.io/py/workflowhub
 [license-badge]:       https://img.shields.io/badge/License-LGPL%20v3-blue.svg

@@ -1,7 +1,7 @@
 WorkflowHub
 ***********
 
-|pypi-badge| |travis-badge| |license-badge|
+|pypi-badge| |build-badge| |license-badge|
 
 `WorkflowHub <https://workflowhub.org>`__ is a community framework for
 enabling scientific workflow research and development. This Python package
@@ -54,8 +54,8 @@ support@workflowhub.org.
     user_api_reference.rst
     dev_api_reference.rst
 
-.. |travis-badge| image:: https://travis-ci.org/workflowhub/workflowhub.svg?branch=master
-    :target: https://travis-ci.org/workflowhub/workflowhub
+.. |build-badge| image:: https://github.com/workflowhub/workflowhub/workflows/Build/badge.svg
+    :target: https://github.com/workflowhub/workflowhub/actions
 .. |license-badge| image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
     :target: https://github.com/workflowhub/workflowhub/blob/master/LICENSE
 .. |pypi-badge| image:: https://badge.fury.io/py/workflowhub.svg
