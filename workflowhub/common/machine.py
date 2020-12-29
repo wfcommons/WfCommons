@@ -74,9 +74,9 @@ class Machine:
         self.hashcode = hashcode
 
         self.cpu_cores: int = cpu['count']
-        self.cpu_speed: int = cpu['speed']
-        self.cpu_flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6
-        self.cpu_vendor: str = cpu['vendor']
+        self.cpu_speed: int = cpu['speed'] if 'speed' in cpu else 0
+        self.cpu_flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6 if 'speed' in cpu else 0
+        self.cpu_vendor: str = cpu['vendor'] if 'vendor' in cpu else None
 
         self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
             self.name, self.cpu_cores, self.cpu_flops)

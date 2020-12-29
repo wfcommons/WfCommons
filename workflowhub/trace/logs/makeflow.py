@@ -118,7 +118,7 @@ class MakeflowLogsParser(LogsParser):
 
                 elif len(line.strip()) > 0:
                     # task execution command
-                    prefix = line.split()[1 if 'LOCAL' in line else 0].replace('./', '')
+                    prefix = line.replace('./', '').replace('perl', '').strip().split()[1 if 'LOCAL' in line else 0]
                     task_name = "{}_ID{:06d}".format(prefix, task_id_counter)
                     task_id_counter += 1
 
@@ -128,7 +128,7 @@ class MakeflowLogsParser(LogsParser):
                     list_files.extend(self._create_files(inputs, FileLink.INPUT, task_name))
 
                     # create task
-                    args = line.replace('LOCAL', '').strip()
+                    args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
                     task = Task(name=task_name,
                                 task_type=TaskType.COMPUTE,
                                 runtime=0,
@@ -210,7 +210,7 @@ class MakeflowLogsParser(LogsParser):
                 data = json.load(f)
 
                 # task
-                task = self.args_map[data['command']]
+                task = self.args_map[data['command'].replace('perl', '').strip()]
                 task.runtime = float(data['wall_time'][0])
                 task.cores = int(data['cores'][0])
                 task.memory = int(data['memory'][0]) * 1000  # MB to KB

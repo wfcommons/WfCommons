@@ -88,7 +88,7 @@ class Trace:
             machine['nodeName']: Machine(
                 name=machine['nodeName'],
                 cpu={k: v for k, v in machine['cpu'].items()},
-                system=MachineSystem(machine.get('system', None)),
+                system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
                 architecture=machine.get('architecture', None),
                 memory=machine.get('memory', None),
                 release=machine.get('release', None),
