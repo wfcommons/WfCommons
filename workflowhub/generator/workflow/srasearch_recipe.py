@@ -8,7 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from .abstract_recipe import WorkflowRecipe
 from ...common.file import FileLink
@@ -17,7 +17,7 @@ from ...common.workflow import Workflow
 
 
 class SRASearchRecipe(WorkflowRecipe):
-    """A SRA Search workflow recipe class for creating synthetic workflow traces.
+    """An SRA Search workflow recipe class for creating synthetic workflow traces.
 
     :param num_accession: The number of NCBI accession numbers.
     :type num_accession: int
@@ -105,7 +105,7 @@ class SRASearchRecipe(WorkflowRecipe):
         :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
         :type output_file_size_factor: float
 
-        :return: A SRA Search workflow recipe object that will generate synthetic workflows
+        :return: An SRA Search workflow recipe object that will generate synthetic workflows
                  using the defined number of pairs.
         :rtype: SRASearchRecipe
         """
@@ -121,7 +121,7 @@ class SRASearchRecipe(WorkflowRecipe):
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-        Generate a synthetic workflow trace of a SRA Search workflow.
+        Generate a synthetic workflow trace of an SRA Search workflow.
 
         :param workflow_name: The workflow name
         :type workflow_name: int
