@@ -101,6 +101,9 @@ class TraceAnalyzer:
 
                 for file in task.files:
                     extension: str = path.splitext(file.name)[1] if '.' in file.name else file.name
+                    if extension[1:].isnumeric():
+                        extension = path.splitext(file.name.replace(extension, ''))[1]
+
                     if file.link == FileLink.INPUT:
                         _append_file_to_dict(extension, inputs_dict, file.size)
                     elif file.link == FileLink.OUTPUT:
