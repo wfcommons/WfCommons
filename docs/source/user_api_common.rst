@@ -11,7 +11,7 @@ workflowhub.common.file
    :private-members:
 
 workflowhub.common.task
-----------------------
+-----------------------
 
 .. automodule:: workflowhub.common.task
    :members:

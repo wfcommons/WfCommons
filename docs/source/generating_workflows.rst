@@ -61,6 +61,24 @@ The current list of available workflow recipes include:
 - :class:`~workflowhub.generator.workflow.soykb_recipe.SoyKBRecipe`: :code:`from workflowhub.generator import SoyKBRecipe`
 - :class:`~workflowhub.generator.workflow.srasearch_recipe.SRASearchRecipe`: :code:`from workflowhub.generator import SRASearchRecipe`
 
+Increasing/Reducing Runtime and File Sizes
+******************************************
+
+Workflow recipes also allow the generation of synthetic workflows with increased/reduced
+runtimes and/or files sizes determined by a factor provided by the user:
+
+- :code:`runtime_factor`: The factor of which tasks runtime will be increased/decreased.
+- :code:`input_file_size_factor`: The factor of which tasks input files size will be increased/decreased.
+- :code:`output_file_size_factor`: The factor of which tasks output files size will be increased/decreased.
+
+The following example shows how to create a Seismology workflow recipe in which task
+runtime is increased by 10%, input files by 50%, and output files reduced by 20%: ::
+
+    from workflowhub.generator import SeismologyRecipe
+
+    # creating a Seismology workflow recipe with increased/decreased runtime and file sizes
+    recipe = SeismologyRecipe.from_num_tasks(num_tasks=100, runtime_factor=1.1, input_file_size_factor=1.5, output_file_size_factor=0.8)
+
 The Workflow Generator
 ----------------------
 
