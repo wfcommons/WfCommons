@@ -29,6 +29,12 @@ class GenomeRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
@@ -36,10 +42,18 @@ class GenomeRecipe(WorkflowRecipe):
                  num_sequences: Optional[int] = 1,
                  num_populations: Optional[int] = 1,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 5
+                 num_tasks: Optional[int] = 5,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the 1000Genome workflow recipe."""
-        super().__init__("1000Genome", data_footprint, num_tasks)
+        super().__init__("1000Genome",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_chromosomes: int = num_chromosomes
         self.num_sequences: int = num_sequences
@@ -47,13 +61,24 @@ class GenomeRecipe(WorkflowRecipe):
         self.populations = ['ALL', 'AFR', 'AMR', 'EAS', 'EUR', 'GBR', 'SAS']
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'GenomeRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'GenomeRecipe':
         """
         Instantiate a 1000Genome workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 5).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A 1000Genome workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -90,14 +115,23 @@ class GenomeRecipe(WorkflowRecipe):
                 else:
                     break
 
-        return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences * 1000, num_populations=num_populations,
-                   data_footprint=None, num_tasks=num_tasks)
+        return cls(num_chromosomes=num_chromosomes,
+                   num_sequences=num_sequences * 1000,
+                   num_populations=num_populations,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
     def from_num_chromosomes(cls,
                              num_chromosomes: int,
                              num_sequences: int,
                              num_populations: int,
+                             runtime_factor: Optional[float] = 1.0,
+                             input_file_size_factor: Optional[float] = 1.0,
+                             output_file_size_factor: Optional[float] = 1.0
                              ) -> 'GenomeRecipe':
         """
         Instantiate a 1000Genome workflow recipe that will generate synthetic workflows using
@@ -109,6 +143,12 @@ class GenomeRecipe(WorkflowRecipe):
         :type num_sequences: int
         :param num_populations: The number of populations being evaluated.
         :type num_populations: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A 1000Genome workflow recipe object that will generate synthetic workflows
                  using the defined number of chromosomes, sequences, and populations.
@@ -121,8 +161,14 @@ class GenomeRecipe(WorkflowRecipe):
         if num_populations < 1 or num_populations > 7:
             raise ValueError("The number of populations should be within the range [1,7].")
 
-        return cls(num_chromosomes=num_chromosomes, num_sequences=num_sequences, num_populations=num_populations,
-                   data_footprint=None, num_tasks=None)
+        return cls(num_chromosomes=num_chromosomes,
+                   num_sequences=num_sequences,
+                   num_populations=num_populations,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of a 1000Genome workflow.

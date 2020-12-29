@@ -30,28 +30,53 @@ class SoyKBRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
                  num_fastq_files: Optional[int] = 2,
                  num_chromosomes: Optional[int] = 1,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 14
+                 num_tasks: Optional[int] = 14,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the SoyKB workflow recipe."""
-        super().__init__("SoyKB", data_footprint, num_tasks)
+        super().__init__("SoyKB",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_fastq_files = num_fastq_files
         self.num_chromosomes = num_chromosomes
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'SoyKBRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'SoyKBRecipe':
         """
         Instantiate a SoyKB workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 14).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A SoyKB workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -71,11 +96,22 @@ class SoyKBRecipe(WorkflowRecipe):
             else:
                 break
 
-        return cls(num_fastq_files=num_fastq_files * 2, num_chromosomes=num_chromosomes, data_footprint=None,
-                   num_tasks=num_tasks)
+        return cls(num_fastq_files=num_fastq_files * 2,
+                   num_chromosomes=num_chromosomes,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
-    def from_sequences(cls, num_fastq_files: int, num_chromosomes: int) -> 'SoyKBRecipe':
+    def from_sequences(cls,
+                       num_fastq_files: int,
+                       num_chromosomes: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'SoyKBRecipe':
         """
         Instantiate a SoyKB workflow recipe that will generate synthetic workflows using
         the defined number of FASTQ files and chromosomes.
@@ -84,6 +120,12 @@ class SoyKBRecipe(WorkflowRecipe):
         :type num_fastq_files: int
         :param num_chromosomes: The number of chromosomes (range [1,22].
         :type num_chromosomes: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A SoyKB workflow recipe object that will generate synthetic workflows
                  using the defined number of FASTQ files and chromosomes.
@@ -94,8 +136,13 @@ class SoyKBRecipe(WorkflowRecipe):
         if num_chromosomes < 1 or num_chromosomes > 22:
             raise ValueError("The number of chromosomes should be within range [1, 22].")
 
-        return cls(num_fastq_files=num_fastq_files, num_chromosomes=num_chromosomes, data_footprint=None,
-                   num_tasks=None)
+        return cls(num_fastq_files=num_fastq_files,
+                   num_chromosomes=num_chromosomes,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a SoyKB workflow.

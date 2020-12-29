@@ -25,26 +25,51 @@ class SeismologyRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
                  num_pairs: Optional[int] = 2,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 3
+                 num_tasks: Optional[int] = 3,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the Seismology workflow recipe."""
-        super().__init__("Seismology", data_footprint, num_tasks)
+        super().__init__("Seismology",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_pairs: int = num_pairs
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'SeismologyRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'SeismologyRecipe':
         """
         Instantiate a Seismology workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 3).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Seismology workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -53,16 +78,32 @@ class SeismologyRecipe(WorkflowRecipe):
         if num_tasks < 3:
             raise ValueError("The upper bound for the number of tasks should be at least 3.")
 
-        return cls(num_pairs=num_tasks - 1, data_footprint=None, num_tasks=num_tasks)
+        return cls(num_pairs=num_tasks - 1,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
-    def from_num_pairs(cls, num_pairs: int) -> 'SeismologyRecipe':
+    def from_num_pairs(cls,
+                       num_pairs: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'SeismologyRecipe':
         """
         Instantiate a Seismology workflow recipe that will generate synthetic workflows using
         the defined number of pairs.
 
         :param num_pairs: The number of pair of signals to estimate earthquake STFs (at least 2).
         :type num_pairs: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Seismology workflow recipe object that will generate synthetic workflows
                  using the defined number of pairs.
@@ -71,7 +112,12 @@ class SeismologyRecipe(WorkflowRecipe):
         if num_pairs < 2:
             raise ValueError("The number of pairs should be at least 2.")
 
-        return cls(num_pairs=num_pairs, data_footprint=None, num_tasks=None)
+        return cls(num_pairs=num_pairs,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a Seismology workflow.

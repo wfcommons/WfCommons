@@ -31,6 +31,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
@@ -38,23 +44,42 @@ class EpigenomicsRecipe(WorkflowRecipe):
                  num_lines: Optional[int] = 10,
                  bin_size: Optional[int] = 10,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 9
+                 num_tasks: Optional[int] = 9,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the Epigenomics workflow recipe."""
-        super().__init__("Epigenomics", data_footprint, num_tasks)
+        super().__init__("Epigenomics",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_sequence_files: int = num_sequence_files
         self.num_lines: int = num_lines
         self.bin_size: int = bin_size
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'EpigenomicsRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'EpigenomicsRecipe':
         """
         Instantiate an Epigenomics workflow recipe that will generate synthetic workflows
         up to the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 9).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: An Epigenomics workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -74,14 +99,23 @@ class EpigenomicsRecipe(WorkflowRecipe):
             else:
                 break
 
-        return cls(num_sequence_files=num_sequence_files, num_lines=num_lines * 10, bin_size=10,
-                   data_footprint=None, num_tasks=num_tasks)
+        return cls(num_sequence_files=num_sequence_files,
+                   num_lines=num_lines * 10,
+                   bin_size=10,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
     def from_sequences(cls,
                        num_sequence_files: int,
                        num_lines: int,
                        bin_size: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
                        ) -> 'EpigenomicsRecipe':
         """
         Instantiate an Epigenomics workflow recipe that will generate synthetic workflows
@@ -93,6 +127,12 @@ class EpigenomicsRecipe(WorkflowRecipe):
         :type num_lines: int
         :param bin_size: Number of DNA and protein sequence information to be processed by each computational task.
         :type bin_size: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: An Epigenomics workflow recipe object that will generate synthetic workflows
                  using the defined number of sequence files, lines, and bin size.
@@ -105,8 +145,14 @@ class EpigenomicsRecipe(WorkflowRecipe):
         if bin_size < 10:
             raise ValueError("The bin size should be at least 10.")
 
-        return cls(num_sequence_files=num_sequence_files, num_lines=num_lines, bin_size=bin_size, data_footprint=None,
-                   num_tasks=None)
+        return cls(num_sequence_files=num_sequence_files,
+                   num_lines=num_lines,
+                   bin_size=bin_size,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of an Epigenomics workflow.

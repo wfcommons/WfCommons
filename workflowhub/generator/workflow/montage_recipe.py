@@ -107,6 +107,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
@@ -114,10 +120,18 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
                  num_bands: Optional[int] = 1,
                  degree: Optional[float] = 0.5,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 133
+                 num_tasks: Optional[int] = 133,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the Montage workflow recipe."""
-        super().__init__("Montage", data_footprint, num_tasks)
+        super().__init__("Montage",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         if not isinstance(dataset, MontageDataset):
             raise TypeError("the dataset should be an instance of MontageDataset object.")
@@ -127,13 +141,24 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
         self.degree: Optional[float] = float(format(degree, '.1f'))
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'MontageRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'MontageRecipe':
         """
         Instantiate a Montage workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 133).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Montage workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -167,10 +192,24 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
             if not added_task:
                 break
 
-        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_tasks=num_tasks)
+        return cls(dataset=dataset,
+                   num_bands=num_bands,
+                   degree=degree,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
-    def from_degree(cls, dataset: MontageDataset, num_bands: int, degree: float) -> 'MontageRecipe':
+    def from_degree(cls,
+                    dataset: MontageDataset,
+                    num_bands: int,
+                    degree: float,
+                    runtime_factor: Optional[float] = 1.0,
+                    input_file_size_factor: Optional[float] = 1.0,
+                    output_file_size_factor: Optional[float] = 1.0
+                    ) -> 'MontageRecipe':
         """
         Instantiate a Montage workflow recipe that will generate synthetic workflows using
         the defined dataset, number of bands, and degree.
@@ -181,6 +220,12 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
         :type num_bands: int
         :param degree: The size (in degrees) to be used for the width/height of the final mosaic (at least 0.5).
         :type degree: float
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Montage workflow recipe object that will generate synthetic workflows
                  using the defined dataset, number of bands, and degree.
@@ -191,7 +236,14 @@ class MontageRecipe(WorkflowRecipe, _MontagetaskRatios):
         if degree < 0.5:
             raise ValueError("The workflow degree should be at least 0.5.")
 
-        return cls(dataset=dataset, num_bands=num_bands, degree=degree, data_footprint=None, num_tasks=None)
+        return cls(dataset=dataset,
+                   num_bands=num_bands,
+                   degree=degree,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: str = None) -> Workflow:
         """Generate a synthetic workflow trace of a Montage workflow.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WorkflowHub Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,17 +31,39 @@ class WorkflowRecipe(ABC):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
-    def __init__(self, name: str, data_footprint: Optional[int], num_tasks: Optional[int],
+    def __init__(self, name: str,
+                 data_footprint: Optional[int],
+                 num_tasks: Optional[int],
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the workflow recipe."""
+        # sanity checks
+        if runtime_factor <= 0.0:
+            raise ValueError("The runtime factor should be a number higher than 0.0.")
+        if input_file_size_factor <= 0.0:
+            raise ValueError("The input file size factor should be a number higher than 0.0.")
+        if output_file_size_factor <= 0.0:
+            raise ValueError("The output file size factor should be a number higher than 0.0.")
+
         self.logger = logging.getLogger(__name__) if logger is None else logger
         self.name = name
         self.data_footprint = data_footprint
         self.num_tasks = num_tasks
+        self.runtime_factor = runtime_factor
+        self.input_file_size_factor = input_file_size_factor
+        self.output_file_size_factor = output_file_size_factor
         self.workflows: List[Workflow] = []
         self.tasks_files: Dict[str, List[File]] = {}
         self.task_id_counter = 1
@@ -57,13 +79,24 @@ class WorkflowRecipe(ABC):
 
     @classmethod
     @abstractmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'WorkflowRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'WorkflowRecipe':
         """
         Instantiate a workflow recipe that will generate synthetic workflows up to the
         total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow.
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A workflow recipe object that will generate synthetic workflows up to
                  the total number of tasks provided.
@@ -100,9 +133,10 @@ class WorkflowRecipe(ABC):
         task_recipe = self._workflow_recipe()[task_name]
 
         # runtime
-        runtime: float = float(format(generate_rvs(task_recipe['runtime']['distribution'],
-                                                   task_recipe['runtime']['min'],
-                                                   task_recipe['runtime']['max']), '.3f'))
+        runtime: float = float(format(
+            self.runtime_factor * generate_rvs(task_recipe['runtime']['distribution'],
+                                               task_recipe['runtime']['min'],
+                                               task_recipe['runtime']['max']), '.3f'))
 
         # linking previous generated output files as input files
         self.tasks_files[task_id] = []
@@ -184,11 +218,13 @@ class WorkflowRecipe(ABC):
         :return: The generated file.
         :rtype: File
         """
+        size = int((self.input_file_size_factor if link == FileLink.INPUT
+                    else self.output_file_size_factor) * generate_rvs(recipe[extension]['distribution'],
+                                                                      recipe[extension]['min'],
+                                                                      recipe[extension]['max']))
         return File(name=str(uuid.uuid4()) + extension,
                     link=link,
-                    size=int(generate_rvs(recipe[extension]['distribution'],
-                                          recipe[extension]['min'],
-                                          recipe[extension]['max'])))
+                    size=size)
 
     def _get_files_by_task_and_link(self, task_id: str, link: FileLink) -> List[File]:
         """Get the list of files for a task ID and link type.

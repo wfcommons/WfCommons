@@ -29,6 +29,12 @@ class CyclesRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
@@ -36,23 +42,42 @@ class CyclesRecipe(WorkflowRecipe):
                  num_crops: Optional[int] = 1,
                  num_params: Optional[int] = 4,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 7
+                 num_tasks: Optional[int] = 7,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the Cycles workflow recipe."""
-        super().__init__("Cycles", data_footprint, num_tasks)
+        super().__init__("Cycles",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_points: int = num_points
         self.num_crops: int = num_crops
         self.num_params: int = num_params
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'CyclesRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'CyclesRecipe':
         """
         Instantiate a Cycles workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 7).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Cycles workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -89,14 +114,23 @@ class CyclesRecipe(WorkflowRecipe):
             if not added_task:
                 break
 
-        return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
-                   num_tasks=num_tasks)
+        return cls(num_points=num_points,
+                   num_crops=num_crops,
+                   num_params=num_params,
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
     def from_points_and_crops(cls,
                               num_points: int,
                               num_crops: int,
                               num_params: int,
+                              runtime_factor: Optional[float] = 1.0,
+                              input_file_size_factor: Optional[float] = 1.0,
+                              output_file_size_factor: Optional[float] = 1.0
                               ) -> 'CyclesRecipe':
         """
         Instantiate a Cycles workflow recipe that will generate synthetic workflows using
@@ -108,6 +142,12 @@ class CyclesRecipe(WorkflowRecipe):
         :type num_crops: int
         :param num_params: The number of parameter values from the simulation matrix.
         :type num_params: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A Cycles workflow recipe object that will generate synthetic workflows
                  using the defined number of points, crops, and params.
@@ -120,8 +160,14 @@ class CyclesRecipe(WorkflowRecipe):
         if num_params < 4:
             raise ValueError("The number of params should be 4 or higher.")
 
-        return cls(num_points=num_points, num_crops=num_crops, num_params=num_params, data_footprint=None,
-                   num_tasks=None)
+        return cls(num_points=num_points,
+                   num_crops=num_crops,
+                   num_params=num_params,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow trace of a Cycles workflow.

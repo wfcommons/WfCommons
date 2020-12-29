@@ -25,26 +25,51 @@ class SRASearchRecipe(WorkflowRecipe):
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
+    :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+    :type runtime_factor: float
+    :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+    :type input_file_size_factor: float
+    :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+    :type output_file_size_factor: float
     """
 
     def __init__(self,
                  num_accession: Optional[int] = 2,
                  data_footprint: Optional[int] = 0,
-                 num_tasks: Optional[int] = 3
+                 num_tasks: Optional[int] = 3,
+                 runtime_factor: Optional[float] = 1.0,
+                 input_file_size_factor: Optional[float] = 1.0,
+                 output_file_size_factor: Optional[float] = 1.0
                  ) -> None:
         """Create an object of the SRA Search workflow recipe."""
-        super().__init__("Seismology", data_footprint, num_tasks)
+        super().__init__("Seismology",
+                         data_footprint,
+                         num_tasks,
+                         runtime_factor,
+                         input_file_size_factor,
+                         output_file_size_factor)
 
         self.num_accession: int = num_accession
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int) -> 'SRASearchRecipe':
+    def from_num_tasks(cls,
+                       num_tasks: int,
+                       runtime_factor: Optional[float] = 1.0,
+                       input_file_size_factor: Optional[float] = 1.0,
+                       output_file_size_factor: Optional[float] = 1.0
+                       ) -> 'SRASearchRecipe':
         """
         Instantiate an SRA Search workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
 
         :param num_tasks: The upper bound for the total number of tasks in the workflow (at least 6).
         :type num_tasks: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: An SRA Search workflow recipe object that will generate synthetic workflows up
                  to the total number of tasks provided.
@@ -53,16 +78,32 @@ class SRASearchRecipe(WorkflowRecipe):
         if num_tasks < 6:
             raise ValueError("The upper bound for the number of tasks should be at least 6.")
 
-        return cls(num_accession=int((num_tasks - 2) / 2), data_footprint=None, num_tasks=num_tasks)
+        return cls(num_accession=int((num_tasks - 2) / 2),
+                   data_footprint=None,
+                   num_tasks=num_tasks,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     @classmethod
-    def from_num_accession(cls, num_accession: int) -> 'SRASearchRecipe':
+    def from_num_accession(cls,
+                           num_accession: int,
+                           runtime_factor: Optional[float] = 1.0,
+                           input_file_size_factor: Optional[float] = 1.0,
+                           output_file_size_factor: Optional[float] = 1.0
+                           ) -> 'SRASearchRecipe':
         """
         Instantiate an SRA Search workflow recipe that will generate synthetic workflows using
         the defined number of pairs.
 
         :param num_accession: The number of NCBI accession numbers.
         :type num_accession: int
+        :param runtime_factor: The factor of which tasks runtime will be increased/decreased.
+        :type runtime_factor: float
+        :param input_file_size_factor: The factor of which tasks input files size will be increased/decreased.
+        :type input_file_size_factor: float
+        :param output_file_size_factor: The factor of which tasks output files size will be increased/decreased.
+        :type output_file_size_factor: float
 
         :return: A SRA Search workflow recipe object that will generate synthetic workflows
                  using the defined number of pairs.
@@ -71,7 +112,12 @@ class SRASearchRecipe(WorkflowRecipe):
         if num_accession < 2:
             raise ValueError("The number of accessions should be at least 2.")
 
-        return cls(num_accession=num_accession, data_footprint=None, num_tasks=None)
+        return cls(num_accession=num_accession,
+                   data_footprint=None,
+                   num_tasks=None,
+                   runtime_factor=runtime_factor,
+                   input_file_size_factor=input_file_size_factor,
+                   output_file_size_factor=output_file_size_factor)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
