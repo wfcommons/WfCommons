@@ -74,8 +74,8 @@ class BLASTRecipe(WorkflowRecipe):
                  to the total number of tasks provided.
         :rtype: BLASTRecipe
         """
-        if num_tasks < 6:
-            raise ValueError("The upper bound for the number of tasks should be at least 6.")
+        if num_tasks < 5:
+            raise ValueError("The upper bound for the number of tasks should be at least 5.")
 
         return cls(num_subsample=int(num_tasks - 3),
                    data_footprint=None,

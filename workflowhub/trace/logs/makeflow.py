@@ -114,7 +114,7 @@ class MakeflowLogsParser(LogsParser):
 
                     for file in itertools.chain(outputs, inputs):
                         if not file in self.files_map:
-                            self.files_map[file] = {'task_name': None, 'children': [], 'file': None}
+                            self.files_map[file] = {'task_name': None, 'children': [], 'file': []}
 
                 elif len(line.strip()) > 0:
                     # task execution command
@@ -161,7 +161,8 @@ class MakeflowLogsParser(LogsParser):
         list_files = []
         for file in files_list:
             if self.files_map[file]['file']:
-                list_files.append(self.files_map[file]['file'])
+                list_files.append(
+                    self.files_map[file]['file'][0] if link == FileLink.INPUT else self.files_map[file]['file'][1])
             else:
                 size = 0
                 if os.path.isdir('{}/{}'.format(self.execution_dir, file)):
@@ -169,12 +170,16 @@ class MakeflowLogsParser(LogsParser):
                 elif os.path.isfile('{}/{}'.format(self.execution_dir, file)):
                     size = int(math.ceil(os.stat('{}/{}'.format(self.execution_dir, file)).st_size / 1000))  # B to KB
 
-                file_obj = File(name=file,
-                                size=size,
-                                link=link,
-                                logger=self.logger)
-                list_files.append(file_obj)
-                self.files_map[file]['file'] = file_obj
+                file_obj_in = File(name=file,
+                                   size=size,
+                                   link=FileLink.INPUT,
+                                   logger=self.logger)
+                file_obj_out = File(name=file,
+                                    size=size,
+                                    link=FileLink.OUTPUT,
+                                    logger=self.logger)
+                list_files.append(file_obj_in if link == FileLink.INPUT else file_obj_out)
+                self.files_map[file]['file'].extend([file_obj_in, file_obj_out])
 
             # files dependencies
             if link == FileLink.INPUT:
@@ -201,7 +206,9 @@ class MakeflowLogsParser(LogsParser):
                 elif line.startswith('# FILE') and not 'condorlog' in line:
                     file_name = line.split()[3]
                     if file_name in self.files_map:
-                        self.files_map[file_name]['file'].size = int(math.ceil(int(line.split()[5]) / 1000))  # B to KB
+                        size = int(math.ceil(int(line.split()[5]) / 1000))  # B to KB
+                        for file_obj in self.files_map[file_name]['file']:
+                            file_obj.size = size
 
     def _parse_resource_monitor_logs(self):
         """Parse the log files produced by resource monitor"""
