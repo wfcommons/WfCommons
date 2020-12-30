@@ -249,6 +249,19 @@ class BLASTRecipe(WorkflowRecipe):
                         "min": 7688,
                         "max": 7688
                     },
+                    ".fasta": {
+                        "distribution": {
+                            "name": "trapz",
+                            "params": [
+                                0.9999999999999999,
+                                1.0,
+                                -0.10500000000000001,
+                                1.1999999999999997
+                            ]
+                        },
+                        "min": 6,
+                        "max": 2015
+                    },
                     "nt": {
                         "distribution": {
                             "name": "trapz",
@@ -259,8 +272,8 @@ class BLASTRecipe(WorkflowRecipe):
                                 1.1999999999999997
                             ]
                         },
-                        "min": 6927,
-                        "max": 2152118512
+                        "min": 0,
+                        "max": 5117704493
                     }
                 },
                 "output": {
@@ -280,19 +293,6 @@ class BLASTRecipe(WorkflowRecipe):
                         "distribution": "None",
                         "min": 0,
                         "max": 0
-                    },
-                    ".fasta": {
-                        "distribution": {
-                            "name": "trapz",
-                            "params": [
-                                0.9999999999999999,
-                                1.0,
-                                -0.10500000000000001,
-                                1.1999999999999997
-                            ]
-                        },
-                        "min": 6,
-                        "max": 2015
                     }
                 }
             },
@@ -313,6 +313,18 @@ class BLASTRecipe(WorkflowRecipe):
                         "distribution": "None",
                         "min": 1,
                         "max": 1
+                    },
+                    ".out": {
+                        "distribution": {
+                            "name": "argus",
+                            "params": [
+                                2.465535551931572e-05,
+                                -0.7452662890705088,
+                                1.7477663092998088
+                            ]
+                        },
+                        "min": 5,
+                        "max": 17952
                     }
                 },
                 "output": {
@@ -326,18 +338,6 @@ class BLASTRecipe(WorkflowRecipe):
                         },
                         "min": 454,
                         "max": 565948
-                    },
-                    ".out": {
-                        "distribution": {
-                            "name": "argus",
-                            "params": [
-                                2.465535551931572e-05,
-                                -0.7452662890705088,
-                                1.7477663092998088
-                            ]
-                        },
-                        "min": 5,
-                        "max": 17952
                     }
                 }
             },
@@ -354,7 +354,11 @@ class BLASTRecipe(WorkflowRecipe):
                     }
                 },
                 "input": {
-
+                    ".err": {
+                        "distribution": "None",
+                        "min": 0,
+                        "max": 0
+                    }
                 },
                 "output": {
                     ".err": {
