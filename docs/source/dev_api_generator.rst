@@ -24,6 +24,26 @@ workflowhub.generator.workflow.abstract\_recipe
    :show-inheritance:
    :private-members:
 
+workflowhub.generator.workflow.blast\_recipe
+--------------------------------------------
+
+.. automodule:: workflowhub.generator.workflow.blast_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+workflowhub.generator.workflow.bwa\_recipe
+------------------------------------------
+
+.. automodule:: workflowhub.generator.workflow.bwa_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 workflowhub.generator.workflow.cycles\_recipe
 ---------------------------------------------
 

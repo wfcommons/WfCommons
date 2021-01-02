@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 from .blast_recipe import BLASTRecipe
+from .bwa_recipe import BWARecipe
 from .cycles_recipe import CyclesRecipe
 from .epigenomics_recipe import EpigenomicsRecipe
 from .genome_recipe import GenomeRecipe

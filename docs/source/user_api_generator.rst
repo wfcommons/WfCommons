@@ -14,6 +14,22 @@ workflowhub.generator.generator
    :undoc-members:
    :show-inheritance:
 
+workflowhub.generator.workflow.blast\_recipe
+--------------------------------------------
+
+.. automodule:: workflowhub.generator.workflow.blast_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+workflowhub.generator.workflow.bwa\_recipe
+------------------------------------------
+
+.. automodule:: workflowhub.generator.workflow.bwa_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 workflowhub.generator.workflow.cycles\_recipe
 ---------------------------------------------
 

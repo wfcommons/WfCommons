@@ -84,7 +84,7 @@ class TraceAnalyzer:
             self.logger.debug('Parsing trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
             for node in trace.workflow.nodes.data():
                 task: Task = node[1]['task']
-                task_name: str = [j for j in tasks_list if j in task.name][0]
+                task_name: str = [j for j in tasks_list if task.name.startswith(j)][0]
 
                 if task_name not in self.tasks_summary:
                     self.tasks_summary[task_name] = []
