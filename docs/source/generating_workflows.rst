@@ -53,6 +53,8 @@ each workflow recipe <workflowhub-generator-label>` for the lower bound values.
 
 The current list of available workflow recipes include:
 
+- :class:`~workflowhub.generator.workflow.blast_recipe.BLASTRecipe`: :code:`from workflowhub.generator import BLASTRecipe`
+- :class:`~workflowhub.generator.workflow.bwa_recipe.BWARecipe`: :code:`from workflowhub.generator import BWARecipe`
 - :class:`~workflowhub.generator.workflow.cycles_recipe.CyclesRecipe`: :code:`from workflowhub.generator import CyclesRecipe`
 - :class:`~workflowhub.generator.workflow.epigenomics_recipe.EpigenomicsRecipe`: :code:`from workflowhub.generator import EpigenomicsRecipe`
 - :class:`~workflowhub.generator.workflow.genome_recipe.GenomeRecipe`: :code:`from workflowhub.generator import GenomeRecipe`
