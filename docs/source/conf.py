@@ -24,7 +24,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'WorkflowHub'
-copyright = '2020, WorkflowHub Team'
+copyright = '2020-2021, WorkflowHub Team'
 author = 'WorkflowHub Team'
 
 # The short X.Y version
