@@ -123,10 +123,12 @@ class PegasusLogsParser(LogsParser):
 
     def _parse_workflow(self):
         """Parse the Workflow file."""
-        workflow_file = '{}/workflow.yml'.format(self.submit_dir)
+        workflows_file_list = self._fetch_all_files('yml', '*workflow')
 
-        if not os.path.exists(workflow_file):
-            raise OSError('Unable to find workflow file: {}'.format(workflow_file))
+        if len(workflows_file_list) < 1:
+            raise OSError('Unable to find workflow file.')
+
+        workflow_file = workflows_file_list[0]
 
         with open(workflow_file) as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
