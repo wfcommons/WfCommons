@@ -1,37 +1,37 @@
-workflowhub.common
+wfcommons.common
 ==================
 
-workflowhub.common.file
+wfcommons.common.file
 -----------------------
 
-.. automodule:: workflowhub.common.file
+.. automodule:: wfcommons.common.file
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-workflowhub.common.task
+wfcommons.common.task
 -----------------------
 
-.. automodule:: workflowhub.common.task
+.. automodule:: wfcommons.common.task
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-workflowhub.common.machine
+wfcommons.common.machine
 --------------------------
 
-.. automodule:: workflowhub.common.machine
+.. automodule:: wfcommons.common.machine
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-workflowhub.common.workflow
+wfcommons.common.workflow
 ---------------------------
 
-.. automodule:: workflowhub.common.workflow
+.. automodule:: wfcommons.common.workflow
    :members:
    :undoc-members:
    :show-inheritance:

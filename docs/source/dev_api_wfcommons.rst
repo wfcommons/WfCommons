@@ -1,7 +1,7 @@
-workflowhub.utils
+wfcommons.utils
 -----------------
 
-.. automodule:: workflowhub.utils
+.. automodule:: wfcommons.utils
    :members:
    :undoc-members:
    :show-inheritance:

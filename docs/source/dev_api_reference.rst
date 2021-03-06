@@ -2,7 +2,7 @@ Developer API Reference
 ***********************
 
 The developer API reference targets developers and researchers who
-want to contribute to the WorkflowHub project by, for example,
+want to contribute to the WfCommons project by, for example,
 developing novel techniques for trace analysis, developing new
 :ref:`workflow recipes <workflow-recipe-label>`, etc.
 The developer API reference documentation includes detailed information
@@ -13,6 +13,6 @@ Python package.
     :caption: Developer API Reference
     :maxdepth: 1
 
-    dev_api_workflowhub.rst
+    dev_api_wfcommons.rst
     dev_api_generator.rst
     dev_api_trace.rst

@@ -1,34 +1,34 @@
-workflowhub.trace
+wfcommons.trace
 =================
 
-workflowhub.trace.trace
+wfcommons.trace.trace
 -----------------------
 
-.. automodule:: workflowhub.trace.trace
+.. automodule:: wfcommons.trace.trace
    :members:
    :undoc-members:
    :show-inheritance:
 
-workflowhub.trace.trace\_analyzer
+wfcommons.trace.trace\_analyzer
 ---------------------------------
 
-.. automodule:: workflowhub.trace.trace_analyzer
+.. automodule:: wfcommons.trace.trace_analyzer
    :members:
    :undoc-members:
    :show-inheritance:
 
-workflowhub.trace.logs.makeflow
+wfcommons.trace.logs.makeflow
 -------------------------------
 
-.. automodule:: workflowhub.trace.logs.makeflow
+.. automodule:: wfcommons.trace.logs.makeflow
    :members:
    :undoc-members:
    :show-inheritance:
 
-workflowhub.trace.logs.pegasus
+wfcommons.trace.logs.pegasus
 ------------------------------
 
-.. automodule:: workflowhub.trace.logs.pegasus
+.. automodule:: wfcommons.trace.logs.pegasus
    :members:
    :undoc-members:
    :show-inheritance:

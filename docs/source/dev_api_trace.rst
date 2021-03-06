@@ -1,59 +1,59 @@
-workflowhub.trace
+wfcommons.trace
 =================
 
-workflowhub.trace.schema
+wfcommons.trace.schema
 ------------------------
 
-.. automodule:: workflowhub.trace.schema
+.. automodule:: wfcommons.trace.schema
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-workflowhub.trace.trace
+wfcommons.trace.trace
 -----------------------
 
-.. automodule:: workflowhub.trace.trace
+.. automodule:: wfcommons.trace.trace
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.trace.trace\_analyzer
+wfcommons.trace.trace\_analyzer
 ---------------------------------
 
-.. automodule:: workflowhub.trace.trace_analyzer
+.. automodule:: wfcommons.trace.trace_analyzer
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.trace.logs.abstract\_logs\_parser
+wfcommons.trace.logs.abstract\_logs\_parser
 ---------------------------------------------
 
-.. automodule:: workflowhub.trace.logs.abstract_logs_parser
+.. automodule:: wfcommons.trace.logs.abstract_logs_parser
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.trace.logs.makeflow
+wfcommons.trace.logs.makeflow
 -------------------------------
 
-.. automodule:: workflowhub.trace.logs.makeflow
+.. automodule:: wfcommons.trace.logs.makeflow
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.trace.logs.pegasus
+wfcommons.trace.logs.pegasus
 ------------------------------
 
-.. automodule:: workflowhub.trace.logs.pegasus
+.. automodule:: wfcommons.trace.logs.pegasus
    :members:
    :undoc-members:
    :show-inheritance:

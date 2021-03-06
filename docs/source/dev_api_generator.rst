@@ -1,13 +1,13 @@
-workflowhub.generator
+wfcommons.generator
 =====================
 
 .. toctree::
    :maxdepth: 4
 
-workflowhub.generator.generator
+wfcommons.generator.generator
 -------------------------------
 
-.. automodule:: workflowhub.generator.generator
+.. automodule:: wfcommons.generator.generator
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,99 +15,99 @@ workflowhub.generator.generator
    :noindex:
 
 
-workflowhub.generator.workflow.abstract\_recipe
+wfcommons.generator.workflow.abstract\_recipe
 -----------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.abstract_recipe
+.. automodule:: wfcommons.generator.workflow.abstract_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-workflowhub.generator.workflow.blast\_recipe
+wfcommons.generator.workflow.blast\_recipe
 --------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.blast_recipe
+.. automodule:: wfcommons.generator.workflow.blast_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.bwa\_recipe
+wfcommons.generator.workflow.bwa\_recipe
 ------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.bwa_recipe
+.. automodule:: wfcommons.generator.workflow.bwa_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.cycles\_recipe
+wfcommons.generator.workflow.cycles\_recipe
 ---------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.cycles_recipe
+.. automodule:: wfcommons.generator.workflow.cycles_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.epigenomics\_recipe
+wfcommons.generator.workflow.epigenomics\_recipe
 --------------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.epigenomics_recipe
+.. automodule:: wfcommons.generator.workflow.epigenomics_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.genome\_recipe
+wfcommons.generator.workflow.genome\_recipe
 ---------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.genome_recipe
+.. automodule:: wfcommons.generator.workflow.genome_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.montage\_recipe
+wfcommons.generator.workflow.montage\_recipe
 ----------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.montage_recipe
+.. automodule:: wfcommons.generator.workflow.montage_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.seismology\_recipe
+wfcommons.generator.workflow.seismology\_recipe
 -------------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.seismology_recipe
+.. automodule:: wfcommons.generator.workflow.seismology_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.soykb\_recipe
+wfcommons.generator.workflow.soykb\_recipe
 --------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.soykb_recipe
+.. automodule:: wfcommons.generator.workflow.soykb_recipe
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
    :noindex:
 
-workflowhub.generator.workflow.srasearch\_recipe
+wfcommons.generator.workflow.srasearch\_recipe
 ------------------------------------------------
 
-.. automodule:: workflowhub.generator.workflow.srasearch_recipe
+.. automodule:: wfcommons.generator.workflow.srasearch_recipe
    :members:
    :undoc-members:
    :show-inheritance:
