@@ -15,13 +15,13 @@ This Python package provides a collection of tools for:
 
 ## Installation
 
-WorkflowHub is available on [PyPI](https://pypi.org/project/workflowhub).
-WorkflowHub requires Python3.6+ and has been tested on Linux and macOS.
+WfCommons is available on [PyPI](https://pypi.org/project/workflowhub).
+WfCommons requires Python3.6+ and has been tested on Linux and macOS.
 
 ### Requirements
 
 #### Graphviz
-WorkflowHub uses _pygraphviz_ and thus needs the graphviz package installed (version 2.16 or later).
+WfCommons uses _pygraphviz_ and thus needs the graphviz package installed (version 2.16 or later).
 You can install graphviz easily on Linux with your favorite package manager,
 for example for Debian-based distributions:
 ```
@@ -39,7 +39,7 @@ brew install graphviz
 
 ### Installation using pip
 
-While `pip` can be used to install WorkflowHub, we suggest the following
+While `pip` can be used to install WfCommons, we suggest the following
 approach for reliable installation when many Python environments are available:
 
 ```
@@ -48,30 +48,30 @@ $ python3 -m pip install workflowhub
 
 ### Retrieving the latest unstable version
 
-If you want to use the latest WorkflowHub unstable version, that will contain
+If you want to use the latest WfCommons unstable version, that will contain
 brand new features (but also contain bugs as the stabilization work is still
 underway), you may consider retrieving the latest unstable version.
 
-Cloning from [WorkflowHub's GitHub](https://github.com/workflowhub/workflowhub)
+Cloning from [WfCommons's GitHub](https://github.com/wfcommons/wfcommons)
 repository:
 
 ```
-$ git clone https://github.com/workflowhub/workflowhub
-$ cd workflowhub
+$ git clone https://github.com/wfcommons/wfcommons
+$ cd wfcommons
 $ pip install .
 ```
 
 ## Get in Touch
 
-The main channel to reach the WorkflowHub team is via the support email: 
-[support@workflowhub.org](mailto:support@workflowhub.org).
+The main channel to reach the WfCommons team is via the support email: 
+[support@wfcommons.org](mailto:support@wfcommons.org).
 
 **Bug Report / Feature Request:** our preferred channel to report a bug or request a feature is via  
-WorkflowHub's [Github Issues Track](https://github.com/workflowhub/workflowhub/issues).
+WfCommons's [Github Issues Track](https://github.com/wfcommons/wfcommons/issues).
 
 
-## Citing WorkflowHub
-When citing WRENCH, please use the following paper. You should also actually read 
+## Citing WfCommons
+When citing WfCommons, please use the following paper. You should also actually read 
 that paper, as it provides a recent and general overview on the framework.
 
 ```
@@ -85,12 +85,12 @@ that paper, as it provides a recent and general overview on the framework.
 }
 ```
 
-[build-badge]:         https://github.com/workflowhub/workflowhub/workflows/Build/badge.svg
-[build-link]:          https://github.com/workflowhub/workflowhub/actions
+[build-badge]:         https://github.com/wfcommons/wfcommons/workflows/Build/badge.svg
+[build-link]:          https://github.com/wfcommons/wfcommons/actions
 [pypi-badge]:          https://badge.fury.io/py/workflowhub.svg
 [pypi-link]:           https://badge.fury.io/py/workflowhub
 [license-badge]:       https://img.shields.io/badge/License-LGPL%20v3-blue.svg
-[codefactor-badge]:    https://www.codefactor.io/repository/github/workflowhub/workflowhub/badge
-[codefactor-link]:     https://www.codefactor.io/repository/github/workflowhub/workflowhub
-[rtd-badge]:           https://readthedocs.org/projects/workflowhub/badge/?version=latest
-[rtd-link]:            https://workflowhub.readthedocs.io/en/latest/?badge=latest
+[codefactor-badge]:    https://www.codefactor.io/repository/github/wfcommons/wfcommons/badge
+[codefactor-link]:     https://www.codefactor.io/repository/github/wfcommons/wfcommons
+[rtd-badge]:           https://readthedocs.org/projects/wfcommons/badge/?version=latest
+[rtd-link]:            https://wfcommons.readthedocs.io/en/latest/?badge=latest

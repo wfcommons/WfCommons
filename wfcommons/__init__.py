@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -10,7 +10,7 @@
 
 from .version import __version__
 
-__author__ = 'WorkflowHub Team - https://workflowhub.org'
+__author__ = 'WfCommons Team - https://wfcommons.org'
 __credits__ = 'University of Southern California, University of Hawaii at Manoa'
 
 import logging
@@ -18,4 +18,4 @@ import logging
 from .generator import WorkflowGenerator
 from .trace import Trace, TraceAnalyzer, TraceElement
 
-logging.getLogger('workflowhub').addHandler(logging.NullHandler())
+logging.getLogger('wfcommons').addHandler(logging.NullHandler())

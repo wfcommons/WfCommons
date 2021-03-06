@@ -76,7 +76,7 @@ class Workflow(nx.DiGraph):
             'schemaVersion': self.schema_version,
             'author': {
                 'name': str(getpass.getuser()),
-                'email': 'support@workflowhub.org'
+                'email': 'support@wfcommons.org'
             },
             'wms': {
                 'name': self.wms_name,

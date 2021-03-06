@@ -64,7 +64,7 @@ class SchemaValidator:
             return json.loads(open(schema_file).read())
 
         # looking for local copy of schema file
-        schema_path = os.getcwd() + '/workflowhub-schema.json'
+        schema_path = os.getcwd() + '/wfcommons-schema.json'
         if os.path.exists(schema_path):
             self.logger.info('Using schema file: {}'.format(schema_path))
             return json.loads(open(schema_path).read())

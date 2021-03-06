@@ -16,16 +16,16 @@ import sphinx_rtd_theme
 import sys
 
 # Fetch the version
-exec(open('../../workflowhub/version.py').read())
+exec(open('../../wfcommons/version.py').read())
 
 sys.path.insert(0, os.path.abspath('../..'))
 sys.setrecursionlimit(1500)
 
 # -- Project information -----------------------------------------------------
 
-project = 'WorkflowHub'
-copyright = '2020-2021, WorkflowHub Team'
-author = 'WorkflowHub Team'
+project = 'WfCommons'
+copyright = '2020-2021, WfCommons Team'
+author = 'WfCommons Team'
 
 # The short X.Y version
 version = str(__version__)

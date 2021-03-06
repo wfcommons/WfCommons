@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,18 +14,18 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Fetch the version
-exec(open('workflowhub/version.py').read())
+exec(open('wfcommons/version.py').read())
 
 setup(
-    name='workflowhub',
+    name='wfcommons',
     version=str(__version__),
     license='GPLv3',
-    author='WorkflowHub team',
-    author_email='support@workflowhub.org',
+    author='WfCommons team',
+    author_email='support@wfcommons.org',
     description='Community Framework for Enabling Scientific Workflow Research and Education',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/workflowhub/workflowhub',
+    url='https://github.com/wfcommons/wfcommons',
     packages=find_packages(),
     install_requires=[
         'jsonschema',

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
     :rtype: Tuple
     """
     if logger is None:
-        logger = logging.getLogger("workflowhub")
+        logger = logging.getLogger("wfcommons")
 
     # get histogram of original data
     bins = math.ceil(len(data) / 10)
