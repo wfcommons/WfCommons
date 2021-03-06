@@ -1,5 +1,5 @@
-WfCommons
-***********
+.. figure::  images/wfcommons-horizontal.png
+   :scale:   35 %
 
 |pypi-badge| |build-badge| |license-badge|
 
