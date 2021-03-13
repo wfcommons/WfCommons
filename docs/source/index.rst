@@ -13,6 +13,7 @@ provides a collection of tools for:
 - Generating synthetic realistic workflow traces.
 
 .. figure::  images/wfcommons.png
+   :scale:   90 %
    :align:   center
 
    The WfCommons conceptual architecture.
