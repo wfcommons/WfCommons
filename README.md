@@ -4,7 +4,7 @@
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![Documentation Status][rtd-badge]][rtd-link]
 
-<a href="https://wfcommons.org" target="_blank"><img src="docs/source/images/wfcommons-horizontal.png" width="350" /></a>
+<a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-horizontal.png" width="350" /></a>
 <br/>_A Community Framework for Enabling Scientific Workflow Research and Development_
 
 This Python package provides a collection of tools for:
