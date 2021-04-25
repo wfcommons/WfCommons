@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**WorkflowHub Information**
-- WorkflowHub version: [e.g., 0.3, master branch, etc.]
+**WfCommons Information**
+- WfCommons version: [e.g., 0.3, master branch, etc.]
 - Python Version: [e.g., 3.5]
 
 **Describe the bug**

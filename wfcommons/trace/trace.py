@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,9 +38,9 @@ class Trace:
     :type input_trace: str
     :param schema_file: The path to the JSON schema that defines the trace.
                         If no schema file is provided, it will look for a local
-                        copy of the WorkflowHub schema, and if not available
+                        copy of the WfCommons schema, and if not available
                         it will fetch the latest schema from the
-                        `WorkflowHub schema GitHub <https://github.com/workflowhub/workflow-schema>`_
+                        `WfCommons schema GitHub <https://github.com/wfcommons/workflow-schema>`_
                         repository.
     :type schema_file: str
     :param logger: The logger where to log information/warning or errors.

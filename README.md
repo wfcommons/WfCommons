@@ -9,13 +9,13 @@
 
 This Python package provides a collection of tools for:
 
-- Analyzing traces of actual workflow executions;
+- Analyzing instances of actual workflow executions;
 - Producing recipes structures for creating workflow recipes for workflow generation; and
-- Generating synthetic realistic workflow traces.
+- Generating synthetic realistic workflow instances.
 
 ## Installation
 
-WfCommons is available on [PyPI](https://pypi.org/project/workflowhub).
+WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
 WfCommons requires Python3.6+ and has been tested on Linux and macOS.
 
 ### Requirements
@@ -43,7 +43,7 @@ While `pip` can be used to install WfCommons, we suggest the following
 approach for reliable installation when many Python environments are available:
 
 ```
-$ python3 -m pip install workflowhub
+$ python3 -m pip install wfcommons
 ```
 
 ### Retrieving the latest unstable version
@@ -87,8 +87,8 @@ that paper, as it provides a recent and general overview on the framework.
 
 [build-badge]:         https://github.com/wfcommons/wfcommons/workflows/Build/badge.svg
 [build-link]:          https://github.com/wfcommons/wfcommons/actions
-[pypi-badge]:          https://badge.fury.io/py/workflowhub.svg
-[pypi-link]:           https://badge.fury.io/py/workflowhub
+[pypi-badge]:          https://badge.fury.io/py/wfcommons.svg
+[pypi-link]:           https://badge.fury.io/py/wfcommons
 [license-badge]:       https://img.shields.io/badge/License-LGPL%20v3-blue.svg
 [codefactor-badge]:    https://www.codefactor.io/repository/github/wfcommons/wfcommons/badge
 [codefactor-link]:     https://www.codefactor.io/repository/github/wfcommons/wfcommons

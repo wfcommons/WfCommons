@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WorkflowHub Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,12 +49,12 @@ class Workflow(nx.DiGraph):
                  makespan: Optional[int] = 0.0
                  ) -> None:
         """Create an object of a workflow representation."""
-        self.description = description if description else 'Trace generated with WorkflowHub - https://workflowhub.org'
+        self.description = description if description else 'Trace generated with WfCommons - https://wfcommons.org'
         self.created_at = str(datetime.utcnow().isoformat())
         self.schema_version = '1.0'
-        self.wms_name = 'WorkflowHub' if not wms_name else wms_name
+        self.wms_name = 'WfCommons' if not wms_name else wms_name
         self.wms_version = str(__version__) if not wms_version else wms_version
-        self.wms_url = 'https://workflowhub.readthedocs.io/en/v{}/'.format(__version__) if not wms_url else wms_url
+        self.wms_url = 'https://wfcommons.readthedocs.io/en/v{}/'.format(__version__) if not wms_url else wms_url
         self.executed_at = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z") if not executed_at else executed_at
         self.makespan = makespan
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)

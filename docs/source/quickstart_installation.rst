@@ -1,7 +1,7 @@
 Installation
 ============
 
-WfCommons is available on `PyPI <https://pypi.org/project/workflowhub>`_.
+WfCommons is available on `PyPI <https://pypi.org/project/wfcommons>`_.
 WfCommons requires Python3.6+ and has been tested on Linux and macOS.
 
 Requirements
@@ -40,7 +40,7 @@ approach for reliable installation when many Python environments are available:
 
 .. code-block:: bash
 
-    $ python3 -m pip install workflowhub
+    $ python3 -m pip install wfcommons
 
 Retrieving the latest unstable version
 --------------------------------------

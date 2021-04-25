@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2020 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@ from typing import Any, Dict, Optional
 
 class SchemaValidator:
     """
-    Validate JSON files against WorkflowHub schema. If schema file path is not
-    provided, it will look for a local copy of the WorkflowHub schema, and if
+    Validate JSON files against WfCommons schema. If schema file path is not
+    provided, it will look for a local copy of the WfCommons schema, and if
     not available it will fetch the latest schema from the
-    `WorkflowHub schema GitHub <https://github.com/workflowhub/workflow-schema>`_
+    `WfCommons schema GitHub <https://github.com/wfcommons/workflow-schema>`_
     repository.
 
     :param schema_file: JSON schema file path.
@@ -49,7 +49,7 @@ class SchemaValidator:
     def _load_schema(self, schema_file: Optional[str] = None):
         """
         Load the schema file. If schema file path is not provided, it will look for
-        a local copy of the WorkflowHub schema, and if not available it will fetch
+        a local copy of the WfCommons schema, and if not available it will fetch
         the latest schema from the GitHub repository.
 
         :param schema_file: JSON schema file path.
@@ -70,7 +70,7 @@ class SchemaValidator:
             return json.loads(open(schema_path).read())
 
         # fetching latest schema file from GitHub repository
-        url = 'https://raw.githubusercontent.com/workflowhub/workflow-schema/master/workflowhub-schema.json'
+        url = 'https://raw.githubusercontent.com/wfcommons/workflow-schema/master/wfcommons-schema.json'
         response = requests.get(url)
         schema = json.loads(response.content)
         with open(schema_path, 'w') as outfile:
