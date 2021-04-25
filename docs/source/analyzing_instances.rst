@@ -1,72 +1,72 @@
 .. _traces-label:
 
-Analyzing Traces
+Analyzing Instances
 ================
 
-Workflow execution traces have been widely used to profile and characterize
+Workflow execution instances have been widely used to profile and characterize
 workflow executions, and to build distributions of workflow execution behaviors,
 which are used to evaluate methods and techniques in simulation or in real
 conditions.
 
 The first axis of the WfCommons project targets the analysis of actual workflow
-execution traces (i.e., the workflow execution profile data and characterizations)
+execution instances (i.e., the workflow execution profile data and characterizations)
 in order to build **recipes** of workflow applications. These recipes contain
 the necessary information for generating synthetic, yet realistic, workflow
-traces that resemble the structure and distribution of the original workflow
+instances that resemble the structure and distribution of the original workflow
 executions.
 
-A `list of workflow execution traces <https://wfcommons.org/traces.html>`_
+A `list of workflow execution instances <https://wfcommons.org/instances>`_
 that are compatible with :ref:`json-format-label` is kept constantly updated
 in our project website.
 
-Workflow Execution Traces
+Workflow Execution Instances
 -------------------------
 
-A workflow execution trace represents an actual execution of a scientific
+A workflow execution instance represents an actual execution of a scientific
 workflow on a distributed platform (e.g., clouds, grids, HPC, etc.). In the
-WfCommons project, a trace is represented in a JSON file following the
+WfCommons project, an instance is represented in a JSON file following the
 schema described in :ref:`json-format-label` section. This Python package
-provides a *trace loader* tool for importing workflow execution traces
-for analysis. For instance, the code snippet below shows how a trace can
+provides an *instance loader* tool for importing workflow execution instances
+for analysis. For instance, the code snippet below shows how an instance can
 be loaded using the :class:`~wfcommons.trace.trace.Trace` class: ::
 
     from wfcommons import Trace
     trace = Trace(input_trace='/path/to/trace/file.json')
 
 The :class:`~wfcommons.trace.trace.Trace` class provides a number of
-methods for interacting with the workflow trace, including:
+methods for interacting with the workflow instance, including:
 
-- :meth:`~wfcommons.trace.trace.Trace.draw`: produces an image or a pdf file representing the trace.
+- :meth:`~wfcommons.trace.trace.Trace.draw`: produces an image or a pdf file representing the instance.
 - :meth:`~wfcommons.trace.trace.Trace.leaves`: gets the leaves of the workflow (i.e., the tasks without any successors).
 - :meth:`~wfcommons.trace.trace.Trace.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
-- :meth:`~wfcommons.trace.trace.Trace.write_dot`: writes a dot file of the trace.
+- :meth:`~wfcommons.trace.trace.Trace.write_dot`: writes a dot file of the instance.
 
-The Trace Analyzer
+The Instance Analyzer
 ------------------
 
 The :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` class provides
-a number of tools for analyzing collection of workflow execution traces. The
+a number of tools for analyzing collection of workflow execution instances. The
 goal of the :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` is to
-perform analyzes of one or multiple workflow execution traces, and build
+perform analyzes of one or multiple workflow execution instances, and build
 summaries of the analyzes per workflow' task type prefix.
 
 .. note::
 
-    Although any workflow execution trace represented as a
+    Although any workflow execution instance represented as a
     :class:`~wfcommons.trace.trace.Trace` object (i.e., compatible with
     :ref:`json-format-label`) can be appended to the
     :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer`, we strongly
-    recommend that only traces of a single workflow application type be
+    recommend that only instances of a single workflow application type be
     appended to an analyzer object. You may though create several analyzer
     objects per workflow application.
 
 The :meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.append_trace` method
-allows you to include traces for analysis. The
+allows you to include instances for analysis. The
 :meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.build_summary` method
-processes all appended traces. The method applies probability distributions fitting
+processes all appended instances. The method applies probability distributions fitting
 to a series of data to find the *best* (i.e., minimizes the mean square error)
 probability distribution that represents the analyzed data. The method returns
-a summary of the analysis of traces in the form of a Python dictionary object in
+a summary of the analysis of instances in the form of a Python dictionary object in
 which keys are task prefixes (provided when invoking the method) and values
 describe the best probability distribution fit for tasks' runtime, and input and
 output data file sizes. The code excerpt below shows an example of an analysis
@@ -90,7 +90,7 @@ summary showing the best fit probability distribution for runtime of the
     }
 
 Workflow analysis summaries can then be used to develop :ref:`workflow-recipe-label`,
-in which themselves are used to :ref:`generate realistic synthetic workflow traces
+in which themselves are used to :ref:`generate realistic synthetic workflow instances
 <generating-workflows-label>`.
 
 Probability distribution fits can also be plotted by using the
@@ -101,7 +101,7 @@ methods -- plots will be saved as :code:`png` files.
 Examples
 --------
 
-The following example shows the analysis of a set of traces, stored in a local folder,
+The following example shows the analysis of a set of instances, stored in a local folder,
 of a Seismology workflow. In this example, we seek for finding the best probability
 distribution fitting for task *prefixes* of the Seismology workflow
 (:code:`sG1IterDecon`, and :code:`wrapper_siftSTFByMisfit`), and generate all fit
@@ -112,23 +112,23 @@ plots (runtime, and input and output files) into the :code:`fits` folder using
     from os import listdir
     from os.path import isfile, join
 
-    # obtaining list of trace files in the folder
-    TRACES_PATH = "/Path/to/some/trace/folder/"
-    trace_files = [f for f in listdir(TRACES_PATH) if isfile(join(TRACES_PATH, f))]
+    # obtaining list of instance files in the folder
+    INSTANCES_PATH = "/Path/to/some/instance/folder/"
+    instance_files = [f for f in listdir(INSTANCES_PATH) if isfile(join(INSTANCES_PATH, f))]
 
-    # creating the trace analyzer object
+    # creating the instance analyzer object
     analyzer = TraceAnalyzer()
 
-    # appending trace files to the trace analyzer
-    for trace_file in trace_files:
-        trace = Trace(input_trace=TRACES_PATH + trace_file)
-        analyzer.append_trace(trace)
+    # appending instance files to the instance analyzer
+    for instance_file in instance_files:
+        instance = Trace(input_trace=INSTANCES_PATH + instance_file)
+        analyzer.append_trace(instance)
 
-    # list of workflow task name prefixes to be analyzed in each trace
+    # list of workflow task name prefixes to be analyzed in each instance
     workflow_tasks = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
 
-    # building the trace summary
-    traces_summary = analyzer.build_summary(workflow_tasks, include_raw_data=True)
+    # building the instance summary
+    instances_summary = analyzer.build_summary(workflow_tasks, include_raw_data=True)
 
     # generating all fit plots (runtime, and input and output files)
     analyzer.generate_all_fit_plots(outfile_prefix='fits/seismology')

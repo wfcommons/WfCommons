@@ -4,7 +4,7 @@ Generating Workflows
 ====================
 
 The second axis of the WfCommons project targets the generation of realistic
-synthetic workflow traces with a variety of characteristics. The
+synthetic workflow instances with a variety of characteristics. The
 :class:`~wfcommons.generator.generator.WorkflowGenerator` class uses recipes
 of workflows (as described in :ref:`traces-label`) for creating many different
 synthetic workflows based on distributions of workflow task runtime, and input
@@ -19,7 +19,7 @@ Workflow Recipes
 ----------------
 
 The WfCommons package provides a number of *workflow recipes* for generating
-realistic synthetic workflow traces. Each recipe may provide their own methods
+realistic synthetic workflow instances. Each recipe may provide their own methods
 for instantiating a :class:`~wfcommons.generator.workflow.abstract_recipe.WorkflowRecipe`
 object depending on the properties that define the structure of the actual
 workflow. For instance, the code snippet below shows how to instantiate a recipe
@@ -84,39 +84,39 @@ runtime is increased by 10%, input files by 50%, and output files reduced by 20%
 The Workflow Generator
 ----------------------
 
-Synthetic workflow traces are generated using the
+Synthetic workflow instances are generated using the
 :class:`~wfcommons.generator.generator.WorkflowGenerator` class. This
 class takes as input a :class:`~wfcommons.generator.workflow.abstract_recipe.WorkflowRecipe`
 object (see above), and provides two methods for generating synthetic
-workflow traces:
+workflow instances:
 
 - :meth:`~wfcommons.generator.generator.WorkflowGenerator.build_workflow`: generates a single synthetic workflow
-  trace based on the workflow recipe used to instantiate the generator.
+  instance based on the workflow recipe used to instantiate the generator.
 - :meth:`~wfcommons.generator.generator.WorkflowGenerator.build_workflows`: generates a number of synthetic workflow
-  traces based on the workflow recipe used to instantiate the generator.
+  instances based on the workflow recipe used to instantiate the generator.
 
 The build methods use the workflow recipe for generating realistic synthetic
-workflow traces, in which the workflow structure follows workflow composition
+workflow instances, in which the workflow structure follows workflow composition
 rules defined in the workflow recipe, and tasks runtime, and input and output
 data sizes are generated according to distributions obtained from actual workflow
-execution traces (see :ref:`traces-label`).
+execution instances (see :ref:`traces-label`).
 
-Each generated trace is a represented as a :class:`~wfcommons.common.workflow.Workflow`
+Each generated instance is a represented as a :class:`~wfcommons.common.workflow.Workflow`
 object (which in itself is an extension of the
 `NetworkX DiGraph <https://networkx.github.io/documentation/stable/reference/classes/digraph.html>`_
 class). The :class:`~wfcommons.common.workflow.Workflow` class provides two
-methods for writing the generated workflow trace into files:
+methods for writing the generated workflow instance into files:
 
-- :meth:`~wfcommons.common.workflow.Workflow.write_dot`: write a DOT file of a workflow trace.
-- :meth:`~wfcommons.common.workflow.Workflow.write_json`: write a JSON file of a workflow trace.
+- :meth:`~wfcommons.common.workflow.Workflow.write_dot`: write a DOT file of a workflow instance.
+- :meth:`~wfcommons.common.workflow.Workflow.write_json`: write a JSON file of a workflow instance.
 
 Examples
 --------
 
-The following example generates a *Seismology* synthetic workflow trace
+The following example generates a *Seismology* synthetic workflow instance
 based on the number of pair of signals to estimate earthquake STFs
-(:code:`num_pairs`), builds a synthetic workflow trace, and writes the
-synthetic trace to a JSON file. ::
+(:code:`num_pairs`), builds a synthetic workflow instance, and writes the
+synthetic instance to a JSON file. ::
 
     from wfcommons import WorkflowGenerator
     from wfcommons.generator import SeismologyRecipe
@@ -129,15 +129,15 @@ synthetic trace to a JSON file. ::
     # Seismology workflow recipe
     generator = WorkflowGenerator(recipe)
 
-    # generating a synthetic workflow trace of the Seismology workflow
+    # generating a synthetic workflow instance of the Seismology workflow
     workflow = generator.build_workflow()
 
-    # writing the synthetic workflow trace into a JSON file
+    # writing the synthetic workflow instance into a JSON file
     workflow.write_json('seismology-workflow.json')
 
 
 The example below generates a number of *Cycles* (agroecosystem) synthetic
-workflow traces based on the upper bound number of tasks allowed per workflow. ::
+workflow instances based on the upper bound number of tasks allowed per workflow. ::
 
     from wfcommons import WorkflowGenerator
     from wfcommons.generator import CyclesRecipe
@@ -149,10 +149,10 @@ workflow traces based on the upper bound number of tasks allowed per workflow. :
     # Cycles workflow recipe
     generator = WorkflowGenerator(recipe)
 
-    # generating 10 synthetic workflow traces of the Cycles workflow
+    # generating 10 synthetic workflow instances of the Cycles workflow
     workflows_list = generator.build_workflows(num_workflows=10)
 
-    # writing each synthetic workflow trace into a JSON file
+    # writing each synthetic workflow instance into a JSON file
     count = 1
     for workflow in workflows_list:
         workflow.write_json('cycles-workflow-{:02}.json'.format(count))

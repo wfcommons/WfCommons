@@ -7,10 +7,10 @@
 enabling scientific workflow research and development. This Python package
 provides a collection of tools for:
 
-- Analyzing traces of actual workflow executions;
+- Analyzing instances of actual workflow executions;
 - Producing recipes structures for creating workflow recipes for workflow
   generation; and
-- Generating synthetic realistic workflow traces.
+- Generating synthetic realistic workflow instances.
 
 .. figure::  images/wfcommons.png
    :scale:   90 %
@@ -45,7 +45,7 @@ support@wfcommons.org.
 
     introduction.rst
     parsing_logs.rst
-    analyzing_traces.rst
+    analyzing_instances.rst
     generating_workflows.rst
 
 .. toctree::

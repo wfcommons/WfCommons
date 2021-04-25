@@ -3,7 +3,7 @@
 Parsing Workflow Execution Logs
 ===============================
 
-The most common way for obtaining traces from actual workflow executions is to parse
+The most common way for obtaining instances from actual workflow executions is to parse
 execution logs. As part of the WfCommons project, we are constantly developing
 parsers for commonly used workflow management systems.
 
@@ -25,7 +25,7 @@ arbitrary DAG structure and is not limited to specific patterns. Makeflow is use
 on a daily basis to execute complex scientific applications in fields such as data
 mining, high energy physics, image processing, and bioinformatics. It has run on
 campus clusters, the Open Science Grid, NSF XSEDE machines, NCSA Blue Waters, and
-Amazon Web Services. Makeflow logs provide time-stamped event traces from these
+Amazon Web Services. Makeflow logs provide time-stamped event instances from these
 executions. The following example shows the analysis of Makeflow execution logs,
 stored in a local folder (execution dir), for a workflow execution using the
 :class:`~wfcommons.trace.logs.makeflow.MakeflowLogsParser` class: ::
@@ -36,10 +36,10 @@ stored in a local folder (execution dir), for a workflow execution using the
     parser = MakeflowLogsParser(execution_dir='/path/to/makeflow/execution/dir/blast/chameleon-small-001/'
                                 resource_monitor_logs_dir='/path/to/makeflow/resource/monitor/logs/dir')
 
-    # generating the workflow trace object
+    # generating the workflow instance object
     workflow = parser.build_workflow('workflow-test')
 
-    # writing the workflow trace to a JSON file
+    # writing the workflow instance to a JSON file
     workflow.write_json('workflow.json')
 
 .. note::
@@ -59,7 +59,7 @@ clusters, clouds, and national cyberinfrastructures. Workflow execution with Peg
 includes data management, monitoring, and failure handling, and is managed by HTCondor
 DAGMan. Individual workflow tasks are managed by a workload management framework,
 HTCondor, which supervises task executions on local and remote resources. Pegasus
-logs provide time-stamped event traces from these executions. The following example shows
+logs provide time-stamped event instances from these executions. The following example shows
 the analysis of Pegasus execution logs, stored in a local folder (submit dir), for a
 workflow execution using the :class:`~wfcommons.trace.logs.pegasus.PegasusLogsParser`
 class: ::
@@ -69,10 +69,10 @@ class: ::
     # creating the parser for the Pegasus workflow
     parser = PegasusLogsParser(submit_dir='/path/to/pegasus/submit/dir/seismology/chameleon-100p-001/')
 
-    # generating the workflow trace object
+    # generating the workflow instance object
     workflow = parser.build_workflow('workflow-test')
 
-    # writing the workflow trace to a JSON file
+    # writing the workflow instance to a JSON file
     workflow.write_json('workflow.json')
 
 .. warning::
