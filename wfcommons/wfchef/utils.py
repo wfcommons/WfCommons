@@ -170,18 +170,18 @@ def draw(g: nx.DiGraph,
 
     return fig, ax
 
-def analyzer_summary(instances: List, workflow: nx.DiGraph):
+def analyzer_summary(path_to_instances: List[str], workflows: List[nx.DiGraph]):
     analyzer = TraceAnalyzer()
     workflow_tasks = set()
-    for instance in instances:
+
+    for instance in path_to_instances.glob("*.json"):
+        instance = Trace(input_trace= f'{path_to_instances}/{instance}')
         analyzer.append_trace(instance)
 
-
-    for node in workflow.nodes:
-        workflow_tasks = node["type"]
+    for workflow in workflows:
+        for node in workflow.nodes:
+            workflow_tasks = node["type"]
 
     stats_dict = analyzer.build_summary(workflow_tasks, include_raw_data=True)
-    
-    savedir = this_dir.joinpath("stats_summary")
-    savedir.mkdir(exist_ok=True, parents=True)
-    savedir.joinpath(f"{workflow.name}/summary").with_suffix(".json").write_text(json.dumps(stats_dict, indent=2))
+    return stats_dict 
+    # savepath.with_suffix(".json").write_text(json.dumps(stats_dict, indent=2))

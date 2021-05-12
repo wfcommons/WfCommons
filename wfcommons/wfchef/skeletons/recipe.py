@@ -17,6 +17,7 @@ from wfcommons.common.workflow import Workflow
 
 from wfchef.duplicate import duplicate_nodes, duplicate
 
+
 from itertools import product
 import pathlib 
 import pickle
@@ -133,6 +134,7 @@ class SkeletonRecipe(WorkflowRecipe):
         :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
+        # default = json.loads(this_dir.joinpath("default.json").read_text()) -- do something like this (maybe =)
         default = {
             "runtime": {
                 "min": 0.087,

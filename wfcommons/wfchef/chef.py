@@ -1,6 +1,8 @@
 
 import pathlib
 import json
+from wfcommons.wfchef.find_microstructures import find_microstructures
+from wfcommons.wfchef.utils import analyzer_summary
 from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe, Workflow
 from typing import Optional, Union, Dict, Any
 import argparse
@@ -8,11 +10,14 @@ import shutil
 from stringcase import camelcase, snakecase
 import pickle
 from .duplicate import duplicate, NoMicrostructuresError
+from .utils import analyzer_summary, create_graph, annotate
+from .find_microstructures import find_microstructures
 import pandas as pd
 import networkx as nx
 import math
 import subprocess
 import numpy as np
+import networkx as nx
 
 this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
@@ -85,6 +90,34 @@ def find_err(workflow: Union[str, pathlib.Path],
     if err_savepath:
         err_savepath.write_text(df.to_csv())
     return df
+
+
+# ------ NEW CREATE RECIPE ----- should be something like this
+
+def new_create_recipe(path_to_instances: Union[str, pathlib.Path])-> WorkflowRecipe:
+   
+    #create networkx graphs
+    graphs = []
+    for path in path_to_instances.glob("*.json"):
+        graph = create_graph(path)
+        annotate(graph)
+        graph.graph["name"] = path.stem
+        graphs.append(graph)
+        
+
+    #Call find microstructures  
+    microstructures = {}
+    for graph in graphs:
+        microstructures = find_microstructures(graph)
+
+    #write it in build_workflow in recipe.py
+
+  # Statistics information
+    instances= [file for file in pathlib.iterdir(path_to_instances) if pathlib.is_file(path_to_instances.joinpath(file))]
+    stats = analyzer_summary(path_to_instances, graphs) 
+
+    #replace with stats the info in the recipe.py _workflow_recipe
+
 
 def create_recipe(path: Union[str, pathlib.Path], dst: Union[str, pathlib.Path], runs: int = 1) -> WorkflowRecipe:
     err_savepath = path.joinpath("metric", "err.csv")
