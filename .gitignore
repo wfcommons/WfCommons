@@ -36,3 +36,6 @@ ipython_config.py
 
 # Virtual environment
 venv
+
+# VSCode settings
+**/*.vscode

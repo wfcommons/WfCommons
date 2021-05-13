@@ -55,4 +55,9 @@ setup(
         'Topic :: System :: Distributed Computing'
     ],
     python_requires='>=3.6',
+    entry_points = {
+        'console_scripts': [
+            'wfchef=wfcommons.wfchef.chef:main',
+        ],
+    },
 )
