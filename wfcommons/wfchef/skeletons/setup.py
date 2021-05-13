@@ -7,8 +7,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'networkx',
-        'workflowhub',
-        'wfchef'
+        'wfcommons'
     ],
     entry_points = {
         'worfklow_recipes': [

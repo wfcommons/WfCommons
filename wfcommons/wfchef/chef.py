@@ -1,23 +1,25 @@
 
 import pathlib
 import json
-from wfcommons.wfchef.find_microstructures import find_microstructures
-from wfcommons.wfchef.utils import analyzer_summary
-from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe, Workflow
-from typing import Optional, Union, Dict, Any
+from re import sub
+from ..trace.trace import Trace
+from ..trace.trace_analyzer import TraceAnalyzer
+from ..generator.workflow.abstract_recipe import WorkflowRecipe, Workflow
+from typing import Dict, Optional, Union
 import argparse
-import shutil
+import pandas as pd
 from stringcase import camelcase, snakecase
 import pickle
 from .duplicate import duplicate, NoMicrostructuresError
-from .utils import analyzer_summary, create_graph, annotate
-from .find_microstructures import find_microstructures
+from .utils import create_graph, annotate
+from .find_microstructures import find_microstructures, save_microstructures
 import pandas as pd
 import networkx as nx
 import math
 import subprocess
 import numpy as np
 import networkx as nx
+import pkg_resources
 
 this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
@@ -92,62 +94,66 @@ def find_err(workflow: Union[str, pathlib.Path],
     return df
 
 
-# ------ NEW CREATE RECIPE ----- should be something like this
+def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
+    analyzer = TraceAnalyzer()
+    task_types = set()
 
-def new_create_recipe(path_to_instances: Union[str, pathlib.Path])-> WorkflowRecipe:
-   
-    #create networkx graphs
-    graphs = []
     for path in path_to_instances.glob("*.json"):
+        instance = Trace(input_trace=str(path))
+        analyzer.append_trace(instance)
         graph = create_graph(path)
-        annotate(graph)
-        graph.graph["name"] = path.stem
-        graphs.append(graph)
-        
+        for node in graph.nodes:
+            task_types.add(graph.nodes[node]["type"])
 
-    #Call find microstructures  
-    microstructures = {}
-    for graph in graphs:
-        microstructures = find_microstructures(graph)
+    stats_dict = analyzer.build_summary(task_types - {"DST", "SRC"}, include_raw_data=False)
+    return stats_dict 
 
-    #write it in build_workflow in recipe.py
+def ls_recipe():
+    rows = []
+    for entry_point in pkg_resources.iter_entry_points('worfklow_recipes'):
+        Recipe = entry_point.load()
+        rows.append([Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+    df = pd.DataFrame(rows, columns=["name", "module", "import command"])
+    print(df.to_string(index=None))
 
-  # Statistics information
-    instances= [file for file in pathlib.iterdir(path_to_instances) if pathlib.is_file(path_to_instances.joinpath(file))]
-    stats = analyzer_summary(path_to_instances, graphs) 
+def uninstall_recipe(module_name: str):
+    for entry_point in pkg_resources.iter_entry_points('worfklow_recipes'):
+        if entry_point.module_name == module_name:
+            print(f"Uninstalling package: wfchef.recipe.{module_name}")
+            proc = subprocess.Popen(["pip", "uninstall", f"wfchef.recipe.{module_name}"])
+            proc.wait()
+            return
+    
+    print(f"Could not find recipe with module name {module_name} installed")
 
-    #replace with stats the info in the recipe.py _workflow_recipe
+def create_recipe(path_to_instances: Union[str, pathlib.Path],  
+                      savedir: pathlib.Path,
+                      wf_name: str,
+                      cutoff: int = 4000,
+                      verbose: bool = False,
+                      runs: int = 1)-> WorkflowRecipe:
+    savedir.mkdir(exist_ok=True, parents=True)
+    dst = pathlib.Path(savedir, snakecase(wf_name)).resolve()
+    dst.mkdir(exist_ok=True, parents=True)
+    
+    if verbose:
+        print(f"Finding Microstructures")
+    microstructures_path = dst.joinpath("microstructures")
+    save_microstructures(path_to_instances, microstructures_path, img_type=None, cutoff=cutoff)
 
-
-def create_recipe(path: Union[str, pathlib.Path], dst: Union[str, pathlib.Path], runs: int = 1) -> WorkflowRecipe:
-    err_savepath = path.joinpath("metric", "err.csv")
+    if verbose:
+        print(f"Generating Error Table")
+    err_savepath = microstructures_path.joinpath("metric", "err.csv")
     err_savepath.parent.mkdir(exist_ok=True, parents=True)
-    df = find_err(path, runs=runs)
+    df = find_err(microstructures_path, runs=runs)
 
     err_savepath.write_text(df.to_csv())
-    
-    path = pathlib.Path(path).resolve(strict=True)
-    wf_name = f"Workflow{camelcase(path.stem)}"
-    dst = pathlib.Path(dst, snakecase(wf_name)).resolve()
-    dst.mkdir(exist_ok=True, parents=True)
-
-    dst_metric_path = dst.joinpath("metric", "err.csv")
-    dst_metric_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(path.joinpath("metric", "err.csv"), dst_metric_path)
-    
-    summary_path = dst.joinpath("microstructures", "summary.json")
-    summary_path.parent.mkdir(exist_ok=True, parents=True)
-    shutil.copy(path.joinpath("summary.json"), summary_path)
-    for filename in ["base_graph.pickle", "microstructures.json"]:
-        for p in path.glob(f"*/{filename}"):
-            dst_path = dst.joinpath("microstructures", p.parent.stem, filename)
-            dst_path.parent.mkdir(exist_ok=True, parents=True)
-            shutil.copy(p, dst_path)
-
     # Recipe 
     with skeleton_path.joinpath("recipe.py").open() as fp:
         skeleton_str = fp.read() 
 
+    if verbose:
+        print(f"Generating Recipe Code")
     skeleton_str = skeleton_str.replace("Skeleton", wf_name)
     skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
     with this_dir.joinpath(dst.joinpath("__init__.py")).open("w+") as fp:
@@ -171,41 +177,80 @@ def create_recipe(path: Union[str, pathlib.Path], dst: Union[str, pathlib.Path],
     with this_dir.joinpath(dst.parent.joinpath("MANIFEST.in")).open("w+") as fp:
         fp.write(skeleton_str)
 
+    if verbose:
+        print(f"Analyzing Workflow Statistics")
+    stats = analyzer_summary(path_to_instances) 
+    dst.joinpath("task_type_stats.json").write_text(json.dumps(stats))
+
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-w", "--workflow", 
-        choices=[path.stem for path in this_dir.joinpath("microstructures").glob("*") if path.is_dir()],
-        required=True,
-        help="Workflow to duplicate"
+    subparsers = parser.add_subparsers()
+
+    ls_parser = subparsers.add_parser("ls")
+    ls_parser.set_defaults(action=ls_recipe)
+
+    uninstall_parser = subparsers.add_parser("uninstall")
+    uninstall_parser.set_defaults(action=uninstall_recipe)
+    uninstall_parser.add_argument("module_name", help="name of recipe module to uninstall")
+
+
+    create_parser = subparsers.add_parser("create")
+    create_parser.set_defaults(action=create_recipe)
+    create_parser.add_argument(
+        "path", type=pathlib.Path, help="path to JSON workflow instances"
     )
-    parser.add_argument(
-        "-i", "--install",
+    create_parser.add_argument(
+        "--no-install",
         action="store_true",
         help="if set, automatically installs the package"
     )
-    parser.add_argument(
+    create_parser.add_argument(
         "-r", "--runs",
         default=1, type=int,
         help="number of runs to compute mean RMSE"
+    )
+    create_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="if set, print verbose logs"
+    )
+    create_parser.add_argument(
+        "-o", "--out",
+        required=True,
+        type=pathlib.Path,
+        help="place to save generated recipe to"
+    )
+    create_parser.add_argument(
+        "-n", "--name",
+        required=True,
+        help="name of workflow to generate"
+    )
+    create_parser.add_argument(
+        "-c", "--cutoff",
+        type=int, default=4000,
+        help="ignore workflow instances with greater than cutoff number of nodes. default is 4000."
     )
     return parser
 
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    src = this_dir.joinpath("microstructures", args.workflow)
-    dst = src.joinpath("recipe")
-    create_recipe(src, dst, runs=args.runs)
 
-    if args.install:
-        proc = subprocess.Popen(["pip", "install", str(dst)])
-        proc.wait()
-    else:
-        print("Done! To install the package, run: \n")
-        print(f"  pip install {dst}")
-        print("\nor, in editable mode:\n")
-        print(f"  pip install -e {dst}")
+    if args.action == ls_recipe:
+        ls_recipe()
+    elif args.action == uninstall_recipe:
+        uninstall_recipe(args.module_name)
+    elif args.action == create_recipe:
+        create_recipe(args.path, args.out, args.name, cutoff=args.cutoff, verbose=True)
+
+        if args.no_install:
+            print("Done! To install the package, run: \n")
+            print(f"  pip install {args.out}")
+            print("\nor, in editable mode:\n")
+            print(f"  pip install -e {args.out}")
+        else:
+            proc = subprocess.Popen(["pip", "install", str(args.out.resolve())])
+            proc.wait()
 
 
 if __name__ == "__main__":

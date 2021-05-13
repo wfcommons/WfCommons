@@ -90,7 +90,7 @@ def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
     return microstructures
 
 def sort_graphs(workflow_path: Union[pathlib.Path],
-                verbose: bool = False):
+                verbose: bool = False) -> List[nx.DiGraph]:
     
     if verbose:
         print(f"Working on {workflow_path}")
@@ -116,14 +116,12 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
                          verbose: bool = False, 
                          img_type: Optional[str] = 'png',
                          cutoff: int = 4000,
-                         highlight_all_instances: bool = False
-                        ):
+                         highlight_all_instances: bool = False) -> List[nx.DiGraph]:
     summary = {
         "frequencies": {},
         "base_graphs": {}
     }
     
-
     for graph in sort_graphs(workflow_path, verbose):
         if graph.order() > cutoff:
             print(f'This and the next workflows have more than {cutoff} tasks')

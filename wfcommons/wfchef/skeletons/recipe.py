@@ -8,24 +8,19 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from typing import Dict, List, Optional, Union, Set
+from typing import Dict, Optional, Set
 
 from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe
-from wfcommons.common.file import FileLink
-from wfcommons.common.task import Task
 from wfcommons.common.workflow import Workflow
 
-from wfchef.duplicate import duplicate_nodes, duplicate
+from wfchef.duplicate import duplicate
 
-
-from itertools import product
 import pathlib 
 import pickle
 import networkx as nx
 import numpy as np
 import pandas as pd
 import json
-from uuid import uuid4
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -54,11 +49,11 @@ class SkeletonRecipe(WorkflowRecipe):
         ]
 
     @classmethod
-    def generate_nx_graph(cls, num_tasks: int, exclude_graphs: Set[str]) -> nx.DiGraph:
+    def generate_nx_graph(cls, num_tasks: int, exclude_graphs: Set[str] = set()) -> nx.DiGraph:
         summary_path = this_dir.joinpath("microstructures", "summary.json")
         summary = json.loads(summary_path.read_text())
 
-        metric_path = this_dir.joinpath("metric", "err.csv")
+        metric_path = this_dir.joinpath("microstructures", "metric", "err.csv")
         df = pd.read_csv(str(metric_path), index_col=0)
         df = df.drop(exclude_graphs, axis=0, errors="ignore")
         df = df.drop(exclude_graphs, axis=1, errors="ignore")
@@ -74,7 +69,7 @@ class SkeletonRecipe(WorkflowRecipe):
         return graph
 
     @classmethod
-    def from_num_tasks(cls, num_tasks: int, exclude_graphs: Set[str]) -> 'SkeletonRecipe':
+    def from_num_tasks(cls, num_tasks: int, exclude_graphs: Set[str] = set()) -> 'SkeletonRecipe':
         """
         Instantiate a Skeleton workflow recipe that will generate synthetic workflows up to
         the total number of tasks provided.
@@ -134,50 +129,4 @@ class SkeletonRecipe(WorkflowRecipe):
         :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
-        # default = json.loads(this_dir.joinpath("default.json").read_text()) -- do something like this (maybe =)
-        default = {
-            "runtime": {
-                "min": 0.087,
-                "max": 5.615,
-                "distribution": {
-                    "name": "alpha",
-                    "params": [
-                        2.8535577839854487e-09,
-                        -0.6968250029499959,
-                        1.0879675561652093
-                    ]
-                }
-            },
-            "input": {
-                ".lht": {
-                    "distribution": {
-                        "name": "fisk",
-                        "params": [
-                            0.4312877358390993,
-                            -5.198983213279189e-26,
-                            2.042713032349936
-                        ]
-                    },
-                    "min": 1024,
-                    "max": 16012
-                }
-            },
-            "output": {
-                ".stf": {
-                    "distribution": {
-                        "name": "argus",
-                        "params": [
-                            1.3444573433417438e-05,
-                            -2922.408647942764,
-                            6738.674391937242
-                        ]
-                    },
-                    "min": 1144,
-                    "max": 17016
-                }
-            }
-        }
-        return {
-            node_type: default
-            for node_type in self.node_types
-        }
+        return json.loads(this_dir.joinpath("task_type_stats.json").read_text())

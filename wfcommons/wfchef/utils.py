@@ -3,7 +3,7 @@ import pathlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.patches as mpatches
-from typing import Iterable, Union, Set, Optional, Tuple, Hashable, List
+from typing import Dict, Iterable, Union, Set, Optional, Tuple, Hashable, List
 import json
 from hashlib import sha256
 from wfcommons import Trace, TraceAnalyzer
@@ -169,19 +169,3 @@ def draw(g: nx.DiGraph,
         plt.close(fig)
 
     return fig, ax
-
-def analyzer_summary(path_to_instances: List[str], workflows: List[nx.DiGraph]):
-    analyzer = TraceAnalyzer()
-    workflow_tasks = set()
-
-    for instance in path_to_instances.glob("*.json"):
-        instance = Trace(input_trace= f'{path_to_instances}/{instance}')
-        analyzer.append_trace(instance)
-
-    for workflow in workflows:
-        for node in workflow.nodes:
-            workflow_tasks = node["type"]
-
-    stats_dict = analyzer.build_summary(workflow_tasks, include_raw_data=True)
-    return stats_dict 
-    # savepath.with_suffix(".json").write_text(json.dumps(stats_dict, indent=2))
