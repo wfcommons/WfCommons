@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+
 from .version import __version__
 
 __author__ = 'WfCommons Team - https://wfcommons.org'
@@ -17,5 +18,6 @@ import logging
 
 from .generator import WorkflowGenerator
 from .trace import Trace, TraceAnalyzer, TraceElement
+
 
 logging.getLogger('wfcommons').addHandler(logging.NullHandler())

@@ -78,17 +78,19 @@ class TraceAnalyzer:
         :rtype: Dict[str, Dict[str, Any]]
         """
         self.logger.debug('Building summary for {} traces'.format(len(self.traces)))
-
+        
+        tasks_list = sorted(list(tasks_list), key=len, reverse=True) #had to sorted so it would get all cases
         # build tasks summary
         for trace in self.traces:
             self.logger.debug('Parsing trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
+
             for node in trace.workflow.nodes.data():
                 task: Task = node[1]['task']
-                task_name: str = [j for j in tasks_list if task.name.startswith(j)][0]
-
+                task_name: str = [j for j in tasks_list if task.name.startswith(j)][0] #it was eliminating bwa_index because bwa came before it
                 if task_name not in self.tasks_summary:
                     self.tasks_summary[task_name] = []
                 self.tasks_summary[task_name].append(task)
+        
 
         # build traces summary
         for task_name in self.tasks_summary:
@@ -123,7 +125,6 @@ class TraceAnalyzer:
             }
             if include_raw_data:
                 self.traces_summary[task_name]['runtime']['data'] = runtime_list
-
         return self.traces_summary
 
     def generate_fit_plots(self, trace_element: TraceElement, outfile_prefix: Optional[str] = None) -> None:

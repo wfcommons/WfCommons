@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WorkflowHub Team.
+# Copyright (c) 2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,35 +37,30 @@ class SkeletonRecipe(WorkflowRecipe):
     """
 
     def __init__(self,
-                 graph: nx.DiGraph,
                  data_footprint: Optional[int] = 0,
                  num_tasks: Optional[int] = 3,
+                 exclude_graphs: Set[str] = set(),
                  **kwargs) -> None:
         super().__init__("Skeleton", data_footprint, num_tasks)
-        self.graph = graph
-        self.node_types = [
-            self.graph.nodes[node]["type"]
-            for node in self.graph.nodes
-        ]
+        self.exclude_graphs = exclude_graphs
 
-    @classmethod
-    def generate_nx_graph(cls, num_tasks: int, exclude_graphs: Set[str] = set()) -> nx.DiGraph:
+    def generate_nx_graph(self) -> nx.DiGraph:
         summary_path = this_dir.joinpath("microstructures", "summary.json")
         summary = json.loads(summary_path.read_text())
 
         metric_path = this_dir.joinpath("microstructures", "metric", "err.csv")
         df = pd.read_csv(str(metric_path), index_col=0)
-        df = df.drop(exclude_graphs, axis=0, errors="ignore")
-        df = df.drop(exclude_graphs, axis=1, errors="ignore")
+        df = df.drop(self.exclude_graphs, axis=0, errors="ignore")
+        df = df.drop(self.exclude_graphs, axis=1, errors="ignore")
         for col in df.columns:
             df.loc[col, col] = np.nan
 
         reference_orders = [summary["base_graphs"][col]["order"] for col in df.columns]
-        idx = np.argmin([abs(num_tasks - ref_num_tasks) for ref_num_tasks in reference_orders])
+        idx = np.argmin([abs(self.num_tasks - ref_num_tasks) for ref_num_tasks in reference_orders])
         reference = df.columns[idx]
 
         base = df.index[df[reference].argmin()]
-        graph = duplicate(this_dir.joinpath("microstructures"), base, num_tasks)
+        graph = duplicate(this_dir.joinpath("microstructures"), base, self.num_tasks)
         return graph
 
     @classmethod
@@ -81,7 +76,7 @@ class SkeletonRecipe(WorkflowRecipe):
                  to the total number of tasks provided.
         :rtype: SkeletonRecipe
         """
-        return SkeletonRecipe(graph=cls.generate_nx_graph(num_tasks, exclude_graphs), num_tasks=num_tasks)
+        return SkeletonRecipe(num_tasks=num_tasks, exclude_graphs=exclude_graphs)
 
     def _load_base_graph(self) -> nx.DiGraph:
         return pickle.loads(this_dir.joinpath("base_graph.pickle").read_bytes())
@@ -99,7 +94,7 @@ class SkeletonRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-trace" if not workflow_name else workflow_name, makespan=None)
-        graph = self.graph.copy()
+        graph = self.generate_nx_graph()
 
         task_names = {}
         for node in graph.nodes:

@@ -1,14 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
 import pathlib
 import json
 from re import sub
+import traceback
 from ..trace.trace import Trace
 from ..trace.trace_analyzer import TraceAnalyzer
 from ..generator.workflow.abstract_recipe import WorkflowRecipe, Workflow
 from typing import Dict, Optional, Union
 import argparse
 import pandas as pd
-from stringcase import camelcase, snakecase
+from stringcase import snakecase, capitalcase
 import pickle
 from .duplicate import duplicate, NoMicrostructuresError
 from .utils import create_graph, annotate
@@ -106,13 +116,18 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
             task_types.add(graph.nodes[node]["type"])
 
     stats_dict = analyzer.build_summary(task_types - {"DST", "SRC"}, include_raw_data=False)
+  
     return stats_dict 
 
 def ls_recipe():
     rows = []
     for entry_point in pkg_resources.iter_entry_points('worfklow_recipes'):
-        Recipe = entry_point.load()
-        rows.append([Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+        try: 
+            Recipe = entry_point.load()
+            rows.append([Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+        except Exception as e:
+            traceback.print_exc()
+            print(f"Could not load {entry_point.module_name}")
     df = pd.DataFrame(rows, columns=["name", "module", "import command"])
     print(df.to_string(index=None))
 
@@ -127,13 +142,15 @@ def uninstall_recipe(module_name: str):
     print(f"Could not find recipe with module name {module_name} installed")
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],  
-                      savedir: pathlib.Path,
-                      wf_name: str,
-                      cutoff: int = 4000,
-                      verbose: bool = False,
-                      runs: int = 1)-> WorkflowRecipe:
+                  savedir: pathlib.Path,
+                  wf_name: str,
+                  cutoff: int = 4000,
+                  verbose: bool = False,
+                  runs: int = 1)-> WorkflowRecipe:
+    camelname = capitalcase(wf_name)
+    snakename = snakecase(wf_name)
     savedir.mkdir(exist_ok=True, parents=True)
-    dst = pathlib.Path(savedir, snakecase(wf_name)).resolve()
+    dst = pathlib.Path(savedir, f"{snakename}_recipe").resolve()
     dst.mkdir(exist_ok=True, parents=True)
     
     if verbose:
@@ -154,17 +171,17 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
 
     if verbose:
         print(f"Generating Recipe Code")
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
-    with this_dir.joinpath(dst.joinpath("__init__.py")).open("w+") as fp:
+    skeleton_str = skeleton_str.replace("Skeleton", camelname)
+    skeleton_str = skeleton_str.replace("skeleton", snakename)
+    with this_dir.joinpath(dst.joinpath(f"recipe.py")).open("w+") as fp:
         fp.write(skeleton_str)
 
     # setup.py 
     with skeleton_path.joinpath("setup.py").open() as fp:
         skeleton_str = fp.read() 
         
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
+    skeleton_str = skeleton_str.replace("Skeleton", camelname)
+    skeleton_str = skeleton_str.replace("skeleton", snakename)
     with this_dir.joinpath(dst.parent.joinpath("setup.py")).open("w+") as fp:
         fp.write(skeleton_str)
 
@@ -172,9 +189,18 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     with skeleton_path.joinpath("MANIFEST.in").open() as fp:
         skeleton_str = fp.read() 
         
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
+    skeleton_str = skeleton_str.replace("Skeleton", camelname)
+    skeleton_str = skeleton_str.replace("skeleton", snakename)
     with this_dir.joinpath(dst.parent.joinpath("MANIFEST.in")).open("w+") as fp:
+        fp.write(skeleton_str)
+
+    # __init__.py
+    with skeleton_path.joinpath("__init__.py").open() as fp:
+        skeleton_str = fp.read() 
+        
+    skeleton_str = skeleton_str.replace("Skeleton", camelname)
+    skeleton_str = skeleton_str.replace("skeleton", snakename)
+    with this_dir.joinpath(dst.joinpath("__init__.py")).open("w+") as fp:
         fp.write(skeleton_str)
 
     if verbose:

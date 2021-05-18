@@ -1,12 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import networkx as nx
 import pathlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.patches as mpatches
-from typing import Dict, Iterable, Union, Set, Optional, Tuple, Hashable, List
+from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 import json
 from hashlib import sha256
-from wfcommons import Trace, TraceAnalyzer
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -102,6 +111,8 @@ def annotate(g: nx.DiGraph) -> None:
             if child not in visited and 
             {sib for _, sib in g.out_edges(child)}.issubset(visited)
         ])
+
+    return g
 
 def draw(g: nx.DiGraph, 
          extension: Optional[str] = 'png',

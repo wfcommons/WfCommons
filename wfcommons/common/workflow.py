@@ -17,6 +17,8 @@ from typing import Optional
 from ..common.task import Task
 from ..version import __version__
 
+from ..wfchef.utils import annotate, create_graph
+import tempfile
 
 class Workflow(nx.DiGraph):
     """
@@ -131,3 +133,8 @@ class Workflow(nx.DiGraph):
         if not dot_filename:
             dot_filename = "{}.dot".format(self.name.lower())
         nx.nx_agraph.write_dot(self, dot_filename)
+
+    def to_nx_digraph(self) -> nx.DiGraph:
+        with tempfile.NamedTemporaryFile() as temp:
+            self.write_json(temp.name)
+            return create_graph(temp.name)
