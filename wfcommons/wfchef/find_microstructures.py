@@ -255,7 +255,6 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
                 "name": ms_name,
                 "nodes": list(map(list, instances)),
                 "frequency": len(instances),
-                "base_graph_path": str(base_graph_path),
             }
             if img_type:
                 print(f"Drawing {ms_name}")
