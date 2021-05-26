@@ -1,0 +1,128 @@
+{
+  "frequencies": {
+    "microstructure_fc98186cc1f9462303f9556460a5096c6815f2894a2de1ae1fc37e0471f550dd": [
+      [
+        106,
+        100
+      ],
+      [
+        106,
+        100
+      ],
+      [
+        106,
+        100
+      ],
+      [
+        106,
+        100
+      ],
+      [
+        106,
+        100
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ],
+      [
+        1006,
+        1000
+      ]
+    ]
+  },
+  "base_graphs": {
+    "bwa-chameleon-small-001": {
+      "size": 404,
+      "order": 106
+    },
+    "bwa-chameleon-small-004": {
+      "size": 404,
+      "order": 106
+    },
+    "bwa-chameleon-small-005": {
+      "size": 404,
+      "order": 106
+    },
+    "bwa-chameleon-small-003": {
+      "size": 404,
+      "order": 106
+    },
+    "bwa-chameleon-small-002": {
+      "size": 404,
+      "order": 106
+    },
+    "bwa-chameleon-medium-003": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-medium-004": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-medium-005": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-large-003": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-large-001": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-medium-001": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-large-004": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-large-005": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-medium-002": {
+      "size": 4004,
+      "order": 1006
+    },
+    "bwa-chameleon-large-002": {
+      "size": 4004,
+      "order": 1006
+    }
+  }
+}

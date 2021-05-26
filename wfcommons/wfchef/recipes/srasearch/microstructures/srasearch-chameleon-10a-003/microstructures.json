@@ -1,0 +1,49 @@
+{
+  "microstructure_9fb12ef8bfde10930a09a142765e72f25b145cdf218249289b1768e8246f6b56": {
+    "name": "microstructure_9fb12ef8bfde10930a09a142765e72f25b145cdf218249289b1768e8246f6b56",
+    "nodes": [
+      [
+        "bowtie2_ID0000021",
+        "fasterq-dump_ID0000020"
+      ],
+      [
+        "fasterq-dump_ID0000012",
+        "bowtie2_ID0000013"
+      ],
+      [
+        "fasterq-dump_ID0000002",
+        "bowtie2_ID0000003"
+      ],
+      [
+        "bowtie2_ID0000011",
+        "fasterq-dump_ID0000010"
+      ],
+      [
+        "bowtie2_ID0000007",
+        "fasterq-dump_ID0000006"
+      ],
+      [
+        "bowtie2_ID0000005",
+        "fasterq-dump_ID0000004"
+      ],
+      [
+        "fasterq-dump_ID0000014",
+        "bowtie2_ID0000015"
+      ],
+      [
+        "fasterq-dump_ID0000016",
+        "bowtie2_ID0000017"
+      ],
+      [
+        "bowtie2_ID0000019",
+        "fasterq-dump_ID0000018"
+      ],
+      [
+        "bowtie2_ID0000009",
+        "fasterq-dump_ID0000008"
+      ]
+    ],
+    "frequency": 10,
+    "base_graph_path": "/home/tainagdcoleman/wfcommons/wfchef_tests/core_workflows/wfcommons//srasearch/microstructures/srasearch-chameleon-10a-003/base_graph.pickle"
+  }
+}

@@ -9,9 +9,18 @@
 # (at your option) any later version.
 
 from setuptools import setup, find_packages
+import pathlib 
+
+thisdir = pathlib.Path(__file__).resolve().parent
+
+workflow_recipes = [
+    line.strip()
+    for line in thisdir.joinpath("workflow_recipes.txt").read_text().splitlines()
+    if line.strip()
+]
 
 setup(
-    name='wfchef.recipe.skeleton',
+    name='wfchef.recipe.PACKAGE_NAME',
     version='0.1',
     packages=find_packages(),
     include_package_data=True,
@@ -20,8 +29,6 @@ setup(
         'wfcommons'
     ],
     entry_points = {
-        'worfklow_recipes': [
-            "skeleton_recipe = skeleton_recipe:SkeletonRecipe"
-        ],
+        'workflow_recipes': workflow_recipes,
     }
 )

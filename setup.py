@@ -9,12 +9,13 @@
 # (at your option) any later version.
 
 from setuptools import setup, find_packages
+from wfcommons.version import __version__
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-# Fetch the version
-exec(open('wfcommons/version.py').read())
+# # Fetch the version
+# exec(open('wfcommons/version.py').read())
 
 setup(
     name='wfcommons',
@@ -27,6 +28,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/wfcommons/wfcommons',
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         'jsonschema',
         'matplotlib',
@@ -59,5 +61,17 @@ setup(
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main',
         ],
+        'workflow_recipes': [
+            # 'epigenomics_recipe = wfcommons.wfchef.wfcommons/.epigenomics:EpigenomicsRecipe',
+            'epigenomics_recipe = wfcommons.wfchef.recipes/.epigenomics:EpigenomicsRecipe',
+            'montage_recipe = wfcommons.wfchef.recipes/.montage:MontageRecipe',
+            'cycles_recipe = wfcommons.wfchef.recipes/.cycles:CyclesRecipe',
+            'seismology_recipe = wfcommons.wfchef.recipes/.seismology:SeismologyRecipe',
+            'soykb_recipe = wfcommons.wfchef.recipes/.soykb:SoykbRecipe',
+            'srasearch_recipe = wfcommons.wfchef.recipes/.srasearch:SrasearchRecipe',
+            'genome_recipe = wfcommons.wfchef.recipes/.genome:GenomeRecipe',
+            'blast_recipe = wfcommons.wfchef.recipes/.blast:BlastRecipe',
+            'bwa_recipe = wfcommons.wfchef.recipes/.bwa:BwaRecipe',
+        ]
     },
 )

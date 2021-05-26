@@ -1,0 +1,272 @@
+{
+  "frequencies": {
+    "microstructure_9fb12ef8bfde10930a09a142765e72f25b145cdf218249289b1768e8246f6b56": [
+      [
+        24,
+        10
+      ],
+      [
+        24,
+        10
+      ],
+      [
+        24,
+        10
+      ],
+      [
+        24,
+        10
+      ],
+      [
+        24,
+        10
+      ],
+      [
+        44,
+        20
+      ],
+      [
+        44,
+        20
+      ],
+      [
+        44,
+        20
+      ],
+      [
+        44,
+        20
+      ],
+      [
+        44,
+        20
+      ]
+    ],
+    "microstructure_0a87c8638f49578715185637746ac60fbe2681e747fb45aef4a12558ff3c3198": [
+      [
+        66,
+        30
+      ],
+      [
+        66,
+        30
+      ],
+      [
+        66,
+        30
+      ],
+      [
+        66,
+        30
+      ],
+      [
+        66,
+        30
+      ],
+      [
+        86,
+        40
+      ],
+      [
+        86,
+        40
+      ],
+      [
+        86,
+        40
+      ],
+      [
+        86,
+        40
+      ],
+      [
+        86,
+        40
+      ],
+      [
+        106,
+        50
+      ],
+      [
+        106,
+        50
+      ],
+      [
+        106,
+        50
+      ],
+      [
+        106,
+        50
+      ],
+      [
+        106,
+        50
+      ]
+    ],
+    "microstructure_1863551888a069f5484f7eebef4b753fb22ecf57bf2ab3973211a2908b103654": [
+      [
+        66,
+        2
+      ],
+      [
+        66,
+        2
+      ],
+      [
+        66,
+        2
+      ],
+      [
+        66,
+        2
+      ],
+      [
+        66,
+        2
+      ],
+      [
+        86,
+        2
+      ],
+      [
+        86,
+        2
+      ],
+      [
+        86,
+        2
+      ],
+      [
+        86,
+        2
+      ],
+      [
+        86,
+        2
+      ],
+      [
+        106,
+        2
+      ],
+      [
+        106,
+        2
+      ],
+      [
+        106,
+        2
+      ],
+      [
+        106,
+        2
+      ],
+      [
+        106,
+        2
+      ]
+    ]
+  },
+  "base_graphs": {
+    "srasearch-chameleon-10a-001": {
+      "size": 42,
+      "order": 24
+    },
+    "srasearch-chameleon-10a-005": {
+      "size": 42,
+      "order": 24
+    },
+    "srasearch-chameleon-10a-003": {
+      "size": 42,
+      "order": 24
+    },
+    "srasearch-chameleon-10a-004": {
+      "size": 42,
+      "order": 24
+    },
+    "srasearch-chameleon-10a-002": {
+      "size": 42,
+      "order": 24
+    },
+    "srasearch-chameleon-20a-005": {
+      "size": 82,
+      "order": 44
+    },
+    "srasearch-chameleon-20a-003": {
+      "size": 82,
+      "order": 44
+    },
+    "srasearch-chameleon-20a-001": {
+      "size": 82,
+      "order": 44
+    },
+    "srasearch-chameleon-20a-004": {
+      "size": 82,
+      "order": 44
+    },
+    "srasearch-chameleon-20a-002": {
+      "size": 82,
+      "order": 44
+    },
+    "srasearch-chameleon-30a-002": {
+      "size": 124,
+      "order": 66
+    },
+    "srasearch-chameleon-30a-004": {
+      "size": 124,
+      "order": 66
+    },
+    "srasearch-chameleon-30a-005": {
+      "size": 124,
+      "order": 66
+    },
+    "srasearch-chameleon-30a-001": {
+      "size": 124,
+      "order": 66
+    },
+    "srasearch-chameleon-30a-003": {
+      "size": 124,
+      "order": 66
+    },
+    "srasearch-chameleon-40a-005": {
+      "size": 164,
+      "order": 86
+    },
+    "srasearch-chameleon-40a-003": {
+      "size": 164,
+      "order": 86
+    },
+    "srasearch-chameleon-40a-002": {
+      "size": 164,
+      "order": 86
+    },
+    "srasearch-chameleon-40a-001": {
+      "size": 164,
+      "order": 86
+    },
+    "srasearch-chameleon-40a-004": {
+      "size": 164,
+      "order": 86
+    },
+    "srasearch-chameleon-50a-004": {
+      "size": 204,
+      "order": 106
+    },
+    "srasearch-chameleon-50a-003": {
+      "size": 204,
+      "order": 106
+    },
+    "srasearch-chameleon-50a-001": {
+      "size": 204,
+      "order": 106
+    },
+    "srasearch-chameleon-50a-002": {
+      "size": 204,
+      "order": 106
+    },
+    "srasearch-chameleon-50a-005": {
+      "size": 204,
+      "order": 106
+    }
+  }
+}

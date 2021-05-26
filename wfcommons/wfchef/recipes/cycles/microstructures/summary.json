@@ -1,0 +1,308 @@
+{
+  "frequencies": {
+    "microstructure_786b906896b98dad3b2e4f48f94585ecf89bdea27b2c40da751948b91b4db0f6": [
+      [
+        69,
+        16
+      ],
+      [
+        135,
+        32
+      ],
+      [
+        136,
+        32
+      ],
+      [
+        203,
+        48
+      ],
+      [
+        221,
+        54
+      ],
+      [
+        268,
+        64
+      ],
+      [
+        333,
+        80
+      ],
+      [
+        401,
+        96
+      ],
+      [
+        439,
+        108
+      ],
+      [
+        440,
+        108
+      ],
+      [
+        659,
+        162
+      ],
+      [
+        663,
+        160
+      ],
+      [
+        664,
+        160
+      ],
+      [
+        876,
+        216
+      ],
+      [
+        995,
+        240
+      ],
+      [
+        1093,
+        270
+      ],
+      [
+        1313,
+        324
+      ],
+      [
+        1324,
+        320
+      ],
+      [
+        1985,
+        480
+      ],
+      [
+        2183,
+        540
+      ],
+      [
+        2184,
+        540
+      ],
+      [
+        3275,
+        810
+      ]
+    ],
+    "microstructure_42823d182b889b3b511f961d9e35c5ba785ca656d188a2db76624f2f842f5b3d": [
+      [
+        135,
+        2
+      ],
+      [
+        268,
+        4
+      ],
+      [
+        333,
+        5
+      ],
+      [
+        401,
+        6
+      ],
+      [
+        439,
+        2
+      ],
+      [
+        663,
+        10
+      ],
+      [
+        664,
+        10
+      ],
+      [
+        876,
+        4
+      ],
+      [
+        995,
+        15
+      ],
+      [
+        1093,
+        5
+      ],
+      [
+        1313,
+        6
+      ],
+      [
+        1324,
+        20
+      ],
+      [
+        1985,
+        30
+      ],
+      [
+        2183,
+        10
+      ],
+      [
+        2184,
+        10
+      ],
+      [
+        3275,
+        15
+      ]
+    ],
+    "microstructure_50129be2283b53e850acb15b84383ec5578e63dc055240dbe88211519886561c": [
+      [
+        136,
+        2
+      ],
+      [
+        203,
+        3
+      ],
+      [
+        268,
+        2
+      ],
+      [
+        401,
+        3
+      ],
+      [
+        440,
+        2
+      ],
+      [
+        659,
+        3
+      ],
+      [
+        664,
+        2
+      ],
+      [
+        876,
+        2
+      ],
+      [
+        995,
+        3
+      ],
+      [
+        1313,
+        3
+      ],
+      [
+        1324,
+        2
+      ],
+      [
+        1985,
+        3
+      ],
+      [
+        2184,
+        2
+      ],
+      [
+        3275,
+        3
+      ]
+    ]
+  },
+  "base_graphs": {
+    "cycles-chameleon-1l-1c-9p-001": {
+      "size": 115,
+      "order": 69
+    },
+    "cycles-chameleon-2l-1c-9p-001": {
+      "size": 229,
+      "order": 135
+    },
+    "cycles-chameleon-1l-2c-9p-001": {
+      "size": 230,
+      "order": 136
+    },
+    "cycles-chameleon-1l-3c-9p-001": {
+      "size": 345,
+      "order": 203
+    },
+    "cycles-chameleon-1l-1c-12p-001": {
+      "size": 381,
+      "order": 221
+    },
+    "cycles-chameleon-2l-2c-9p-001": {
+      "size": 458,
+      "order": 268
+    },
+    "cycles-chameleon-5l-1c-9p-001": {
+      "size": 571,
+      "order": 333
+    },
+    "cycles-chameleon-2l-3c-9p-001": {
+      "size": 687,
+      "order": 401
+    },
+    "cycles-chameleon-2l-1c-12p-001": {
+      "size": 761,
+      "order": 439
+    },
+    "cycles-chameleon-1l-2c-12p-001": {
+      "size": 762,
+      "order": 440
+    },
+    "cycles-chameleon-1l-3c-12p-001": {
+      "size": 1143,
+      "order": 659
+    },
+    "cycles-chameleon-10l-1c-9p-001": {
+      "size": 1141,
+      "order": 663
+    },
+    "cycles-chameleon-5l-2c-9p-001": {
+      "size": 1142,
+      "order": 664
+    },
+    "cycles-chameleon-2l-2c-12p-001": {
+      "size": 1522,
+      "order": 876
+    },
+    "cycles-chameleon-5l-3c-9p-001": {
+      "size": 1713,
+      "order": 995
+    },
+    "cycles-chameleon-5l-1c-12p-001": {
+      "size": 1901,
+      "order": 1093
+    },
+    "cycles-chameleon-2l-3c-12p-001": {
+      "size": 2283,
+      "order": 1313
+    },
+    "cycles-chameleon-10l-2c-9p-001": {
+      "size": 2282,
+      "order": 1324
+    },
+    "cycles-chameleon-10l-3c-9p-001": {
+      "size": 3423,
+      "order": 1985
+    },
+    "cycles-chameleon-10l-1c-12p-001": {
+      "size": 3801,
+      "order": 2183
+    },
+    "cycles-chameleon-5l-2c-12p-001": {
+      "size": 3802,
+      "order": 2184
+    },
+    "cycles-chameleon-5l-3c-12p-001": {
+      "size": 5703,
+      "order": 3275
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "frequencies": {
+    "microstructure_16467339aff95304f141d90992656578726aca4a011cba8d791a25da97bd3f47": [
+      [
+        60,
+        3
+      ],
+      [
+        60,
+        3
+      ],
+      [
+        105,
+        3
+      ],
+      [
+        180,
+        3
+      ],
+      [
+        312,
+        3
+      ],
+      [
+        474,
+        3
+      ],
+      [
+        621,
+        3
+      ],
+      [
+        621,
+        3
+      ],
+      [
+        750,
+        3
+      ],
+      [
+        1068,
+        3
+      ],
+      [
+        1314,
+        3
+      ],
+      [
+        1740,
+        3
+      ],
+      [
+        2124,
+        3
+      ]
+    ],
+    "microstructure_acec689e9f8c507c368a890998e569ba213ddbf0fb1633a98221e50886311245": [
+      [
+        60,
+        36
+      ],
+      [
+        60,
+        36
+      ],
+      [
+        105,
+        36
+      ],
+      [
+        180,
+        216
+      ],
+      [
+        312,
+        258
+      ],
+      [
+        474,
+        720
+      ],
+      [
+        621,
+        582
+      ],
+      [
+        621,
+        582
+      ],
+      [
+        750,
+        570
+      ],
+      [
+        1068,
+        1800
+      ],
+      [
+        1314,
+        1404
+      ],
+      [
+        1740,
+        2244
+      ],
+      [
+        2124,
+        3780
+      ]
+    ]
+  },
+  "base_graphs": {
+    "montage-chameleon-2mass-005d-001": {
+      "size": 130,
+      "order": 60
+    },
+    "montage-chameleon-dss-05d-001": {
+      "size": 130,
+      "order": 60
+    },
+    "montage-chameleon-2mass-01d-001": {
+      "size": 256,
+      "order": 105
+    },
+    "montage-chameleon-dss-075d-001": {
+      "size": 475,
+      "order": 180
+    },
+    "montage-chameleon-2mass-015d-001": {
+      "size": 850,
+      "order": 312
+    },
+    "montage-chameleon-dss-10d-001": {
+      "size": 1336,
+      "order": 474
+    },
+    "montage-chameleon-2mass-02d-001": {
+      "size": 1735,
+      "order": 621
+    },
+    "montage-chameleon-2mass-025d-001": {
+      "size": 1735,
+      "order": 621
+    },
+    "montage-chameleon-2mass-03d-001": {
+      "size": 2104,
+      "order": 750
+    },
+    "montage-chameleon-dss-125d-001": {
+      "size": 3091,
+      "order": 1068
+    },
+    "montage-chameleon-2mass-04d-001": {
+      "size": 3724,
+      "order": 1314
+    },
+    "montage-chameleon-2mass-05d-001": {
+      "size": 4942,
+      "order": 1740
+    },
+    "montage-chameleon-dss-15d-001": {
+      "size": 6226,
+      "order": 2124
+    }
+  }
+}

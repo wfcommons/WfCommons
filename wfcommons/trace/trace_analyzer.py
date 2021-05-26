@@ -91,7 +91,7 @@ class TraceAnalyzer:
                     self.tasks_summary[task_name] = []
                 self.tasks_summary[task_name].append(task)
         
-
+        
         # build traces summary
         for task_name in self.tasks_summary:
             runtime_list: List[float] = []
@@ -125,6 +125,7 @@ class TraceAnalyzer:
             }
             if include_raw_data:
                 self.traces_summary[task_name]['runtime']['data'] = runtime_list
+
         return self.traces_summary
 
     def generate_fit_plots(self, trace_element: TraceElement, outfile_prefix: Optional[str] = None) -> None:

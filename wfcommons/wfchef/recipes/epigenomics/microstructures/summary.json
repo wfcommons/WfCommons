@@ -1,0 +1,306 @@
+{
+  "frequencies": {
+    "microstructure_e3c86113bcda578cb9b0d101f794787174a5da55ca0ea848d29443d62311726c": [
+      [
+        43,
+        9
+      ],
+      [
+        75,
+        17
+      ],
+      [
+        121,
+        28
+      ],
+      [
+        127,
+        30
+      ],
+      [
+        225,
+        54
+      ],
+      [
+        235,
+        56
+      ],
+      [
+        243,
+        59
+      ],
+      [
+        265,
+        64
+      ],
+      [
+        349,
+        84
+      ],
+      [
+        407,
+        99
+      ],
+      [
+        423,
+        102
+      ],
+      [
+        447,
+        109
+      ],
+      [
+        509,
+        123
+      ],
+      [
+        517,
+        127
+      ],
+      [
+        561,
+        137
+      ],
+      [
+        579,
+        140
+      ],
+      [
+        673,
+        165
+      ],
+      [
+        715,
+        175
+      ],
+      [
+        795,
+        196
+      ],
+      [
+        819,
+        201
+      ],
+      [
+        865,
+        212
+      ],
+      [
+        985,
+        242
+      ],
+      [
+        1097,
+        271
+      ],
+      [
+        1123,
+        276
+      ],
+      [
+        1399,
+        346
+      ],
+      [
+        1697,
+        420
+      ]
+    ],
+    "microstructure_ff6faa06cad91e9087e4fc1521927c613a0a72664c476c58edf6673033029151": [
+      [
+        121,
+        2
+      ],
+      [
+        225,
+        2
+      ],
+      [
+        235,
+        3
+      ],
+      [
+        265,
+        2
+      ],
+      [
+        349,
+        4
+      ],
+      [
+        407,
+        3
+      ],
+      [
+        423,
+        5
+      ],
+      [
+        447,
+        3
+      ],
+      [
+        509,
+        6
+      ],
+      [
+        517,
+        2
+      ],
+      [
+        561,
+        4
+      ],
+      [
+        579,
+        7
+      ],
+      [
+        673,
+        4
+      ],
+      [
+        715,
+        5
+      ],
+      [
+        795,
+        3
+      ],
+      [
+        819,
+        5
+      ],
+      [
+        865,
+        6
+      ],
+      [
+        985,
+        6
+      ],
+      [
+        1097,
+        4
+      ],
+      [
+        1123,
+        7
+      ],
+      [
+        1399,
+        5
+      ],
+      [
+        1697,
+        6
+      ]
+    ]
+  },
+  "base_graphs": {
+    "epigenomics-chameleon-hep-1seq-100k-001": {
+      "size": 50,
+      "order": 43
+    },
+    "epigenomics-chameleon-hep-1seq-50k-001": {
+      "size": 90,
+      "order": 75
+    },
+    "epigenomics-chameleon-hep-2seq-100k-001": {
+      "size": 147,
+      "order": 121
+    },
+    "epigenomics-chameleon-ilmn-1seq-100k-001": {
+      "size": 155,
+      "order": 127
+    },
+    "epigenomics-chameleon-hep-2seq-50k-001": {
+      "size": 277,
+      "order": 225
+    },
+    "epigenomics-chameleon-hep-3seq-100k-001": {
+      "size": 289,
+      "order": 235
+    },
+    "epigenomics-chameleon-ilmn-1seq-50k-001": {
+      "size": 300,
+      "order": 243
+    },
+    "epigenomics-chameleon-ilmn-2seq-100k-001": {
+      "size": 327,
+      "order": 265
+    },
+    "epigenomics-chameleon-hep-4seq-100k-001": {
+      "size": 431,
+      "order": 349
+    },
+    "epigenomics-chameleon-ilmn-3seq-100k-001": {
+      "size": 504,
+      "order": 407
+    },
+    "epigenomics-chameleon-hep-5seq-100k-001": {
+      "size": 523,
+      "order": 423
+    },
+    "epigenomics-chameleon-hep-3seq-50k-001": {
+      "size": 554,
+      "order": 447
+    },
+    "epigenomics-chameleon-hep-6seq-100k-001": {
+      "size": 630,
+      "order": 509
+    },
+    "epigenomics-chameleon-ilmn-2seq-50k-001": {
+      "size": 642,
+      "order": 517
+    },
+    "epigenomics-chameleon-ilmn-4seq-100k-001": {
+      "size": 696,
+      "order": 561
+    },
+    "epigenomics-chameleon-hep-7seq-100k-001": {
+      "size": 717,
+      "order": 579
+    },
+    "epigenomics-chameleon-hep-4seq-50k-001": {
+      "size": 836,
+      "order": 673
+    },
+    "epigenomics-chameleon-ilmn-5seq-100k-001": {
+      "size": 888,
+      "order": 715
+    },
+    "epigenomics-chameleon-ilmn-3seq-50k-001": {
+      "size": 989,
+      "order": 795
+    },
+    "epigenomics-chameleon-hep-5seq-50k-001": {
+      "size": 1018,
+      "order": 819
+    },
+    "epigenomics-chameleon-ilmn-6seq-100k-001": {
+      "size": 1075,
+      "order": 865
+    },
+    "epigenomics-chameleon-hep-6seq-50k-001": {
+      "size": 1225,
+      "order": 985
+    },
+    "epigenomics-chameleon-ilmn-4seq-50k-001": {
+      "size": 1366,
+      "order": 1097
+    },
+    "epigenomics-chameleon-hep-7seq-50k-001": {
+      "size": 1397,
+      "order": 1123
+    },
+    "epigenomics-chameleon-ilmn-5seq-50k-001": {
+      "size": 1743,
+      "order": 1399
+    },
+    "epigenomics-chameleon-ilmn-6seq-50k-001": {
+      "size": 2115,
+      "order": 1697
+    }
+  }
+}

@@ -218,9 +218,6 @@ def draw(g: nx.DiGraph,
     if legend:
         legend = ax.legend(handles = color_lines , loc='lower right')
 
-    # for handle in legend.legendHandles:
-    #     handle.set_color(cmap(types[t]))
-
     if show:
         plt.show()
 

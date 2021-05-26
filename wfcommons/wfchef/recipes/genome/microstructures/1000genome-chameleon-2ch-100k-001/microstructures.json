@@ -1,0 +1,230 @@
+{
+  "microstructure_8cebc1ff8a0999184df2b0415e7fd6c5e3d7c66e02989691374070613082b775": {
+    "name": "microstructure_8cebc1ff8a0999184df2b0415e7fd6c5e3d7c66e02989691374070613082b775",
+    "nodes": [
+      [
+        "individuals_ID0000006"
+      ],
+      [
+        "individuals_ID0000017"
+      ],
+      [
+        "individuals_ID0000018"
+      ],
+      [
+        "individuals_ID0000010"
+      ],
+      [
+        "individuals_ID0000019"
+      ],
+      [
+        "individuals_ID0000020"
+      ],
+      [
+        "individuals_ID0000001"
+      ],
+      [
+        "individuals_ID0000009"
+      ],
+      [
+        "individuals_ID0000007"
+      ],
+      [
+        "individuals_ID0000016"
+      ],
+      [
+        "individuals_ID0000014"
+      ],
+      [
+        "individuals_ID0000022"
+      ],
+      [
+        "individuals_ID0000013"
+      ],
+      [
+        "individuals_ID0000015"
+      ],
+      [
+        "individuals_ID0000004"
+      ],
+      [
+        "individuals_ID0000008"
+      ],
+      [
+        "individuals_ID0000002"
+      ],
+      [
+        "individuals_ID0000021"
+      ],
+      [
+        "individuals_ID0000005"
+      ],
+      [
+        "individuals_ID0000003"
+      ]
+    ],
+    "frequency": 20,
+    "base_graph_path": "/home/tainagdcoleman/wfcommons/wfchef_tests/core_workflows/wfcommons//genome/microstructures/1000genome-chameleon-2ch-100k-001/base_graph.pickle"
+  },
+  "microstructure_42ecb476b9247408a6b12c5a40f5584169fda2915d3df3f6843ca94ae37fb8e4": {
+    "name": "microstructure_42ecb476b9247408a6b12c5a40f5584169fda2915d3df3f6843ca94ae37fb8e4",
+    "nodes": [
+      [
+        "frequency_ID0000050",
+        "mutation_overlap_ID0000049",
+        "individuals_ID0000021",
+        "sifting_ID0000024",
+        "individuals_ID0000017",
+        "mutation_overlap_ID0000043",
+        "individuals_ID0000020",
+        "frequency_ID0000040",
+        "mutation_overlap_ID0000041",
+        "frequency_ID0000046",
+        "frequency_ID0000042",
+        "mutation_overlap_ID0000051",
+        "frequency_ID0000052",
+        "frequency_ID0000044",
+        "individuals_ID0000014",
+        "mutation_overlap_ID0000045",
+        "frequency_ID0000048",
+        "individuals_ID0000013",
+        "mutation_overlap_ID0000039",
+        "individuals_merge_ID0000023",
+        "individuals_ID0000022",
+        "individuals_ID0000015",
+        "mutation_overlap_ID0000047",
+        "individuals_ID0000019",
+        "individuals_ID0000016",
+        "individuals_ID0000018"
+      ],
+      [
+        "frequency_ID0000038",
+        "frequency_ID0000036",
+        "frequency_ID0000034",
+        "individuals_ID0000007",
+        "frequency_ID0000026",
+        "mutation_overlap_ID0000031",
+        "frequency_ID0000032",
+        "individuals_ID0000009",
+        "individuals_merge_ID0000011",
+        "mutation_overlap_ID0000029",
+        "individuals_ID0000008",
+        "mutation_overlap_ID0000027",
+        "frequency_ID0000030",
+        "individuals_ID0000001",
+        "frequency_ID0000028",
+        "individuals_ID0000004",
+        "individuals_ID0000010",
+        "individuals_ID0000003",
+        "mutation_overlap_ID0000033",
+        "individuals_ID0000006",
+        "individuals_ID0000002",
+        "individuals_ID0000005",
+        "mutation_overlap_ID0000035",
+        "mutation_overlap_ID0000037",
+        "mutation_overlap_ID0000025",
+        "sifting_ID0000012"
+      ]
+    ],
+    "frequency": 2,
+    "base_graph_path": "/home/tainagdcoleman/wfcommons/wfchef_tests/core_workflows/wfcommons//genome/microstructures/1000genome-chameleon-2ch-100k-001/base_graph.pickle"
+  },
+  "microstructure_807d9522ad16219f3464e25fa9d317db2a59b19e908a564e9c981e6c31f88721": {
+    "name": "microstructure_807d9522ad16219f3464e25fa9d317db2a59b19e908a564e9c981e6c31f88721",
+    "nodes": [
+      [
+        "mutation_overlap_ID0000025"
+      ],
+      [
+        "mutation_overlap_ID0000049"
+      ],
+      [
+        "mutation_overlap_ID0000027"
+      ],
+      [
+        "mutation_overlap_ID0000041"
+      ],
+      [
+        "mutation_overlap_ID0000029"
+      ],
+      [
+        "mutation_overlap_ID0000035"
+      ],
+      [
+        "mutation_overlap_ID0000045"
+      ],
+      [
+        "mutation_overlap_ID0000047"
+      ],
+      [
+        "mutation_overlap_ID0000043"
+      ],
+      [
+        "mutation_overlap_ID0000039"
+      ],
+      [
+        "mutation_overlap_ID0000033"
+      ],
+      [
+        "mutation_overlap_ID0000037"
+      ],
+      [
+        "mutation_overlap_ID0000051"
+      ],
+      [
+        "mutation_overlap_ID0000031"
+      ]
+    ],
+    "frequency": 14,
+    "base_graph_path": "/home/tainagdcoleman/wfcommons/wfchef_tests/core_workflows/wfcommons//genome/microstructures/1000genome-chameleon-2ch-100k-001/base_graph.pickle"
+  },
+  "microstructure_b3db674f7bb9218dd76cadd24dbdc86ed24f353c08b887f112a1fa879856f764": {
+    "name": "microstructure_b3db674f7bb9218dd76cadd24dbdc86ed24f353c08b887f112a1fa879856f764",
+    "nodes": [
+      [
+        "frequency_ID0000050"
+      ],
+      [
+        "frequency_ID0000036"
+      ],
+      [
+        "frequency_ID0000030"
+      ],
+      [
+        "frequency_ID0000038"
+      ],
+      [
+        "frequency_ID0000040"
+      ],
+      [
+        "frequency_ID0000046"
+      ],
+      [
+        "frequency_ID0000034"
+      ],
+      [
+        "frequency_ID0000048"
+      ],
+      [
+        "frequency_ID0000042"
+      ],
+      [
+        "frequency_ID0000026"
+      ],
+      [
+        "frequency_ID0000052"
+      ],
+      [
+        "frequency_ID0000044"
+      ],
+      [
+        "frequency_ID0000028"
+      ],
+      [
+        "frequency_ID0000032"
+      ]
+    ],
+    "frequency": 14,
+    "base_graph_path": "/home/tainagdcoleman/wfcommons/wfchef_tests/core_workflows/wfcommons//genome/microstructures/1000genome-chameleon-2ch-100k-001/base_graph.pickle"
+  }
+}

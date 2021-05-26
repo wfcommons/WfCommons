@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import pathlib
 import json
 import pickle 
@@ -92,44 +102,3 @@ def duplicate(path: pathlib.Path,
 
     return graph
 
-# def get_parser():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument(
-#         "-w", "--workflow", 
-#         choices=[path.stem for path in this_dir.joinpath("microstructures").glob("*") if path.is_dir()],
-#         required=True,
-#         help="Workflow to duplicate"
-#     )
-#     parser.add_argument(
-#         "-b", "--base",
-#         default=None ,
-#         help="base graph to duplicate off of"
-#     )
-#     parser.add_argument(
-#         "-s", "--size", type=int,
-#         help="Approximate size of graph to generate"
-#     )
-#     parser.add_argument(
-#         "-o", "--out", type=pathlib.Path,
-#         help="path to save graph image to"
-#     )
-#     parser.add_argument(
-#         "-e", "--extension", default="png",
-#         help="Extension to save image, if not set default is png."
-#     )
-
-#     return parser
-
-
-# def main():
-#     parser = get_parser()
-#     args = parser.parse_args()
-#     path = this_dir.joinpath("microstructures", args.workflow)
-#     graph = duplicate(path, args.base, num_nodes=args.size)
-    
-#     duplicated = {node for node in graph.nodes if "duplicate_of" in graph.nodes[node]}
-
-#     draw(graph, save=args.out, extension=args.extension, close=True, subgraph=duplicated)
-
-# if __name__ == "__main__":
-#     main()
