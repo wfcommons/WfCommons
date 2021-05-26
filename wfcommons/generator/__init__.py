@@ -9,5 +9,4 @@
 # (at your option) any later version.
 
 from .generator import WorkflowGenerator
-from .workflow import BLASTRecipe, BWARecipe, CyclesRecipe, EpigenomicsRecipe, GenomeRecipe, MontageRecipe, \
-    MontageDataset, SeismologyRecipe, SoyKBRecipe, SRASearchRecipe
+from wfcommons.wfchef.recipes import BlastRecipe, BwaRecipe, CyclesRecipe, EpigenomicsRecipe, GenomeRecipe, MontageRecipe, SeismologyRecipe, SoykbRecipe, SrasearchRecipe

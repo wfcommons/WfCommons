@@ -3,14 +3,13 @@
 Generating Workflows
 ====================
 
-The second axis of the WfCommons project targets the generation of realistic
+WfGen is a component of WfCommons project that targets the generation of realistic
 synthetic workflow instances with a variety of characteristics. The
 :class:`~wfcommons.generator.generator.WorkflowGenerator` class uses recipes
-of workflows (as described in :ref:`traces-label`) for creating many different
-synthetic workflows based on distributions of workflow task runtime, and input
-and output file sizes.
-The resulting workflows are represented in the WfCommons JSON format, which
-is already supported by simulation frameworks such as
+of workflows, many different synthetic workflows based on distributions of workflow 
+task runtime,  and input and output file sizes (as described in :ref:`workflow-recipe-generator-label`) 
+for creating the realistic synthetic instances. The resulting workflows are represented in the 
+WfCommons JSON format (WfFormat), which is already supported by simulation frameworks such as
 `WRENCH <https://wrench-project.org>`_.
 
 .. _workflow-recipe-label:
