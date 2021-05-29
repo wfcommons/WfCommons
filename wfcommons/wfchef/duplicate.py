@@ -95,10 +95,24 @@ def duplicate(path: pathlib.Path,
     all_microstructures = json.loads(base_path.joinpath("microstructures.json").read_text())
     microstructures, freqs = zip(*[(ms, ms["freq"]) for ms_hash, ms in all_microstructures.items()])
     
-    p: np.ndarray = np.array(freqs) / np.sum(freqs)
-    while graph.order() < num_nodes:
-        ms = np.random.choice(microstructures, p=p)
-        duplicate_nodes(graph, random.choice(ms["nodes"]))
+    p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
+    while graph.order() < num_nodes and microstructures:
+        i = random.choice(range(len(microstructures)))
+        ms = microstructures[i]
+        while ms["nodes"]:
+            j = random.choice(range(len(ms["nodes"])))
+            structure = ms["nodes"][j]      
+            if graph.order() + len(structure) > num_nodes:
+                del ms["nodes"][j]
+            else:
+                break
+        
+        if not ms["nodes"]: # delete microstructure
+            del microstructures[i]
+            del p[i]
+            continue
+        
+        duplicate_nodes(graph, structure)
 
     return graph
 

@@ -3,11 +3,31 @@
 Generating Workflows Recipe
 ============================
 
-The third axis of the WfCommons project is called **WfChef**, a component 
-responsible for automating the process of constructing a synthetic workflow
-generator for any given workflow application. WfChef takes as input a set
-of real workflow instances from an application, and outputs the 
-code of a synthetic workflow generator for that application.
+**WfChef** is the WfCommons component that automates the construction of
+synthetic workflow generators for any given workflow application. The input
+to this component is a set of real workflow instances described in the
+*WfFormat* (e.g., instances available in **WfInstances**).
+WfChef automatically analyzes the real workflow instances for
+two purposes. First, it discovers workflow subgraphs that represent
+fundamental task dependency patterns. Second, it derives
+statistical models of the workflow tasks' performance characteristics (more details :ref:`.. _traces-label:`).
+WfChef then outputs a **recipe** that will be used by **WfGen** 
+(see :ref:`generating-workflows-label`) to generate realistic synthetic  
+workflow instances with any arbitrary number of tasks.
+
+.. _workflow-recipe-label:
+
+Workflow Recipes
+----------------
+
+A **workfflow recipe** is a data structure that encodes the discovered pattern occurrences 
+as well as the statistical models of workflow task characteristics.
+The WfCommons package provides a number of *workflow recipes* for generating realistic 
+synthetic workflow instances. 
+
+All workflow recipes provide a common method, :code:`from_num_tasks`, that defines the upper 
+bound for the total number of tasks in the synthetic workflow.
+
 
 .. _workflow-recipe-generator-label:
 
@@ -21,7 +41,7 @@ workflows, WfChef outputs a generator that can generate realistic synthetic
 workflow instances with an arbitrary numbers of tasks. The code snippet below shows 
 how to create a recipe for the Epigenomics application: ::
 
-    $ wfchef create path/to/real/instances -o ./epigenomics -v --name EpigenomicsWorkflow
+    $ wfchef create path/to/real/instances -o ./epigenomics -v --name Epigenomics
 
 The flags that can be used with this command are:
 
@@ -29,7 +49,7 @@ The flags that can be used with this command are:
 contain the recipe.
 
 :code:`-n` or :code:`--name` is a required flag that stands for the name of the recipe. Tipically, the format used is 
-*ApplicationNameWorkflow*. 
+*ApplicationName*. 
 
 :code:`-v` or :code:`--verbose` if set, activates status messages.
 
@@ -49,28 +69,14 @@ bellow is an example of how to install/uninstall a package for an application in
     $ pip install path/to/the/package
 
     # uninstalling a package
-    $ pip uninstall wfchef.recipe.appication_name_workflow
+    $ pip uninstall wfcommons.wfchef.recipes.appication_name_workflow
 
-The *wfchef.recipe.appication_name_workflow* can be found in :file:`setup.py` under the tag :code:`name`. The example bellow shows
-the :meth:`setup` method for makeflow's BWA application: ::
-
-    # BWA's setup method in setup.py
-    setup(
-    name='wfchef.recipe.b_w_a_workflow', # information necessary to install and uninstall a package
-    version='0.1',
-    packages=find_packages(),
-    include_package_data=True,
-    install_requires=[
-        'networkx',
-        'wfcommons'
-    ],
-    )
 
 
 The snippet below show an example of how to import the recipes: ::
 
     # creating an Epigenomics workflow recipe
-    from epigenomics_workflow_recipe import EpigenomicsWorkflowRecipe
+    from wfcommons.wfchef.recipes import EpigenomicsRecipe
 
 
 To check which recipes are installed in a system and how to import them use: ::
@@ -80,15 +86,15 @@ To check which recipes are installed in a system and how to import them use: ::
 
 The current list of available workflow recipes include:
 
-- :class:`~wfcommons.generator.workflow.blast_recipe.BLASTRecipe`: :code:`from blast_workflow_recipe import BlastWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.bwa_recipe.BWARecipe`: :code:`from bwa_workflow_recipe import BWAWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.cycles_recipe.CyclesRecipe`: :code:`from cycles_workflow_recipe import CyclesWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.epigenomics_recipe.EpigenomicsRecipe`: :code:`from epigenomics_workflow_recipe import EpigenomicsWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.genome_recipe.GenomeRecipe`: :code:`from genome_workflow_recipe import GenomeWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.montage_recipe.MontageRecipe`: :code:`from montage_workflow_recipe import MontageWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.seismology_recipe.SeismologyRecipe`: :code:`from seismology_workflow_recipe import SeismologyWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.soykb_recipe.SoyKBRecipe`: :code:`from soykb_workflow_recipe import SoyKbWorkflowRecipe`
-- :class:`~wfcommons.generator.workflow.srasearch_recipe.SRASearchRecipe`: :code:`from srasearch_workflow_recipe import SRASearchWorkflowRecipe`
+- :class:`~wfcommons.wfchef.recipes.blast_recipe.BlastRecipe`: :code:`from wfcommons.wfchef.recipes import BlastWorkflowRecipe`
+- :class:`~wfcommons.wfchef.recipes.bwa_recipe.BwaRecipe`: :code:`from wfcommons.wfchef.recipes import BwaRecipe`
+- :class:`~wfcommons.wfchef.recipes.cycles_recipe.CyclesRecipe`: :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
+- :class:`~wfcommons.wfchef.recipes.epigenomics_recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
+- :class:`~wfcommons.wfchef.recipes.genome_recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
+- :class:`~wfcommons.wfchef.recipes.montage_recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
+- :class:`~wfcommons.wfchef.recipes.seismology_recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
+- :class:`~wfcommons.wfchef.recipes.soykb_recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
+- :class:`~wfcommons.wfchef.recipes.srasearch_recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
 
 
 
@@ -99,10 +105,10 @@ The following example generates 10 *Epigenomics* synthetic workflow instances
 based on the number of tasks entered by the user (1000), builds the synthetic workflow instances, and writes the
 synthetic instances to JSON files. ::
 
-    from epigenomics_workflow_recipe import EpigenomicsWorkflowRecipe
+    from wfcommons.wfchef.recipes import EpigenomicsRecipe
     from wfcommons.generator import WorkflowGenerator
 
-    generator = WorkflowGenerator(EpigenomicsWorkflowRecipeRecipe.from_num_tasks(1000)) 
+    generator = WorkflowGenerator(EpigenomicsRecipe.from_num_tasks(1000)) 
     for i, workflow in enumerate(generator.build_workflows(10)):
         workflow.write_json(f'epigenomics-workflow-{i}.json')
 
@@ -110,11 +116,11 @@ The example below generates a *Cycles* (agroecosystem) synthetic workflow instan
 of tasks entered by the user (250), builds the synthetic workflow instance, and writes the synthetic 
 instance to a JSON file. ::
     
-    from cycles_workflow_recipe import CyclesWorkflowRecipe
+    from wfcommons.wfchef.recipes import CyclesRecipe
     from wfcommons.generator import WorkflowGenerator
 
-    generator = WorkflowGenerator(CyclesWorkflowRecipeRecipe.from_num_tasks(250)) 
-    workflow = generator.build_workflows(1)
+    generator = WorkflowGenerator(CyclesRecipe.from_num_tasks(250)) 
+    workflow = generator.build_workflow()
     workflow.write_json(f'cycles-workflow.json')
 
 ..
