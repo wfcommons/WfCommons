@@ -1,0 +1,409 @@
+{
+    "chr21": {
+        "runtime": {
+            "min": 2.115,
+            "max": 120.272,
+            "distribution": {
+                "name": "arcsine",
+                "params": [
+                    -0.3035999774381156,
+                    1.3035999774381157
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".map": {
+                "distribution": {
+                    "name": "wald",
+                    "params": [
+                        -0.17493471523909687,
+                        0.7756671015273009
+                    ]
+                },
+                "min": 8974436,
+                "max": 213287821
+            }
+        },
+        "output": {
+            ".map": {
+                "distribution": {
+                    "name": "wald",
+                    "params": [
+                        -0.17493471523909687,
+                        0.7756671015273009
+                    ]
+                },
+                "min": 8974436,
+                "max": 213287821
+            }
+        }
+    },
+    "fast2bfq": {
+        "runtime": {
+            "min": 0.033,
+            "max": 10.513,
+            "distribution": {
+                "name": "argus",
+                "params": [
+                    0.0013172190571931008,
+                    -0.6255630820469653,
+                    1.6268274262928797
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".fq": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 290449,
+                "max": 10074424
+            }
+        },
+        "output": {
+            ".bfq": {
+                "distribution": {
+                    "name": "argus",
+                    "params": [
+                        0.00020234879528656372,
+                        -0.6526074074243076,
+                        1.6539075869135396
+                    ]
+                },
+                "min": 71135,
+                "max": 2779927
+            }
+        }
+    },
+    "fastqSplit": {
+        "runtime": {
+            "min": 1.344,
+            "max": 878.473,
+            "distribution": {
+                "name": "rdist",
+                "params": [
+                    1.75042596138855,
+                    1.0,
+                    1.4743823168866782e-24
+                ]
+            }
+        },
+        "input": {
+            ".sfq": {
+                "distribution": {
+                    "name": "beta",
+                    "params": [
+                        0.38998784207990245,
+                        0.3731068582609596,
+                        -0.09952333251102002,
+                        1.0995233325110203
+                    ]
+                },
+                "min": 109431824,
+                "max": 572332024
+            }
+        },
+        "output": {
+            ".sfq": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 385300,
+                "max": 15387524
+            }
+        }
+    },
+    "filterContams": {
+        "runtime": {
+            "min": 0.067,
+            "max": 47.417,
+            "distribution": {
+                "name": "argus",
+                "params": [
+                    0.000119419805378591,
+                    -0.6267937401576169,
+                    1.6280498175034972
+                ]
+            }
+        },
+        "input": {
+            ".sfq": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 385300,
+                "max": 15387524
+            }
+        },
+        "output": {
+            ".sfq": {
+                "distribution": {
+                    "name": "argus",
+                    "params": [
+                        0.00017206648550145397,
+                        -0.7476097341288013,
+                        1.7490421045139302
+                    ]
+                },
+                "min": 379368,
+                "max": 13605894
+            }
+        }
+    },
+    "mapMerge": {
+        "runtime": {
+            "min": 1.574,
+            "max": 37.253,
+            "distribution": {
+                "name": "arcsine",
+                "params": [
+                    -0.09850603366048286,
+                    1.098506033660483
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".map": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 17429,
+                "max": 38332663
+            }
+        },
+        "output": {
+            ".map": {
+                "distribution": {
+                    "name": "rdist",
+                    "params": [
+                        1.6552925257207445,
+                        0.9629629570958356,
+                        0.03703704290416444
+                    ]
+                },
+                "min": 8972748,
+                "max": 213287821
+            }
+        }
+    },
+    "map": {
+        "runtime": {
+            "min": 24.836,
+            "max": 122.642,
+            "distribution": {
+                "name": "dweibull",
+                "params": [
+                    1.3729294023668532,
+                    0.18900496465089503,
+                    0.2220995526444095
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".bfq": {
+                "distribution": {
+                    "name": "argus",
+                    "params": [
+                        0.00020234879528656372,
+                        -0.6526074074243076,
+                        1.6539075869135396
+                    ]
+                },
+                "min": 71135,
+                "max": 2779927
+            },
+            ".bfa": {
+                "distribution": null,
+                "min": 46944392,
+                "max": 46944392
+            }
+        },
+        "output": {
+            ".map": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 17429,
+                "max": 1255720
+            }
+        }
+    },
+    "pileup": {
+        "runtime": {
+            "min": 23.112,
+            "max": 99.597,
+            "distribution": {
+                "name": "arcsine",
+                "params": [
+                    -0.11142536390545808,
+                    1.1114253639054583
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".map": {
+                "distribution": {
+                    "name": "wald",
+                    "params": [
+                        -0.17493471523909687,
+                        0.7756671015273009
+                    ]
+                },
+                "min": 8974436,
+                "max": 213287821
+            },
+            ".bfa": {
+                "distribution": null,
+                "min": 46944392,
+                "max": 46944392
+            }
+        },
+        "output": {
+            ".pileup": {
+                "distribution": {
+                    "name": "dgamma",
+                    "params": [
+                        45.77906786660549,
+                        0.5490748835177965,
+                        0.010065796180024893
+                    ]
+                },
+                "min": 4595783,
+                "max": 88008977
+            }
+        }
+    },
+    "sol2sanger": {
+        "runtime": {
+            "min": 0.024,
+            "max": 28.568,
+            "distribution": {
+                "name": "argus",
+                "params": [
+                    0.00047854815637565084,
+                    -0.6360141902251384,
+                    1.6372643378490337
+                ]
+            }
+        },
+        "input": {
+            "maq": {
+                "distribution": null,
+                "min": 171256,
+                "max": 171256
+            },
+            "maqindex": {
+                "distribution": null,
+                "min": 118456,
+                "max": 118456
+            },
+            ".sfq": {
+                "distribution": {
+                    "name": "argus",
+                    "params": [
+                        0.00017206648550145397,
+                        -0.7476097341288013,
+                        1.7490421045139302
+                    ]
+                },
+                "min": 379368,
+                "max": 13605894
+            }
+        },
+        "output": {
+            ".fq": {
+                "distribution": {
+                    "name": "trapz",
+                    "params": [
+                        1.0,
+                        1.0,
+                        -0.10500000000000001,
+                        1.2
+                    ]
+                },
+                "min": 290449,
+                "max": 10074424
+            }
+        }
+    }
+}

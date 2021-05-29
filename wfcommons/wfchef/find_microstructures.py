@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import networkx as nx
 from hashlib import sha256
 from typing import Union, Set, Optional, Dict, Hashable, List
@@ -15,21 +25,83 @@ import math
 this_dir = pathlib.Path(__file__).resolve().parent
 
 def comb(n: int, k: int) -> int:
+    """
+    Calculates the combination of two integers.
+
+    :param n: number.
+    :type n: int.
+    :param k: number.
+    :type k: int.
+    
+    :return: combination of two integers.
+    :rtype: int.
+    """
     return math.factorial(n) / (math.factorial(k) * math.factorial(n - k))
 
 class ImbalancedMicrostructureError(Exception):
     pass 
 
 def get_children(graph: nx.DiGraph, node: str) -> List[str]:
+    
+    """
+    Gets the children of a node.
+
+    :param graph: graph that contains the node.
+    :type graph: netwrokX DiGraph.
+    :param node: a node.
+    :type node: str.
+    
+    :return: list of the node's children.
+    :rtype: List[str].
+    """
     return [child for _, child in graph.out_edges(node)]
     
 def get_parents(graph: nx.DiGraph, node: str) -> List[str]:
+    
+    """
+    Gets the parents of a node.
+
+    :param graph: graph that contains the node.
+    :type graph: netwrokX DiGraph.
+    :param node: a node.
+    :type node: str.
+    
+    :return: list of the node's parents.
+    :rtype: List[str].
+    """
     return [parent for parent, _ in graph.in_edges(node)]
 
 def get_relatives(graph: nx.DiGraph, node: str) -> Set[str]:
+    
+    """
+    Gets all node's relatives (children and parents).
+
+    :param graph: graph that contains the node.
+    :type graph: netwrokX DiGraph.
+    :param node: a node.
+    :type node: str.
+    
+    :return: set of node's relative.
+    :rtype: Set[str].
+    """
     return set(chain(get_children(graph, node), get_parents(graph, node)))
 
 def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
+    """
+    Detects a pattern (microstructure).
+
+    :param graph: graph.
+    :type graph: netwrokX DiGraph.
+    :param n1:  a node in graph.
+    :type node: str.
+    :param n1:  a different node in graph.
+    :type node: str.
+    
+    :return: sets of n1 related nodes, n2 related nodes, the nodes in common between n1 and n2 and 
+            all the nodes involved in the process.
+    :rtype: Set[str], Set[str], Set[str], Set[str].
+
+    """
     n1_new_friends = get_relatives(graph, n1)
     n2_new_friends = get_relatives(graph, n2)
 
@@ -49,6 +121,7 @@ def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
         common_friends.update(n1_new_friends.intersection(n2_new_friends))
         all_friends.update(n1_new_friends.union(n2_new_friends))
 
+
         n1_new_friends -= common_friends
         n2_new_friends -= common_friends
 
@@ -58,6 +131,18 @@ def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
     return n1_friends, n2_friends, common_friends, all_friends
 
 def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
+    """
+    Detects the patterns (microstructures) that are used for replication and graph expansion.
+
+    :param graph: graph.
+    :type graph: netwrokX DiGraph.
+    :param verbose: if set, prints status messages.
+    :type verbose: netwrokX DiGraph.
+
+    :return: patterns (microstructures)
+    :rtype: Set[str].
+    """
+    
     if verbose:
         print("Sorting nodes by type hash and parent")
     nodes_by_type_hash: Dict[str, Set[str]] = {}
@@ -92,6 +177,17 @@ def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
 def sort_graphs(workflow_path: Union[pathlib.Path],
                 verbose: bool = False) -> List[nx.DiGraph]:
     
+    """
+    Sort graphs in crescent order of number of tasks.
+
+    :param workflow_path: path to the JSON instances.
+    :type workflow_path: pathlib.Path.
+    :param verbose: if set, prints status messages.
+    :type verbose: netwrokX DiGraph.
+
+    :return: sorted graphs
+    :rtype: List[networkX.DiGraph].
+    """
     if verbose:
         print(f"Working on {workflow_path}")
     graphs = []
@@ -159,7 +255,6 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
                 "name": ms_name,
                 "nodes": list(map(list, instances)),
                 "frequency": len(instances),
-                "base_graph_path": str(base_graph_path),
             }
             if img_type:
                 print(f"Drawing {ms_name}")
@@ -179,27 +274,3 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
 
     savedir.joinpath("summary").with_suffix(".json").write_text(json.dumps(summary, indent=2)) 
         
-def get_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('path', help="Directory of workflow JSONs", type=pathlib.Path)
-    parser.add_argument("-v", "--verbose", action="store_true", help="print logs")
-    parser.add_argument("-n", "--name", help="name for workflow")
-    parser.add_argument("-d", "--draw", default='png', help="output types for images. anything that matplotlib supports (png, jpg, pdf, etc.). Default is None.")
-    parser.add_argument("-c", "--cutoff", type=int, default=4000, help="max order of workflow")
-    parser.add_argument("-l", "--highlight-all-instances", action="store_true", help="if set, highlights all instances of the microstructure")
-
-    return parser
-
-def main():
-    parser = get_parser()
-    args = parser.parse_args()
-    outpath = this_dir.joinpath("microstructures", args.name)
-
-    save_microstructures(
-        args.path, outpath, args.verbose, img_type=args.draw, cutoff=args.cutoff,
-        highlight_all_instances=args.highlight_all_instances
-    )
-
-if __name__ == "__main__":
-    main()
-    

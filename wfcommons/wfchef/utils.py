@@ -1,12 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import networkx as nx
 import pathlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.patches as mpatches
-from typing import Dict, Iterable, Union, Set, Optional, Tuple, Hashable, List
+from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 import json
 from hashlib import sha256
-from wfcommons import Trace, TraceAnalyzer
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -20,6 +29,16 @@ def combine_hashes(*hashes: str) -> str:
     return string_hash(sorted(hashes))
 
 def create_graph(path: Union[str, pathlib.Path]) -> nx.DiGraph:
+    
+    """
+    Creates a networkX DiGraph from a JSON file in the WfFormat.
+
+    :param path: name (for samples available in WfCommons) or the path to graphs JSON.
+    :type path: str or pathlib.Path.
+    
+    :return: graph.
+    :rtype: networkX DiGraph.
+    """
     path = pathlib.Path(path)
     with path.open() as fp:
         content = json.load(fp)
@@ -65,6 +84,18 @@ def create_graph(path: Union[str, pathlib.Path]) -> nx.DiGraph:
         return graph
 
 def annotate(g: nx.DiGraph) -> None:
+    
+    """
+    Annotates a networkX DiGraph with metadata such as the tasks top-down type hash, 
+    bottom-up type hash, and type-hash.
+
+    :param path: name (for samples available in WfCommons) or the path to graphs JSON.
+    :type path: str or pathlib.Path.
+    
+    :return: annotated graph.
+    :rtype: networkX DiGraph.
+    """
+
     visited = set()
     queue = [(node, 1) for node in g.nodes if g.in_degree(node) <= 0]
     while queue:
@@ -103,6 +134,8 @@ def annotate(g: nx.DiGraph) -> None:
             {sib for _, sib in g.out_edges(child)}.issubset(visited)
         ])
 
+    return g
+
 def draw(g: nx.DiGraph, 
          extension: Optional[str] = 'png',
          with_labels: bool = False, 
@@ -114,6 +147,38 @@ def draw(g: nx.DiGraph,
          node_size: int = 1000,
          linewidths: int = 5,
          subgraph: Set[str] = set()) -> Tuple[plt.Figure, plt.Axes]:
+    
+    """
+    Plots a netwrokX DiGraph.
+
+    :param g: graph to be plotted.
+    :type g: networkX DiGraph.
+    :type extension: extension of the output file.
+    :param extension: str.
+    :param with_labels: if set, it prints the task types over their nodes.
+    :type with_labels: bool.
+    :param ax: plot axes.
+    :type ax: plt.Axes.
+    :param show: if set, displays the plot on screen.
+    :type show: bool.
+    :param save: path to directory to save the plot.
+    :type save: pathlib.Path.
+    :param close: if set, automatically closes window that displays plot.
+    :type close: bool.
+    :param legend: if set, displays legend of the plot.
+    :type legend: bool.
+    :param node_size: size of the nodes (circles) in the plot.
+    :type node_size: int.
+    :param linewidths: thickness of the edges in the plot.
+    :type linewidths: int.
+    :param subgraph: nodes that were added by replication and will be colored green.
+    :type subgraph: Set[str].
+
+    
+
+    :return: the figure and the axis used.
+    :rtype:  Tuple[plt.Figure, plt.Axes].
+    """
     fig: plt.Figure
     ax: plt.Axes
     if ax is None:
@@ -152,9 +217,6 @@ def draw(g: nx.DiGraph,
    
     if legend:
         legend = ax.legend(handles = color_lines , loc='lower right')
-
-    # for handle in legend.legendHandles:
-    #     handle.set_color(cmap(types[t]))
 
     if show:
         plt.show()

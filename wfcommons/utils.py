@@ -79,18 +79,21 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
 
-            distribution = getattr(scipy.stats, dist_name)
-            params = distribution.fit(y)
+            try:
+                distribution = getattr(scipy.stats, dist_name)
+                params = distribution.fit(y)
 
-            # calculate fitted PDF and error with fit in distribution
-            pdf = distribution.pdf(x, *params[:-2], loc=params[-2], scale=params[-1])
-            sse = np.sum(np.power(y - pdf[0:bins], 2.0))
+                # calculate fitted PDF and error with fit in distribution
+                pdf = distribution.pdf(x, *params[:-2], loc=params[-2], scale=params[-1])
+                sse = np.sum(np.power(y - pdf[0:bins], 2.0))
 
-            # identify if this distribution is better
-            if best_sse > sse > 0:
-                best_distribution = dist_name
-                best_params = params
-                best_sse = sse
+                # identify if this distribution is better
+                if best_sse > sse > 0:
+                    best_distribution = dist_name
+                    best_params = params
+                    best_sse = sse
+            except Exception as e:
+                print(f"WARNING: distribution \"{dist_name}\" failed ({e})")
 
     logger.debug('Best distribution fit: {}'.format(best_distribution))
     return best_distribution, best_params

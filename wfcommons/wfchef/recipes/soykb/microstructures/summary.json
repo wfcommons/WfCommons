@@ -1,0 +1,130 @@
+{
+  "frequencies": {
+    "microstructure_72e087ba59a6e7c6218befe61bcc7f0b9afe2f5d435be33e688dc9b2383c8214": [
+      [
+        98,
+        5
+      ],
+      [
+        158,
+        5
+      ],
+      [
+        178,
+        10
+      ],
+      [
+        258,
+        15
+      ],
+      [
+        288,
+        10
+      ],
+      [
+        338,
+        20
+      ],
+      [
+        418,
+        15
+      ],
+      [
+        418,
+        25
+      ],
+      [
+        548,
+        20
+      ],
+      [
+        678,
+        25
+      ]
+    ],
+    "microstructure_0b162a40a93e879e3cb4e197f83e87ad35aff0665c920ea01ab1abff5573ea67": [
+      [
+        98,
+        10
+      ],
+      [
+        158,
+        20
+      ],
+      [
+        178,
+        10
+      ],
+      [
+        258,
+        10
+      ],
+      [
+        288,
+        20
+      ],
+      [
+        338,
+        10
+      ],
+      [
+        418,
+        20
+      ],
+      [
+        418,
+        10
+      ],
+      [
+        548,
+        20
+      ],
+      [
+        678,
+        20
+      ]
+    ]
+  },
+  "base_graphs": {
+    "soykb-chameleon-10fastq-10ch-001": {
+      "size": 202,
+      "order": 98
+    },
+    "soykb-chameleon-10fastq-20ch-001": {
+      "size": 362,
+      "order": 158
+    },
+    "soykb-chameleon-20fastq-10ch-001": {
+      "size": 387,
+      "order": 178
+    },
+    "soykb-chameleon-30fastq-10ch-001": {
+      "size": 572,
+      "order": 258
+    },
+    "soykb-chameleon-20fastq-20ch-001": {
+      "size": 697,
+      "order": 288
+    },
+    "soykb-chameleon-40fastq-10ch-001": {
+      "size": 757,
+      "order": 338
+    },
+    "soykb-chameleon-30fastq-20ch-001": {
+      "size": 1032,
+      "order": 418
+    },
+    "soykb-chameleon-50fastq-10ch-001": {
+      "size": 942,
+      "order": 418
+    },
+    "soykb-chameleon-40fastq-20ch-001": {
+      "size": 1367,
+      "order": 548
+    },
+    "soykb-chameleon-50fastq-20ch-001": {
+      "size": 1702,
+      "order": 678
+    }
+  }
+}

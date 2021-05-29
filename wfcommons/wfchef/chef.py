@@ -1,19 +1,28 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
 import pathlib
 import json
 from re import sub
+import traceback
 from ..trace.trace import Trace
 from ..trace.trace_analyzer import TraceAnalyzer
 from ..generator.workflow.abstract_recipe import WorkflowRecipe, Workflow
 from typing import Dict, Optional, Union
 import argparse
 import pandas as pd
-from stringcase import camelcase, snakecase
+from stringcase import snakecase, capitalcase
 import pickle
 from .duplicate import duplicate, NoMicrostructuresError
 from .utils import create_graph, annotate
 from .find_microstructures import find_microstructures, save_microstructures
-import pandas as pd
 import networkx as nx
 import math
 import subprocess
@@ -25,6 +34,20 @@ this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
 
 def compare_rmse(synth_graph: nx.DiGraph, real_graph: nx.DiGraph):
+    
+    """
+    Calculates the Root Mean Square Error of a synthetic instance created 
+    based on the correspondent (in number of tasks) real-world sample.
+
+    :param synth_graph: a synthetic instance created by WfCommons.
+    :type synth_graph: networkX DiGraph 
+    :param real_graph: the correspondent (in number of tasks) real-world workflow instance.
+    :type real_graph: networkX DiGraph 
+
+    :return: The RMSE between the synthetic instance and the real instance.
+    :rtype: float
+    """
+
     synthetic = {}
     real = {}
     
@@ -49,7 +72,27 @@ def compare_rmse(synth_graph: nx.DiGraph, real_graph: nx.DiGraph):
 def find_err(workflow: Union[str, pathlib.Path], 
              err_savepath: Optional[Union[str, pathlib.Path]] = None,
              always_update: bool = False,
-             runs: int = 1) -> None:
+             runs: int = 1) -> pd.DataFrame:
+    
+    """
+    Creates a dataframe with the Root Mean Square Error of the synthetic instances created 
+    based on the correspondent, w.r.t. number of tasks, real-world samples available at 
+    `WfCommons WfInstances from Pegasus WMS GitHub <https://github.com/wfcommons/pegasus-instances> 
+    and from Makeflow WMS GitHub <https://github.com/wfcommons/makeflow-instances>`_
+    repositories.
+
+    :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
+    :type workflow: str or pathlib.Path 
+    :param err_savepath: path to save the err (rmse) of all instances available into a csv.
+    :type real_graph: str or pathlib.Path
+    :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
+    :type real_graph: bool 
+    :param runs: number of times to repeat the err calculation process (due to randomization).
+    :type runs: bool
+
+    :return: dataframe with RMSE of all available instances.
+    :rtype: pd.DataFrame
+    """
     summary = json.loads(workflow.joinpath("summary.json").read_text())
     sorted_graphs = sorted([name for name, _ in summary["base_graphs"].items()], key=lambda name: summary["base_graphs"][name]["order"])
     
@@ -77,7 +120,7 @@ def find_err(workflow: Union[str, pathlib.Path],
                     dists.append(compare_rmse(wf_synth, wf_real))
                 rows[j][i] = np.median(dists)
             except NoMicrostructuresError:
-                print(f"No Microstructures Error")
+                print(f"No microstructures Error")
                 continue  
 
             if err_savepath is not None and always_update:
@@ -95,6 +138,26 @@ def find_err(workflow: Union[str, pathlib.Path],
 
 
 def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
+    
+    """
+    Creates a dataframe with the Root Mean Square Error of the synthetic instances created 
+    based on the correspondent, w.r.t. number of tasks, real-world samples available at 
+    `WfCommons WfInstances from Pegasus WMS GitHub <https://github.com/wfcommons/pegasus-instances> 
+    and from Makeflow WMS GitHub <https://github.com/wfcommons/makeflow-instances>`_
+    repositories.
+
+    :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
+    :type workflow: str or pathlib.Path 
+    :param err_savepath: path to save the err (rmse) of all instances available into a csv.
+    :type real_graph: str or pathlib.Path
+    :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
+    :type real_graph: bool 
+    :param runs: number of times to repeat the err calculation process (due to randomization).
+    :type runs:bool
+
+    :return: dataframe with RMSE of all available instances.
+    :rtype: pd.DataFrame
+    """
     analyzer = TraceAnalyzer()
     task_types = set()
 
@@ -106,18 +169,33 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
             task_types.add(graph.nodes[node]["type"])
 
     stats_dict = analyzer.build_summary(task_types - {"DST", "SRC"}, include_raw_data=False)
+  
     return stats_dict 
 
 def ls_recipe():
+    
+    """
+    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
+    how to import it to use.
+    """
+    import inspect
     rows = []
-    for entry_point in pkg_resources.iter_entry_points('worfklow_recipes'):
-        Recipe = entry_point.load()
-        rows.append([Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
+        try: 
+            Recipe = entry_point.load()
+            rows.append([Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+        except Exception as e:
+            traceback.print_exc()
+            print(f"Could not load {entry_point.module_name}")
     df = pd.DataFrame(rows, columns=["name", "module", "import command"])
     print(df.to_string(index=None))
 
 def uninstall_recipe(module_name: str):
-    for entry_point in pkg_resources.iter_entry_points('worfklow_recipes'):
+    """
+    Uninstalls a recipe installed in the system.
+    """
+
+    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
         if entry_point.module_name == module_name:
             print(f"Uninstalling package: wfchef.recipe.{module_name}")
             proc = subprocess.Popen(["pip", "uninstall", f"wfchef.recipe.{module_name}"])
@@ -127,17 +205,37 @@ def uninstall_recipe(module_name: str):
     print(f"Could not find recipe with module name {module_name} installed")
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],  
-                      savedir: pathlib.Path,
-                      wf_name: str,
-                      cutoff: int = 4000,
-                      verbose: bool = False,
-                      runs: int = 1)-> WorkflowRecipe:
+                  savedir: pathlib.Path,
+                  wf_name: str,
+                  cutoff: int = 4000,
+                  verbose: bool = False,
+                  runs: int = 1)-> WorkflowRecipe:
+
+    """
+    Creates a recipe for a workflow application by automatically replacing custom information 
+    from the recipe skeleton.
+
+    :param path_to_instances: name (for samples available in WfCommons) or path to the real workflow instances.
+    :type path_to_instances: str or pathlib.Path 
+    :param savedir: path to save the recipe.
+    :type savedir: pathlib.Path
+    :param wf_name: name of the workflow apllication.
+    :type wf_name: str 
+    :param cutoff: when set, only consider instances of smaller or equal sizes.
+    :type cutoff: int
+    :param verbose: when set, prints status messages.
+    :type cutoff: bool
+    :param verbose: number of times to repeat the err calculation process (due to randomization).
+    :type runs:bool
+    """
+
+    camelname = capitalcase(wf_name)
     savedir.mkdir(exist_ok=True, parents=True)
-    dst = pathlib.Path(savedir, snakecase(wf_name)).resolve()
+    dst = pathlib.Path(savedir, f"{savedir.stem}_recipes", wf_name).resolve()
     dst.mkdir(exist_ok=True, parents=True)
     
     if verbose:
-        print(f"Finding Microstructures")
+        print(f"Finding microstructures")
     microstructures_path = dst.joinpath("microstructures")
     save_microstructures(path_to_instances, microstructures_path, img_type=None, cutoff=cutoff)
 
@@ -154,28 +252,36 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
 
     if verbose:
         print(f"Generating Recipe Code")
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
-    with this_dir.joinpath(dst.joinpath("__init__.py")).open("w+") as fp:
+    skeleton_str = skeleton_str.replace("Skeleton", camelname)
+    skeleton_str = skeleton_str.replace("skeleton", wf_name)
+    with this_dir.joinpath(dst.joinpath("recipe.py")).open("w+") as fp:
         fp.write(skeleton_str)
+        
+    # recipe __init__.py
+    dst.joinpath("__init__.py").write_text(f"from .recipe import {camelname}Recipe")
 
     # setup.py 
     with skeleton_path.joinpath("setup.py").open() as fp:
         skeleton_str = fp.read() 
         
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
-    with this_dir.joinpath(dst.parent.joinpath("setup.py")).open("w+") as fp:
+    skeleton_str = skeleton_str.replace("PACKAGE_NAME", savedir.stem)
+    with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("w+") as fp:
         fp.write(skeleton_str)
+           
+    # __init__.py
+    dst.parent.joinpath("__init__.py").touch(exist_ok=True)
+    with dst.parent.joinpath("__init__.py").open("a") as fp:
+        fp.write(f"from .{wf_name} import {camelname}Recipe\n")
 
     # MANIFEST
-    with skeleton_path.joinpath("MANIFEST.in").open() as fp:
-        skeleton_str = fp.read() 
-        
-    skeleton_str = skeleton_str.replace("Skeleton", wf_name)
-    skeleton_str = skeleton_str.replace("skeleton", snakecase(wf_name))
-    with this_dir.joinpath(dst.parent.joinpath("MANIFEST.in")).open("w+") as fp:
-        fp.write(skeleton_str)
+    with dst.parent.parent.joinpath("MANIFEST.in").open("a+") as fp:
+        fp.write(f"graft {savedir.stem}_recipes/{wf_name}/microstructures/**\n")
+        fp.write(f"graft {savedir.stem}_recipes/{wf_name}/microstructures\n")
+        fp.write(f"graft {savedir.stem}_recipes/{wf_name}\n")
+
+    # workflow_recipes
+    with this_dir.joinpath(dst.parent.parent.joinpath("workflow_recipes.txt")).open("a+") as fp:
+        fp.write(f"{wf_name}_recipe = {savedir.stem}_recipes.{wf_name}:{camelname}Recipe\n")
 
     if verbose:
         print(f"Analyzing Workflow Statistics")

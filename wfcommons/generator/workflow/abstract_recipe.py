@@ -134,7 +134,6 @@ class WorkflowRecipe(ABC):
         :rtype: task
         """
         task_recipe = self._workflow_recipe()[task_name]
-
         # runtime
         runtime: float = float(format(
             self.runtime_factor * generate_rvs(task_recipe['runtime']['distribution'],

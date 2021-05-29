@@ -1,0 +1,128 @@
+{
+  "frequencies": {
+    "microstructure_d8aae90a4fac2e63bfc873b138cca9b37d03d0bda439f261a1613ea120803fb7": [
+      [
+        45,
+        40
+      ],
+      [
+        45,
+        40
+      ],
+      [
+        45,
+        40
+      ],
+      [
+        45,
+        40
+      ],
+      [
+        45,
+        40
+      ],
+      [
+        105,
+        100
+      ],
+      [
+        105,
+        100
+      ],
+      [
+        105,
+        100
+      ],
+      [
+        105,
+        100
+      ],
+      [
+        105,
+        100
+      ],
+      [
+        305,
+        300
+      ],
+      [
+        305,
+        300
+      ],
+      [
+        305,
+        300
+      ],
+      [
+        305,
+        300
+      ],
+      [
+        305,
+        300
+      ]
+    ]
+  },
+  "base_graphs": {
+    "blast-chameleon-small-004": {
+      "size": 123,
+      "order": 45
+    },
+    "blast-chameleon-small-003": {
+      "size": 123,
+      "order": 45
+    },
+    "blast-chameleon-small-005": {
+      "size": 123,
+      "order": 45
+    },
+    "blast-chameleon-small-002": {
+      "size": 123,
+      "order": 45
+    },
+    "blast-chameleon-small-001": {
+      "size": 123,
+      "order": 45
+    },
+    "blast-chameleon-large-003": {
+      "size": 303,
+      "order": 105
+    },
+    "blast-chameleon-large-005": {
+      "size": 303,
+      "order": 105
+    },
+    "blast-chameleon-large-004": {
+      "size": 303,
+      "order": 105
+    },
+    "blast-chameleon-large-001": {
+      "size": 303,
+      "order": 105
+    },
+    "blast-chameleon-large-002": {
+      "size": 303,
+      "order": 105
+    },
+    "blast-chameleon-medium-005": {
+      "size": 903,
+      "order": 305
+    },
+    "blast-chameleon-medium-002": {
+      "size": 903,
+      "order": 305
+    },
+    "blast-chameleon-medium-004": {
+      "size": 903,
+      "order": 305
+    },
+    "blast-chameleon-medium-003": {
+      "size": 903,
+      "order": 305
+    },
+    "blast-chameleon-medium-001": {
+      "size": 903,
+      "order": 305
+    }
+  }
+}

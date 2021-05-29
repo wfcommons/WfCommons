@@ -1,0 +1,88 @@
+{
+  "frequencies": {
+    "microstructure_e6be0e427ca44562dbece1908145bffb5cef8193f4ee932b1f74452d82f28cd4": [
+      [
+        103,
+        100
+      ],
+      [
+        203,
+        200
+      ],
+      [
+        303,
+        300
+      ],
+      [
+        403,
+        400
+      ],
+      [
+        503,
+        500
+      ],
+      [
+        603,
+        600
+      ],
+      [
+        703,
+        700
+      ],
+      [
+        803,
+        800
+      ],
+      [
+        903,
+        900
+      ],
+      [
+        1103,
+        1100
+      ]
+    ]
+  },
+  "base_graphs": {
+    "seismology-chameleon-100p-001": {
+      "size": 201,
+      "order": 103
+    },
+    "seismology-chameleon-200p-001": {
+      "size": 401,
+      "order": 203
+    },
+    "seismology-chameleon-300p-001": {
+      "size": 601,
+      "order": 303
+    },
+    "seismology-chameleon-400p-001": {
+      "size": 801,
+      "order": 403
+    },
+    "seismology-chameleon-500p-001": {
+      "size": 1001,
+      "order": 503
+    },
+    "seismology-chameleon-600p-001": {
+      "size": 1201,
+      "order": 603
+    },
+    "seismology-chameleon-700p-001": {
+      "size": 1401,
+      "order": 703
+    },
+    "seismology-chameleon-800p-001": {
+      "size": 1601,
+      "order": 803
+    },
+    "seismology-chameleon-900p-001": {
+      "size": 1801,
+      "order": 903
+    },
+    "seismology-chameleon-1100p-001": {
+      "size": 2201,
+      "order": 1103
+    }
+  }
+}
