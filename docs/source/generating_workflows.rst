@@ -12,8 +12,26 @@ WfCommons JSON format (WfFormat), which is already supported by simulation frame
 `WRENCH <https://wrench-project.org>`_.
 
 
-The Workflow Generator
-----------------------
+.. _recipes-list:
+
+WfCommons Workflows Recipes
+---------------------------
+
+The current list of available workflow recipes include:
+
+- :class:`~wfcommons.wfchef.recipes.blast_recipe.BlastRecipe`: :code:`from wfcommons.wfchef.recipes import BlastWorkflowRecipe`
+- :class:`~wfcommons.wfchef.recipes.bwa_recipe.BwaRecipe`: :code:`from wfcommons.wfchef.recipes import BwaRecipe`
+- :class:`~wfcommons.wfchef.recipes.cycles_recipe.CyclesRecipe`: :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
+- :class:`~wfcommons.wfchef.recipes.epigenomics_recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
+- :class:`~wfcommons.wfchef.recipes.genome_recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
+- :class:`~wfcommons.wfchef.recipes.montage_recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
+- :class:`~wfcommons.wfchef.recipes.seismology_recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
+- :class:`~wfcommons.wfchef.recipes.soykb_recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
+- :class:`~wfcommons.wfchef.recipes.srasearch_recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
+
+
+The Workflow Instances Generator
+--------------------------------
 
 Synthetic workflow instances are generated using the
 :class:`~wfcommons.generator.generator.WorkflowGenerator` class. This
@@ -40,6 +58,9 @@ methods for writing the generated workflow instance into files:
 
 - :meth:`~wfcommons.common.workflow.Workflow.write_dot`: write a DOT file of a workflow instance.
 - :meth:`~wfcommons.common.workflow.Workflow.write_json`: write a JSON file of a workflow instance.
+
+All workflow recipes provide a common method, :code:`from_num_tasks`, that defines the lower
+bound for the total number of tasks in the synthetic workflow.
 
 Increasing/Reducing Runtime and File Sizes
 ******************************************
