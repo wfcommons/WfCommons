@@ -63,20 +63,21 @@ less tasks. This is a useful flag to use when there is trust that all
 possible patterns present in this application can be already found in the
 smaller instances.
 
-Workflow recipes are automatically installed and can be used throughout the system. WfCommons creates a Python package in the directory
-specified by the flag :code:`--out` in which the :file:`setup.py` and :file:`recipe.py` files are stored. If the flag :code:`--no-install` is set 
-when creating a package for a specific application, the user will need to install the package before using it. The code 
-bellow is an example of how to install/uninstall a package for an application in WfCommons: ::
+Workflow recipes are automatically installed and can be used throughout the
+system. WfCommons creates a Python package in the directory specified by the
+flag :code:`--out` in which the :file:`setup.py` and :file:`recipe.py` files
+are stored. If the flag :code:`--no-install` is set when creating a package
+for a specific application, the user will need to manually install the package
+before using it. The code bellow is an example of how to install/uninstall a
+package for an application in WfCommons: ::
 
     # installing the package
-    $ pip install path/to/the/package
+    $ pip install /path/to/the/package
 
     # uninstalling a package
     $ pip uninstall wfcommons.wfchef.recipes.appication_name_workflow
 
-
-
-The snippet below show an example of how to import the recipes: ::
+The snippet below shows an example of how to import the recipes: ::
 
     # creating an Epigenomics workflow recipe
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
@@ -85,35 +86,3 @@ The snippet below show an example of how to import the recipes: ::
 To check which recipes are installed in a system and how to import them use: ::
     
     $ wfchef ls
-
-
-
-
-
-Examples
---------
-
-The following example generates 10 *Epigenomics* synthetic workflow instances
-based on the number of tasks entered by the user (1000), builds the synthetic workflow instances, and writes the
-synthetic instances to JSON files. ::
-
-    from wfcommons.wfchef.recipes import EpigenomicsRecipe
-    from wfcommons.generator import WorkflowGenerator
-
-    generator = WorkflowGenerator(EpigenomicsRecipe.from_num_tasks(1000)) 
-    for i, workflow in enumerate(generator.build_workflows(10)):
-        workflow.write_json(f'epigenomics-workflow-{i}.json')
-
-The example below generates a *Cycles* (agroecosystem) synthetic workflow instance based on the number 
-of tasks entered by the user (250), builds the synthetic workflow instance, and writes the synthetic 
-instance to a JSON file. ::
-    
-    from wfcommons.wfchef.recipes import CyclesRecipe
-    from wfcommons.generator import WorkflowGenerator
-
-    generator = WorkflowGenerator(CyclesRecipe.from_num_tasks(250)) 
-    workflow = generator.build_workflow()
-    workflow.write_json(f'cycles-workflow.json')
-
-..
-    maybe we should pout examples only on generator, because we need it
