@@ -93,7 +93,7 @@ def duplicate(path: pathlib.Path,
         raise ValueError(f"Cannot create synthentic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
 
     all_microstructures = json.loads(base_path.joinpath("microstructures.json").read_text())
-    microstructures, freqs = zip(*[(ms, ms["freq"]) for ms_hash, ms in all_microstructures.items()])
+    microstructures, freqs = map(list, zip(*[(ms, ms["frequency"]) for ms_hash, ms in all_microstructures.items()]))
     
     p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
     while graph.order() < num_nodes and microstructures:
