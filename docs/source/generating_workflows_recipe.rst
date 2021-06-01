@@ -6,12 +6,13 @@ Generating Workflows Recipes
 **WfChef** is the WfCommons component that automates the construction of
 synthetic workflow generators for any given workflow application. The input
 to this component is a set of real workflow instances described in the
-*WfFormat* (e.g., instances available in **WfInstances**).
+:ref:`json-format-label` (e.g., instances available in **WfInstances**).
 WfChef automatically analyzes a set of real workflow instances for
 two purposes. First, it discovers workflow subgraphs that represent
 fundamental task dependency patterns. Second, it derives
-statistical models of the workflow tasks' performance characteristics (more details :ref:`.. _traces-label:`).
-WfChef then outputs a **recipe** that will be used by **WfGen** 
+statistical models of the workflow tasks' performance characteristics
+(see :ref:`instances-label`).
+WfChef then outputs a **recipe** that will be used by **WfGen**
 (see :ref:`generating-workflows-label`) to generate realistic synthetic  
 workflow instances with any arbitrary number of tasks.
 
@@ -20,7 +21,7 @@ workflow instances with any arbitrary number of tasks.
 Workflow Recipes
 ----------------
 
-A **workfflow recipe** is a data structure that encodes the discovered pattern occurrences 
+A **workflow recipe** is a data structure that encodes the discovered pattern occurrences
 as well as the statistical models of workflow task characteristics.
 The WfCommons package provides a number of *workflow recipes* for generating realistic 
 synthetic workflow instances. 

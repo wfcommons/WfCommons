@@ -1,4 +1,4 @@
-.. _traces-label:
+.. _instances-label:
 
 Analyzing Instances
 ===================
