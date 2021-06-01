@@ -9,4 +9,3 @@
 # (at your option) any later version.
 
 from .generator import WorkflowGenerator
-from wfcommons.wfchef.recipes import BlastRecipe, BwaRecipe, CyclesRecipe, EpigenomicsRecipe, GenomeRecipe, MontageRecipe, SeismologyRecipe, SoykbRecipe, SrasearchRecipe
