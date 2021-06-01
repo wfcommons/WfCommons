@@ -1,37 +1,39 @@
 .. _traces-label:
 
 Analyzing Instances
-================
+===================
 
 Workflow execution instances have been widely used to profile and characterize
 workflow executions, and to build distributions of workflow execution behaviors,
 which are used to evaluate methods and techniques in simulation or in real
 conditions.
 
-The first axis of the WfCommons project targets the analysis of actual workflow
-execution instances (i.e., the workflow execution profile data and characterizations)
-in order to build **recipes** of workflow applications. These recipes contain
-the necessary information for generating synthetic, yet realistic, workflow
-instances that resemble the structure and distribution of the original workflow
-executions.
+The WfCommons project targets the analysis of actual workflow execution instances
+(i.e., the workflow execution profile data and characterizations)
+in order to build :ref:`workflow-recipe-label` of workflow applications.
+These recipes contain the necessary information for generating synthetic, yet
+realistic, workflow instances that resemble the structure and distribution of
+the original workflow executions.
 
 A `list of workflow execution instances <https://wfcommons.org/instances>`_
 that are compatible with :ref:`json-format-label` is kept constantly updated
 in our project website.
 
-Workflow Execution Instances
--------------------------
+.. _wfinstances-label:
+
+WfInstances
+-----------
 
 A workflow execution instance represents an actual execution of a scientific
 workflow on a distributed platform (e.g., clouds, grids, HPC, etc.). In the
 WfCommons project, an instance is represented in a JSON file following the
-schema described in :ref:`json-format-label` section. This Python package
+schema described in :ref:`json-format-label`. This Python package
 provides an *instance loader* tool for importing workflow execution instances
 for analysis. For instance, the code snippet below shows how an instance can
 be loaded using the :class:`~wfcommons.trace.trace.Trace` class: ::
 
     from wfcommons import Trace
-    trace = Trace(input_trace='/path/to/trace/file.json')
+    trace = Trace(input_trace='/path/to/instance/file.json')
 
 The :class:`~wfcommons.trace.trace.Trace` class provides a number of
 methods for interacting with the workflow instance, including:
@@ -41,8 +43,13 @@ methods for interacting with the workflow instance, including:
 - :meth:`~wfcommons.trace.trace.Trace.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
 - :meth:`~wfcommons.trace.trace.Trace.write_dot`: writes a dot file of the instance.
 
+.. note::
+    Although the analysis methods are inherently used by WfCommons (specifically
+    WfChef) for :ref:`generating-workflows-recipe-label`, they can also be used
+    in a standalone manner.
+
 The Instance Analyzer
-------------------
+---------------------
 
 The :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` class provides
 a number of tools for analyzing collection of workflow execution instances. The
@@ -50,7 +57,7 @@ goal of the :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` is to
 perform analyzes of one or multiple workflow execution instances, and build
 summaries of the analyzes per workflow' task type prefix.
 
-.. note::
+.. warning::
 
     Although any workflow execution instance represented as a
     :class:`~wfcommons.trace.trace.Trace` object (i.e., compatible with
@@ -89,7 +96,7 @@ summary showing the best fit probability distribution for runtime of the
         ...
     }
 
-Workflow analysis summaries can then be used to develop :ref:`workflow-recipe-label`,
+Workflow analysis summaries are used by WfChef to develop :ref:`workflow-recipe-label`,
 in which themselves are used to :ref:`generate realistic synthetic workflow instances
 <generating-workflows-label>`.
 
@@ -113,7 +120,7 @@ plots (runtime, and input and output files) into the :code:`fits` folder using
     from os.path import isfile, join
 
     # obtaining list of instance files in the folder
-    INSTANCES_PATH = "/Path/to/some/instance/folder/"
+    INSTANCES_PATH = "/path/to/some/instance/folder/"
     instance_files = [f for f in listdir(INSTANCES_PATH) if isfile(join(INSTANCES_PATH, f))]
 
     # creating the instance analyzer object
