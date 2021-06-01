@@ -38,7 +38,8 @@ setup(
         'requests',
         'scipy',
         'setuptools',
-        'pyyaml'
+        'pyyaml',
+        'pandas'
     ],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
