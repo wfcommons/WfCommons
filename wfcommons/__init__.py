@@ -19,5 +19,4 @@ import logging
 from .generator import WorkflowGenerator
 from .trace import Trace, TraceAnalyzer, TraceElement
 
-
 logging.getLogger('wfcommons').addHandler(logging.NullHandler())

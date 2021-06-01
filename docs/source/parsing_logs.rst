@@ -3,9 +3,11 @@
 Parsing Workflow Execution Logs
 ===============================
 
-The most common way for obtaining instances from actual workflow executions is to parse
-execution logs. As part of the WfCommons project, we are constantly developing
-parsers for commonly used workflow management systems.
+The most common way for obtaining **workflow instances** from actual workflow
+executions is to parse execution logs. As part of the WfCommons project, we
+are constantly developing parsers for commonly used workflow management systems.
+The parsers provided in this Python package automatically scans execution logs
+to produce instances using :ref:`json-format-label`.
 
 Each parser class is derived from the abstract
 :class:`~wfcommons.trace.logs.abstract_logs_parser.LogsParser` class. Thus, each
@@ -18,7 +20,7 @@ Makeflow
 
 `Makeflow <http://ccl.cse.nd.edu/software/makeflow/>`_ is a workflow system for
 executing large complex workflows on clusters, clouds, and grids. The Makeflow
-language is similar to traditional Make, so if you can write a Makefile, then you
+language is similar to traditional "Make", so if you can write a Makefile, then you
 can write a Makeflow. A workflow can be just a few commands chained together, or
 it can be a complex application consisting of thousands of tasks. It can have an
 arbitrary DAG structure and is not limited to specific patterns. Makeflow is used

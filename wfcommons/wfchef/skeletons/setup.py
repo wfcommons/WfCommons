@@ -9,7 +9,7 @@
 # (at your option) any later version.
 
 from setuptools import setup, find_packages
-import pathlib 
+import pathlib
 
 thisdir = pathlib.Path(__file__).resolve().parent
 
@@ -20,7 +20,7 @@ workflow_recipes = [
 ]
 
 setup(
-    name='wfchef.recipe.PACKAGE_NAME',
+    name='wfcommons.wfchef.recipe.PACKAGE_NAME',
     version='0.1',
     packages=find_packages(),
     include_package_data=True,
@@ -28,7 +28,7 @@ setup(
         'networkx',
         'wfcommons'
     ],
-    entry_points = {
+    entry_points={
         'workflow_recipes': workflow_recipes,
     }
 )

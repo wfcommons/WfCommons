@@ -10,17 +10,16 @@
 
 from typing import Dict, Optional, Set
 
-from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe
 from wfcommons.common.workflow import Workflow
-
+from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe
 from wfcommons.wfchef.duplicate import duplicate
 
-import pathlib 
+import json
+import pathlib
+import pandas as pd
 import pickle
 import networkx as nx
 import numpy as np
-import pandas as pd
-import json
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -28,14 +27,11 @@ this_dir = pathlib.Path(__file__).resolve().parent
 class SkeletonRecipe(WorkflowRecipe):
     """A Skeleton workflow recipe class for creating synthetic workflow traces.
 
-    :param num_pairs: The number of pair of signals to estimate earthquake STFs.
-    :type num_pairs: int
     :param data_footprint: The upper bound for the workflow total data footprint (in bytes).
     :type data_footprint: int
     :param num_tasks: The upper bound for the total number of tasks in the workflow.
     :type num_tasks: int
     """
-
     def __init__(self,
                  data_footprint: Optional[int] = 0,
                  num_tasks: Optional[int] = 3,
@@ -110,8 +106,8 @@ class SkeletonRecipe(WorkflowRecipe):
         for (src, dst) in graph.edges:
             if src in ["SRC", "DST"] or dst in ["SRC", "DST"]:
                 continue
-            workflow.add_edge(task_names[src], task_names[dst])        
-        
+            workflow.add_edge(task_names[src], task_names[dst])
+
         workflow.nxgraph = graph
         self.workflows.append(workflow)
         return workflow

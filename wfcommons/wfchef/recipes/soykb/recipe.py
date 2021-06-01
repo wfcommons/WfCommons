@@ -10,9 +10,9 @@
 
 from typing import Dict, Optional, Set
 
-from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe
 from wfcommons.common.workflow import Workflow
 
+from wfcommons.generator.workflow.abstract_recipe import WorkflowRecipe
 from wfcommons.wfchef.duplicate import duplicate
 
 import pathlib 

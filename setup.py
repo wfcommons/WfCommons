@@ -9,13 +9,12 @@
 # (at your option) any later version.
 
 from setuptools import setup, find_packages
-from wfcommons.version import __version__
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-# # Fetch the version
-# exec(open('wfcommons/version.py').read())
+# Fetch the version
+exec(open('wfcommons/version.py').read())
 
 setup(
     name='wfcommons',
@@ -39,7 +38,9 @@ setup(
         'requests',
         'scipy',
         'setuptools',
-        'pyyaml'
+        'pyyaml',
+        'pandas',
+        'stringcase'
     ],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
@@ -57,7 +58,7 @@ setup(
         'Topic :: System :: Distributed Computing'
     ],
     python_requires='>=3.6',
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main',
         ],
