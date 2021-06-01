@@ -114,8 +114,7 @@ def find_err(workflow: Union[str, pathlib.Path],
                     wf_synth = duplicate(
                         path=workflow,
                         base=base,
-                        num_nodes=wf_real.order(),
-                        interpolate_limit=summary["base_graphs"][base]["order"]
+                        num_nodes=wf_real.order()
                     )
                     dists.append(compare_rmse(wf_synth, wf_real))
                 rows[j][i] = np.median(dists)
