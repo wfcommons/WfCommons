@@ -19,7 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install -y graphviz-dev
+          sudo apt-get install -y graphviz-dev python3-sphinx
       - name: Check package install
         run: |
           pip install .

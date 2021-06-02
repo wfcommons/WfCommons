@@ -87,7 +87,7 @@ os 300 tasks, builds a synthetic workflow instance, and writes the
 synthetic instance to a JSON file. ::
 
     from wfcommons.wfchef.recipes import SeismologyRecipe
-    from wfcommons.wfgen import WorkflowGenerator
+    from wfcommons import WorkflowGenerator
 
     generator = WorkflowGenerator(SeismologyRecipe.from_num_tasks(250)) 
     workflow = generator.build_workflow()
@@ -98,7 +98,7 @@ The example below generates a number of 10 *Blast* synthetic
 workflow instances for every size defined in the array :code:`num_tasks`: ::
 
     from wfcommons.wfchef.recipes import BlastRecipe
-    from wfcommons.wfgen import WorkflowGenerator
+    from wfcommons import WorkflowGenerator
 
     num_tasks = [100, 250, 370, 800]
     
@@ -114,7 +114,7 @@ based on the number of tasks entered by the user (1000), builds the synthetic
 workflow instances, and writes the synthetic instances to JSON files. ::
 
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
-    from wfcommons.wfgen import WorkflowGenerator
+    from wfcommons import WorkflowGenerator
 
     generator = WorkflowGenerator(EpigenomicsRecipe.from_num_tasks(1000))
     for i, workflow in enumerate(generator.build_workflows(10)):
@@ -125,7 +125,7 @@ based on the number of tasks entered by the user (250), builds the synthetic wor
 instance, and writes the synthetic instance to a JSON file. ::
 
     from wfcommons.wfchef.recipes import CyclesRecipe
-    from wfcommons.wfgen import WorkflowGenerator
+    from wfcommons import WorkflowGenerator
 
     generator = WorkflowGenerator(CyclesRecipe.from_num_tasks(250))
     workflow = generator.build_workflow()
