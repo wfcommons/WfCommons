@@ -13,7 +13,7 @@ import logging
 from logging import Logger
 from typing import List, Optional
 
-from .workflow.abstract_recipe import WorkflowRecipe
+from .abstract_recipe import WorkflowRecipe
 from ..common.workflow import Workflow
 
 

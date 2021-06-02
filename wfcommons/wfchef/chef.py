@@ -21,12 +21,12 @@ import subprocess
 import traceback
 
 from typing import Dict, Optional, Union
-from stringcase import snakecase, capitalcase
+from stringcase import capitalcase
 
 from .duplicate import duplicate, NoMicrostructuresError
 from .find_microstructures import save_microstructures
 from .utils import create_graph
-from ..generator.workflow.abstract_recipe import WorkflowRecipe
+from ..wfgen.abstract_recipe import WorkflowRecipe
 from ..trace.trace import Trace
 from ..trace.trace_analyzer import TraceAnalyzer
 
@@ -176,7 +176,6 @@ def ls_recipe():
     Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
     how to import it to use.
     """
-    import inspect
     rows = []
     for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
         try:

@@ -110,16 +110,9 @@ workflow instances for every size defined in the array :code:`num_tasks`: ::
       for i, workflow in enumerate(workflows):
         workflow.write_json(f'blast-workflow-{task}-{i}.json')
 
-
-
-
-
-Examples
---------
-
 The following example generates 10 *Epigenomics* synthetic workflow instances
-based on the number of tasks entered by the user (1000), builds the synthetic workflow instances, and writes the
-synthetic instances to JSON files. ::
+based on the number of tasks entered by the user (1000), builds the synthetic
+workflow instances, and writes the synthetic instances to JSON files. ::
 
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
     from wfcommons.generator import WorkflowGenerator
@@ -128,9 +121,9 @@ synthetic instances to JSON files. ::
     for i, workflow in enumerate(generator.build_workflows(10)):
         workflow.write_json(f'epigenomics-workflow-{i}.json')
 
-The example below generates a *Cycles* (agroecosystem) synthetic workflow instance based on the number
-of tasks entered by the user (250), builds the synthetic workflow instance, and writes the synthetic
-instance to a JSON file. ::
+The example below generates a *Cycles* (agroecosystem) synthetic workflow instance
+based on the number of tasks entered by the user (250), builds the synthetic workflow
+instance, and writes the synthetic instance to a JSON file. ::
 
     from wfcommons.wfchef.recipes import CyclesRecipe
     from wfcommons.generator import WorkflowGenerator
@@ -139,5 +132,3 @@ instance to a JSON file. ::
     workflow = generator.build_workflow()
     workflow.write_json(f'cycles-workflow.json')
 
-..
-    maybe we should pout examples only on generator, because we need it
