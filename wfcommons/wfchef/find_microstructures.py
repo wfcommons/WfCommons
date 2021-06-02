@@ -16,13 +16,14 @@ import pathlib
 import json
 from itertools import product
 from networkx.readwrite import read_gpickle, write_gpickle
-import numpy as np 
+import numpy as np
 from itertools import chain, combinations
 import argparse
 from .utils import create_graph, string_hash, type_hash, combine_hashes, annotate, draw
-import math 
+import math
 
 this_dir = pathlib.Path(__file__).resolve().parent
+
 
 def comb(n: int, k: int) -> int:
     """
@@ -38,11 +39,12 @@ def comb(n: int, k: int) -> int:
     """
     return math.factorial(n) / (math.factorial(k) * math.factorial(n - k))
 
+
 class ImbalancedMicrostructureError(Exception):
-    pass 
+    pass
+
 
 def get_children(graph: nx.DiGraph, node: str) -> List[str]:
-    
     """
     Gets the children of a node.
 
@@ -55,9 +57,9 @@ def get_children(graph: nx.DiGraph, node: str) -> List[str]:
     :rtype: List[str].
     """
     return [child for _, child in graph.out_edges(node)]
-    
+
+
 def get_parents(graph: nx.DiGraph, node: str) -> List[str]:
-    
     """
     Gets the parents of a node.
 
@@ -71,8 +73,8 @@ def get_parents(graph: nx.DiGraph, node: str) -> List[str]:
     """
     return [parent for parent, _ in graph.in_edges(node)]
 
+
 def get_relatives(graph: nx.DiGraph, node: str) -> Set[str]:
-    
     """
     Gets all node's relatives (children and parents).
 
@@ -85,6 +87,7 @@ def get_relatives(graph: nx.DiGraph, node: str) -> Set[str]:
     :rtype: Set[str].
     """
     return set(chain(get_children(graph, node), get_parents(graph, node)))
+
 
 def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
     """
@@ -121,7 +124,6 @@ def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
         common_friends.update(n1_new_friends.intersection(n2_new_friends))
         all_friends.update(n1_new_friends.union(n2_new_friends))
 
-
         n1_new_friends -= common_friends
         n2_new_friends -= common_friends
 
@@ -129,6 +131,7 @@ def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
         n2_friends.update(n2_new_friends)
 
     return n1_friends, n2_friends, common_friends, all_friends
+
 
 def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
     """
@@ -142,7 +145,7 @@ def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
     :return: patterns (microstructures)
     :rtype: Set[str].
     """
-    
+
     if verbose:
         print("Sorting nodes by type hash and parent")
     nodes_by_type_hash: Dict[str, Set[str]] = {}
@@ -174,9 +177,9 @@ def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
 
     return microstructures
 
+
 def sort_graphs(workflow_path: Union[pathlib.Path],
                 verbose: bool = False) -> List[nx.DiGraph]:
-    
     """
     Sort graphs in crescent order of number of tasks.
 
@@ -197,7 +200,7 @@ def sort_graphs(workflow_path: Union[pathlib.Path],
         annotate(graph)
         graph.graph["name"] = path.stem
         graphs.append(graph)
-    
+
     if not graphs:
         raise ValueError(f"No graphs found in {workflow_path}")
 
@@ -207,9 +210,10 @@ def sort_graphs(workflow_path: Union[pathlib.Path],
     sorted_graphs = sorted(graphs, key=lambda graph: len(graph.nodes))
     return sorted_graphs
 
-def save_microstructures(workflow_path: Union[pathlib.Path], 
-                         savedir: pathlib.Path, 
-                         verbose: bool = False, 
+
+def save_microstructures(workflow_path: Union[pathlib.Path],
+                         savedir: pathlib.Path,
+                         verbose: bool = False,
                          img_type: Optional[str] = 'png',
                          cutoff: int = 4000,
                          highlight_all_instances: bool = False) -> List[nx.DiGraph]:
@@ -217,12 +221,12 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
         "frequencies": {},
         "base_graphs": {}
     }
-    
+
     for graph in sort_graphs(workflow_path, verbose):
         if graph.order() > cutoff:
             print(f'This and the next workflows have more than {cutoff} tasks')
             break
-    
+
         if verbose:
             print(f"Running for {graph.name}")
         g_savedir = savedir.joinpath(graph.name)
@@ -239,7 +243,7 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
             base_graph_image_path = g_savedir.joinpath(f"base_graph")
             if verbose:
                 print(f"Drawing base graph to {base_graph_image_path}")
-            draw(graph, close=True, legend=False, extension= img_type, save=str(base_graph_image_path))
+            draw(graph, close=True, legend=False, extension=img_type, save=str(base_graph_image_path))
 
         if verbose:
             print("Finding microstructures")
@@ -259,18 +263,17 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
             if img_type:
                 print(f"Drawing {ms_name}")
                 draw(
-                    graph, 
+                    graph,
                     subgraph=list(instances)[0] if not highlight_all_instances else set.union(*instances),
-                    with_labels=False, 
+                    with_labels=False,
                     extension=img_type,
-                    save=str(g_savedir.joinpath(ms_name)), 
+                    save=str(g_savedir.joinpath(ms_name)),
                     close=True
                 )
-            
+
         if verbose:
             print()
-                
-        g_savedir.joinpath("microstructures").with_suffix(".json").write_text(json.dumps(mdatas, indent=2)) 
 
-    savedir.joinpath("summary").with_suffix(".json").write_text(json.dumps(summary, indent=2)) 
-        
+        g_savedir.joinpath("microstructures").with_suffix(".json").write_text(json.dumps(mdatas, indent=2))
+
+    savedir.joinpath("summary").with_suffix(".json").write_text(json.dumps(summary, indent=2))

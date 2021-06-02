@@ -10,7 +10,7 @@
 
 import pathlib
 import json
-import pickle 
+import pickle
 import networkx as nx
 from typing import Set, Optional, List, Union, Dict
 from uuid import uuid4
@@ -19,16 +19,17 @@ import numpy as np
 from .utils import draw
 import random
 import argparse
-import pandas as pd 
+import pandas as pd
 from functools import partial
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
+
 class NoMicrostructuresError(Exception):
-    pass 
+    pass
+
 
 def duplicate_nodes(graph: nx.DiGraph, nodes: Set[str]) -> Dict:
-    
     """
     Replicates nodes of a graph.
 
@@ -46,7 +47,7 @@ def duplicate_nodes(graph: nx.DiGraph, nodes: Set[str]) -> Dict:
         graph.add_node(new_node, **graph.nodes[node])
         nx.set_node_attributes(graph, {new_node: node}, "duplicate_of")
         new_nodes[node] = new_node
-    
+
     for node, new_node in new_nodes.items():
         for parent, _ in graph.in_edges(node):
             if parent in new_nodes:
@@ -59,11 +60,12 @@ def duplicate_nodes(graph: nx.DiGraph, nodes: Set[str]) -> Dict:
                 graph.add_edge(new_node, new_nodes[child])
             else:
                 graph.add_edge(new_node, child)
-    
+
     return new_nodes
 
-def duplicate(path: pathlib.Path, 
-              base: Union[str, pathlib.Path], 
+
+def duplicate(path: pathlib.Path,
+              base: Union[str, pathlib.Path],
               num_nodes: int) -> nx.DiGraph:
     """
     Attaches replicated nodes to base graph.
@@ -90,29 +92,29 @@ def duplicate(path: pathlib.Path,
 
     graph = pickle.loads(base_path.joinpath("base_graph.pickle").read_bytes())
     if num_nodes < graph.order():
-        raise ValueError(f"Cannot create synthentic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
+        raise ValueError(
+            f"Cannot create synthentic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
 
     all_microstructures = json.loads(base_path.joinpath("microstructures.json").read_text())
     microstructures, freqs = map(list, zip(*[(ms, ms["frequency"]) for ms_hash, ms in all_microstructures.items()]))
-    
+
     p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
     while graph.order() < num_nodes and microstructures:
         i = random.choice(range(len(microstructures)))
         ms = microstructures[i]
         while ms["nodes"]:
             j = random.choice(range(len(ms["nodes"])))
-            structure = ms["nodes"][j]      
+            structure = ms["nodes"][j]
             if graph.order() + len(structure) > num_nodes:
                 del ms["nodes"][j]
             else:
                 break
-        
-        if not ms["nodes"]: # delete microstructure
+
+        if not ms["nodes"]:  # delete microstructure
             del microstructures[i]
             del p[i]
             continue
-        
+
         duplicate_nodes(graph, structure)
 
     return graph
-
