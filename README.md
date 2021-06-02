@@ -5,7 +5,7 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 
 <a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-horizontal.png" width="350" /></a>
-<br/>_A Community Framework for Enabling Scientific Workflow Research and Development_
+<br/>_A Framework for Enabling Scientific Workflow Research and Development_
 
 This Python package provides a collection of tools for:
 
