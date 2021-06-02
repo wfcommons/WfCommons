@@ -20,6 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install -y graphviz-dev python3-sphinx sphinx-rtd-theme-common
+          pip install sphinx_rtd_theme
       - name: Check package install
         run: |
           pip install .
