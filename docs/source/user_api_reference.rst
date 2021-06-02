@@ -13,4 +13,5 @@ Python package. Users are NOT expected to develop new
 
     user_api_common.rst
     user_api_trace.rst
-    user_api_generator.rst
+    user_api_wfchef.rst
+    user_api_wfgen.rst

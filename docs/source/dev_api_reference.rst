@@ -14,5 +14,6 @@ Python package.
     :maxdepth: 1
 
     dev_api_wfcommons.rst
-    dev_api_generator.rst
     dev_api_trace.rst
+    dev_api_wfchef.rst
+    dev_api_wfgen.rst

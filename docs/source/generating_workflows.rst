@@ -5,7 +5,7 @@ Generating Workflows
 
 WfGen is a component of WfCommons project that targets the generation of realistic
 synthetic workflow instances with a variety of characteristics. The
-:class:`~wfcommons.generator.generator.WorkflowGenerator` class uses recipes
+:class:`~wfcommons.wfgen.generator.WorkflowGenerator` class uses recipes
 of workflows (as described in :ref:`workflow-recipe-generator-label`) 
 for creating the realistic synthetic instances. The resulting workflows are represented in the 
 :ref:`json-format-label`, which is already supported by simulation frameworks such as
@@ -19,29 +19,28 @@ WfCommons Workflows Recipes
 This Python package provides several *workflow recipes* for generating realistic
 synthetic workflow instances. The current list of available workflow recipes include:
 
-- :class:`~wfcommons.wfchef.recipes.blast_recipe.BlastRecipe`: :code:`from wfcommons.wfchef.recipes import BlastWorkflowRecipe`
-- :class:`~wfcommons.wfchef.recipes.bwa_recipe.BwaRecipe`: :code:`from wfcommons.wfchef.recipes import BwaRecipe`
-- :class:`~wfcommons.wfchef.recipes.cycles_recipe.CyclesRecipe`: :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
-- :class:`~wfcommons.wfchef.recipes.epigenomics_recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
-- :class:`~wfcommons.wfchef.recipes.genome_recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
-- :class:`~wfcommons.wfchef.recipes.montage_recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
-- :class:`~wfcommons.wfchef.recipes.seismology_recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
-- :class:`~wfcommons.wfchef.recipes.soykb_recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
-- :class:`~wfcommons.wfchef.recipes.srasearch_recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
-
+- :class:`~wfcommons.wfchef.recipes.blast.recipe.BlastRecipe`: :code:`from wfcommons.wfchef.recipes import BlastRecipe`
+- :class:`~wfcommons.wfchef.recipes.bwa.recipe.BwaRecipe`: :code:`from wfcommons.wfchef.recipes import BwaRecipe`
+- :class:`~wfcommons.wfchef.recipes.cycles.recipe.CyclesRecipe`: :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
+- :class:`~wfcommons.wfchef.recipes.epigenomics.recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
+- :class:`~wfcommons.wfchef.recipes.genome.recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
+- :class:`~wfcommons.wfchef.recipes.montage.recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
+- :class:`~wfcommons.wfchef.recipes.seismology.recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
+- :class:`~wfcommons.wfchef.recipes.soykb.recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
+- :class:`~wfcommons.wfchef.recipes.srasearch.recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
 
 The Workflow Instances Generator
 --------------------------------
 
 Synthetic workflow instances are generated using the
-:class:`~wfcommons.generator.generator.WorkflowGenerator` class. This class takes
-as input a :class:`~wfcommons.generator.workflow.abstract_recipe.WorkflowRecipe`
+:class:`~wfcommons.wfgen.generator.WorkflowGenerator` class. This class takes
+as input a :class:`~wfcommons.wfgen.abstract_recipe.WorkflowRecipe`
 object (see in :ref:`workflow-recipe-generator-label`), and provides two methods
 for generating synthetic workflow instances:
 
-- :meth:`~wfcommons.generator.generator.WorkflowGenerator.build_workflow`: generates a single synthetic workflow
+- :meth:`~wfcommons.wfgen.generator.WorkflowGenerator.build_workflow`: generates a single synthetic workflow
   instance based on the workflow recipe used to instantiate the generator.
-- :meth:`~wfcommons.generator.generator.WorkflowGenerator.build_workflows`: generates a number of synthetic workflow
+- :meth:`~wfcommons.wfgen.generator.WorkflowGenerator.build_workflows`: generates a number of synthetic workflow
   instances based on the workflow recipe used to instantiate the generator.
 
 The build methods use the workflow recipe for generating realistic synthetic
@@ -88,7 +87,7 @@ os 300 tasks, builds a synthetic workflow instance, and writes the
 synthetic instance to a JSON file. ::
 
     from wfcommons.wfchef.recipes import SeismologyRecipe
-    from wfcommons.generator import WorkflowGenerator
+    from wfcommons.wfgen import WorkflowGenerator
 
     generator = WorkflowGenerator(SeismologyRecipe.from_num_tasks(250)) 
     workflow = generator.build_workflow()
@@ -99,7 +98,7 @@ The example below generates a number of 10 *Blast* synthetic
 workflow instances for every size defined in the array :code:`num_tasks`: ::
 
     from wfcommons.wfchef.recipes import BlastRecipe
-    from wfcommons.generator import WorkflowGenerator
+    from wfcommons.wfgen import WorkflowGenerator
 
     num_tasks = [100, 250, 370, 800]
     
@@ -115,7 +114,7 @@ based on the number of tasks entered by the user (1000), builds the synthetic
 workflow instances, and writes the synthetic instances to JSON files. ::
 
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
-    from wfcommons.generator import WorkflowGenerator
+    from wfcommons.wfgen import WorkflowGenerator
 
     generator = WorkflowGenerator(EpigenomicsRecipe.from_num_tasks(1000))
     for i, workflow in enumerate(generator.build_workflows(10)):
@@ -126,7 +125,7 @@ based on the number of tasks entered by the user (250), builds the synthetic wor
 instance, and writes the synthetic instance to a JSON file. ::
 
     from wfcommons.wfchef.recipes import CyclesRecipe
-    from wfcommons.generator import WorkflowGenerator
+    from wfcommons.wfgen import WorkflowGenerator
 
     generator = WorkflowGenerator(CyclesRecipe.from_num_tasks(250))
     workflow = generator.build_workflow()
