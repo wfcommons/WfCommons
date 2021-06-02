@@ -8,4 +8,4 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-__version__ = "0.6"
+__version__ = "0.7-dev"

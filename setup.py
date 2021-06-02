@@ -22,7 +22,7 @@ setup(
     license='GPLv3',
     author='WfCommons team',
     author_email='support@wfcommons.org',
-    description='Community Framework for Enabling Scientific Workflow Research and Education',
+    description='A Framework for Enabling Scientific Workflow Research and Education',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/wfcommons/wfcommons',
