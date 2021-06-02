@@ -18,81 +18,81 @@ from matplotlib import pyplot
 from os import path
 from typing import Any, Dict, List, Optional, Tuple
 
-from .trace import Trace
+from .instance import Instance
 from ..common.task import Task
 from ..common.file import FileLink
 from ..utils import best_fit_distribution, NoValue
 
 
-class TraceElement(NoValue):
+class InstanceElement(NoValue):
     RUNTIME = ('runtime', 'Runtime (s)')
     INPUT = ('input', 'Input File Size (bytes)')
     OUTPUT = ('output', 'Input File Size (bytes)')
 
 
-class TraceAnalyzer:
-    """Set of tools for analyzing collections of traces.
+class InstanceAnalyzer:
+    """Set of tools for analyzing collections of instances.
 
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
     def __init__(self, logger: Optional[Logger] = None) -> None:
-        """Create an object of the trace analyzer."""
+        """Create an object of the instance analyzer."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
-        self.traces: List[Trace] = []
+        self.instances: List[Instance] = []
         self.tasks_summary: Dict[str, List:[Task]] = {}
-        self.traces_summary: Dict[str, Dict[str, Any]] = {}
+        self.instances_summary: Dict[str, Dict[str, Any]] = {}
 
-    def append_trace(self, trace: Trace) -> None:
-        """Append a workflow trace object to the trace analyzer.
+    def append_instance(self, instance: Instance) -> None:
+        """Append a workflow instance object to the instance analyzer.
 
         .. code-block:: python
 
-            trace = Trace(input_trace = 'trace.json', schema = 'schema.json')
-            trace_analyzer = TraceAnalyzer()
-            trace_analyzer.append_trace(trace)
+            instance = Instance(input_instance = 'instance.json', schema = 'schema.json')
+            instance_analyzer = InstanceAnalyzer()
+            instance_analyzer.append_instance(instance)
 
-        :param trace: A workflow trace object.
-        :type trace: Trace
+        :param instance: A workflow instance object.
+        :type instance: Instance
         """
-        if trace not in self.traces:
-            self.traces.append(trace)
-            self.logger.debug('Appended trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
+        if instance not in self.instances:
+            self.instances.append(instance)
+            self.logger.debug('Appended instance: {} ({} tasks)'.format(instance.name, len(instance.workflow.nodes)))
 
     def build_summary(self, tasks_list: List[str], include_raw_data: Optional[bool] = True) -> Dict[
         str, Dict[str, Any]]:
-        """Analyzes appended traces and produce a summary of the analysis per task prefix.
+        """Analyzes appended instances and produce a summary of the analysis per task prefix.
 
         .. code-block:: python
 
             workflow_tasks = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']
-            traces_summary = trace_analyzer.build_summary(workflow_tasks, include_raw_data=False)
+            instances_summary = instance_analyzer.build_summary(workflow_tasks, include_raw_data=False)
 
         :param tasks_list: List of workflow tasks prefix (e.g., mProject, sol2sanger, add_replace)
         :type tasks_list: List[str]
-        :param include_raw_data: Whether to include the raw data in the trace summary.
+        :param include_raw_data: Whether to include the raw data in the instance summary.
         :type include_raw_data: bool
 
-        :return: A summary of the analysis of traces in the form of a dictionary in which keys are task prefixes.
+        :return: A summary of the analysis of instances in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Dict[str, Any]]
         """
-        self.logger.debug('Building summary for {} traces'.format(len(self.traces)))
-        
-        tasks_list = sorted(list(tasks_list), key=len, reverse=True) #had to sorted so it would get all cases
-        # build tasks summary
-        for trace in self.traces:
-            self.logger.debug('Parsing trace: {} ({} tasks)'.format(trace.name, len(trace.workflow.nodes)))
+        self.logger.debug('Building summary for {} instances'.format(len(self.instances)))
 
-            for node in trace.workflow.nodes.data():
+        tasks_list = sorted(list(tasks_list), key=len, reverse=True)  # had to sorted so it would get all cases
+        # build tasks summary
+        for instance in self.instances:
+            self.logger.debug('Parsing instance: {} ({} tasks)'.format(instance.name, len(instance.workflow.nodes)))
+
+            for node in instance.workflow.nodes.data():
                 task: Task = node[1]['task']
-                task_name: str = [j for j in tasks_list if task.name.startswith(j)][0] #it was eliminating bwa_index because bwa came before it
+                task_name: str = [j for j in tasks_list if task.name.startswith(j)][
+                    0]  # it was eliminating bwa_index because bwa came before it
                 if task_name not in self.tasks_summary:
                     self.tasks_summary[task_name] = []
                 self.tasks_summary[task_name].append(task)
-        
-        
-        # build traces summary
+
+        # build instances summary
         for task_name in self.tasks_summary:
             runtime_list: List[float] = []
             inputs_dict: Dict[str, Any] = {}
@@ -114,7 +114,7 @@ class TraceAnalyzer:
             _best_fit_distribution_for_file(inputs_dict, include_raw_data)
             _best_fit_distribution_for_file(outputs_dict, include_raw_data)
 
-            self.traces_summary[task_name] = {
+            self.instances_summary[task_name] = {
                 'runtime': {
                     'min': min(runtime_list),
                     'max': max(runtime_list),
@@ -124,35 +124,35 @@ class TraceAnalyzer:
                 'output': outputs_dict
             }
             if include_raw_data:
-                self.traces_summary[task_name]['runtime']['data'] = runtime_list
+                self.instances_summary[task_name]['runtime']['data'] = runtime_list
 
-        return self.traces_summary
+        return self.instances_summary
 
-    def generate_fit_plots(self, trace_element: TraceElement, outfile_prefix: Optional[str] = None) -> None:
+    def generate_fit_plots(self, instance_element: InstanceElement, outfile_prefix: Optional[str] = None) -> None:
         """
-        Produce fit plots as images for each entry of a trace element generated by the summary analysis. For
+        Produce fit plots as images for each entry of an instance element generated by the summary analysis. For
         entries in which there are no distribution (i.e., constant value), no plot will be generated.
 
-        :param trace_element: Workflow element for which the fit plots will be generated.
-        :type trace_element: TraceElement
+        :param instance_element: Workflow element for which the fit plots will be generated.
+        :type instance_element: InstanceElement
         :param outfile_prefix: Prefix to be attached to each generated plot file name (optional).
         :type outfile_prefix: str
         """
-        self.logger.info('Generating fit plots ({}).'.format(trace_element.value[0]))
+        self.logger.info('Generating fit plots ({}).'.format(instance_element.value[0]))
         outfile_prefix = outfile_prefix + '_' if outfile_prefix else ''
 
-        for task_summary in self.traces_summary:
-            outfile = outfile_prefix + task_summary.lower() + '-' + trace_element.value[0]
-            el = self.traces_summary[task_summary][trace_element.value[0]]
+        for task_summary in self.instances_summary:
+            outfile = outfile_prefix + task_summary.lower() + '-' + instance_element.value[0]
+            el = self.instances_summary[task_summary][instance_element.value[0]]
 
-            if trace_element == TraceElement.RUNTIME:
-                _generate_fit_plots(el, task_summary + ' (' + trace_element.value[0] + ')',
-                                    xlabel=trace_element.value[1], outfile=outfile + '.png', logger=self.logger)
+            if instance_element == InstanceElement.RUNTIME:
+                _generate_fit_plots(el, task_summary + ' (' + instance_element.value[0] + ')',
+                                    xlabel=instance_element.value[1], outfile=outfile + '.png', logger=self.logger)
             else:
                 for k in el:
                     ext = k if '.' not in k else k[1:]
-                    _generate_fit_plots(el[k], task_summary + ' (' + trace_element.value[0] + '): ' + ext,
-                                        xlabel=trace_element.value[1], outfile=outfile + '-' + ext + '.png',
+                    _generate_fit_plots(el[k], task_summary + ' (' + instance_element.value[0] + '): ' + ext,
+                                        xlabel=instance_element.value[1], outfile=outfile + '-' + ext + '.png',
                                         logger=self.logger)
 
     def generate_all_fit_plots(self, outfile_prefix: Optional[str] = None) -> None:
@@ -163,8 +163,8 @@ class TraceAnalyzer:
         :param outfile_prefix: Prefix to be attached to each generated plot file name (optional).
         :type outfile_prefix: str
         """
-        for trace_element in TraceElement:
-            self.generate_fit_plots(trace_element, outfile_prefix)
+        for instance_element in InstanceElement:
+            self.generate_fit_plots(instance_element, outfile_prefix)
 
 
 def _append_file_to_dict(extension: str, dict_obj: Dict[str, Any], file_size: int) -> None:
@@ -217,9 +217,9 @@ def _json_format_distribution_fit(dist_tuple: Tuple) -> Dict[str, Any]:
 
 def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_size: Optional[int] = None,
                         logger: Optional[Logger] = None) -> None:
-    """Produce a fit plot as an image for an entry of a trace element generated by the summary analysis.
+    """Produce a fit plot as an image for an entry of an instance element generated by the summary analysis.
 
-    :param el: Entry of a trace element generated by the summary analysis.
+    :param el: Entry of an instance element generated by the summary analysis.
     :type el: Dict
     :param title: Plot title.
     :type title: str

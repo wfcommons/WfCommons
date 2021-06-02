@@ -10,5 +10,5 @@
 
 from .logs import MakeflowLogsParser, PegasusLogsParser
 from .schema import SchemaValidator
-from .trace import Trace
-from .trace_analyzer import TraceAnalyzer, TraceElement
+from .instance import Instance
+from .instance_analyzer import InstanceAnalyzer, InstanceElement

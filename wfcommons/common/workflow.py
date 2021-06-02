@@ -27,7 +27,7 @@ class Workflow(nx.DiGraph):
 
     :param name: Workflow name.
     :type name: str
-    :param description: Workflow trace description.
+    :param description: Workflow instance description.
     :type description: str
     :param wms_name: WMS name.
     :type wms_name: str
@@ -51,18 +51,18 @@ class Workflow(nx.DiGraph):
                  makespan: Optional[int] = 0.0
                  ) -> None:
         """Create an object of a workflow representation."""
-        self.description = description if description else 'Trace generated with WfCommons - https://wfcommons.org'
+        self.description = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
         self.created_at = str(datetime.utcnow().isoformat())
         self.schema_version = '1.0'
         self.wms_name = 'WfCommons' if not wms_name else wms_name
         self.wms_version = str(__version__) if not wms_version else wms_version
-        self.wms_url = 'https://wfcommons.readthedocs.io/en/v{}/'.format(__version__) if not wms_url else wms_url
+        self.wms_url = 'https://docs.wfcommons.org/en/v{}/'.format(__version__) if not wms_url else wms_url
         self.executed_at = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z") if not executed_at else executed_at
         self.makespan = makespan
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
     def write_json(self, json_filename: Optional[str] = None) -> None:
-        """Write a JSON file of the workflow trace.
+        """Write a JSON file of the workflow instance.
 
         :param json_filename: JSON output file name.
         :type json_filename: str
@@ -125,7 +125,7 @@ class Workflow(nx.DiGraph):
             outfile.write(json.dumps(workflow_json, indent=4))
 
     def write_dot(self, dot_filename: str = None) -> None:
-        """Write a dot file of the workflow trace.
+        """Write a dot file of the workflow instance.
 
         :param dot_filename: DOT output file name.
         :type dot_filename: str

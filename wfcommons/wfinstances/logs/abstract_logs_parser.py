@@ -18,13 +18,13 @@ from ...common.workflow import Workflow
 
 
 class LogsParser(ABC):
-    """An abstract class of logs parser for creating workflow traces.
+    """An abstract class of logs parser for creating workflow instances.
 
     :param wms_name: Name of the workflow system.
     :type wms_name: str
     :param wms_url: URL for the workflow system.
     :type wms_url: str
-    :param description: Workflow trace description.
+    :param description: Workflow instance description.
     :type description: str
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
@@ -49,11 +49,11 @@ class LogsParser(ABC):
     @abstractmethod
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-        Create workflow trace based on the workflow execution logs.
+        Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
         :type workflow_name: str
 
-        :return: A workflow trace object.
+        :return: A workflow instance object.
         :rtype: Workflow
         """

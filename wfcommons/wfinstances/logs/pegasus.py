@@ -27,13 +27,13 @@ from ...common.workflow import Workflow
 
 class PegasusLogsParser(LogsParser):
     """
-    Parse Pegasus submit directory to generate workflow trace.
+    Parse Pegasus submit directory to generate workflow instance.
 
     :param submit_dir: Pegasus submit directory.
     :type submit_dir: str
     :param legacy: Whether the submit directory is from a Pegasus 4.x version.
     :type legacy: bool
-    :param description: Workflow trace description.
+    :param description: Workflow instance description.
     :type description: str
     :param ignore_auxiliary: Ignore auxiliary jobs.
     :type ignore_auxiliary: bool
@@ -64,12 +64,12 @@ class PegasusLogsParser(LogsParser):
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-        Create workflow trace based on the workflow execution logs.
+        Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
         :type workflow_name: str
 
-        :return: A workflow trace object.
+        :return: A workflow instance object.
         :rtype: Workflow
         """
         self.workflow_name = workflow_name
@@ -101,19 +101,19 @@ class PegasusLogsParser(LogsParser):
                 if line.startswith('planner_version'):
                     wms_version = line.split()[1]
                 elif line.startswith('pegasus_wf_name'):
-                    self.trace_name = line.split()[1]
+                    self.instance_name = line.split()[1]
                 elif line.startswith('timestamp'):
                     executed_at = line.split()[1]
 
         # sanity checks
         if not wms_version:
             self.logger.warning('Unable to determine pegasus version.')
-        if not self.trace_name:
-            self.logger.warning('Unable to determine trace name from "pegasus_wf_name".')
+        if not self.instance_name:
+            self.logger.warning('Unable to determine instance name from "pegasus_wf_name".')
         if not executed_at:
             self.logger.warning('Unable to determine execution time from "timestamp".')
 
-        # create base workflow trace object
+        # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  wms_name=self.wms_name,
@@ -134,7 +134,7 @@ class PegasusLogsParser(LogsParser):
             data = yaml.load(f, Loader=yaml.SafeLoader)
             self.logger.info('Processing Pegasus workflow file: {}'.format(os.path.basename(workflow_file)))
 
-            # create base workflow trace object
+            # create base workflow instance object
             self.workflow = Workflow(name=self.workflow_name,
                                      description=self.description,
                                      wms_name=self.wms_name,

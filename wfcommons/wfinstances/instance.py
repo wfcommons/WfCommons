@@ -27,16 +27,16 @@ from ..common.workflow import Workflow
 from ..utils import read_json
 
 
-class Trace:
+class Instance:
     """Representation of one execution of one workflow on a set of machines
 
     .. code-block:: python
 
-        Trace(input_trace = 'trace.json')
+        Instance(input_instance = 'instance.json')
 
-    :param input_trace: The JSON trace.
-    :type input_trace: str
-    :param schema_file: The path to the JSON schema that defines the trace.
+    :param input_instance: The JSON instance.
+    :type input_instance: str
+    :param schema_file: The path to the JSON schema that defines the instance.
                         If no schema file is provided, it will look for a local
                         copy of the WfCommons schema, and if not available
                         it will fetch the latest schema from the
@@ -47,41 +47,41 @@ class Trace:
     :type logger: Logger
     """
 
-    def __init__(self, input_trace: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
-        """Create an object that represents a workflow execution trace."""
+    def __init__(self, input_instance: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+        """Create an object that represents a workflow execution instance."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
-        # Internal variables to be able to iterate directly on a trace
+        # Internal variables to be able to iterate directly on an instance
         self._n = 0
         self._order = None
 
-        self.trace: Dict[str, Any] = read_json(input_trace)
-        self.logger.info("Read a JSON trace: " + input_trace)
+        self.instance: Dict[str, Any] = read_json(input_instance)
+        self.logger.info("Read a JSON instance: " + input_instance)
 
-        # validate trace
+        # validate instance
         schema_validator = SchemaValidator(schema_file)
-        schema_validator.validate_trace(self.trace)
+        schema_validator.validate_instance(self.instance)
 
         # Basic global properties
-        self.name: str = self.trace['name']
-        self.desc: str = self.trace['description']
-        self.created_at: datetime = dateutil.parser.parse(self.trace['createdAt'])
-        self.schema_version: str = self.trace['schemaVersion']
+        self.name: str = self.instance['name']
+        self.desc: str = self.instance['description']
+        self.created_at: datetime = dateutil.parser.parse(self.instance['createdAt'])
+        self.schema_version: str = self.instance['schemaVersion']
 
         # WMS properties
         self.wms: Dict[str, str] = {
-            u: v for u, v in self.trace['wms'].items()
+            u: v for u, v in self.instance['wms'].items()
         }
 
         # Author properties
         self.author: Dict[str, str] = {
-            u: v for u, v in self.trace['author'].items()
+            u: v for u, v in self.instance['author'].items()
         }
 
         # Workflow properties
         # Global properties
-        self.executed_at: datetime = dateutil.parser.parse(self.trace['workflow']['executedAt'])
-        self.makespan: int = self.trace['workflow']['makespan']
+        self.executed_at: datetime = dateutil.parser.parse(self.instance['workflow']['executedAt'])
+        self.makespan: int = self.instance['workflow']['makespan']
 
         # Machines
         self.machines: Dict[str, Machine] = {
@@ -94,12 +94,12 @@ class Trace:
                 release=machine.get('release', None),
                 hashcode=machine.get('machine_code', None),
                 logger=self.logger
-            ) for machine in self.trace['workflow']['machines']
+            ) for machine in self.instance['workflow']['machines']
         }
 
         # Tasks
         self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
-        for task in self.trace['workflow']['jobs']:
+        for task in self.instance['workflow']['jobs']:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
             # By default the value is set to None if we do not find the value
@@ -139,12 +139,12 @@ class Trace:
             )
 
         # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
-        for task in self.trace['workflow']['jobs']:
+        for task in self.instance['workflow']['jobs']:
             for parent in task['parents']:
                 self.workflow.add_edge(parent, task['name'], weight=0)
 
         # TODO: instead of attaching files to tasks, attach them to edges based on the link direction.
-        self.logger.info('Parsed a trace with {} tasks'.format(len(self.workflow.nodes)))
+        self.logger.info('Parsed an instance with {} tasks'.format(len(self.workflow.nodes)))
 
     def __iter__(self):
         """Produce an iterator based on a topological sort (e.g., scheduling order)"""
@@ -182,16 +182,16 @@ class Trace:
         return [n for n, d in self.workflow.out_degree() if d == 0]
 
     def write_dot(self, output: Optional[str] = None) -> None:
-        """Write a dot file of the trace.
+        """Write a dot file of the instance.
 
         :param output: The output ``dot`` file name (optional).
         :type output: str
         """
         self.workflow.write_dot(output)
 
-    # # TODO: improve drawing for large traces
+    # # TODO: improve drawing for large instances
     def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
-        """Produce an image or a pdf file representing the trace.
+        """Produce an image or a pdf file representing the instance.
 
         :param output: Name of the output file.
         :type output: str

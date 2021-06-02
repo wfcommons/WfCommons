@@ -27,13 +27,13 @@ from ...common.workflow import Workflow
 
 class MakeflowLogsParser(LogsParser):
     """
-    Parse Makeflow submit directory to generate workflow trace.
+    Parse Makeflow submit directory to generate workflow instance.
 
     :param execution_dir: Makeflow workflow execution directory (contains .mf and .makeflowlog files).
     :type execution_dir: str
     :param resource_monitor_logs_dir: Resource Monitor log files directory.
     :type resource_monitor_logs_dir: str
-    :param description: Workflow trace description.
+    :param description: Workflow instance description.
     :type description: str
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
@@ -73,17 +73,17 @@ class MakeflowLogsParser(LogsParser):
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-        Create workflow trace based on the workflow execution logs.
+        Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
         :type workflow_name: str
 
-        :return: A workflow trace object.
+        :return: A workflow instance object.
         :rtype: Workflow
         """
         self.workflow_name = workflow_name
 
-        # create base workflow trace object
+        # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  wms_name=self.wms_name,

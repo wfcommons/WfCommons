@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 The WfCommons Team.
+# Copyright (c) 2020-2021 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,10 +37,10 @@ class SchemaValidator:
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.schema = self._load_schema(schema_file)
 
-    def validate_trace(self, data: Dict[str, Any]):
+    def validate_instance(self, data: Dict[str, Any]):
         """Perform syntax validation against the schema, and semantic validation.
 
-        :param data: Workflow trace in JSON format.
+        :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
         """
         self._syntax_validation(data)
@@ -80,9 +80,9 @@ class SchemaValidator:
         return schema
 
     def _syntax_validation(self, data: Dict[str, Any]):
-        """Validate the JSON workflow execution trace against the schema.
+        """Validate the JSON workflow execution instance against the schema.
 
-        :param data: Workflow trace in JSON format.
+        :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
         """
         v = jsonschema.Draft4Validator(self.schema)
@@ -94,12 +94,12 @@ class SchemaValidator:
             has_error = True
 
         if has_error:
-            raise RuntimeError('The workflow trace has syntax errors.')
+            raise RuntimeError('The workflow instance has syntax errors.')
 
     def _semantic_validation(self, data: Dict[str, Any]):
-        """Validate the semantics of the JSON workflow execution trace.
+        """Validate the semantics of the JSON workflow execution instance.
 
-        :param data: Workflow trace in JSON format.
+        :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
         """
         has_error = False
@@ -130,4 +130,4 @@ class SchemaValidator:
         self.logger.debug('The workflow has {} machines.'.format(len(machine_ids)))
 
         if has_error:
-            raise RuntimeError('The workflow trace has semantic errors.')
+            raise RuntimeError('The workflow instance has semantic errors.')

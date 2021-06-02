@@ -18,6 +18,6 @@ import logging
 from .wfchef.recipes import BlastRecipe, BwaRecipe, CyclesRecipe, EpigenomicsRecipe, GenomeRecipe, MontageRecipe, \
     SeismologyRecipe, SoykbRecipe, SrasearchRecipe
 from .wfgen import WorkflowGenerator
-from .trace import Trace, TraceAnalyzer, TraceElement
+from .wfinstances import Instance, InstanceAnalyzer, InstanceElement
 
 logging.getLogger('wfcommons').addHandler(logging.NullHandler())

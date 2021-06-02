@@ -27,16 +27,16 @@ class NoValue(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
-def read_json(trace_filename: str) -> Dict[str, Any]:
+def read_json(instance_filename: str) -> Dict[str, Any]:
     """Read the JSON from the file path.
 
-    :param trace_filename: The absolute path of the trace file.
-    :type trace_filename: str
+    :param instance_filename: The absolute path of the instance file.
+    :type instance_filename: str
 
     :return: The json object loaded with json data from the file
     :rtype: Dict[str, Any]
     """
-    with open(trace_filename) as data:
+    with open(instance_filename) as data:
         return json.load(data)
 
 

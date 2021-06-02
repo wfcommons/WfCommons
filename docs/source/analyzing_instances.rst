@@ -30,18 +30,18 @@ WfCommons project, an instance is represented in a JSON file following the
 schema described in :ref:`json-format-label`. This Python package
 provides an *instance loader* tool for importing workflow execution instances
 for analysis. For instance, the code snippet below shows how an instance can
-be loaded using the :class:`~wfcommons.trace.trace.Trace` class: ::
+be loaded using the :class:`~wfcommons.wfinstances.instance.Instance` class: ::
 
-    from wfcommons import Trace
-    trace = Trace(input_trace='/path/to/instance/file.json')
+    from wfcommons import Instance
+    instance = Instance(input_instance='/path/to/instance/file.json')
 
-The :class:`~wfcommons.trace.trace.Trace` class provides a number of
+The :class:`~wfcommons.wfinstances.instance.Instance` class provides a number of
 methods for interacting with the workflow instance, including:
 
-- :meth:`~wfcommons.trace.trace.Trace.draw`: produces an image or a pdf file representing the instance.
-- :meth:`~wfcommons.trace.trace.Trace.leaves`: gets the leaves of the workflow (i.e., the tasks without any successors).
-- :meth:`~wfcommons.trace.trace.Trace.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
-- :meth:`~wfcommons.trace.trace.Trace.write_dot`: writes a dot file of the instance.
+- :meth:`~wfcommons.wfinstances.instance.Instance.draw`: produces an image or a pdf file representing the instance.
+- :meth:`~wfcommons.wfinstances.instance.Instance.leaves`: gets the leaves of the workflow (i.e., the tasks without any successors).
+- :meth:`~wfcommons.wfinstances.instance.Instance.roots`: gets the roots of the workflow (i.e., the tasks without any predecessors).
+- :meth:`~wfcommons.wfinstances.instance.Instance.write_dot`: writes a dot file of the instance.
 
 .. note::
     Although the analysis methods are inherently used by WfCommons (specifically
@@ -51,25 +51,25 @@ methods for interacting with the workflow instance, including:
 The Instance Analyzer
 ---------------------
 
-The :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` class provides
+The :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer` class provides
 a number of tools for analyzing collection of workflow execution instances. The
-goal of the :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer` is to
+goal of the :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer` is to
 perform analyzes of one or multiple workflow execution instances, and build
 summaries of the analyzes per workflow' task type prefix.
 
 .. warning::
 
     Although any workflow execution instance represented as a
-    :class:`~wfcommons.trace.trace.Trace` object (i.e., compatible with
+    :class:`~wfcommons.wfinstances.instance.Instance` object (i.e., compatible with
     :ref:`json-format-label`) can be appended to the
-    :class:`~wfcommons.trace.trace_analyzer.TraceAnalyzer`, we strongly
+    :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer`, we strongly
     recommend that only instances of a single workflow application type be
     appended to an analyzer object. You may though create several analyzer
     objects per workflow application.
 
-The :meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.append_trace` method
+The :meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.append_instance` method
 allows you to include instances for analysis. The
-:meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.build_summary` method
+:meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.build_summary` method
 processes all appended instances. The method applies probability distributions fitting
 to a series of data to find the *best* (i.e., minimizes the mean square error)
 probability distribution that represents the analyzed data. The method returns
@@ -101,8 +101,8 @@ in which themselves are used to :ref:`generate realistic synthetic workflow inst
 <generating-workflows-label>`.
 
 Probability distribution fits can also be plotted by using the
-:meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.generate_fit_plots` or
-:meth:`~wfcommons.trace.trace_analyzer.TraceAnalyzer.generate_all_fit_plots`
+:meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.generate_fit_plots` or
+:meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.generate_all_fit_plots`
 methods -- plots will be saved as :code:`png` files.
 
 Examples
@@ -115,7 +115,7 @@ distribution fitting for task *prefixes* of the Seismology workflow
 plots (runtime, and input and output files) into the :code:`fits` folder using
 :code:`seismology` as a prefix for each generated plot: ::
 
-    from wfcommons import Trace, TraceAnalyzer
+    from wfcommons import Instance, InstanceAnalyzer
     from os import listdir
     from os.path import isfile, join
 
@@ -124,12 +124,12 @@ plots (runtime, and input and output files) into the :code:`fits` folder using
     instance_files = [f for f in listdir(INSTANCES_PATH) if isfile(join(INSTANCES_PATH, f))]
 
     # creating the instance analyzer object
-    analyzer = TraceAnalyzer()
+    analyzer = InstanceAnalyzer()
 
     # appending instance files to the instance analyzer
     for instance_file in instance_files:
-        instance = Trace(input_trace=INSTANCES_PATH + instance_file)
-        analyzer.append_trace(instance)
+        instance = Instance(input_instance=INSTANCES_PATH + instance_file)
+        analyzer.append_instance(instance)
 
     # list of workflow task name prefixes to be analyzed in each instance
     workflow_tasks = ['sG1IterDecon', 'wrapper_siftSTFByMisfit']

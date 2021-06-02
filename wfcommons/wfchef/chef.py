@@ -27,8 +27,8 @@ from .duplicate import duplicate, NoMicrostructuresError
 from .find_microstructures import save_microstructures
 from .utils import create_graph
 from ..wfgen.abstract_recipe import WorkflowRecipe
-from ..trace.trace import Trace
-from ..trace.trace_analyzer import TraceAnalyzer
+from ..wfinstances.instance import Instance
+from ..wfinstances.instance_analyzer import InstanceAnalyzer
 
 this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
@@ -156,12 +156,12 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     :return: dataframe with RMSE of all available instances.
     :rtype: pd.DataFrame
     """
-    analyzer = TraceAnalyzer()
+    analyzer = InstanceAnalyzer()
     task_types = set()
 
     for path in path_to_instances.glob("*.json"):
-        instance = Trace(input_trace=str(path))
-        analyzer.append_trace(instance)
+        instance = Instance(input_instance=str(path))
+        analyzer.append_instance(instance)
         graph = create_graph(path)
         for node in graph.nodes:
             task_types.add(graph.nodes[node]["type"])

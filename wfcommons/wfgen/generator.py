@@ -19,8 +19,8 @@ from ..common.workflow import Workflow
 
 class WorkflowGenerator:
     """
-    A generator of synthetic workflow traces based on workflow recipes obtained from the
-    analysis of real workflow execution traces.
+    A generator of synthetic workflow instances based on workflow recipes obtained from the
+    analysis of real workflow execution instances.
 
     :param workflow_recipe: The workflow recipe to be used for this generator.
     :type workflow_recipe: WorkflowRecipe
@@ -40,13 +40,13 @@ class WorkflowGenerator:
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-        Generate a synthetic workflow trace based on the workflow recipe used to instantiate
+        Generate a synthetic workflow instance based on the workflow recipe used to instantiate
         the generator.
 
         :param workflow_name: The workflow name.
         :type workflow_name: str
 
-        :return: A synthetic workflow trace object.
+        :return: A synthetic workflow instance object.
         :rtype: Workflow
         """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
@@ -57,13 +57,13 @@ class WorkflowGenerator:
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
         """
-        Generate a number of synthetic workflow traces based on the workflow recipe used to
+        Generate a number of synthetic workflow instances based on the workflow recipe used to
         instantiate the generator.
 
         :param num_workflows: The number of workflows to be generated.
         :type num_workflows: int
 
-        :return: A list of synthetic workflow trace objects.
+        :return: A list of synthetic workflow instance objects.
         :rtype: List[Workflow]
         """
         if num_workflows < 1:
