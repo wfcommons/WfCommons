@@ -171,11 +171,7 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     return stats_dict
 
 
-def ls_recipe():
-    """
-    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
-    how to import it to use.
-    """
+def get_recipes() -> pd.DataFrame:
     rows = []
     for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
         try:
@@ -185,8 +181,14 @@ def ls_recipe():
         except Exception as e:
             traceback.print_exc()
             print(f"Could not load {entry_point.module_name}")
-    df = pd.DataFrame(rows, columns=["name", "module", "import command"])
-    print(df.to_string(index=None))
+    return pd.DataFrame(rows, columns=["name", "module", "import command"])
+
+def ls_recipe():
+    """
+    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
+    how to import it to use.
+    """
+    print(get_recipes())
 
 
 def uninstall_recipe(module_name: str):

@@ -61,6 +61,8 @@ setup(
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main',
+            'wfperf=wfcommons.wfperf.perf:main',
+
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',
