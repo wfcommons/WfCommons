@@ -11,6 +11,8 @@
 import argparse
 import json
 import math
+from modulefinder import Module
+from importlib_metadata import entry_points
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -20,7 +22,7 @@ import pkg_resources
 import subprocess
 import traceback
 
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 from stringcase import capitalcase
 
 from .duplicate import duplicate, NoMicrostructuresError
@@ -170,6 +172,12 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
 
     return stats_dict
 
+def get_recipe(recipe: str) -> Module:
+    modules = []
+    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
+        att  = entry_point.attrs[0]
+        if att == recipe:
+            return entry_point.load()
 
 def get_recipes() -> pd.DataFrame:
     rows = []
