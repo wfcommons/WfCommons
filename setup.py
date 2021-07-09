@@ -60,8 +60,7 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'wfchef=wfcommons.wfchef.chef:main',
-            'wfperf=wfcommons.wfperf.perf:main',
+            'wfchef=wfcommons.wfchef.chef:main'
 
         ],
         'workflow_recipes': [
