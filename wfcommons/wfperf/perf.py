@@ -5,6 +5,7 @@ from typing import Dict, Type, Union
 import json
 from numpy.random import choice
 import numpy as np
+import subprocess
 
 
 
@@ -28,6 +29,7 @@ class WorkflowBenchmark():
                rw_ratio: float = 1.5,
                test_mode: str = "seqwr") -> Dict:
     
+        self._check_sysbench()
         save_dir = pathlib.Path(save_dir).resolve()
         self._check(cpu, fileio, memory)
         save_dir.mkdir(exist_ok=True, parents=True)
@@ -62,6 +64,13 @@ class WorkflowBenchmark():
     def _check(self, cpu: float, fileio: float, memory: float):
         if not np.isclose(cpu + fileio + memory, 1.0):
             raise ValueError("cpu, fileio, and memory arguments must sum to 1.")
+
+    def _check_sysbench(self,):
+        proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        if not out:
+            raise FileNotFoundError("Sysbench not found. Please install sysbench: https://github.com/akopytov/sysbench")
+            
 
     def _cpu_benchmark(self, save_dir: pathlib.Path, max_prime: int = 10000):
         save_dir.joinpath("wfperf-cpu.sh").write_text("\n".join([
