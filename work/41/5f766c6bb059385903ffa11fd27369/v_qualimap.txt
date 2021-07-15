@@ -1,0 +1,22 @@
+Java memory size is set to 1200M
+Launching application...
+
+QualiMap v.2.2.2-dev
+Built on 2019-11-11 14:05
+
+Selected tool: --version
+No proper tool name is provided.
+
+usage: qualimap <tool> [options]
+
+To launch GUI leave <tool> empty.
+
+Available tools:
+
+    bamqc            Evaluate NGS mapping to a reference genome
+    rnaseq           Evaluate RNA-seq alignment data
+    counts           Counts data analysis (further RNA-seq data evaluation)
+    multi-bamqc      Compare QC reports from multiple NGS mappings
+    clustering       Cluster epigenomic signals
+    comp-counts      Compute feature counts
+

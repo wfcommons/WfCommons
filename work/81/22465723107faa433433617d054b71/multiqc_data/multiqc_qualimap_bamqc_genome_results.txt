@@ -1,0 +1,4 @@
+Sample	bam_file	total_reads	mapped_reads	mapped_bases	sequenced_bases	mean_insert_size	median_insert_size	mean_mapping_quality	general_error_rate	mean_coverage	percentage_aligned
+SRR389222_sub1	SRR389222_sub1_trimmed_bismark_bt2.deduplicated.sorted.bam	310.0	310.0	10893.0	10893.0	0.0	0.0	0.4003	0.2569	0.2246	100.0
+SRR389222_sub2	SRR389222_sub2_trimmed_bismark_bt2.deduplicated.sorted.bam	323.0	323.0	11367.0	11367.0	0.0	0.0	0.3848	0.2489	0.2344	100.0
+SRR389222_sub3	SRR389222_sub3_trimmed_bismark_bt2.deduplicated.sorted.bam	311.0	311.0	10964.0	10964.0	0.0	0.0	0.3827	0.2581	0.2261	100.0

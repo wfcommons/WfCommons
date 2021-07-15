@@ -1,0 +1,3 @@
+Sample	Unmapped	Mapped
+1234N.recal	37.0	831.0
+9876T.recal	225.0	8405.0

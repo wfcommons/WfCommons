@@ -1,0 +1,46 @@
+This is cutadapt 2.8 with Python 3.6.7
+Command line parameters: -g GTGYCAGCMGCCGCGGTAA -G GGACTACNVGGGTWTCTAAT --discard-untrimmed -o trimmed/1_S103_L001_R1_001.fastq.gz -p trimmed/1_S103_L001_R2_001.fastq.gz 1_S103_L001_R1_001.fastq.gz 1_S103_L001_R2_001.fastq.gz
+Processing reads on 1 core in paired-end mode ...
+Finished in 0.41 s (165 us/read; 0.36 M reads/minute).
+
+=== Summary ===
+
+Total read pairs processed:              2,500
+  Read 1 with adapter:                   1,840 (73.6%)
+  Read 2 with adapter:                   1,821 (72.8%)
+Pairs written (passing filters):         1,812 (72.5%)
+
+Total basepairs processed:       976,805 bp
+  Read 1:       487,364 bp
+  Read 2:       489,441 bp
+Total written (filtered):        831,610 bp (85.1%)
+  Read 1:       416,723 bp
+  Read 2:       414,887 bp
+
+=== First read: Adapter 1 ===
+
+Sequence: GTGYCAGCMGCCGCGGTAA; Type: regular 5'; Length: 19; Trimmed: 1840 times; Reverse-complemented: 0 times
+
+No. of allowed errors:
+0-9 bp: 0; 10-19 bp: 1
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+18	9	0.0	1	2 7
+19	1830	0.0	1	1729 101
+174	1	0.0	1	1
+
+
+=== Second read: Adapter 2 ===
+
+Sequence: GGACTACNVGGGTWTCTAAT; Type: regular 5'; Length: 20; Trimmed: 1821 times; Reverse-complemented: 0 times
+
+No. of allowed errors:
+0-9 bp: 0; 10-19 bp: 1
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+19	25	0.0	1	0 25
+20	1782	0.0	2	1715 67
+21	13	0.0	2	2 11
+22	1	0.0	2	0 1

@@ -1,0 +1,20 @@
+I0330 03:17:24.833405 140630553257728 call_variants.py:283] Set KMP_BLOCKTIME to 0
+2021-03-30 03:17:24.871346: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+I0330 03:17:24.922007 140630553257728 modeling.py:318] Initializing model with random parameters
+W0330 03:17:24.924160 140630553257728 tf_logging.py:125] Using temporary folder as model directory: /tmp/tmpLk9ytp
+I0330 03:17:24.924988 140630553257728 tf_logging.py:115] Using config: {'_save_checkpoints_secs': 1000, '_session_config': None, '_keep_checkpoint_max': 100000, '_task_type': 'worker', '_global_id_in_cluster': 0, '_is_chief': True, '_cluster_spec': <tensorflow.python.training.server_lib.ClusterSpec object at 0x7fe6ef85cb10>, '_evaluation_master': '', '_save_checkpoints_steps': None, '_keep_checkpoint_every_n_hours': 10000, '_service': None, '_num_ps_replicas': 0, '_tf_random_seed': None, '_master': '', '_device_fn': None, '_num_worker_replicas': 1, '_task_id': 0, '_log_step_count_steps': 100, '_model_dir': '/tmp/tmpLk9ytp', '_train_distribute': None, '_save_summary_steps': 100}
+I0330 03:17:24.925595 140630553257728 call_variants.py:341] Writing calls to NA12878_S1.chr20.10_10p1mb_call_variants_output.tfrecord
+I0330 03:17:24.968961 140630553257728 tf_logging.py:115] Calling model_fn.
+I0330 03:17:27.592231 140630553257728 tf_logging.py:115] Done calling model_fn.
+I0330 03:17:28.856189 140630553257728 tf_logging.py:115] Graph was finalized.
+I0330 03:17:28.856604 140630553257728 tf_logging.py:115] Restoring parameters from /opt/conda/envs/nf-core-deepvariant-1.0/share/deepvariant-0.7.0-0/models/DeepVariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
+I0330 03:17:29.283844 140630553257728 tf_logging.py:115] Running local_init_op.
+I0330 03:17:29.327264 140630553257728 tf_logging.py:115] Done running local_init_op.
+I0330 03:17:29.589803 140630553257728 tf_logging.py:115] Reloading EMA...
+I0330 03:17:29.590039 140630553257728 tf_logging.py:115] Restoring parameters from /opt/conda/envs/nf-core-deepvariant-1.0/share/deepvariant-0.7.0-0/models/DeepVariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
+2021-03-30 03:17:30.250307: W tensorflow/core/framework/allocator.cc:108] Allocation of 34496000 exceeds 10% of system memory.
+2021-03-30 03:17:30.415041: W tensorflow/core/framework/allocator.cc:108] Allocation of 32486400 exceeds 10% of system memory.
+2021-03-30 03:17:30.628521: W tensorflow/core/framework/allocator.cc:108] Allocation of 64972800 exceeds 10% of system memory.
+2021-03-30 03:17:30.974606: W tensorflow/core/framework/allocator.cc:108] Allocation of 41126400 exceeds 10% of system memory.
+I0330 03:17:32.013988 140630553257728 call_variants.py:359] Processed 1 examples in 1 batches [708.685 sec per 100]
+I0330 03:17:32.025362 140630553257728 call_variants.py:361] Done evaluating variants

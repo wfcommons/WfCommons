@@ -1,0 +1,1 @@
+/Users/nirvaanreddy/Desktop/CURVE/work/b1/1ec21d770c1477ee33d38822f26247/.command.sh: line 4: bwa: command not found

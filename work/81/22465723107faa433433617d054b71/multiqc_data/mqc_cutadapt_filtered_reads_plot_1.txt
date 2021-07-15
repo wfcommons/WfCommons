@@ -1,0 +1,4 @@
+Sample	Reads passing filters
+SRR389222_sub1	100000.0
+SRR389222_sub2	120000.0
+SRR389222_sub3	80000.0

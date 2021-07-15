@@ -1,0 +1,110 @@
+mkdir: cannot create directory ‘//.config’: Permission denied
+yara_mapper - Yara Mapper
+=========================
+
+SYNOPSIS
+    yara_mapper [OPTIONS] <REFERENCE INDEX PREFIX> <SE-READS FILE>
+    yara_mapper [OPTIONS] <REFERENCE INDEX PREFIX> <PE-READS FILE 1> <PE-READS
+    FILE 2>
+
+DESCRIPTION
+    Yara - Yet Another Read Aligner.
+
+    See http://www.seqan.de/projects/yara for more information.
+
+    (c) Copyright 2011-2014 by Enrico Siragusa.
+
+    (c) Copyright 2013 by NVIDIA Corporation.
+
+REQUIRED ARGUMENTS
+    REFERENCE_INDEX_PREFIX INPUT_PREFIX
+          An indexed reference genome.
+    READS_FILE List of INPUT_FILE's
+          Either one single-end or two paired-end / mate-pair read files.
+          Valid filetypes are: .sam[.*], .raw[.*], .gbk[.*], .frn[.*],
+          .fq[.*], .fna[.*], .ffn[.*], .fastq[.*], .fasta[.*], .faa[.*],
+          .fa[.*], .embl[.*], and .bam, where * is any of the following
+          extensions: gz, bz2, and bgzf for transparent (de)compression.
+
+OPTIONS
+    -h, --help
+          Display the help message.
+    --version-check BOOL
+          Turn this option off to disable version update notifications of the
+          application. One of 1, ON, TRUE, T, YES, 0, OFF, FALSE, F, and NO.
+          Default: 1.
+    --version
+          Display version information.
+    -v, --verbose
+          Displays global statistics.
+    -vv, --very-verbose
+          Displays extensive statistics for each batch of reads.
+
+  Output Options:
+    -o, --output-file OUTPUT_FILE
+          Specify an output file. Default: write the file to standard output.
+          Valid filetypes are: .sam[.*] and .bam, where * is any of the
+          following extensions: gz, bz2, and bgzf for transparent
+          (de)compression.
+    -f, --output-format STRING
+          Specify an output format. Note: when specifying the option
+          --output-file, the output format is taken from the filename
+          extension. One of bam, sam, sam.bgzf, sam.gz, and sam.bz2. Default:
+          sam.
+    -rg, --read-group STRING
+          Specify a read group for all records in the SAM/BAM file. Default:
+          none.
+    -sm, --secondary-matches STRING
+          Specify whether to output secondary matches in the XA tag of the
+          primary alignment, as separate secondary records, or to omit them.
+          One of tag, record, and omit. Default: tag.
+    -as, --align-secondary
+          Compute and output co- and suboptimal match alignments. Ignored if
+          '-sa omit' is set.
+    -ra, --rabema-alignments
+          Output alignments compatible with the Read Alignment BEnchMArk
+          (RABEMA).
+
+  Mapping Options:
+    -e, --error-rate INTEGER
+          Consider alignments within this percentual number of errors.
+          Increase this threshold to increase the number of mapped reads.
+          Decrease this threshold to decrease the runtime. In range [0..10].
+          Default: 5.
+    -s, --strata-rate INTEGER
+          Consider suboptimal alignments within this percentual number of
+          errors from the optimal alignment. Increase this threshold to
+          increase the number of alternative alignments at the expense of
+          runtime. In range [0..10]. Default: 0.
+    -sc, --strata-count INTEGER
+          Consider suboptimal alignments within this absolute number of errors
+          from the optimal alignment. Increase this threshold to increase the
+          number of alternative alignments at the expense of runtime. In range
+          [0..127]. Default: 0.
+    -y, --sensitivity STRING
+          Sensitivity with respect to edit distance. Full sensitivity
+          guarantees to find all considered alignments but increases runtime,
+          low sensitivity decreases runtime by breaking such guarantee. One of
+          low, high, and full. Default: high.
+
+  Paired-End Mapping Options:
+    -ll, --library-length INTEGER
+          Expected library length. Default: autodetected. In range [1..inf].
+    -ld, --library-deviation INTEGER
+          Deviation from the expected library length. Default: autodetected.
+          In range [1..inf].
+    -i, --indel-rate INTEGER
+          Rescue unaligned ends within this percentual number of indels. In
+          range [0..50]. Default: 25.
+    -ni, --no-indels
+          Turn off the rescue of unaligned ends containing indels.
+
+  Performance Options:
+    -t, --threads INTEGER
+          Specify the number of threads to use. In range [1..2048]. Default:
+          4.
+
+VERSION
+    Last update: 2018-08-20_08:52:10_+0200
+    yara_mapper version: 1.0.2 [a914e84]
+    SeqAn version: 2.4.1

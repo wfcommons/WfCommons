@@ -1,0 +1,60 @@
+========================================
+ nf-core/deepvariant v1.0
+========================================
+Run Name: sick_hamilton
+
+## nf-core/deepvariant execution completed successfully! ##
+
+
+## nf-core/deepvariant execution completed successfully! ##
+
+
+
+
+The workflow was completed at 2021-03-29T20:17:41.839867-07:00 (duration: 11m 37s)
+
+The command used to launch the workflow was as follows:
+
+  nextflow run nf-core/deepvariant -r 1.0 -profile test,docker
+
+
+
+Pipeline Configuration:
+-----------------------
+ - Pipeline Name: nf-core/deepvariant
+ - Pipeline Version: 1.0
+ - Bam file: https://github.com/nf-core/test-datasets/raw/deepvariant/testdata/NA12878_S1.chr20.10_10p1mb.bam
+ - Bed file: https://github.com/nf-core/test-datasets/raw/deepvariant/testdata/test_nist.b37_chr20_100kbp_at_10mb.bed
+ - Reference genome: hg19chr20
+ - Fasta Ref: s3://deepvariant-data/genomes/hg19chr20/chr20.fa
+ - Fasta Index: s3://deepvariant-data/genomes/hg19chr20/chr20.fa.fai
+ - Fasta gzipped : s3://deepvariant-data/genomes/hg19chr20/chr20.fa.gz
+ - Fasta gzipped Index: s3://deepvariant-data/genomes/hg19chr20/chr20.fa.gz.fai
+ - Fasta bgzip Index: s3://deepvariant-data/genomes/hg19chr20/chr20.fa.gz.gzi
+ - Max Memory: 6 GB
+ - Max CPUs: 2
+ - Max Time: 2d
+ - Model: wgs
+ - Output dir: results
+ - Working dir: /Users/nirvaanreddy/Desktop/CURVE/work
+ - Container Engine: docker
+ - Container: nfcore/deepvariant:1.0
+ - Current home: /Users/nirvaanreddy
+ - Current user: nirvaanreddy
+ - Current path: /Users/nirvaanreddy/Desktop/CURVE
+ - Script dir: /Users/nirvaanreddy/.nextflow/assets/nf-core/deepvariant
+ - Config Profile: test,docker
+ - Date Started: 2021-03-29T20:06:04.435348-07:00
+ - Date Completed: 2021-03-29T20:17:41.839867-07:00
+ - Pipeline script file path: /Users/nirvaanreddy/.nextflow/assets/nf-core/deepvariant/main.nf
+ - Pipeline script hash ID: 0788b605ab27586299d179015c7595da
+ - Pipeline repository Git URL: https://github.com/nf-core/deepvariant
+ - Pipeline repository Git Commit: 2b5486356c4dbd4dcb598b611281997119c2e350
+ - Pipeline Git branch/tag: 1.0
+ - Nextflow Version: 20.10.0
+ - Nextflow Build: 5430
+ - Nextflow Compile Timestamp: 01-11-2020 15:14 UTC
+
+--
+nf-core/deepvariant
+https://github.com/nf-core/deepvariant

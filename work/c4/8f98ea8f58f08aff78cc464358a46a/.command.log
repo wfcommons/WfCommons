@@ -1,0 +1,32 @@
+Unable to find image 'nfcore/ampliseq:1.2.0' locally
+1.2.0: Pulling from nfcore/ampliseq
+68ced04f60ab: Already exists
+9c388eb6d33c: Already exists
+96cf53b3a9dd: Already exists
+3fbba84366dd: Already exists
+8581738915d3: Pulling fs layer
+eab4918e09a5: Pulling fs layer
+50a35cb6d382: Pulling fs layer
+3173d1b5761e: Pulling fs layer
+df4d31b2b7f4: Pulling fs layer
+6e907024a8d0: Pulling fs layer
+3173d1b5761e: Waiting
+df4d31b2b7f4: Waiting
+6e907024a8d0: Waiting
+8581738915d3: Download complete
+50a35cb6d382: Verifying Checksum
+50a35cb6d382: Download complete
+8581738915d3: Pull complete
+3173d1b5761e: Download complete
+df4d31b2b7f4: Verifying Checksum
+df4d31b2b7f4: Download complete
+6e907024a8d0: Verifying Checksum
+6e907024a8d0: Download complete
+eab4918e09a5: Download complete
+eab4918e09a5: Pull complete
+50a35cb6d382: Pull complete
+3173d1b5761e: Pull complete
+df4d31b2b7f4: Pull complete
+6e907024a8d0: Pull complete
+Digest: sha256:2eb95339c0a754397e43dcf649e4fd9e819463bda572bca15da0799fa71497af
+Status: Downloaded newer image for nfcore/ampliseq:1.2.0

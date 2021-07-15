@@ -1,0 +1,9 @@
+sample-id,absolute-filepath,direction
+2a,/Users/nirvaanreddy/Desktop/CURVE/work/16/25ac53e515616c8500fcd22711e840/trimmed/2a_S115_L001_R1_001.fastq.gz,forward
+2a,/Users/nirvaanreddy/Desktop/CURVE/work/16/25ac53e515616c8500fcd22711e840/trimmed/2a_S115_L001_R2_001.fastq.gz,reverse
+1a,/Users/nirvaanreddy/Desktop/CURVE/work/85/f7bc0b9c6ed6583e9a3b7ed4810d2b/trimmed/1a_S103_L001_R1_001.fastq.gz,forward
+1a,/Users/nirvaanreddy/Desktop/CURVE/work/85/f7bc0b9c6ed6583e9a3b7ed4810d2b/trimmed/1a_S103_L001_R2_001.fastq.gz,reverse
+1,/Users/nirvaanreddy/Desktop/CURVE/work/18/e71ae688fc763cf12408017d26daa6/trimmed/1_S103_L001_R1_001.fastq.gz,forward
+1,/Users/nirvaanreddy/Desktop/CURVE/work/18/e71ae688fc763cf12408017d26daa6/trimmed/1_S103_L001_R2_001.fastq.gz,reverse
+2,/Users/nirvaanreddy/Desktop/CURVE/work/4a/aa2352d1b0948045aee96a9e7ac29b/trimmed/2_S115_L001_R1_001.fastq.gz,forward
+2,/Users/nirvaanreddy/Desktop/CURVE/work/4a/aa2352d1b0948045aee96a9e7ac29b/trimmed/2_S115_L001_R2_001.fastq.gz,reverse

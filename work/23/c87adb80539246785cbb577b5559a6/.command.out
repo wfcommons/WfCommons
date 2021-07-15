@@ -1,0 +1,30 @@
+chr chr (48502 bp)
+
+Processed 99829 sequences in total
+
+Sequences with no alignments under any condition:	50240
+Sequences did not map uniquely:	0
+Sequences which were discarded because genomic sequence could not be extracted:	0
+
+Number of sequences with unique best (first) alignment came from the bowtie output:
+CT/CT:	49575	((converted) top strand)
+CT/GA:	14	((converted) bottom strand)
+GA/CT:	0	(complementary to (converted) top strand)
+GA/GA:	0	(complementary to (converted) bottom strand)
+
+Number of alignments to (merely theoretical) complementary strands being rejected in total:	0
+
+Processed 99829 sequences in total
+
+Sequences with no alignments under any condition:	50240
+Sequences did not map uniquely:	0
+Sequences which were discarded because genomic sequence could not be extracted:	0
+
+Number of sequences with unique best (first) alignment came from the bowtie output:
+CT/CT:	49575	((converted) top strand)
+CT/GA:	14	((converted) bottom strand)
+GA/CT:	0	(complementary to (converted) top strand)
+GA/GA:	0	(complementary to (converted) bottom strand)
+
+Number of alignments to (merely theoretical) complementary strands being rejected in total:	0
+

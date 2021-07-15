@@ -1,0 +1,34 @@
+
+id: 'software_versions'
+section_name: 'nf-core/sarek software versions'
+section_href: 'https://github.com/nf-core/sarek'
+plot_type: 'html'
+description: 'are collected at run time from the software output.'
+data: |
+    <dl class="dl-horizontal">
+
+        <dt>nf-core/sarek</dt><dd><samp>v2.7</samp></dd>
+        <dt>Nextflow</dt><dd><samp>v20.10.0</samp></dd>
+        <dt>BWA</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>GATK</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>FreeBayes</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>samtools</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>Strelka</dt><dd><samp>v1</samp></dd>
+        <dt>Manta</dt><dd><samp>v1</samp></dd>
+        <dt>TIDDIT</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>AlleleCount</dt><dd><samp>v/Users/nirvaanreddy/Desktop/CURVE/work/b1/1ec21d770c1477ee33d38822f26247/.command.sh:</samp></dd>
+        <dt>ASCAT</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>Control-FREEC</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>msisensor</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>SnpEff</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>VEP</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>MultiQC</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>FastQC</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>bcftools</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>CNVkit</dt><dd><samp>v/Users/nirvaanreddy/Desktop/CURVE/work/b1/1ec21d770c1477ee33d38822f26247/.command.sh:</samp></dd>
+        <dt>htslib</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>QualiMap</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>Trim Galore</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+        <dt>vcftools</dt><dd><samp>v1</samp></dd>
+        <dt>R</dt><dd><samp><span style="color:#999999;">N/A</span></samp></dd>
+    </dl>

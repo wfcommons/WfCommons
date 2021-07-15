@@ -1,0 +1,69 @@
+
+R version 4.0.2 (2020-06-22) -- "Taking Off Again"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-conda_cos6-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(ASCAT); help(package='ASCAT')
+Loading required package: RColorBrewer
+
+		Information on package ‘ASCAT’
+
+Description:
+
+Package:       ASCAT
+Type:          Package
+Title:         Allele-Specific Copy Number Analysis of Tumours
+Version:       2.5.2
+Date:          2018-08-29
+Authors@R:     c(person("Peter", "Van Loo", role=c("aut","cre"),
+               email="Peter.VanLoo@crick.ac.uk"), person("Gro",
+               "Nielsen", role="ctb"), person("Jiqiu","Cheng",
+               role="ctb"), person("Stefan","Dentro", role="ctb"),
+               person("Edith","Ross", role="ctb"),
+               person("Kerstin","Haase", role="ctb"))
+Author:        Peter Van Loo [aut, cre], Gro Nielsen [ctb], Jiqiu Cheng
+               [ctb], Stefan Dentro [ctb], Edith Ross [ctb], Kerstin
+               Haase [ctb]
+Maintainer:    Kerstin Haase <Kerstin.Haase@crick.ac.uk>
+Description:   R package of ASCAT as published in
+               http://www.ncbi.nlm.nih.gov/ pubmed/20837533
+Depends:       R (>= 2.13.0), RColorBrewer, grDevices, graphics, stats,
+               utils
+License:       GPL-3
+LazyLoad:      yes
+RoxygenNote:   6.1.0
+Built:         R 4.0.2; ; 2020-08-13 08:42:19 UTC; unix
+
+Index:
+
+ascat.GCcorrect         ascat.GCcorrect
+ascat.asmultipcf        Allele-specific segmentation of multiple
+                        samples
+ascat.aspcf             ascat.aspcf
+ascat.loadData          ascat.loadData
+ascat.plotAscatProfile
+                        ascat.plotAscatProfile
+ascat.plotGenotypes     ascat.plotGenotypes
+ascat.plotNonRounded    ascat.plotNonRounded
+ascat.plotRawData       ascat.plotRawData
+ascat.plotSegmentedData
+                        ascat.plotSegmentedData
+ascat.plotSunrise       ascat.plotSunrise
+ascat.predictGermlineGenotypes
+                        ascat.predictGermlineGenotypes
+ascat.runAscat          ascat.runAscat
+
+> 
+> 

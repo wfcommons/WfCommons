@@ -1,0 +1,7 @@
+2021-03-30 03:17:41.374779: I deepvariant/postprocess_variants.cc:88] Read from: call_variants_output.tfrecord
+2021-03-30 03:17:41.375955: I deepvariant/postprocess_variants.cc:97] Done reading: call_variants_output.tfrecord. #entries in single_site_calls = 50
+2021-03-30 03:17:41.376532: I deepvariant/postprocess_variants.cc:101] Total #entries in single_site_calls = 50
+2021-03-30 03:17:41.376626: I deepvariant/postprocess_variants.cc:103] Start SortSingleSiteCalls
+2021-03-30 03:17:41.376661: I deepvariant/postprocess_variants.cc:105] Done SortSingleSiteCalls
+I0330 03:17:41.377204 139734138865408 postprocess_variants.py:592] Writing output to VCF file: NA12878_S1.chr20.10_10p1mb.bam.vcf
+I0330 03:17:41.379385 139734138865408 genomics_writer.py:163] Writing NA12878_S1.chr20.10_10p1mb.bam.vcf with NativeVcfWriter

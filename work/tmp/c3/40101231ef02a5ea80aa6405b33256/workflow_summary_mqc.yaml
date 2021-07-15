@@ -1,0 +1,35 @@
+
+id: 'nf-core-cageseq-summary'
+description: " - this information is collected when the pipeline is started."
+section_name: 'nf-core/cageseq Workflow Summary'
+section_href: 'https://github.com/nf-core/cageseq'
+plot_type: 'html'
+data: |
+    <dl class="dl-horizontal">
+        <dt>Pipeline Release</dt><dd><samp>1.0.2</samp></dd>
+        <dt>Run Name</dt><dd><samp>focused_allen</samp></dd>
+        <dt>Input</dt><dd><samp>data/*R1.fastq.gz</samp></dd>
+        <dt>5' artifacts</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq/assets/artifacts_5end.fasta</samp></dd>
+        <dt>3' artifacts</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq/assets/artifacts_3end.fasta</samp></dd>
+        <dt>trim_ecop</dt><dd><samp>true</samp></dd>
+        <dt>trim_linker</dt><dd><samp>true</samp></dd>
+        <dt>trim_5g</dt><dd><samp>true</samp></dd>
+        <dt>trim_artifacts</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>eco_site</dt><dd><samp>CAGCAG</samp></dd>
+        <dt>linker_seq</dt><dd><samp>TCGTATGCCGTCTTC</samp></dd>
+        <dt>Remove rRNA</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Aligner</dt><dd><samp>STAR</samp></dd>
+        <dt>Fasta Ref</dt><dd><samp>https://github.com/nf-core/test-datasets/raw/cageseq/reference/chr_sub.fasta</samp></dd>
+        <dt>Min. cluster</dt><dd><samp>30</samp></dd>
+        <dt>Cluster Threshold</dt><dd><samp>0.2</samp></dd>
+        <dt>Save Reference</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Max Resources</dt><dd><samp>6 GB memory, 2 cpus, 2d time per job</samp></dd>
+        <dt>Output dir</dt><dd><samp>./results</samp></dd>
+        <dt>Launch dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE</samp></dd>
+        <dt>Working dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE/work</samp></dd>
+        <dt>Script dir</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq</samp></dd>
+        <dt>User</dt><dd><samp>nirvaanreddy</samp></dd>
+        <dt>Config Profile</dt><dd><samp>test</samp></dd>
+        <dt>Config Profile Description</dt><dd><samp>Minimal test dataset to check pipeline function</samp></dd>
+        <dt>Config Files</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq/nextflow.config</samp></dd>
+    </dl>

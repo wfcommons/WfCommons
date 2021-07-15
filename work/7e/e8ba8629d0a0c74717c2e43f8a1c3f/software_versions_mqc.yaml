@@ -1,0 +1,19 @@
+
+id: 'nf-core/deepvariant-software-versions'
+section_name: 'nf-core/deepvariant Software Versions'
+section_href: 'https://github.com/nf-core/deepvariant'
+plot_type: 'html'
+description: 'are collected at run time from the software output.'
+data: |
+    <dl class="dl-horizontal">
+
+        <dt>nf-core/deepvariant</dt><dd>v1.0</dd>
+        <dt>Nextflow</dt><dd>v20.10.0</dd>
+        <dt>DeepVariant</dt><dd>v0.7.0</dd>
+        <dt>Python</dt><dd>v2.7.15</dd>
+        <dt>Pip</dt><dd>v10.0.1</dd>
+        <dt>Samtools</dt><dd>v1.9</dd>
+        <dt>Htslib</dt><dd>v1.9</dd>
+        <dt>Lbzip2</dt><dd>v2.5</dd>
+        <dt>Bzip2</dt><dd><span style="color:#999999;">N/A</span></dd>
+    </dl>

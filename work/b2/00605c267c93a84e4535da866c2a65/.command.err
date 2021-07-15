@@ -1,0 +1,25 @@
+User specifified dedup report: SRR389222_sub1_trimmed_bismark_bt2.deduplication_report.txt
+
+Writing Bismark HTML report to >> SRR389222_sub1_trimmed_bismark_bt2_SE_report.html <<
+
+==============================================================================================================
+Using the following alignment report:		> SRR389222_sub1_trimmed_bismark_bt2_SE_report.txt <
+Processing alignment report SRR389222_sub1_trimmed_bismark_bt2_SE_report.txt ...
+Complete
+
+Using the following deduplication report:	> SRR389222_sub1_trimmed_bismark_bt2.deduplication_report.txt <
+Processing deduplication report SRR389222_sub1_trimmed_bismark_bt2.deduplication_report.txt ...
+Complete
+
+Using the following splitting report:		> SRR389222_sub1_trimmed_bismark_bt2.deduplicated_splitting_report.txt <
+Processing splitting report SRR389222_sub1_trimmed_bismark_bt2.deduplicated_splitting_report.txt ...
+Complete
+
+Using the following M-bias report:		> SRR389222_sub1_trimmed_bismark_bt2.deduplicated.M-bias.txt <
+Processing M-bias report SRR389222_sub1_trimmed_bismark_bt2.deduplicated.M-bias.txt ...
+Complete
+
+No nucleotide coverage report file specified, skipping this step
+==============================================================================================================
+
+

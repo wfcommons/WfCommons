@@ -1,0 +1,7 @@
+/opt/conda/envs/nf-core-methylseq-1.6/bin/hisat2-align-s version 2.2.1
+64-bit
+Built on fv-az145
+Tue Aug 11 06:50:09 UTC 2020
+Compiler: collect2: error: ld returned 1 exit status
+Options: -O3 -m64 -msse2 -funroll-loops -g3 -DPOPCNT_CAPABILITY -std=c++11
+Sizeof {int, long, long long, void*, size_t, off_t}: {4, 8, 8, 8, 8, 8}

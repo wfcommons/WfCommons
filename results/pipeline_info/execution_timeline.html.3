@@ -1,0 +1,227 @@
+<!doctype html>
+<!--
+  ~ Copyright 2013-2019, Centre for Genomic Regulation (CRG)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<script type="text/javascript">
+var prot = (("https:" == document.location.protocol) ? "https://" : "http://");
+document.write(unescape("%3Cscript src='" + prot + "code.jquery.com/jquery-latest.min.js' type='text/javascript' %3E%3C/script%3E"));
+document.write(unescape("%3Cscript src='" + prot + "d3js.org/d3.v3.min.js' charset='utf-8' type='text/javascript' %3E%3C/script%3E"));
+document.write(unescape("%3Cscript src='" + prot + "cdn.rawgit.com/nextflow-io/d3-timeline/82622c4cc35bac7283b3a317826b0709ac1ae476/src/d3-timeline.js' type='text/javascript' %3E%3C/script%3E"));
+</script>
+<style type="text/css">
+* {
+  font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+.axis path,
+.axis line {
+fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-size: 10px;
+}
+
+div#timeline g text {
+  font-size: 13px;
+}
+
+text.timeline-label {
+  font-size: 13px;
+}
+
+#timeline2 .axis {
+  transform: translate(0px,30px);
+  -ms-transform: translate(0px,30px); /* IE 9 */
+  -webkit-transform: translate(0px,30px); /* Safari and Chrome */
+  -o-transform: translate(0px,30px); /* Opera */
+  -moz-transform: translate(0px,30px); /* Firefox */
+}
+
+.coloredDiv {
+  height:20px; width:20px; float:left;
+}
+
+#footer {
+  padding-top: 3em; color: #bfbfbf; font-size: 13px;
+}
+
+#footer a:visited {
+  color: #bfbfbf;
+  text-decoration: underline;
+}
+</style>
+<script type="text/javascript">
+var handler=null;
+// see https://github.com/mbostock/d3/wiki/Ordinal-Scales#category20c
+var colors = d3.scale.category20c().domain(d3.range(0,20)).range()
+
+function c0(index) { return "#9c9c9c"; }
+function c1(index) { return "#bdbdbd"; }
+function c2(index) { return colors[index % 16]; } // <-- note: uses only the first 16 colors
+
+var elapsed="8m 18s"
+var beginningMillis=1616913286326;
+var endingMillis=1616913783947;
+var data=[
+{"label": "get_software_versions", "times": [{"starting_time": 1616913290150, "ending_time": 1616913290159, "color":c1(0)}, {"starting_time": 1616913290159, "ending_time": 1616913297752, "color":c2(0), "label": "3m 44s \/ 91.3 MB"}, {"starting_time": 1616913297752, "ending_time": 1616913513994, "color":c1(0)}]},
+{"label": "output_documentation", "times": [{"starting_time": 1616913517389, "ending_time": 1616913518482, "color":c1(1)}, {"starting_time": 1616913518482, "ending_time": 1616913518848, "color":c2(1), "label": "2.7s \/ 3.1 MB"}, {"starting_time": 1616913518848, "ending_time": 1616913520086, "color":c1(1)}]},
+{"label": "makeBismarkIndex (1)", "times": [{"starting_time": 1616913520112, "ending_time": 1616913520187, "color":c1(2)}, {"starting_time": 1616913520187, "ending_time": 1616913526302, "color":c2(2), "label": "7.1s \/ 116.9 MB"}, {"starting_time": 1616913526302, "ending_time": 1616913527211, "color":c1(2)}]},
+{"label": "fastqc (SRR389222_sub1)", "times": [{"starting_time": 1616913527217, "ending_time": 1616913527316, "color":c1(3)}, {"starting_time": 1616913527316, "ending_time": 1616913532823, "color":c2(3), "label": "6.4s \/ 198.9 MB"}, {"starting_time": 1616913532823, "ending_time": 1616913533588, "color":c1(3)}]},
+{"label": "trim_galore (SRR389222_sub1)", "times": [{"starting_time": 1616913533594, "ending_time": 1616913533691, "color":c1(4)}, {"starting_time": 1616913533691, "ending_time": 1616913541039, "color":c2(4), "label": "8.2s \/ 207.4 MB"}, {"starting_time": 1616913541039, "ending_time": 1616913541777, "color":c1(4)}]},
+{"label": "fastqc (SRR389222_sub2)", "times": [{"starting_time": 1616913541808, "ending_time": 1616913541877, "color":c1(3)}, {"starting_time": 1616913541877, "ending_time": 1616913549516, "color":c2(3), "label": "8.7s \/ 191 MB"}, {"starting_time": 1616913549516, "ending_time": 1616913550474, "color":c1(3)}]},
+{"label": "fastqc (SRR389222_sub3)", "times": [{"starting_time": 1616913550482, "ending_time": 1616913550578, "color":c1(3)}, {"starting_time": 1616913550578, "ending_time": 1616913557313, "color":c2(3), "label": "7.7s \/ 163.7 MB"}, {"starting_time": 1616913557313, "ending_time": 1616913558205, "color":c1(3)}]},
+{"label": "trim_galore (SRR389222_sub3)", "times": [{"starting_time": 1616913558215, "ending_time": 1616913558309, "color":c1(4)}, {"starting_time": 1616913558309, "ending_time": 1616913566700, "color":c2(4), "label": "9.2s \/ 234.1 MB"}, {"starting_time": 1616913566700, "ending_time": 1616913567440, "color":c1(4)}]},
+{"label": "trim_galore (SRR389222_sub2)", "times": [{"starting_time": 1616913567448, "ending_time": 1616913567541, "color":c1(4)}, {"starting_time": 1616913567541, "ending_time": 1616913575847, "color":c2(4), "label": "9.2s \/ 224 MB"}, {"starting_time": 1616913575847, "ending_time": 1616913576634, "color":c1(4)}]},
+{"label": "bismark_align (SRR389222_sub1)", "times": [{"starting_time": 1616913576641, "ending_time": 1616913576736, "color":c1(5)}, {"starting_time": 1616913576736, "ending_time": 1616913611372, "color":c2(5), "label": "35.8s \/ 71.1 MB"}, {"starting_time": 1616913611372, "ending_time": 1616913612405, "color":c1(5)}]},
+{"label": "bismark_align (SRR389222_sub3)", "times": [{"starting_time": 1616913612458, "ending_time": 1616913613087, "color":c1(5)}, {"starting_time": 1616913613087, "ending_time": 1616913645161, "color":c2(5), "label": "33.6s \/ 70.4 MB"}, {"starting_time": 1616913645161, "ending_time": 1616913646066, "color":c1(5)}]},
+{"label": "bismark_align (SRR389222_sub2)", "times": [{"starting_time": 1616913646105, "ending_time": 1616913646166, "color":c1(5)}, {"starting_time": 1616913646166, "ending_time": 1616913681677, "color":c2(5), "label": "36.6s \/ 70.6 MB"}, {"starting_time": 1616913681677, "ending_time": 1616913682695, "color":c1(5)}]},
+{"label": "preseq (SRR389222_sub1)", "times": [{"starting_time": 1616913682705, "ending_time": 1616913682797, "color":c1(6)}, {"starting_time": 1616913682797, "ending_time": 1616913684161, "color":c2(6), "label": "1.5s \/ -"}]},
+{"label": "bismark_deduplicate (SRR389222_sub1)", "times": [{"starting_time": 1616913684166, "ending_time": 1616913684261, "color":c1(7)}, {"starting_time": 1616913684261, "ending_time": 1616913684833, "color":c2(7), "label": "1.4s \/ 10.9 MB"}, {"starting_time": 1616913684833, "ending_time": 1616913685536, "color":c1(7)}]},
+{"label": "bismark_deduplicate (SRR389222_sub3)", "times": [{"starting_time": 1616913685541, "ending_time": 1616913685639, "color":c1(7)}, {"starting_time": 1616913685639, "ending_time": 1616913686135, "color":c2(7), "label": "1.3s \/ 11 MB"}, {"starting_time": 1616913686135, "ending_time": 1616913686826, "color":c1(7)}]},
+{"label": "preseq (SRR389222_sub3)", "times": [{"starting_time": 1616913686842, "ending_time": 1616913686928, "color":c1(6)}, {"starting_time": 1616913686928, "ending_time": 1616913688159, "color":c2(6), "label": "1.3s \/ -"}]},
+{"label": "bismark_deduplicate (SRR389222_sub2)", "times": [{"starting_time": 1616913688167, "ending_time": 1616913688263, "color":c1(7)}, {"starting_time": 1616913688263, "ending_time": 1616913688995, "color":c2(7), "label": "1.6s \/ 11.1 MB"}, {"starting_time": 1616913688995, "ending_time": 1616913689757, "color":c1(7)}]},
+{"label": "preseq (SRR389222_sub2)", "times": [{"starting_time": 1616913689767, "ending_time": 1616913689862, "color":c1(6)}, {"starting_time": 1616913689862, "ending_time": 1616913691321, "color":c2(6), "label": "1.6s \/ -"}]},
+{"label": "qualimap (SRR389222_sub1)", "times": [{"starting_time": 1616913691330, "ending_time": 1616913691426, "color":c1(8)}, {"starting_time": 1616913691426, "ending_time": 1616913695722, "color":c2(8), "label": "5.1s \/ 126.1 MB"}, {"starting_time": 1616913695722, "ending_time": 1616913696458, "color":c1(8)}]},
+{"label": "bismark_methXtract (SRR389222_sub1)", "times": [{"starting_time": 1616913696467, "ending_time": 1616913696561, "color":c1(9)}, {"starting_time": 1616913696561, "ending_time": 1616913708128, "color":c2(9), "label": "12.5s \/ 26.1 MB"}, {"starting_time": 1616913708128, "ending_time": 1616913708936, "color":c1(9)}]},
+{"label": "qualimap (SRR389222_sub3)", "times": [{"starting_time": 1616913708941, "ending_time": 1616913709041, "color":c1(8)}, {"starting_time": 1616913709041, "ending_time": 1616913711909, "color":c2(8), "label": "3.6s \/ 118.1 MB"}, {"starting_time": 1616913711909, "ending_time": 1616913712559, "color":c1(8)}]},
+{"label": "bismark_methXtract (SRR389222_sub3)", "times": [{"starting_time": 1616913712567, "ending_time": 1616913712661, "color":c1(9)}, {"starting_time": 1616913712661, "ending_time": 1616913724172, "color":c2(9), "label": "12.3s \/ 26.2 MB"}, {"starting_time": 1616913724172, "ending_time": 1616913724910, "color":c1(9)}]},
+{"label": "bismark_methXtract (SRR389222_sub2)", "times": [{"starting_time": 1616913724917, "ending_time": 1616913725012, "color":c1(9)}, {"starting_time": 1616913725012, "ending_time": 1616913736547, "color":c2(9), "label": "12.3s \/ 26 MB"}, {"starting_time": 1616913736547, "ending_time": 1616913737167, "color":c1(9)}]},
+{"label": "qualimap (SRR389222_sub2)", "times": [{"starting_time": 1616913737181, "ending_time": 1616913737270, "color":c1(8)}, {"starting_time": 1616913737270, "ending_time": 1616913740303, "color":c2(8), "label": "3.8s \/ 121.4 MB"}, {"starting_time": 1616913740303, "ending_time": 1616913741028, "color":c1(8)}]},
+{"label": "bismark_report (SRR389222_sub1)", "times": [{"starting_time": 1616913741037, "ending_time": 1616913741128, "color":c1(10)}, {"starting_time": 1616913741128, "ending_time": 1616913742828, "color":c2(10), "label": "2.7s \/ 140.6 MB"}, {"starting_time": 1616913742828, "ending_time": 1616913743752, "color":c1(10)}]},
+{"label": "bismark_report (SRR389222_sub3)", "times": [{"starting_time": 1616913743762, "ending_time": 1616913743856, "color":c1(10)}, {"starting_time": 1616913743856, "ending_time": 1616913745348, "color":c2(10), "label": "2.2s \/ 141.2 MB"}, {"starting_time": 1616913745348, "ending_time": 1616913745975, "color":c1(10)}]},
+{"label": "bismark_report (SRR389222_sub2)", "times": [{"starting_time": 1616913745986, "ending_time": 1616913746077, "color":c1(10)}, {"starting_time": 1616913746077, "ending_time": 1616913747534, "color":c2(10), "label": "2.2s \/ 114.2 MB"}, {"starting_time": 1616913747534, "ending_time": 1616913748201, "color":c1(10)}]},
+{"label": "bismark_summary", "times": [{"starting_time": 1616913748217, "ending_time": 1616913748304, "color":c1(11)}, {"starting_time": 1616913748304, "ending_time": 1616913748762, "color":c2(11), "label": "1.3s \/ 11.5 MB"}, {"starting_time": 1616913748762, "ending_time": 1616913749521, "color":c1(11)}]},
+{"label": "multiqc (1)", "times": [{"starting_time": 1616913749607, "ending_time": 1616913749623, "color":c1(12)}, {"starting_time": 1616913749623, "ending_time": 1616913780247, "color":c2(12), "label": "31.7s \/ 133.8 MB"}, {"starting_time": 1616913780247, "ending_time": 1616913781351, "color":c1(12)}]}
+]
+
+
+function getTickFormat() {
+  var MIN = 1000 * 60
+  var HOUR = MIN * 60
+  var DAY = HOUR * 24
+  var delta = (endingMillis - beginningMillis)
+
+  if( delta < 2 * MIN ) {
+    return {
+      format: d3.time.format("%S"),
+      tickTime: d3.time.seconds,
+      tickInterval: 5,
+      tickSize: 6
+    }
+  }
+
+  if( delta < 2 * HOUR ) {
+    return {
+      format: d3.time.format("%M"),
+      tickTime: d3.time.minutes,
+      tickInterval: 5,
+      tickSize: 6
+    }
+  }
+
+  if( delta < 2 * DAY ) {
+    return {
+      format: d3.time.format("%H:%M"),
+      tickTime: d3.time.hours,
+      tickInterval: 1,
+      tickSize: 6
+    }
+  }
+
+  if( delta <= 7 * DAY ) {
+    return {
+      format: d3.time.format("%b %e %H:%M"),
+      tickTime: d3.time.hours,
+      tickInterval: 6,
+      tickSize: 6
+    }
+  }
+
+  return {
+    format: d3.time.format("%b %e"),
+    tickTime: d3.time.days,
+    tickInterval: 1,
+    tickSize: 6
+  }
+}
+
+function getLabelMargin(scale) {
+    $('<span class="labelSpan" style="display: none"></span>').appendTo('body');
+
+    var labelMargin = 0
+    $.each(data, function (key, value) {
+      labelMargin = Math.max(labelMargin, $('.labelSpan').html(value.label).width());
+    });
+
+    $('.labelSpan').remove();
+
+    return (labelMargin * scale);
+}
+
+function render() {
+  handler=null;
+  $("#timeline").empty()
+  $('#label_elapsed').text(elapsed)
+  $('#label_launch').text( d3.time.format('%d %b %Y %H:%M')(new Date(beginningMillis)) )
+
+  var width = $(window).width();
+  var chart = d3.timeline()
+    .stack() // toggles graph stacking
+    .margin({left:getLabelMargin(0.85), right:100, top:0, bottom:0})
+    .tickFormat( getTickFormat() )
+    .rowSeperators('#f5f5f5')
+    .showTimeAxisTick()
+    ;
+  var svg = d3.select("#timeline").append("svg").attr("width", width).datum(data).call(chart);
+}
+
+function hrz() {
+if( handler != null ) clearTimeout(handler)
+  handler = setTimeout(render, 150);
+}
+
+$(document).ready(render)
+$(window).resize(hrz); // resize the applet on window resize
+</script>
+</head>
+
+<body>
+<div>
+  <h3>Processes execution timeline</h3>
+  <p>
+    Launch time: <span id='label_launch'> </span><br>
+    Elapsed time: <span id='label_elapsed'> </span><br>
+    Legend: job wall time / memory usage (RAM) <span id='label_legend'> </span>
+  </p>
+  <div id="timeline"></div>
+</div>
+
+<div id='footer'>
+  Created with Nextflow -- <a href='http://www.nextflow.io' target='_blank'>http://nextflow.io</a>
+</div>
+
+<script type="text/javascript">
+var prot = (("https:" == document.location.protocol) ? "https://" : "http://");
+document.write(unescape("%3Clink href='" + prot + "fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css' %3E%3C/link%3E"));
+</script>
+</body>
+</html>

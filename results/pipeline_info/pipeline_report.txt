@@ -1,0 +1,61 @@
+----------------------------------------------------
+                                        ,--./,-.
+        ___     __   __   __   ___     /,-._.--~\
+  |\ | |__  __ /  ` /  \ |__) |__         }  {
+  | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                        `._,._,'
+  nf-core/hlatyping v1.2.0
+----------------------------------------------------
+
+Run Name: adoring_roentgen
+
+## nf-core/hlatyping execution completed successfully! ##
+
+
+The workflow was completed at 2021-03-29T19:58:03.440215-07:00 (duration: 7m 44s)
+
+The command used to launch the workflow was as follows:
+
+  nextflow run nf-core/hlatyping -r 1.2.0 -profile test,docker
+
+
+
+Pipeline Configuration:
+-----------------------
+ - Pipeline Release: 1.2.0
+ - Run Name: adoring_roentgen
+ - File Type: BAM
+ - Seq Type: dna
+ - Index Location: /Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping/data/indices/yara/hla_reference_dna
+ - IP Solver: glpk
+ - Enumerations: 1
+ - Beta: 0.009
+ - Max Memory: 6 GB
+ - Max CPUs: 2
+ - Max Time: 2d
+ - Input: https://github.com/nf-core/test-datasets/raw/hlatyping/bam/example_pe.bam
+ - Data Type: Paired-End
+ - Output Dir: results
+ - Launch Dir: /Users/nirvaanreddy/Desktop/CURVE
+ - Working Dir: /Users/nirvaanreddy/Desktop/CURVE/work
+ - Script Dir: /Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping
+ - User: nirvaanreddy
+ - Max Resources: 6 GB memory, 2 cpus, 2d time per job
+ - Container: docker - nfcore/hlatyping:1.2.0
+ - Config Profile: test,docker
+ - Config Profile Description: Minimal test dataset to check pipeline function
+ - Config Files: /Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping/nextflow.config
+ - Date Started: 2021-03-29T19:50:19.776538-07:00
+ - Date Completed: 2021-03-29T19:58:03.440215-07:00
+ - Pipeline script file path: /Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping/main.nf
+ - Pipeline script hash ID: 43f9f0a073136525e184961fc5677d6e
+ - Pipeline repository Git URL: https://github.com/nf-core/hlatyping
+ - Pipeline repository Git Commit: 69987947952ec3f188356a3043cce724d72125e3
+ - Pipeline Git branch/tag: 1.2.0
+ - Nextflow Version: 20.10.0
+ - Nextflow Build: 5430
+ - Nextflow Compile Timestamp: 01-11-2020 15:14 UTC
+
+--
+nf-core/hlatyping
+https://github.com/nf-core/hlatyping

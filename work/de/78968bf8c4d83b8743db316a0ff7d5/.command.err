@@ -1,0 +1,53 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xmx6g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar GatherBQSRReports -I X_1-200000_9876T.recal.table -I 2_1-200000_9876T.recal.table -I 8_1-1276_9876T.recal.table -I 3_1-200000_9876T.recal.table -I 1_1-200000_9876T.recal.table -I 11_1-3679_9876T.recal.table -O 9876T.recal.table
+05:48:32.951 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+Mar 17, 2021 5:48:33 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+05:48:33.307 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:48:33.308 INFO  GatherBQSRReports - The Genome Analysis Toolkit (GATK) v4.1.7.0
+05:48:33.308 INFO  GatherBQSRReports - For support and documentation go to https://software.broadinstitute.org/gatk/
+05:48:33.309 INFO  GatherBQSRReports - Executing as root@2c294bb15ffe on Linux v4.19.76-linuxkit amd64
+05:48:33.310 INFO  GatherBQSRReports - Java runtime: OpenJDK 64-Bit Server VM v1.8.0_265-b11
+05:48:33.310 INFO  GatherBQSRReports - Start Date/Time: March 17, 2021 5:48:32 AM UTC
+05:48:33.311 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:48:33.311 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:48:33.312 INFO  GatherBQSRReports - HTSJDK Version: 2.21.2
+05:48:33.312 INFO  GatherBQSRReports - Picard Version: 2.21.9
+05:48:33.313 INFO  GatherBQSRReports - HTSJDK Defaults.COMPRESSION_LEVEL : 2
+05:48:33.313 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_READ_FOR_SAMTOOLS : false
+05:48:33.313 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_SAMTOOLS : true
+05:48:33.314 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_TRIBBLE : false
+05:48:33.315 INFO  GatherBQSRReports - Deflater: IntelDeflater
+05:48:33.315 INFO  GatherBQSRReports - Inflater: IntelInflater
+05:48:33.315 INFO  GatherBQSRReports - GCS max retries/reopens: 20
+05:48:33.316 INFO  GatherBQSRReports - Requester pays: disabled
+05:48:33.316 INFO  GatherBQSRReports - Initializing engine
+05:48:33.316 INFO  GatherBQSRReports - Done initializing engine
+05:48:34.039 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/de/78968bf8c4d83b8743db316a0ff7d5/X_1-200000_9876T.recal.table
+05:48:34.048 INFO  RecalibrationReport -   9876T_M1
+05:48:34.048 INFO  RecalibrationReport -   9876T_M2
+05:48:34.048 INFO  RecalibrationReport -   9876T_M3
+05:48:34.049 INFO  RecalibrationReport -   9876T_M4
+05:48:34.049 INFO  RecalibrationReport -   9876T_M5
+05:48:34.050 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/de/78968bf8c4d83b8743db316a0ff7d5/2_1-200000_9876T.recal.table
+05:48:34.050 INFO  RecalibrationReport -   9876T_M1
+05:48:34.050 INFO  RecalibrationReport -   9876T_M2
+05:48:34.051 INFO  RecalibrationReport -   9876T_M3
+05:48:34.052 INFO  RecalibrationReport -   9876T_M4
+05:48:34.052 INFO  RecalibrationReport -   9876T_M5
+05:48:34.052 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/de/78968bf8c4d83b8743db316a0ff7d5/3_1-200000_9876T.recal.table
+05:48:34.053 INFO  RecalibrationReport -   9876T_M1
+05:48:34.053 INFO  RecalibrationReport -   9876T_M2
+05:48:34.054 INFO  RecalibrationReport -   9876T_M3
+05:48:34.054 INFO  RecalibrationReport -   9876T_M4
+05:48:34.055 INFO  RecalibrationReport -   9876T_M5
+05:48:34.055 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/de/78968bf8c4d83b8743db316a0ff7d5/1_1-200000_9876T.recal.table
+05:48:34.056 INFO  RecalibrationReport -   9876T_M1
+05:48:34.056 INFO  RecalibrationReport -   9876T_M2
+05:48:34.056 INFO  RecalibrationReport -   9876T_M3
+05:48:34.057 INFO  RecalibrationReport -   9876T_M4
+05:48:34.057 INFO  RecalibrationReport -   9876T_M5
+05:50:45.153 INFO  GatherBQSRReports - Shutting down engine
+[March 17, 2021 5:50:45 AM UTC] org.broadinstitute.hellbender.tools.walkers.bqsr.GatherBQSRReports done. Elapsed time: 2.20 minutes.
+Runtime.totalMemory()=446693376

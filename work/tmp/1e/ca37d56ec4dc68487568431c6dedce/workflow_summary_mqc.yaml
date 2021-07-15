@@ -1,0 +1,23 @@
+
+id: 'nf-core-ampliseq-summary'
+description: " - this information is collected when the pipeline is started."
+section_name: 'nf-core/ampliseq Workflow Summary'
+section_href: 'https://github.com/nf-core/ampliseq'
+plot_type: 'html'
+data: |
+    <dl class="dl-horizontal">
+        <dt>Pipeline Name</dt><dd><samp>nf-core/ampliseq</samp></dd>
+        <dt>Pipeline Release</dt><dd><samp>1.2.0</samp></dd>
+        <dt>Run Name</dt><dd><samp>marvelous_mirzakhani</samp></dd>
+        <dt>Input</dt><dd><samp>data/*_R{1,2}_001.fastq.gz</samp></dd>
+        <dt>Max Resources</dt><dd><samp>6 GB memory, 2 cpus, 2d time per job</samp></dd>
+        <dt>Container</dt><dd><samp>docker - nfcore/ampliseq:1.2.0</samp></dd>
+        <dt>Output dir</dt><dd><samp>./results</samp></dd>
+        <dt>Launch dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE</samp></dd>
+        <dt>Working dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE/work</samp></dd>
+        <dt>Script dir</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/ampliseq</samp></dd>
+        <dt>User</dt><dd><samp>nirvaanreddy</samp></dd>
+        <dt>Config Profile</dt><dd><samp>test,docker</samp></dd>
+        <dt>Config Profile Description</dt><dd><samp>Minimal test dataset to check pipeline function</samp></dd>
+        <dt>Config Files</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/ampliseq/nextflow.config</samp></dd>
+    </dl>

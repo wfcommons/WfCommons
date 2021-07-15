@@ -1,0 +1,48 @@
+Unable to find image 'nfcore/methylseq:1.6' locally
+1.6: Pulling from nfcore/methylseq
+852e50cd189d: Pulling fs layer
+a6236801494d: Pulling fs layer
+679c171d6942: Pulling fs layer
+611a95a83b94: Pulling fs layer
+749871488056: Pulling fs layer
+611a95a83b94: Waiting
+749871488056: Waiting
+86c1f95f715d: Pulling fs layer
+3207b65aca56: Pulling fs layer
+86c1f95f715d: Waiting
+1057f0b25d91: Pulling fs layer
+90836bdc6200: Pulling fs layer
+1057f0b25d91: Waiting
+6e20337c7e72: Pulling fs layer
+90836bdc6200: Waiting
+6e20337c7e72: Waiting
+852e50cd189d: Download complete
+611a95a83b94: Verifying Checksum
+611a95a83b94: Download complete
+852e50cd189d: Pull complete
+749871488056: Verifying Checksum
+749871488056: Download complete
+86c1f95f715d: Verifying Checksum
+86c1f95f715d: Download complete
+3207b65aca56: Download complete
+679c171d6942: Verifying Checksum
+679c171d6942: Download complete
+1057f0b25d91: Verifying Checksum
+1057f0b25d91: Download complete
+6e20337c7e72: Verifying Checksum
+6e20337c7e72: Download complete
+a6236801494d: Verifying Checksum
+a6236801494d: Download complete
+a6236801494d: Pull complete
+679c171d6942: Pull complete
+611a95a83b94: Pull complete
+749871488056: Pull complete
+86c1f95f715d: Pull complete
+3207b65aca56: Pull complete
+1057f0b25d91: Pull complete
+90836bdc6200: Verifying Checksum
+90836bdc6200: Download complete
+90836bdc6200: Pull complete
+6e20337c7e72: Pull complete
+Digest: sha256:bdc53941f46142f464d61769fcd6aa6caf9f34766882116a17255705577df838
+Status: Downloaded newer image for nfcore/methylseq:1.6

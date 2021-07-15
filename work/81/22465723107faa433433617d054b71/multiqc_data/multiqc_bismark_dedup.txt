@@ -1,0 +1,4 @@
+Sample	aligned_reads	dedup_reads	dedup_reads_percent	dup_reads	dup_reads_percent
+SRR389222_sub1	49589.0	310.0	0.63	49279.0	99.37
+SRR389222_sub2	59741.0	323.0	0.54	59418.0	99.46
+SRR389222_sub3	39627.0	311.0	0.78	39316.0	99.22

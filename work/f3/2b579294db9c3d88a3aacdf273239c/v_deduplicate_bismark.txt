@@ -1,0 +1,9 @@
+
+                  Bismark Deduplication Module
+
+	      Deduplicator Version: v0.23.0
+      Copyright 2010-20 Felix Krueger, Babraham Bioinformatics
+	www.bioinformatics.babraham.ac.uk/projects/bismark/
+	    https://github.com/FelixKrueger/Bismark
+  	  
+	  

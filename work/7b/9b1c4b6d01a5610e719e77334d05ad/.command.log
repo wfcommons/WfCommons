@@ -1,0 +1,12 @@
+Found Bismark/Bowtie2 single-end files
+No Bismark/Bowtie2 paired-end BAM files detected
+No Bismark/HISAT2 single-end BAM files detected
+No Bismark/HISAT2 paired-end BAM files detected
+
+Generating Bismark summary report from 3 Bismark BAM file(s)...
+>> Reading from Bismark report: SRR389222_sub1_trimmed_bismark_bt2_SE_report.txt
+>> Reading from Bismark report: SRR389222_sub2_trimmed_bismark_bt2_SE_report.txt
+>> Reading from Bismark report: SRR389222_sub3_trimmed_bismark_bt2_SE_report.txt
+
+Wrote Bismark project summary to >> bismark_summary_report.html <<
+

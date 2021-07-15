@@ -1,0 +1,9 @@
+[bwa_index] Pack FASTA... 0.01 sec
+[bwa_index] Construct BWT for the packed sequence...
+[bwa_index] 0.15 seconds elapse.
+[bwa_index] Update BWT... 0.01 sec
+[bwa_index] Pack forward-only FASTA... 0.01 sec
+[bwa_index] Construct SA from BWT and Occ... 0.07 sec
+[main] Version: 0.7.17-r1188
+[main] CMD: bwa index human_g1k_v37_decoy.small.fasta
+[main] Real time: 0.325 sec; CPU: 0.248 sec

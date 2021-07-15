@@ -1,0 +1,39 @@
+
+id: 'sarek-summary'
+description: " - this information is collected when the pipeline is started."
+section_name: 'nf-core/sarek Workflow Summary'
+section_href: 'https://github.com/nf-core/sarek'
+plot_type: 'html'
+data: |
+    <dl class="dl-horizontal">
+        <dt>Pipeline Release</dt><dd><samp>2.7</samp></dd>
+        <dt>Run Name</dt><dd><samp>clever_carson</samp></dd>
+        <dt>Max Resources</dt><dd><samp>6 GB memory, 2 cpus, 2d time per job</samp></dd>
+        <dt>Input</dt><dd><samp>https://raw.githubusercontent.com/nf-core/test-datasets/sarek/testdata/tsv/tiny-manta-https.tsv</samp></dd>
+        <dt>Step</dt><dd><samp>mapping</samp></dd>
+        <dt>Genome</dt><dd><samp>smallGRCh37</samp></dd>
+        <dt>Nucleotides/s</dt><dd><samp>1000.0</samp></dd>
+        <dt>MarkDuplicates</dt><dd><samp>Options</samp></dd>
+        <dt>Java options</dt><dd><samp>"-Xms4000m -Xmx7g"</samp></dd>
+        <dt>GATK Spark</dt><dd><samp>No</samp></dd>
+        <dt>Save BAMs mapped</dt><dd><samp>No</samp></dd>
+        <dt>Skip MarkDuplicates</dt><dd><samp>No</samp></dd>
+        <dt>AWS iGenomes</dt><dd><samp>Do not use</samp></dd>
+        <dt>Save Reference</dt><dd><samp>No</samp></dd>
+        <dt>dbsnp</dt><dd><samp>https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference/dbsnp_138.b37.small.vcf.gz</samp></dd>
+        <dt>fasta reference</dt><dd><samp>https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference/human_g1k_v37_decoy.small.fasta</samp></dd>
+        <dt>intervals</dt><dd><samp>https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference/small.intervals</samp></dd>
+        <dt>known indels</dt><dd><samp>https://raw.githubusercontent.com/nf-core/test-datasets/sarek/reference/Mills_1000G_gold_standard_and_1000G_phase1.indels.b37.small.vcf.gz</samp></dd>
+        <dt>snpEff DB</dt><dd><samp>WBcel235.86</samp></dd>
+        <dt>species</dt><dd><samp>caenorhabditis_elegans</samp></dd>
+        <dt>VEP cache version</dt><dd><samp>99</samp></dd>
+        <dt>Output dir</dt><dd><samp>./results</samp></dd>
+        <dt>Publish dir mode</dt><dd><samp>copy</samp></dd>
+        <dt>Launch dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE</samp></dd>
+        <dt>Working dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE/work</samp></dd>
+        <dt>Script dir</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/sarek</samp></dd>
+        <dt>User</dt><dd><samp>nirvaanreddy</samp></dd>
+        <dt>Config Profile</dt><dd><samp>test,</samp></dd>
+        <dt>Config Description</dt><dd><samp>Minimal test dataset to check pipeline function</samp></dd>
+        <dt>Config Files</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/sarek/nextflow.config</samp></dd>
+    </dl>

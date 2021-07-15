@@ -1,0 +1,16 @@
+[M::bwa_idx_load_from_disk] read 0 ALT contigs
+[M::process] read 158 sequences (15958 bp)...
+[M::mem_pestat] # candidate unique pairs for (FF, FR, RF, RR): (0, 68, 0, 0)
+[M::mem_pestat] skip orientation FF as there are not enough pairs
+[M::mem_pestat] analyzing insert size distribution for orientation FR...
+[M::mem_pestat] (25, 50, 75) percentile: (330, 344, 354)
+[M::mem_pestat] low and high boundaries for computing mean and std.dev: (282, 402)
+[M::mem_pestat] mean and std.dev: (341.39, 18.66)
+[M::mem_pestat] low and high boundaries for proper pairs: (258, 426)
+[M::mem_pestat] skip orientation RF as there are not enough pairs
+[M::mem_pestat] skip orientation RR as there are not enough pairs
+[M::mem_process_seqs] Processed 158 reads in 0.007 CPU sec, 0.005 real sec
+[main] Version: 0.7.17-r1188
+[main] CMD: bwa mem -K 100000000 -R @RG\tID:1234N_M7\tPU:1234N_M7\tSM:1234N\tLB:1234N\tPL:illumina -t 2 -M human_g1k_v37_decoy.small.fasta D0F23_N_111212.3.AGTTGCTT_R1_xxx.fastq.gz D0F23_N_111212.3.AGTTGCTT_R2_xxx.fastq.gz
+[main] Real time: 0.057 sec; CPU: 0.016 sec
+[bam_sort_core] merging from 0 files and 2 in-memory blocks...

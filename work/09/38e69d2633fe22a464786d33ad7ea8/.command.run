@@ -1,0 +1,437 @@
+#!/bin/bash
+# NEXTFLOW TASK: MultiQC (1)
+set -e
+set -u
+NXF_DEBUG=${NXF_DEBUG:=0}; [[ $NXF_DEBUG > 1 ]] && set -x
+NXF_ENTRY=${1:-nxf_main}
+
+nxf_tree() {
+    local pid=$1
+
+    declare -a ALL_CHILDREN
+    while read P PP;do
+        ALL_CHILDREN[$PP]+=" $P"
+    done < <(ps -e -o pid= -o ppid=)
+
+    pstat() {
+        local x_pid=$1
+        local STATUS=$(2> /dev/null < /proc/$1/status egrep 'Vm|ctxt')
+
+        if [ $? = 0 ]; then
+        local  x_vsz=$(echo "$STATUS" | grep VmSize | awk '{print $2}' || echo -n '0')
+        local  x_rss=$(echo "$STATUS" | grep VmRSS | awk '{print $2}' || echo -n '0')
+        local x_peak=$(echo "$STATUS" | egrep 'VmPeak|VmHWM' | sed 's/^.*:\s*//' | sed 's/[\sa-zA-Z]*$//' | tr '\n' ' ' || echo -n '0 0')
+        local x_pmem=$(awk -v rss=$x_rss -v mem_tot=$mem_tot 'BEGIN {printf "%.0f", rss/mem_tot*100*10}' || echo -n '0')
+        local vol_ctxt=$(echo "$STATUS" | grep '\bvoluntary_ctxt_switches' | awk '{print $2}' || echo -n '0')
+        local inv_ctxt=$(echo "$STATUS" | grep '\bnonvoluntary_ctxt_switches' | awk '{print $2}' || echo -n '0')
+        cpu_stat[x_pid]="$x_pid $x_pmem $x_vsz $x_rss $x_peak $vol_ctxt $inv_ctxt"
+        fi
+    }
+
+    pwalk() {
+        pstat $1
+        for i in ${ALL_CHILDREN[$1]:=}; do pwalk $i; done
+    }
+
+    pwalk $1
+}
+
+nxf_stat() {
+    cpu_stat=()
+    nxf_tree $1
+
+    declare -a sum=(0 0 0 0 0 0 0 0)
+    local pid
+    local i
+    for pid in "${!cpu_stat[@]}"; do
+        local row=(${cpu_stat[pid]})
+        [ $NXF_DEBUG = 1 ] && echo "++ stat mem=${row[*]}"
+        for i in "${!row[@]}"; do
+        if [ $i != 0 ]; then
+            sum[i]=$((sum[i]+row[i]))
+        fi
+        done
+    done
+
+    [ $NXF_DEBUG = 1 ] && echo -e "++ stat SUM=${sum[*]}"
+
+    for i in {1..7}; do
+        if [ ${sum[i]} -lt ${cpu_peak[i]} ]; then
+            sum[i]=${cpu_peak[i]}
+        else
+            cpu_peak[i]=${sum[i]}
+        fi
+    done
+
+    [ $NXF_DEBUG = 1 ] && echo -e "++ stat PEAK=${sum[*]}\n"
+    nxf_stat_ret=(${sum[*]})
+}
+
+nxf_sleep() {
+  sleep $1 2>/dev/null || sleep 1;
+}
+
+nxf_mem_watch() {
+    set -o pipefail
+    local pid=$1
+    local trace_file=.command.trace
+    local count=0;
+    declare -a cpu_stat=(0 0 0 0 0 0 0 0)
+    declare -a cpu_peak=(0 0 0 0 0 0 0 0)
+    local mem_tot=$(< /proc/meminfo grep MemTotal | awk '{print $2}')
+    local timeout
+    local DONE
+    local STOP=''
+
+    [ $NXF_DEBUG = 1 ] && nxf_sleep 0.2 && ps fx
+
+    while true; do
+        nxf_stat $pid
+        if [ $count -lt 10 ]; then timeout=1;
+        elif [ $count -lt 120 ]; then timeout=5;
+        else timeout=30;
+        fi
+        read -t $timeout -r DONE || true
+        [[ $DONE ]] && break
+        if [ ! -e /proc/$pid ]; then
+            [ ! $STOP ] && STOP=$(nxf_date)
+            [ $(($(nxf_date)-STOP)) -gt 10000 ] && break
+        fi
+        count=$((count+1))
+    done
+
+    echo "%mem=${nxf_stat_ret[1]}"      >> $trace_file
+    echo "vmem=${nxf_stat_ret[2]}"      >> $trace_file
+    echo "rss=${nxf_stat_ret[3]}"       >> $trace_file
+    echo "peak_vmem=${nxf_stat_ret[4]}" >> $trace_file
+    echo "peak_rss=${nxf_stat_ret[5]}"  >> $trace_file
+    echo "vol_ctxt=${nxf_stat_ret[6]}"  >> $trace_file
+    echo "inv_ctxt=${nxf_stat_ret[7]}"  >> $trace_file
+}
+
+nxf_write_trace() {
+    echo "nextflow.trace/v2"           > $trace_file
+    echo "realtime=$wall_time"         >> $trace_file
+    echo "%cpu=$ucpu"                  >> $trace_file
+    echo "rchar=${io_stat1[0]}"        >> $trace_file
+    echo "wchar=${io_stat1[1]}"        >> $trace_file
+    echo "syscr=${io_stat1[2]}"        >> $trace_file
+    echo "syscw=${io_stat1[3]}"        >> $trace_file
+    echo "read_bytes=${io_stat1[4]}"   >> $trace_file
+    echo "write_bytes=${io_stat1[5]}"  >> $trace_file
+}
+
+nxf_trace_mac() {
+    local start_millis=$(nxf_date)
+
+    /bin/bash -euo pipefail /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8/.command.sh
+
+    local end_millis=$(nxf_date)
+    local wall_time=$((end_millis-start_millis))
+    local ucpu=''
+    local io_stat1=('' '' '' '' '' '')
+    nxf_write_trace
+}
+
+nxf_fd() {
+    local FD=11
+    while [ -e /proc/$$/fd/$FD ]; do FD=$((FD+1)); done
+    echo $FD
+}
+
+nxf_trace_linux() {
+    local pid=$$
+    command -v ps &>/dev/null || { >&2 echo "Command 'ps' required by nextflow to collect task metrics cannot be found"; exit 1; }
+    local num_cpus=$(< /proc/cpuinfo grep '^processor' -c)
+    local tot_time0=$(grep '^cpu ' /proc/stat | awk '{sum=$2+$3+$4+$5+$6+$7+$8+$9; printf "%.0f",sum}')
+    local cpu_time0=$(2> /dev/null < /proc/$pid/stat awk '{printf "%.0f", ($16+$17)*10 }' || echo -n 'X')
+    local io_stat0=($(2> /dev/null < /proc/$pid/io sed 's/^.*:\s*//' | head -n 6 | tr '\n' ' ' || echo -n '0 0 0 0 0 0'))
+    local start_millis=$(nxf_date)
+    trap 'kill $mem_proc' ERR
+    
+    /bin/bash -euo pipefail /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8/.command.sh &
+    local task=$!
+
+    mem_fd=$(nxf_fd)
+    eval "exec $mem_fd> >(nxf_mem_watch $task)"
+    local mem_proc=$!
+
+    wait $task
+
+    local end_millis=$(nxf_date)
+    local tot_time1=$(grep '^cpu ' /proc/stat | awk '{sum=$2+$3+$4+$5+$6+$7+$8+$9; printf "%.0f",sum}')
+    local cpu_time1=$(2> /dev/null < /proc/$pid/stat awk '{printf "%.0f", ($16+$17)*10 }' || echo -n 'X')
+    local ucpu=$(awk -v p1=$cpu_time1 -v p0=$cpu_time0 -v t1=$tot_time1 -v t0=$tot_time0 -v n=$num_cpus 'BEGIN { pct=(p1-p0)/(t1-t0)*100*n; printf("%.0f", pct>0 ? pct : 0) }' )
+
+    local io_stat1=($(2> /dev/null < /proc/$pid/io sed 's/^.*:\s*//' | head -n 6 | tr '\n' ' ' || echo -n '0 0 0 0 0 0'))
+    local i
+    for i in {0..5}; do
+        io_stat1[i]=$((io_stat1[i]-io_stat0[i]))
+    done
+
+    local wall_time=$((end_millis-start_millis))
+    [ $NXF_DEBUG = 1 ] && echo "+++ STATS %CPU=$ucpu TIME=$wall_time I/O=${io_stat1[*]}"
+
+    echo "nextflow.trace/v2"           > $trace_file
+    echo "realtime=$wall_time"         >> $trace_file
+    echo "%cpu=$ucpu"                  >> $trace_file
+    echo "rchar=${io_stat1[0]}"        >> $trace_file
+    echo "wchar=${io_stat1[1]}"        >> $trace_file
+    echo "syscr=${io_stat1[2]}"        >> $trace_file
+    echo "syscw=${io_stat1[3]}"        >> $trace_file
+    echo "read_bytes=${io_stat1[4]}"   >> $trace_file
+    echo "write_bytes=${io_stat1[5]}"  >> $trace_file
+
+    [ -e /proc/$mem_proc ] && eval "echo 'DONE' >&$mem_fd" || true
+    wait $mem_proc 2>/dev/null || true
+    while [ -e /proc/$mem_proc ]; do nxf_sleep 0.1; done
+}
+
+nxf_trace() {
+    local trace_file=.command.trace
+    touch $trace_file
+    if [[ $(uname) = Darwin ]]; then
+        nxf_trace_mac
+    else
+        nxf_trace_linux
+    fi
+}
+nxf_container_env() {
+cat << EOF
+export PYTHONNOUSERSITE="1"
+export R_PROFILE_USER="/.Rprofile"
+export R_ENVIRON_USER="/.Renviron"
+export PATH="/Users/nirvaanreddy/.nextflow/assets/nf-core/sarek/bin:\$PATH"
+EOF
+}
+
+nxf_date() {
+    local ts=$(date +%s%3N);
+    if [[ ${#ts} == 10 ]]; then echo ${ts}000
+    elif [[ $ts == *%3N ]]; then echo ${ts/\%3N/000}
+    elif [[ $ts == *3N ]]; then echo ${ts/3N/000}
+    elif [[ ${#ts} == 13 ]]; then echo $ts
+    else echo "Unexpected timestamp value: $ts"; exit 1
+    fi
+}
+
+nxf_env() {
+    echo '============= task environment ============='
+    env | sort | sed "s/\(.*\)AWS\(.*\)=\(.\{6\}\).*/\1AWS\2=\3xxxxxxxxxxxxx/"
+    echo '============= task output =================='
+}
+
+nxf_kill() {
+    declare -a children
+    while read P PP;do
+        children[$PP]+=" $P"
+    done < <(ps -e -o pid= -o ppid=)
+
+    kill_all() {
+        [[ $1 != $$ ]] && kill $1 2>/dev/null || true
+        for i in ${children[$1]:=}; do kill_all $i; done
+    }
+
+    kill_all $1
+}
+
+nxf_mktemp() {
+    local base=${1:-/tmp}
+    if [[ $(uname) = Darwin ]]; then mktemp -d $base/nxf.XXXXXXXXXX
+    else TMPDIR="$base" mktemp -d -t nxf.XXXXXXXXXX
+    fi
+}
+
+on_exit() {
+    exit_status=${nxf_main_ret:=$?}
+    printf $exit_status > /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8/.exitcode
+    set +u
+    [[ "$tee1" ]] && kill $tee1 2>/dev/null
+    [[ "$tee2" ]] && kill $tee2 2>/dev/null
+    [[ "$ctmp" ]] && rm -rf $ctmp || true
+    docker rm $NXF_BOXID &>/dev/null || true
+    exit $exit_status
+}
+
+on_term() {
+    set +e
+    docker kill $NXF_BOXID
+}
+
+nxf_launch() {
+    docker run -i --memory 6144m -e "NXF_DEBUG=${NXF_DEBUG:=0}" -v /Users/nirvaanreddy:/Users/nirvaanreddy -v "$PWD":"$PWD" -w "$PWD" --entrypoint /bin/bash --name $NXF_BOXID nfcore/sarek:2.7 -c "eval $(nxf_container_env); /bin/bash /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8/.command.run nxf_trace"
+}
+
+nxf_stage() {
+    true
+    # stage input files
+    rm -f multiqc_config.yaml
+    rm -f software_versions_mqc.yaml
+    rm -f workflow_summary_mqc.yaml
+    rm -f bamQC/1234N_1234N_M7
+    rm -f bamQC/1234N_1234N_M5
+    rm -f bamQC/1234N_1234N_M2
+    rm -f bamQC/9876T_9876T_M1
+    rm -f bamQC/1234N_1234N_M1
+    rm -f bamQC/1234N_1234N_M4
+    rm -f bamQC/1234N_1234N_M6
+    rm -f bamQC/9876T_9876T_M2
+    rm -f bamQC/9876T_9876T_M3
+    rm -f bamQC/9876T_9876T_M4
+    rm -f bamQC/9876T_9876T_M5
+    rm -f bamQC/9876T.recal
+    rm -f bamQC/1234N.recal
+    rm -f FastQC/1234N_1234N_M1_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M1_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M1_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M1_R2_fastqc.zip
+    rm -f FastQC/1234N_1234N_M2_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M2_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M2_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M2_R2_fastqc.zip
+    rm -f FastQC/1234N_1234N_M4_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M4_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M4_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M4_R2_fastqc.zip
+    rm -f FastQC/1234N_1234N_M5_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M5_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M5_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M5_R2_fastqc.zip
+    rm -f FastQC/1234N_1234N_M6_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M6_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M6_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M6_R2_fastqc.zip
+    rm -f FastQC/1234N_1234N_M7_R1_fastqc.html
+    rm -f FastQC/1234N_1234N_M7_R1_fastqc.zip
+    rm -f FastQC/1234N_1234N_M7_R2_fastqc.html
+    rm -f FastQC/1234N_1234N_M7_R2_fastqc.zip
+    rm -f FastQC/9876T_9876T_M1_R1_fastqc.html
+    rm -f FastQC/9876T_9876T_M1_R1_fastqc.zip
+    rm -f FastQC/9876T_9876T_M1_R2_fastqc.html
+    rm -f FastQC/9876T_9876T_M1_R2_fastqc.zip
+    rm -f FastQC/9876T_9876T_M2_R1_fastqc.html
+    rm -f FastQC/9876T_9876T_M2_R1_fastqc.zip
+    rm -f FastQC/9876T_9876T_M2_R2_fastqc.html
+    rm -f FastQC/9876T_9876T_M2_R2_fastqc.zip
+    rm -f FastQC/9876T_9876T_M3_R1_fastqc.html
+    rm -f FastQC/9876T_9876T_M3_R1_fastqc.zip
+    rm -f FastQC/9876T_9876T_M3_R2_fastqc.html
+    rm -f FastQC/9876T_9876T_M3_R2_fastqc.zip
+    rm -f FastQC/9876T_9876T_M4_R1_fastqc.html
+    rm -f FastQC/9876T_9876T_M4_R1_fastqc.zip
+    rm -f FastQC/9876T_9876T_M4_R2_fastqc.html
+    rm -f FastQC/9876T_9876T_M4_R2_fastqc.zip
+    rm -f FastQC/9876T_9876T_M5_R1_fastqc.html
+    rm -f FastQC/9876T_9876T_M5_R1_fastqc.zip
+    rm -f FastQC/9876T_9876T_M5_R2_fastqc.html
+    rm -f FastQC/9876T_9876T_M5_R2_fastqc.zip
+    rm -f MarkDuplicates/1234N.bam.metrics
+    rm -f MarkDuplicates/9876T.bam.metrics
+    rm -f DuplicatesMarked/1.recal.table
+    rm -f DuplicatesMarked/2.recal.table
+    rm -f SamToolsStats/9876T.recal.bam.samtools.stats.out
+    rm -f SamToolsStats/1234N.recal.bam.samtools.stats.out
+    ln -s /Users/nirvaanreddy/.nextflow/assets/nf-core/sarek/assets/multiqc_config.yaml multiqc_config.yaml
+    ln -s /Users/nirvaanreddy/Desktop/CURVE/work/b4/c30f7a978ce45cff61acf041f985fd/software_versions_mqc.yaml software_versions_mqc.yaml
+    ln -s /Users/nirvaanreddy/Desktop/CURVE/work/tmp/d6/966a65a8ab727eb97f4dc31758563b/workflow_summary_mqc.yaml workflow_summary_mqc.yaml
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/1e/a310f73667c92a9dce895d2dd3d6fb/1234N_1234N_M7 bamQC/1234N_1234N_M7
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/71/4d8a1cc6e2772032f6081015ad437e/1234N_1234N_M5 bamQC/1234N_1234N_M5
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/be/1cdf5850dd813ff51ad1b1d0922274/1234N_1234N_M2 bamQC/1234N_1234N_M2
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/fd/6a6f21b3e2f73a027e067272e01e1d/9876T_9876T_M1 bamQC/9876T_9876T_M1
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/57/2b3ccb8aea7a91739f2491e2fa0bb4/1234N_1234N_M1 bamQC/1234N_1234N_M1
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/35/66dd1572d8b78024e4eefeb0ff469c/1234N_1234N_M4 bamQC/1234N_1234N_M4
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/e9/63326cf866f5cd28ba1dbc8a2b5f22/1234N_1234N_M6 bamQC/1234N_1234N_M6
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/06/e309f593ae33308d90133a4182620c/9876T_9876T_M2 bamQC/9876T_9876T_M2
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/1d/b2d09bd08be16fab52049935c5b1a5/9876T_9876T_M3 bamQC/9876T_9876T_M3
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/c9/142e9aa764a99385db1064de5994be/9876T_9876T_M4 bamQC/9876T_9876T_M4
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/d4/c9d739494ed5611ebc370c5984bd91/9876T_9876T_M5 bamQC/9876T_9876T_M5
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/59/5f924c8cef76141091c1b4fea50839/9876T.recal bamQC/9876T.recal
+    mkdir -p bamQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/4b/58bb977d350a9ee94c20184d6a9066/1234N.recal bamQC/1234N.recal
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/3a/20f1d176c9d6c6b981fbf017a5007c/1234N_1234N_M1_R1_fastqc.html FastQC/1234N_1234N_M1_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/3a/20f1d176c9d6c6b981fbf017a5007c/1234N_1234N_M1_R1_fastqc.zip FastQC/1234N_1234N_M1_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/3a/20f1d176c9d6c6b981fbf017a5007c/1234N_1234N_M1_R2_fastqc.html FastQC/1234N_1234N_M1_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/3a/20f1d176c9d6c6b981fbf017a5007c/1234N_1234N_M1_R2_fastqc.zip FastQC/1234N_1234N_M1_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/7a/0b7301974726d55f0ac3f5c4cbc216/1234N_1234N_M2_R1_fastqc.html FastQC/1234N_1234N_M2_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/7a/0b7301974726d55f0ac3f5c4cbc216/1234N_1234N_M2_R1_fastqc.zip FastQC/1234N_1234N_M2_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/7a/0b7301974726d55f0ac3f5c4cbc216/1234N_1234N_M2_R2_fastqc.html FastQC/1234N_1234N_M2_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/7a/0b7301974726d55f0ac3f5c4cbc216/1234N_1234N_M2_R2_fastqc.zip FastQC/1234N_1234N_M2_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/46/e017cd909086ac11d79af1c5a0cd01/1234N_1234N_M4_R1_fastqc.html FastQC/1234N_1234N_M4_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/46/e017cd909086ac11d79af1c5a0cd01/1234N_1234N_M4_R1_fastqc.zip FastQC/1234N_1234N_M4_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/46/e017cd909086ac11d79af1c5a0cd01/1234N_1234N_M4_R2_fastqc.html FastQC/1234N_1234N_M4_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/46/e017cd909086ac11d79af1c5a0cd01/1234N_1234N_M4_R2_fastqc.zip FastQC/1234N_1234N_M4_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ba/1248016d1528bcc7e787b22a199e35/1234N_1234N_M5_R1_fastqc.html FastQC/1234N_1234N_M5_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ba/1248016d1528bcc7e787b22a199e35/1234N_1234N_M5_R1_fastqc.zip FastQC/1234N_1234N_M5_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ba/1248016d1528bcc7e787b22a199e35/1234N_1234N_M5_R2_fastqc.html FastQC/1234N_1234N_M5_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ba/1248016d1528bcc7e787b22a199e35/1234N_1234N_M5_R2_fastqc.zip FastQC/1234N_1234N_M5_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/f7/a60ef99aa33977b31d0de41e3bd03b/1234N_1234N_M6_R1_fastqc.html FastQC/1234N_1234N_M6_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/f7/a60ef99aa33977b31d0de41e3bd03b/1234N_1234N_M6_R1_fastqc.zip FastQC/1234N_1234N_M6_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/f7/a60ef99aa33977b31d0de41e3bd03b/1234N_1234N_M6_R2_fastqc.html FastQC/1234N_1234N_M6_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/f7/a60ef99aa33977b31d0de41e3bd03b/1234N_1234N_M6_R2_fastqc.zip FastQC/1234N_1234N_M6_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/3e003e73fca4761e8bc691a81de48e/1234N_1234N_M7_R1_fastqc.html FastQC/1234N_1234N_M7_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/3e003e73fca4761e8bc691a81de48e/1234N_1234N_M7_R1_fastqc.zip FastQC/1234N_1234N_M7_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/3e003e73fca4761e8bc691a81de48e/1234N_1234N_M7_R2_fastqc.html FastQC/1234N_1234N_M7_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/3e003e73fca4761e8bc691a81de48e/1234N_1234N_M7_R2_fastqc.zip FastQC/1234N_1234N_M7_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/d4/011318efc81857f361904ec68300a4/9876T_9876T_M1_R1_fastqc.html FastQC/9876T_9876T_M1_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/d4/011318efc81857f361904ec68300a4/9876T_9876T_M1_R1_fastqc.zip FastQC/9876T_9876T_M1_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/d4/011318efc81857f361904ec68300a4/9876T_9876T_M1_R2_fastqc.html FastQC/9876T_9876T_M1_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/d4/011318efc81857f361904ec68300a4/9876T_9876T_M1_R2_fastqc.zip FastQC/9876T_9876T_M1_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/08/1d6c0ad05e364d5fff615f333ba51f/9876T_9876T_M2_R1_fastqc.html FastQC/9876T_9876T_M2_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/08/1d6c0ad05e364d5fff615f333ba51f/9876T_9876T_M2_R1_fastqc.zip FastQC/9876T_9876T_M2_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/08/1d6c0ad05e364d5fff615f333ba51f/9876T_9876T_M2_R2_fastqc.html FastQC/9876T_9876T_M2_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/08/1d6c0ad05e364d5fff615f333ba51f/9876T_9876T_M2_R2_fastqc.zip FastQC/9876T_9876T_M2_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/b4/f1eff91b2b703749c85a8fc0ff4a19/9876T_9876T_M3_R1_fastqc.html FastQC/9876T_9876T_M3_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/b4/f1eff91b2b703749c85a8fc0ff4a19/9876T_9876T_M3_R1_fastqc.zip FastQC/9876T_9876T_M3_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/b4/f1eff91b2b703749c85a8fc0ff4a19/9876T_9876T_M3_R2_fastqc.html FastQC/9876T_9876T_M3_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/b4/f1eff91b2b703749c85a8fc0ff4a19/9876T_9876T_M3_R2_fastqc.zip FastQC/9876T_9876T_M3_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/4b/7b976737cc861d19ae9f8e4ecc8d8c/9876T_9876T_M4_R1_fastqc.html FastQC/9876T_9876T_M4_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/4b/7b976737cc861d19ae9f8e4ecc8d8c/9876T_9876T_M4_R1_fastqc.zip FastQC/9876T_9876T_M4_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/4b/7b976737cc861d19ae9f8e4ecc8d8c/9876T_9876T_M4_R2_fastqc.html FastQC/9876T_9876T_M4_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/4b/7b976737cc861d19ae9f8e4ecc8d8c/9876T_9876T_M4_R2_fastqc.zip FastQC/9876T_9876T_M4_R2_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/88ce292633c1cd087e680bd22054e5/9876T_9876T_M5_R1_fastqc.html FastQC/9876T_9876T_M5_R1_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/88ce292633c1cd087e680bd22054e5/9876T_9876T_M5_R1_fastqc.zip FastQC/9876T_9876T_M5_R1_fastqc.zip
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/88ce292633c1cd087e680bd22054e5/9876T_9876T_M5_R2_fastqc.html FastQC/9876T_9876T_M5_R2_fastqc.html
+    mkdir -p FastQC && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/ec/88ce292633c1cd087e680bd22054e5/9876T_9876T_M5_R2_fastqc.zip FastQC/9876T_9876T_M5_R2_fastqc.zip
+    mkdir -p MarkDuplicates && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/8b/64d279c836baf073dcb859bcf6da0d/1234N.bam.metrics MarkDuplicates/1234N.bam.metrics
+    mkdir -p MarkDuplicates && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/24/c74b806cbc8fc8ad272f3fd26152b3/9876T.bam.metrics MarkDuplicates/9876T.bam.metrics
+    mkdir -p DuplicatesMarked && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/de/78968bf8c4d83b8743db316a0ff7d5/9876T.recal.table DuplicatesMarked/1.recal.table
+    mkdir -p DuplicatesMarked && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/12/5dc8a625f2af1980087d203f4e945b/1234N.recal.table DuplicatesMarked/2.recal.table
+    mkdir -p SamToolsStats && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/48/4f079a42ccf13d037e4b96f6f54567/9876T.recal.bam.samtools.stats.out SamToolsStats/9876T.recal.bam.samtools.stats.out
+    mkdir -p SamToolsStats && ln -s /Users/nirvaanreddy/Desktop/CURVE/work/66/800049bfc95641bcf67f96e388237b/1234N.recal.bam.samtools.stats.out SamToolsStats/1234N.recal.bam.samtools.stats.out
+}
+
+nxf_unstage() {
+    true
+    [[ ${nxf_main_ret:=0} != 0 ]] && return
+}
+
+nxf_main() {
+    trap on_exit EXIT
+    trap on_term TERM INT USR2
+    trap '' USR1
+
+    [[ "${NXF_CHDIR:-}" ]] && cd "$NXF_CHDIR"
+    export NXF_BOXID="nxf-$(dd bs=18 count=1 if=/dev/urandom 2>/dev/null | base64 | tr +/ 0A)"
+    NXF_SCRATCH=''
+    [[ $NXF_DEBUG > 0 ]] && nxf_env
+    touch /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8/.command.begin
+    set +u
+    set -u
+    [[ $NXF_SCRATCH ]] && echo "nxf-scratch-dir $HOSTNAME:$NXF_SCRATCH" && cd $NXF_SCRATCH
+    nxf_stage
+
+    set +e
+    local ctmp=$(set +u; nxf_mktemp /dev/shm 2>/dev/null || nxf_mktemp $TMPDIR)
+    local cout=$ctmp/.command.out; mkfifo $cout
+    local cerr=$ctmp/.command.err; mkfifo $cerr
+    tee .command.out < $cout &
+    tee1=$!
+    tee .command.err < $cerr >&2 &
+    tee2=$!
+    ( nxf_launch ) >$cout 2>$cerr &
+    pid=$!
+    wait $pid || nxf_main_ret=$?
+    wait $tee1 $tee2
+    nxf_unstage
+}
+
+$NXF_ENTRY

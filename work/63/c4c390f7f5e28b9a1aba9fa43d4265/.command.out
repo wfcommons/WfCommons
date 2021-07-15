@@ -1,0 +1,5 @@
+skipping header line:	@HD	VN:1.0	SO:unsorted
+skipping header line:	@SQ	SN:chr	LN:48502
+skipping header line:	@PG	ID:Bismark	VN:v0.23.0	CL:"bismark SRR389222_sub3_trimmed.fq.gz --bowtie2 --bam --genome BismarkIndex SRR389222_sub3_trimmed.fq.gz"
+skipping header line:	@PG	ID:samtools	PN:samtools	PP:Bismark	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -bSh -
+skipping header line:	@PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -h --threads 1 SRR389222_sub3_trimmed_bismark_bt2.bam

@@ -1,0 +1,11 @@
+preseq:  a program for analyzing library complexity
+Version: 2.0.3
+
+Usage:   preseq <command> [OPTIONS]
+
+<command>: c_curve    generate complexity curve for a library
+           lc_extrap  predict the yield for future experiments
+           gc_extrap  predict genome coverage low input
+                      sequencing experiments
+           bound_pop  lower bound on population size
+

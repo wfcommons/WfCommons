@@ -1,0 +1,13 @@
+Module	Section	Sample Name	Source
+Cutadapt	all_sections	2a_S115_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/cutadapt/logs/cutadapt_log_2a.txt
+Cutadapt	all_sections	2_S115_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/cutadapt/logs/cutadapt_log_2.txt
+Cutadapt	all_sections	1_S103_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/cutadapt/logs/cutadapt_log_1.txt
+Cutadapt	all_sections	1a_S103_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/cutadapt/logs/cutadapt_log_1a.txt
+FastQC	all_sections	2_S115_L001_R1_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/2_S115_L001_R1_001_fastqc.zip
+FastQC	all_sections	1_S103_L001_R1_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/1_S103_L001_R1_001_fastqc.zip
+FastQC	all_sections	2a_S115_L001_R1_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/2a_S115_L001_R1_001_fastqc.zip
+FastQC	all_sections	2_S115_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/2_S115_L001_R2_001_fastqc.zip
+FastQC	all_sections	1_S103_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/1_S103_L001_R2_001_fastqc.zip
+FastQC	all_sections	2a_S115_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/2a_S115_L001_R2_001_fastqc.zip
+FastQC	all_sections	1a_S103_L001_R2_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/1a_S103_L001_R2_001_fastqc.zip
+FastQC	all_sections	1a_S103_L001_R1_001	/Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b/fastqc/1a_S103_L001_R1_001_fastqc.zip

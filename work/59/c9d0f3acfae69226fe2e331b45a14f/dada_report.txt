@@ -1,0 +1,7 @@
+R version 3.5.1 (2018-07-02) 
+DADA2: 1.10.0 / Rcpp: 1.0.2 / RcppParallel: 4.4.4 
+1) Filtering Running external command line application(s). This may print messages to stdout and/or stderr.
+The command(s) being run are below. These commands cannot be manually re-run as they will depend on temporary files that no longer exist.
+
+Command: run_dada_paired.R /tmp/tmpp5wa2973/forward /tmp/tmpp5wa2973/reverse /tmp/tmpp5wa2973/output.tsv.biom /tmp/tmpp5wa2973/track.tsv /tmp/tmpp5wa2973/filt_f /tmp/tmpp5wa2973/filt_r 230 229 0 0 2.0 2.0 2 consensus 1.0 0 1000000
+

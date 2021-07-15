@@ -1,0 +1,14 @@
+
+
+Program: msisensor (homopolymer and miscrosatelite analysis using bam files)
+Version: v0.5
+Author: Beifang Niu && Kai Ye
+
+Usage:   msisensor <command> [options]
+
+Key commands:
+
+ scan            scan homopolymers and miscrosatelites
+ msi             msi scoring
+
+

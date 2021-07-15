@@ -1,0 +1,286 @@
+<!DOCTYPE html><html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            body {
+              font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+              padding: 3em;
+              margin-right: 350px;
+              max-width: 100%;
+            }
+            .toc {
+              position: fixed;
+              right: 20px;
+              width: 300px;
+              padding-top: 20px;
+              overflow: scroll;
+              height: calc(100% - 3em - 20px);
+            }
+            .toctitle {
+              font-size: 1.8em;
+              font-weight: bold;
+            }
+            .toc > ul {
+              padding: 0;
+              margin: 1rem 0;
+              list-style-type: none;
+            }
+            .toc > ul ul { padding-left: 20px; }
+            .toc > ul > li > a { display: none; }
+            img { max-width: 800px; }
+            pre {
+              padding: 0.6em 1em;
+            }
+            h2 {
+
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#nf-coreampliseq-output">nf-core/ampliseq: Output</a><ul>
+<li><a href="#please-read-this-documentation-on-the-nf-core-website-httpsnf-coreampliseqoutput">Please read this documentation on the nf-core website: https://nf-co.re/ampliseq/output</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#pipeline-overview">Pipeline overview</a><ul>
+<li><a href="#fastqc">FastQC</a></li>
+<li><a href="#cutadapt">Cutadapt</a></li>
+<li><a href="#multiqc">MultiQC</a></li>
+<li><a href="#qiime2">QIIME2</a></li>
+<li><a href="#dada2">DADA2</a></li>
+<li><a href="#taxonomic-classification">Taxonomic classification</a></li>
+<li><a href="#exclude-taxa">Exclude taxa</a></li>
+<li><a href="#relative-abundance-tables">Relative abundance tables</a></li>
+<li><a href="#barplot">Barplot</a></li>
+<li><a href="#alpha-diversity-rarefaction-curves">Alpha diversity rarefaction curves</a></li>
+<li><a href="#alpha-diversity-indices">Alpha diversity indices</a></li>
+<li><a href="#beta-diversity-indices">Beta diversity indices</a></li>
+<li><a href="#ancom">ANCOM</a></li>
+</ul>
+</li>
+<li><a href="#pipeline-information">Pipeline information</a></li>
+<li><a href="#more-help">More help</a></li>
+<li><a href="#citations">Citations</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="nf-coreampliseq-output">nf-core/ampliseq: Output</h1>
+<h2 id="please-read-this-documentation-on-the-nf-core-website-httpsnf-coreampliseqoutput"><img alt="⚠" class="emojione" src="https://cdn.jsdelivr.net/emojione/assets/4.0/png/64/26a0.png" title=":warning:" /> Please read this documentation on the nf-core website: <a href="https://nf-co.re/ampliseq/output">https://nf-co.re/ampliseq/output</a></h2>
+<blockquote>
+<p><em>Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files.</em></p>
+</blockquote>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.</p>
+<p>The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.</p>
+<h2 id="pipeline-overview">Pipeline overview</h2>
+<p>The pipeline is built using <a href="https://www.nextflow.io/">Nextflow</a>
+and processes data using the following steps:</p>
+<ul>
+<li><a href="#nf-coreampliseq-output">nf-core/ampliseq: Output</a></li>
+<li><a href="#pipeline-overview">Pipeline overview</a><ul>
+<li><a href="#fastqc">FastQC</a> - Read quality control</li>
+<li><a href="#cutadapt">Cutadapt</a> - Primer trimming</li>
+<li><a href="#multiqc">MultiQC</a> - Aggregate report describing results</li>
+<li><a href="#qiime2">QIIME2</a> - Import &amp; quality control</li>
+<li><a href="#dada2">DADA2</a> - Infer Amplicon Sequence Variants (ASVs)</li>
+<li><a href="#taxonomic-classification">Taxonomic classification</a> - Taxonomical classification of ASVs</li>
+<li><a href="#exclude-taxa">Exclude taxa</a> - Remove unwanted ASV based on taxonomy</li>
+<li><a href="#relative-abundance-tables">Relative abundance tables</a> - Exported relative abundance tables</li>
+<li><a href="#barplot">Barplot</a> - Interactive barplot</li>
+<li><a href="#alpha-diversity-rarefaction-curves">Alpha diversity rarefaction curves</a> - Rarefaction curves for quality control</li>
+<li><a href="#alpha-diversity-indices">Alpha diversity indices</a> - Diversity within samples</li>
+<li><a href="#beta-diversity-indices">Beta diversity indices</a> - Diversity between samples (e.g. PCoA plots)</li>
+<li><a href="#ancom">ANCOM</a> - Differential abundance analysis</li>
+<li><a href="#pipeline-information">Pipeline information</a> - Report metrics generated during the workflow execution</li>
+</ul>
+</li>
+<li><a href="#more-help">More help</a></li>
+<li><a href="#citations">Citations</a></li>
+</ul>
+<h3 id="fastqc">FastQC</h3>
+<p><a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC</a> gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences.</p>
+<p>For further reading and documentation see the <a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/">FastQC help pages</a>.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>fastqc/</code></li>
+<li><code>*_fastqc.html</code>: FastQC report containing quality metrics for your untrimmed raw fastq files.</li>
+<li><code>fastqc/zips/</code></li>
+<li><code>*_fastqc.zip</code>: Zip archive containing the FastQC report, tab-delimited data file and plot images.</li>
+</ul>
+<blockquote>
+<p><strong>NB:</strong> The FastQC plots displayed in the MultiQC report shows <em>untrimmed</em> reads. They may contain adapter sequence and potentially regions with low quality.</p>
+</blockquote>
+<h3 id="cutadapt">Cutadapt</h3>
+<p><a href="https://journal.embnet.org/index.php/embnetjournal/article/view/200">Cutadapt</a> is trimming primer sequences from sequencing reads. Primer sequences are non-biological sequences that often introduce point mutations that do not reflect sample sequences. This is especially true for degenerated PCR primer. If primer trimming would be omitted, artifactual amplicon sequence variants might be computed by the denoising tool or sequences might be lost due to become labelled as PCR chimera.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>trimmed/logs/</code>: directory containing log files with retained reads, trimming percentage, etc. for each sample.</li>
+</ul>
+<h3 id="multiqc">MultiQC</h3>
+<p><a href="http://multiqc.info">MultiQC</a> is a visualization tool that generates a single HTML report summarizing all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.</p>
+<p>The pipeline has special steps which also allow the software versions to be reported in the MultiQC output for future traceability.</p>
+<p>For more information about how to use MultiQC reports, see <a href="https://multiqc.info">https://multiqc.info</a>.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>multiqc/</code></li>
+<li><code>multiqc_report.html</code>: a standalone HTML file that can be viewed in your web browser.</li>
+<li><code>multiqc_data/</code>: directory containing parsed statistics from the different tools used in the pipeline.</li>
+<li><code>multiqc_plots/</code>: directory containing static images from the report in various formats.</li>
+</ul>
+<h3 id="qiime2">QIIME2</h3>
+<p><strong>Quantitative Insights Into Microbial Ecology 2</strong> (<a href="https://qiime2.org/">QIIME2</a>) is a next-generation microbiome bioinformatics platform and the successor of the widely used <a href="https://www.nature.com/articles/nmeth.f.303">QIIME1</a>. QIIME2 is currently <strong>under heavy development</strong> and often updated, this version of ampliseq uses QIIME2 2019.10. QIIME2 has a wide variety of analysis tools available and has excellent support in its <a href="https://docs.qiime2.org/2019.10/">forum</a>.</p>
+<p>At this point of the analysis the trimmed reads are imported into QIIME2 and an interactive quality plot is made.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>demux/</code>  </li>
+<li><code>index.html</code>: Quality plots that can be viewed in your web browser.</li>
+<li><code>demux.qza</code> (only when --untilQ2import is true): QIIME2 artefact for imported reads.</li>
+</ul>
+<p>All following analysis steps are performed in QIIME2, except DADA2 in the case of pacbio data.</p>
+<h3 id="dada2">DADA2</h3>
+<p><a href="https://www.nature.com/articles/nmeth.3869">DADA2</a> performs fast and accurate sample inference from amplicon data with single-nucleotide resolution. It infers exact amplicon sequence variants (ASVs) from amplicon data with fewer false positives than many other methods while maintaining high sensitivity.</p>
+<p>DADA2 computes an error model on the sequencing reads (forward and reverse independently), therefore quality filtering or paired read merging may not be performed before. Each sequencing run varies in their error profile and it is recommended that DADA2 runs separately on data from each run individually. It is recommended to use the ampliseq option <code>--multipleSequencingRuns</code> to analyse such data.</p>
+<p>DADA2 reduces sequence errors and dereplicates sequences by quality filtering, denoising, read pair merging (for paired end Illumina reads only) and PCR chimera removal.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>representative_sequences/unfiltered/</code>  </li>
+<li><code>sequences.fasta</code>: Fasta file with ASV sequences.</li>
+<li><code>index.html</code>: ASV IDs, sequences and blast results in an interactive table that can be viewed in your web browser.</li>
+<li><code>rep-seqs.qza</code>: QIIME2 data artefact.</li>
+<li><code>abundance-table/unfiltered/</code>  </li>
+<li><code>dada_report.txt</code>: DADA2 verbose output.</li>
+<li><code>dada_stats.tsv</code>: Tab-separated table of DADA2 statistics.</li>
+<li><code>feature-table.biom</code>: Abundance table in biom format for importing into downstream analysis tools.</li>
+<li><code>feature-table.tsv</code>: Tab-separated abundance table for each ASV and each sample.</li>
+<li><code>rel-feature-table.biom</code>: Relative abundance table in biom format for importing into downstream analysis tools.</li>
+<li><code>rel-feature-table.tsv</code>: Tab-separated relative abundance table for each ASV and each sample.</li>
+<li><code>table.qza</code>: QIIME2 data artefact.</li>
+</ul>
+<h3 id="taxonomic-classification">Taxonomic classification</h3>
+<p>ASV abundance and sequences inferred in DADA2 are informative but routinely taxonomic classifications such as family or genus annotation is desireable. ASV sequences are classified by default against the <a href="https://www.arb-silva.de/">SILVA</a> <a href="https://www.arb-silva.de/documentation/release-132/">v132</a> database to add taxonomic information, but a custom database is used if provided. In particular, a <a href="https://unite.ut.ee/repository.php">UNITE</a> fasta file can be provided to classify fungal ITS sequences.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>taxonomy/</code></li>
+<li><code>taxonomy.tsv</code>: Tab-separated table with taxonomic classification for each ASV</li>
+<li><code>index.html</code>: ASV IDs with taxonomic classification in an interactive table that can be viewed in your web browser</li>
+</ul>
+<h3 id="exclude-taxa">Exclude taxa</h3>
+<p>Removes unwanted taxa in DADA2 output sequences and abundance tables by taxonomic classification. Unwanted taxa are often off-targets generated in PCR with primers that are not perfectly specific for the target DNA. For example, PCR with commonly used primers also amplifyies mitrochindrial or chloroplast rRNA genes and therefore leads to non-bacteria products. These mitrochondria or chloroplast amplicons are removed in this step.</p>
+<p>All following analysis is based on these filtered tables.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>representative_sequences/filtered/</code></li>
+<li><code>sequences.fasta</code>: Fasta file with ASV sequences.</li>
+<li><code>index.html</code>: ASV IDs, sequences and blast results in an interactive table that can be viewed in your web browser.</li>
+<li><code>rep-seqs.qza</code>: QIIME2 data artefact.</li>
+<li><code>abundance-table/filtered/</code></li>
+<li><code>abs-abund-table-2.tsv</code>: Tab-separated absolute abundance table at phylum level.</li>
+<li><code>abs-abund-table-3.tsv</code>: Tab-separated absolute abundance table at class level.</li>
+<li><code>abs-abund-table-4.tsv</code>: Tab-separated absolute abundance table at order level.</li>
+<li><code>abs-abund-table-5.tsv</code>: Tab-separated absolute abundance table at family level.</li>
+<li><code>abs-abund-table-6.tsv</code>: Tab-separated absolute abundance table at genus level.</li>
+<li><code>abs-abund-table-7.tsv</code>: Tab-separated absolute abundance table at species level.</li>
+<li><code>count_table_filter_stats.tsv</code>: Tab-separated table with information on how much counts were filtered for each sample.</li>
+<li><code>feature-table.biom</code>: Abundance table in biom format for importing into downstream analysis tools.</li>
+<li><code>feature-table.tsv</code>: Tab-separated abundance table for each ASV and each sample.</li>
+<li><code>table.qza</code>: QIIME2 data artefact.</li>
+</ul>
+<h3 id="relative-abundance-tables">Relative abundance tables</h3>
+<p>Absolute abundance tables produced by the previous steps contain count data, but the compositional nature of 16S rRNA amplicon sequencing requires sequencing depth normalisation. This step computes relative abundance tables for various taxonomic levels and a detailed table for all ASVs with taxonomic classification, sequence and relative abundance for each sample. Typically used for in depth investigation of taxa abundances.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>rel_abundance_tables/</code></li>
+<li><code>rel-table-2.tsv</code>: Tab-separated relative abundance table at phylum level.</li>
+<li><code>rel-table-3.tsv</code>: Tab-separated relative abundance table at class level.</li>
+<li><code>rel-table-4.tsv</code>: Tab-separated relative abundance table at order level.</li>
+<li><code>rel-table-5.tsv</code>: Tab-separated relative abundance table at family level.</li>
+<li><code>rel-table-6.tsv</code>: Tab-separated relative abundance table at genus level.</li>
+<li><code>rel-table-7.tsv</code>: Tab-separated relative abundance table at species level.</li>
+<li><code>rel-table-ASV.tsv</code>: Tab-separated relative abundance table for all ASVs.</li>
+<li><code>qiime2_ASV_table.tsv</code>: Tab-separated table for all ASVs with taxonomic classification, sequence and relative abundance.</li>
+</ul>
+<h3 id="barplot">Barplot</h3>
+<p>Produces an interactive abundance plot count tables that aids exploratory browsing the discovered taxa and their abundance in samples and allows sorting for associated meta data.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>barplot/</code></li>
+<li><code>index.html</code>: Interactive barplot for taxa abundance per sample that can be viewed in your web browser.</li>
+</ul>
+<h3 id="alpha-diversity-rarefaction-curves">Alpha diversity rarefaction curves</h3>
+<p>Produces rarefaction plots for several alpha diversity indices, and is primarily used to determine if the richness of the samples has been fully observed or sequenced. If the slope of the curves does not level out and the lines do not becomes horizontal, this might be because the sequencing depth was too low to observe all diversity or that sequencing error artificially increases sequence diversity and causes false discoveries.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>alpha-rarefaction/</code></li>
+<li><code>index.html</code>: Interactive alphararefaction curve for taxa abundance per sample that can be viewed in your web browser.</li>
+</ul>
+<h3 id="alpha-diversity-indices">Alpha diversity indices</h3>
+<p>Alpha diversity measures the species diversity within samples. This step calculates alpha diversity using various methods and performs pairwise comparisons of groups of samples.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>alpha-diversity</code></li>
+<li><code>evenness_vector/index.html</code>: Pielou’s Evenness.</li>
+<li><code>faith_pd_vector/index.html</code>: Faith’s Phylogenetic Diversity (qualitiative, phylogenetic).</li>
+<li><code>observed_otus_vector/index.html</code>: Observed OTUs (qualitative).</li>
+<li><code>shannon_vector/index.html</code>: Shannon’s diversity index (quantitative).</li>
+</ul>
+<h3 id="beta-diversity-indices">Beta diversity indices</h3>
+<p>Beta diversity measures the species community differences between samples. This step calculates beta diversity distances using various methods and performs pairwise comparisons of groups of samples. Additionally principle coordinates analysis (PCoA) plots are produced that can be visualized with <a href="https://biocore.github.io/emperor/build/html/index.html">Emperor</a> in your default browser without the need for installation.</p>
+<p><strong>The following methods are used to calculate community dissimilarities:</strong></p>
+<ul>
+<li>Jaccard distance (qualitative)</li>
+<li>Bray-Curtis distance (quantitative)</li>
+<li>unweighted UniFrac distance (qualitative, phylogenetic)</li>
+<li>weighted UniFrac distance (quantitative, phylogenetic)</li>
+</ul>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>beta-diversity/</code></li>
+<li><code>&lt;method&gt;_distance_matrix-&lt;treatment&gt;/index.html</code></li>
+<li><code>&lt;method&gt;_pcoa_results-PCoA/index.html</code><ul>
+<li>method: bray_curtis, jaccard, unweighted_unifrac, weighted_unifrac</li>
+<li>treatment: depends on your metadata sheet or what metadata categories you have specified</li>
+</ul>
+</li>
+</ul>
+<h3 id="ancom">ANCOM</h3>
+<p>Analysis of Composition of Microbiomes (<a href="https://www.ncbi.nlm.nih.gov/pubmed/26028277">ANCOM</a>) is applied to identify features that are differentially abundant across sample groups. A key assumption made by ANCOM is that few taxa (less than about 25%) will be differentially abundant between groups otherwise the method will be inaccurate.</p>
+<p>ANCOM is applied to each suitable or specified metadata column for 6 taxonomic levels.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>ancom/</code></li>
+<li><code>Category-&lt;treatment&gt;-&lt;taxonomic level&gt;/index.html</code><ul>
+<li>treatment: depends on your metadata sheet or what metadata categories you have specified</li>
+<li>taxonomic level: level-2 (phylum), level-3 (class), level-4 (order), level-5 (family), level-6 (genus), ASV</li>
+</ul>
+</li>
+</ul>
+<h2 id="pipeline-information">Pipeline information</h2>
+<p><a href="https://www.nextflow.io/docs/latest/tracing.html">Nextflow</a> provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>pipeline_info/</code></li>
+<li>Reports generated by Nextflow: <code>execution_report.html</code>, <code>execution_timeline.html</code>, <code>execution_trace.txt</code> and <code>pipeline_dag.dot</code>/<code>pipeline_dag.svg</code>.</li>
+<li>Reports generated by the pipeline: <code>pipeline_report.html</code>, <code>pipeline_report.txt</code> and <code>software_versions.csv</code>.</li>
+<li>Documentation for interpretation of results in HTML format: <code>results_description.html</code>.</li>
+</ul>
+<h2 id="more-help">More help</h2>
+<p>QIIME2 is currently <strong>under heavy development</strong> and often updated, this version of ampliseq uses QIIME2 2019.10. QIIME2 has excellent support in its <a href="https://docs.qiime2.org/2019.10/">forum</a>.</p>
+<h2 id="citations">Citations</h2>
+<p>Besides citing the <a href="https://doi.org/10.5281/zenodo.3568091">pipeline</a> and its <a href="https://doi.org/10.3389/fmicb.2020.550420">publication</a>, all tools that were used inside the pipeline have to be cited in a publication properly:</p>
+<ul>
+<li>FastQC, "Andrews, Simon. "FastQC: a quality control tool for high throughput sequence data." (2010)."</li>
+<li>Cutadapt "Martin, Marcel. "Cutadapt removes adapter sequences from high-throughput sequencing reads." EMBnet. journal 17.1 (2011): pp-10."</li>
+<li>MultiQC, "Ewels, Philip, et al. "MultiQC: summarize analysis results for multiple tools and samples in a single report." Bioinformatics 32.19 (2016): 3047-3048."</li>
+<li>QIIME2, "Bolyen, Evan, et al. "Reproducible, interactive, scalable and extensible microbiome data science using QIIME 2." Nature Biotechnology 37 (2019): 852–857."</li>
+<li>DADA2, "Callahan, Benjamin J., et al. "DADA2: high-resolution sample inference from Illumina amplicon data." Nature methods 13.7 (2016): 581."</li>
+<li>Matplotlib, "Hunter, John D. "Matplotlib: A 2D graphics environment." Computing in science &amp; engineering 9.3 (2007): 90-95."</li>
+<li>Feature-classifier, "Bokulich, Kaehler, et al. "Optimizing taxonomic classification of marker-gene amplicon sequences with QIIME 2's q2-feature-classifier plugin." Microbiome 6 (2018): 90.</li>
+<li>SILVA database, "Quast, Pruesse, et al. 2013. 'The SILVA ribosomal RNA gene database project: improved data processing and web-based tools', Nucleic Acids Research, 41: D590-D96."</li>
+<li>Mafft, "Katoh, Kazutaka and Standley, Daron M. "MAFFT multiple sequence alignment software version 7: improvements in performance and usability. Molecular biology and evolution 4 (2013): 772-780"</li>
+<li>ANCOM, "Mandal, Siddhartha et al. “Analysis of composition of microbiomes: a novel method for studying microbial composition” Microbial ecology in health and disease vol. 26 27663. 29 May. 2015, doi:10.3402/mehd.v26.27663"</li>
+</ul>
+    </div>
+    </body>
+    </html>
+    

@@ -1,0 +1,243 @@
+<!DOCTYPE html><html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            body {
+              font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+              padding: 3em;
+              margin-right: 350px;
+              max-width: 100%;
+            }
+            .toc {
+              position: fixed;
+              right: 20px;
+              width: 300px;
+              padding-top: 20px;
+              overflow: scroll;
+              height: calc(100% - 3em - 20px);
+            }
+            .toctitle {
+              font-size: 1.8em;
+              font-weight: bold;
+            }
+            .toc > ul {
+              padding: 0;
+              margin: 1rem 0;
+              list-style-type: none;
+            }
+            .toc > ul ul { padding-left: 20px; }
+            .toc > ul > li > a { display: none; }
+            img { max-width: 800px; }
+            pre {
+              padding: 0.6em 1em;
+            }
+            h2 {
+
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#nf-coremethylseq-output">nf-core/methylseq Output</a><ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#pipeline-overview">Pipeline overview</a></li>
+<li><a href="#fastqc">FastQC</a></li>
+<li><a href="#trimgalore">TrimGalore</a><ul>
+<li><a href="#alignment">Alignment</a></li>
+<li><a href="#deduplication">Deduplication</a></li>
+<li><a href="#methylation-extraction">Methylation Extraction</a></li>
+<li><a href="#bismark-reports">Bismark Reports</a></li>
+</ul>
+</li>
+<li><a href="#qualimap">Qualimap</a></li>
+<li><a href="#preseq">Preseq</a></li>
+<li><a href="#multiqc">MultiQC</a></li>
+<li><a href="#pipeline-information">Pipeline information</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="nf-coremethylseq-output">nf-core/methylseq Output</h1>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.</p>
+<p>Note that nf-core/methylseq contains two workflows - one for Bismark, one for bwa-meth. The results files produced will vary depending on which variant is run.</p>
+<p>The output directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.</p>
+<h2 id="pipeline-overview">Pipeline overview</h2>
+<p>The pipeline is built using <a href="https://www.nextflow.io/">Nextflow</a>
+and processes data using the following steps:</p>
+<ul>
+<li><a href="#fastqc">FastQC</a> - Read quality control</li>
+<li><a href="#trimgalore">TrimGalore</a> - Adapter trimming</li>
+<li><a href="#alignment">Alignment</a> - Aligning reads to reference genome</li>
+<li><a href="#deduplication">Deduplication</a> - Deduplicating reads</li>
+<li><a href="#methylation-extraction">Methylation Extraction</a> - Calling cytosine methylation steps</li>
+<li><a href="#bismark-reports">Bismark Reports</a> - Single-sample and summary analysis reports</li>
+<li><a href="#qualimap">Qualimap</a> - Tool for genome alignments QC</li>
+<li><a href="#preseq">Preseq</a> - Tool for estimating sample complexity</li>
+<li><a href="#multiqc">MultiQC</a> - Aggregate report describing results of the whole pipeline</li>
+<li><a href="#pipeline-information">Pipeline information</a> - Report metrics generated during the workflow execution</li>
+</ul>
+<h2 id="fastqc">FastQC</h2>
+<p><a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC</a> gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences.</p>
+<p>For further reading and documentation see the <a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/">FastQC help pages</a>.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>fastqc/</code></li>
+<li><code>*_fastqc.html</code>: FastQC report containing quality metrics for your untrimmed raw fastq files.</li>
+<li><code>fastqc/zips/</code></li>
+<li>
+<p><code>*_fastqc.zip</code>: Zip archive containing the FastQC report, tab-delimited data file and plot images.</p>
+</li>
+<li>
+<p><code>sample_fastqc.html</code></p>
+</li>
+<li>FastQC report, containing quality metrics for your untrimmed raw fastq files</li>
+<li><code>sample_fastqc.zip</code></li>
+<li>zip file containing the FastQC report, tab-delimited data file and plot images</li>
+</ul>
+<blockquote>
+<p><strong>NB:</strong> The FastQC plots displayed in the MultiQC report shows <em>untrimmed</em> reads. They may contain adapter sequence and potentially regions with low quality.</p>
+</blockquote>
+<h2 id="trimgalore">TrimGalore</h2>
+<p>The nf-core/methylseq pipeline uses <a href="http://www.bioinformatics.babraham.ac.uk/projects/trim_galore/">TrimGalore!</a> for removal of adapter contamination and trimming of low quality regions. TrimGalore is a wrapper around <a href="https://github.com/marcelm/cutadapt">Cutadapt</a> and runs FastQC after it finishes.</p>
+<p>MultiQC reports the percentage of bases removed by Cutadapt in the <em>General Statistics</em> table, along with a line plot showing where reads were trimmed.</p>
+<p><strong>Output directory: <code>results/trim_galore</code></strong></p>
+<p>Contains FastQ files with quality and adapter trimmed reads for each sample, along with a log file describing the trimming.</p>
+<ul>
+<li><code>sample_val_1.fq.gz</code>, <code>sample_val_2.fq.gz</code></li>
+<li>Trimmed FastQ data, reads 1 and 2.</li>
+<li><strong>NB:</strong> Only saved if <code>--save_trimmed</code> has been specified.</li>
+<li><code>logs/sample_val_1.fq.gz_trimming_report.txt</code></li>
+<li>Trimming report (describes which parameters that were used)</li>
+<li><code>FastQC/sample_val_1_fastqc.zip</code></li>
+<li>FastQC report for trimmed reads</li>
+</ul>
+<p>Single-end data will have slightly different file names and only one FastQ file per sample.</p>
+<h3 id="alignment">Alignment</h3>
+<p>Bismark and bwa-meth convert all Cytosines contained within the sequenced reads to Thymine <em>in-silico</em> and then align against a three-letter reference genome. This method avoids methylation-specific alignment bias. The alignment produces a BAM file of genomic alignments.</p>
+<p><strong>Bismark output directory: <code>results/bismark_alignments/</code></strong>
+<em>Note that bismark can use either use Bowtie2 (default) or HISAT2 as alignment tool and the output file names will not differ between the options.</em></p>
+<ul>
+<li><code>sample.bam</code></li>
+<li>Aligned reads in BAM format.</li>
+<li><strong>NB:</strong> Only saved if <code>--save_align_intermeds</code>, <code>--skip_deduplication</code> or <code>--rrbs</code> is specified when running the pipeline.</li>
+<li><code>logs/sample_PE_report.txt</code></li>
+<li>Log file giving summary statistics about alignment.</li>
+<li><code>unmapped/unmapped_reads_1.fq.gz</code>, <code>unmapped/unmapped_reads_2.fq.gz</code></li>
+<li>Unmapped reads in FastQ format.</li>
+<li>Only saved if <code>--unmapped</code> specified when running the pipeline.</li>
+</ul>
+<p><strong>bwa-meth output directory: <code>results/bwa-mem_alignments/</code></strong></p>
+<ul>
+<li><code>sample.bam</code></li>
+<li>Aligned reads in BAM format.</li>
+<li><strong>NB:</strong> Only saved if <code>--save_align_intermeds</code> is used</li>
+<li><code>sample.sorted.bam</code></li>
+<li>Aligned reads in a sorted BAM file.</li>
+<li><strong>NB:</strong> Only saved if <code>--save_align_intermeds</code>, <code>--skip_deduplication</code> or <code>--rrbs</code> is specified when running the pipeline.</li>
+<li><code>sample.sorted.bam.bai</code></li>
+<li>Index of sorted BAM file</li>
+<li><strong>NB:</strong> Only saved if <code>--save_align_intermeds</code>, <code>--skip_deduplication</code> or <code>--rrbs</code> is specified when running the pipeline.</li>
+<li><code>logs/sample_flagstat.txt</code></li>
+<li>Summary file describing the number of reads which aligned in different ways.</li>
+<li><code>logs/sample_stats.txt</code></li>
+<li>Summary file giving lots of metrics about the aligned BAM file.</li>
+</ul>
+<h3 id="deduplication">Deduplication</h3>
+<p>This step removes alignments with identical mapping position to avoid technical duplication in the results. Note that it is skipped if <code>--save_align_intermeds</code>, <code>--skip_deduplication</code> or <code>--rrbs</code> is specified when running the pipeline.</p>
+<p><strong>Bismark output directory: <code>results/bismark_deduplicated/</code></strong></p>
+<ul>
+<li><code>deduplicated.bam</code></li>
+<li>BAM file with only unique alignments.</li>
+<li><code>logs/deduplication_report.txt</code></li>
+<li>Log file giving summary statistics about deduplication.</li>
+</ul>
+<p><strong>bwa-meth output directory: <code>results/bwa-mem_markDuplicates/</code></strong></p>
+<blockquote>
+<p><strong>NB:</strong> The bwa-meth step doesn't remove duplicate reads from the BAM file, it just labels them.</p>
+</blockquote>
+<ul>
+<li><code>sample.sorted.markDups.bam</code></li>
+<li>BAM file with only unique alignments.</li>
+<li><code>sample.sorted.markDups.bam.bai</code></li>
+<li>Index for markDups BAM file.</li>
+<li><code>logs/sample.sorted.markDups_metrics.txt</code></li>
+<li>Log file giving summary statistics about deduplication.</li>
+</ul>
+<h3 id="methylation-extraction">Methylation Extraction</h3>
+<p>The methylation extractor step takes a BAM file with aligned reads and generates files containing cytosine methylation calls. It produces a few different output formats, described below.</p>
+<p>Note that the output may vary a little depending on whether you specify <code>--comprehensive</code> or <code>--non_directional</code> when running the pipeline.</p>
+<p>Filename abbreviations stand for the following reference alignment strands:</p>
+<ul>
+<li><code>OT</code> - original top strand</li>
+<li><code>OB</code> - original bottom strand</li>
+<li><code>CTOT</code> - complementary to original top strand</li>
+<li><code>CTOB</code> - complementary to original bottom strand</li>
+</ul>
+<p><strong>Bismark output directory: <code>results/bismark_methylation_calls/</code></strong></p>
+<blockquote>
+<p><strong>NB:</strong> <code>CTOT</code> and <code>CTOB</code> are not aligned unless <code>--non_directional</code> specified.</p>
+</blockquote>
+<ul>
+<li><code>methylation_calls/XXX_context_sample.txt.gz</code></li>
+<li>Individual methylation calls, sorted into files according to cytosine context.</li>
+<li><code>methylation_coverage/sample.bismark.cov.gz</code></li>
+<li>Coverage text file summarising cytosine methylation values.</li>
+<li><code>bedGraph/sample.bedGraph.gz</code></li>
+<li>Methylation statuses in <a href="http://genome.ucsc.edu/goldenPath/help/bedgraph.html">bedGraph</a> format, with 0-based genomic start and 1- based end coordinates.</li>
+<li><code>m-bias/sample.M-bias.txt</code></li>
+<li>QC data showing methylation bias across read lengths. See the <a href="https://rawgit.com/FelixKrueger/Bismark/master/Docs/Bismark_User_Guide.html#m-bias-plot">bismark documentation</a> for more information.</li>
+<li><code>logs/sample_splitting_report.txt</code></li>
+<li>Log file giving summary statistics about methylation extraction.</li>
+</ul>
+<p><strong>bwa-meth workflow output directory: <code>results/MethylDackel/</code></strong></p>
+<ul>
+<li><code>sample.bedGraph</code></li>
+<li>Methylation statuses in <a href="http://genome.ucsc.edu/goldenPath/help/bedgraph.html">bedGraph</a> format.</li>
+</ul>
+<h3 id="bismark-reports">Bismark Reports</h3>
+<p>Bismark generates a HTML reports describing results for each sample, as well as a summary report for the whole run.</p>
+<p><strong>Output directory: <code>results/bismark_reports</code></strong></p>
+<p><strong>Output directory: <code>results/bismark_summary</code></strong></p>
+<h2 id="qualimap">Qualimap</h2>
+<p><a href="http://qualimap.bioinfo.cipf.es/doc_html/analysis.html#bam-qc">Qualimap BamQC</a> is a general-use quality-control tool that generates a number of statistics about aligned BAM files. It's not specific to bisulfite data, but it produces several useful stats - for example, insert size and coverage statistics.</p>
+<p><strong>Output directory: <code>results/qualimap</code></strong></p>
+<ul>
+<li><code>sample/qualimapReport.html</code></li>
+<li>Qualimap HTML report</li>
+<li><code>sample/genome_results.txt</code>, <code>sample/raw_data_qualimapReport/*.txt</code></li>
+<li>Text-based statistics that can be loaded into downstream programs</li>
+</ul>
+<h2 id="preseq">Preseq</h2>
+<p><a href="http://smithlabresearch.org/software/preseq/">Preseq</a> estimates the complexity of a library, showing how many additional unique reads are sequenced for increasing the total read count. A shallow curve indicates that the library has reached complexity saturation and further sequencing would likely not add further unique reads. The dashed line shows a perfectly complex library where total reads = unique reads.</p>
+<p>Note that these are predictive numbers only, not absolute. The MultiQC plot can sometimes give extreme sequencing depth on the X axis - click and drag from the left side of the plot to zoom in on more realistic numbers.</p>
+<p><strong>Output directory: <code>results/preseq</code></strong></p>
+<ul>
+<li><code>sample_ccurve.txt</code></li>
+<li>This file contains plot values for the complexity curve, plotted in the MultiQC report.</li>
+</ul>
+<h2 id="multiqc">MultiQC</h2>
+<p><a href="http://multiqc.info">MultiQC</a> is a visualization tool that generates a single HTML report summarizing all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.</p>
+<p>The pipeline has special steps which also allow the software versions to be reported in the MultiQC output for future traceability.</p>
+<p>For more information about how to use MultiQC reports, see <a href="https://multiqc.info">https://multiqc.info</a>.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>multiqc/</code></li>
+<li><code>multiqc_report.html</code>: a standalone HTML file that can be viewed in your web browser.</li>
+<li><code>multiqc_data/</code>: directory containing parsed statistics from the different tools used in the pipeline.</li>
+<li><code>multiqc_plots/</code>: directory containing static images from the report in various formats.</li>
+</ul>
+<h2 id="pipeline-information">Pipeline information</h2>
+<p><a href="https://www.nextflow.io/docs/latest/tracing.html">Nextflow</a> provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>pipeline_info/</code></li>
+<li>Reports generated by Nextflow: <code>execution_report.html</code>, <code>execution_timeline.html</code>, <code>execution_trace.txt</code> and <code>pipeline_dag.dot</code>/<code>pipeline_dag.svg</code>.</li>
+<li>Reports generated by the pipeline: <code>pipeline_report.html</code>, <code>pipeline_report.txt</code> and <code>software_versions.csv</code>.</li>
+<li>Documentation for interpretation of results in HTML format: <code>results_description.html</code>.</li>
+</ul>
+    </div>
+    </body>
+    </html>
+    

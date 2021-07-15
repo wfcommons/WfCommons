@@ -1,0 +1,7 @@
+
+                        Quality-/Adapter-/RRBS-/Speciality-Trimming
+                                [powered by Cutadapt]
+                                  version 0.6.4_dev
+
+                               Last update: 24 09 2019
+

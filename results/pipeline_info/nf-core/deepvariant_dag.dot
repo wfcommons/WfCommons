@@ -1,0 +1,130 @@
+digraph "deepvariant_dag" {
+p0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p1 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p0 -> p1;
+
+p2 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p2 -> p3;
+
+p3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p3 -> p22 [label="bedToExamples"];
+
+p4 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p4 -> p5;
+
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p5 -> p18 [label="faiToExamples"];
+
+p6 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p6 -> p7;
+
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p7 -> p8;
+
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p25 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p8 -> p25 [label="fastaGzToVariants"];
+
+p8 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p8 -> p19 [label="fastaGzToExamples"];
+
+p9 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p9 -> p10;
+
+p10 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p10 -> p11;
+
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p11 -> p20 [label="gzFaiToExamples"];
+
+p11 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p11 -> p26 [label="gzFaiToVariants"];
+
+p12 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p12 -> p13;
+
+p13 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p13 -> p14;
+
+p14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p14 -> p27 [label="gziToVariants"];
+
+p14 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="into"];
+p21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p14 -> p21 [label="gziToExamples"];
+
+p15 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p15 -> p16;
+
+p16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p17 [label="preprocess_bam"];
+p16 -> p17 [label="bamChannel"];
+
+p17 [label="preprocess_bam"];
+p23 [label="make_examples"];
+p17 -> p23 [label="completeChannel"];
+
+p18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p23 [label="make_examples"];
+p18 -> p23;
+
+p19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p23 [label="make_examples"];
+p19 -> p23;
+
+p20 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p23 [label="make_examples"];
+p20 -> p23;
+
+p21 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p23 [label="make_examples"];
+p21 -> p23;
+
+p22 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p23 [label="make_examples"];
+p22 -> p23;
+
+p23 [label="make_examples"];
+p24 [label="call_variants"];
+p23 -> p24 [label="examples"];
+
+p24 [label="call_variants"];
+p28 [label="postprocess_variants"];
+p24 -> p28 [label="called_variants"];
+
+p25 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p28 [label="postprocess_variants"];
+p25 -> p28;
+
+p26 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p28 [label="postprocess_variants"];
+p26 -> p28;
+
+p27 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p28 [label="postprocess_variants"];
+p27 -> p28;
+
+p28 [label="postprocess_variants"];
+p29 [shape=point];
+p28 -> p29 [label="postout"];
+
+p30 [label="get_software_versions"];
+p31 [shape=point];
+p30 -> p31 [label="software_versions_yaml"];
+
+}

@@ -1,0 +1,2 @@
+/opt/conda/envs/nf-core-sarek-2.7/bin/snpEff: line 8: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8): No such file or directory
+SnpEff	4.3t	2017-11-24

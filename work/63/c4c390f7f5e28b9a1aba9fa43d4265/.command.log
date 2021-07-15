@@ -1,0 +1,23 @@
+Processing single-end Bismark output file(s) (SAM format):
+SRR389222_sub3_trimmed_bismark_bt2.bam
+
+
+If there are several alignments to a single position in the genome the first alignment will be chosen. Since the input files are not in any way sorted this is a near-enough random selection of reads.
+
+Checking file >>SRR389222_sub3_trimmed_bismark_bt2.bam<< for signs of file truncation...
+
+
+Output file is: SRR389222_sub3_trimmed_bismark_bt2.deduplicated.bam
+
+
+Total number of alignments analysed in SRR389222_sub3_trimmed_bismark_bt2.bam:	39627
+Total number duplicated alignments removed:	39316 (99.22%)
+Duplicated alignments were found at:	298 different position(s)
+
+Total count of deduplicated leftover sequences: 311 (0.78% of total)
+
+skipping header line:	@HD	VN:1.0	SO:unsorted
+skipping header line:	@SQ	SN:chr	LN:48502
+skipping header line:	@PG	ID:Bismark	VN:v0.23.0	CL:"bismark SRR389222_sub3_trimmed.fq.gz --bowtie2 --bam --genome BismarkIndex SRR389222_sub3_trimmed.fq.gz"
+skipping header line:	@PG	ID:samtools	PN:samtools	PP:Bismark	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -bSh -
+skipping header line:	@PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -h --threads 1 SRR389222_sub3_trimmed_bismark_bt2.bam

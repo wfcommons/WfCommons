@@ -1,0 +1,1 @@
+/Users/nirvaanreddy/Desktop/CURVE/work/48/cbfa26ad5e4b2323a7cbd446b80887/.command.sh: line 12: freebayes: command not found

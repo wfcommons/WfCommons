@@ -1,0 +1,13 @@
+	
+
+                             Bismark HTML Summary Report
+                                 powered by Plot.ly
+
+                           bismark2summary version: 0.22.4
+                          Copyright 2010-20 Felix Krueger
+                               Babraham Bioinformatics
+                 www.bioinformatics.babraham.ac.uk/projects/bismark/
+                      https://github.com/FelixKrueger/Bismark
+
+
+

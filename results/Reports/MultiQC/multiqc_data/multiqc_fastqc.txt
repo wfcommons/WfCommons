@@ -1,0 +1,23 @@
+Sample	adapter_content	Sequences flagged as poor quality	sequence_duplication_levels	avg_sequence_length	Encoding	per_base_sequence_quality	sequence_length_distribution	Sequence length	File type	basic_statistics	per_sequence_gc_content	Total Sequences	per_base_n_content	per_base_sequence_content	overrepresented_sequences	%GC	total_deduplicated_percentage	Filename	per_tile_sequence_quality	per_sequence_quality_scores
+1234N_1234N_M1_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	58.0	warn	fail	fail	38.0	100.0	1234N_1234N_M1_R1.fastq.gz	fail	pass
+1234N_1234N_M1_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	58.0	pass	warn	fail	39.0	100.0	1234N_1234N_M1_R2.fastq.gz	fail	pass
+1234N_1234N_M2_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	31.0	pass	fail	fail	39.0	100.0	1234N_1234N_M2_R1.fastq.gz	fail	pass
+1234N_1234N_M2_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	31.0	pass	fail	fail	39.0	100.0	1234N_1234N_M2_R2.fastq.gz	fail	pass
+1234N_1234N_M4_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	71.0	pass	fail	fail	40.0	100.0	1234N_1234N_M4_R1.fastq.gz	fail	pass
+1234N_1234N_M4_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	71.0	pass	warn	fail	39.0	98.5915492958	1234N_1234N_M4_R2.fastq.gz	fail	pass
+1234N_1234N_M5_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	102.0	pass	warn	fail	39.0	98.0392156863	1234N_1234N_M5_R1.fastq.gz	warn	pass
+1234N_1234N_M5_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	102.0	pass	fail	fail	41.0	99.0196078431	1234N_1234N_M5_R2.fastq.gz	fail	pass
+1234N_1234N_M6_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	94.0	pass	warn	fail	39.0	96.8085106383	1234N_1234N_M6_R1.fastq.gz	pass	pass
+1234N_1234N_M6_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	94.0	pass	warn	fail	40.0	96.8085106383	1234N_1234N_M6_R2.fastq.gz	fail	pass
+1234N_1234N_M7_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	79.0	pass	warn	fail	40.0	100.0	1234N_1234N_M7_R1.fastq.gz	fail	pass
+1234N_1234N_M7_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	79.0	warn	fail	fail	41.0	100.0	1234N_1234N_M7_R2.fastq.gz	fail	pass
+9876T_9876T_M1_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	warn	870.0	pass	pass	warn	37.0	89.4252873563	9876T_9876T_M1_R1.fastq.gz	fail	pass
+9876T_9876T_M1_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	870.0	pass	pass	warn	38.0	89.1954022989	9876T_9876T_M1_R2.fastq.gz	fail	pass
+9876T_9876T_M2_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	warn	799.0	pass	pass	warn	37.0	88.1101376721	9876T_9876T_M2_R1.fastq.gz	fail	pass
+9876T_9876T_M2_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	799.0	pass	pass	warn	37.0	90.4881101377	9876T_9876T_M2_R2.fastq.gz	fail	pass
+9876T_9876T_M3_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	warn	825.0	pass	pass	warn	37.0	89.2121212121	9876T_9876T_M3_R1.fastq.gz	fail	pass
+9876T_9876T_M3_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	warn	825.0	pass	pass	warn	37.0	89.696969697	9876T_9876T_M3_R2.fastq.gz	fail	pass
+9876T_9876T_M4_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	934.0	pass	pass	warn	37.0	87.1520342612	9876T_9876T_M4_R1.fastq.gz	fail	pass
+9876T_9876T_M4_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	934.0	pass	pass	warn	37.0	87.1520342612	9876T_9876T_M4_R2.fastq.gz	fail	pass
+9876T_9876T_M5_R1	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	fail	891.0	pass	pass	warn	37.0	88.5521885522	9876T_9876T_M5_R1.fastq.gz	fail	pass
+9876T_9876T_M5_R2	pass	0.0	pass	101.0	Sanger / Illumina 1.9	pass	pass	101.0	Conventional base calls	pass	warn	891.0	pass	pass	warn	37.0	90.5723905724	9876T_9876T_M5_R2.fastq.gz	fail	pass

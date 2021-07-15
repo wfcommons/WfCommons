@@ -1,0 +1,37 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xmx6g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar ApplyBQSR -R human_g1k_v37_decoy.small.fasta --input 1234N.md.bam --output 2_1-200000_1234N.recal.bam -L 2_1-200000.bed --bqsr-recal-file 1234N.recal.table
+05:53:12.564 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+Mar 17, 2021 5:53:12 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+05:53:12.915 INFO  ApplyBQSR - ------------------------------------------------------------
+05:53:12.916 INFO  ApplyBQSR - The Genome Analysis Toolkit (GATK) v4.1.7.0
+05:53:12.916 INFO  ApplyBQSR - For support and documentation go to https://software.broadinstitute.org/gatk/
+05:53:12.916 INFO  ApplyBQSR - Executing as root@47d666478611 on Linux v4.19.76-linuxkit amd64
+05:53:12.916 INFO  ApplyBQSR - Java runtime: OpenJDK 64-Bit Server VM v1.8.0_265-b11
+05:53:12.917 INFO  ApplyBQSR - Start Date/Time: March 17, 2021 5:53:12 AM UTC
+05:53:12.917 INFO  ApplyBQSR - ------------------------------------------------------------
+05:53:12.917 INFO  ApplyBQSR - ------------------------------------------------------------
+05:53:12.918 INFO  ApplyBQSR - HTSJDK Version: 2.21.2
+05:53:12.918 INFO  ApplyBQSR - Picard Version: 2.21.9
+05:53:12.918 INFO  ApplyBQSR - HTSJDK Defaults.COMPRESSION_LEVEL : 2
+05:53:12.918 INFO  ApplyBQSR - HTSJDK Defaults.USE_ASYNC_IO_READ_FOR_SAMTOOLS : false
+05:53:12.918 INFO  ApplyBQSR - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_SAMTOOLS : true
+05:53:12.918 INFO  ApplyBQSR - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_TRIBBLE : false
+05:53:12.918 INFO  ApplyBQSR - Deflater: IntelDeflater
+05:53:12.918 INFO  ApplyBQSR - Inflater: IntelInflater
+05:53:12.918 INFO  ApplyBQSR - GCS max retries/reopens: 20
+05:53:12.918 INFO  ApplyBQSR - Requester pays: disabled
+05:53:12.918 INFO  ApplyBQSR - Initializing engine
+05:53:13.553 INFO  FeatureManager - Using codec BEDCodec to read file file:///Users/nirvaanreddy/Desktop/CURVE/work/5c/26981c9f4931445ffbf8e768c08bce/2_1-200000.bed
+05:53:13.577 INFO  IntervalArgumentCollection - Processing 200000 bp from intervals
+05:53:13.585 INFO  ApplyBQSR - Done initializing engine
+05:53:13.619 INFO  ProgressMeter - Starting traversal
+05:53:13.620 INFO  ProgressMeter -        Current Locus  Elapsed Minutes       Reads Processed     Reads/Minute
+05:53:14.165 INFO  ApplyBQSR - 0 read(s) filtered by: WellformedReadFilter 
+
+05:53:14.166 INFO  ProgressMeter -             unmapped              0.0                     0              0.0
+05:53:14.166 INFO  ProgressMeter - Traversal complete. Processed 0 total reads in 0.0 minutes.
+05:53:14.179 INFO  ApplyBQSR - Shutting down engine
+[March 17, 2021 5:53:14 AM UTC] org.broadinstitute.hellbender.tools.walkers.bqsr.ApplyBQSR done. Elapsed time: 0.03 minutes.
+Runtime.totalMemory()=268959744

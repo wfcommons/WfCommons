@@ -1,0 +1,82 @@
+digraph "pipeline_dag" {
+p0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.empty"];
+p16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p0 -> p16 [label="ch_multiqc_custom_config"];
+
+p1 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.fromPath"];
+p2 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p1 -> p2;
+
+p2 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p2 -> p3;
+
+p3 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p9 [label="remap_to_hla"];
+p3 -> p9 [label="input_data"];
+
+p4 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.from"];
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p4 -> p5;
+
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="reduce"];
+p5 -> p6;
+
+p6 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="reduce"];
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p6 -> p7;
+
+p7 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="map"];
+p19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p7 -> p19 [label="ch_workflow_summary"];
+
+p8 [shape=point,label="",fixedsize=true,width=0.1];
+p9 [label="remap_to_hla"];
+p8 -> p9 [label="data_index"];
+
+p9 [label="remap_to_hla"];
+p11 [label="run_optitype"];
+p9 -> p11 [label="fished_reads"];
+
+p10 [label="make_ot_config"];
+p11 [label="run_optitype"];
+p10 -> p11 [label="config"];
+
+p12 [shape=point,label="",fixedsize=true,width=0.1];
+p14 [label="output_documentation"];
+p12 -> p14 [label="output_docs"];
+
+p13 [shape=point,label="",fixedsize=true,width=0.1];
+p14 [label="output_documentation"];
+p13 -> p14 [label="images"];
+
+p15 [label="get_software_versions"];
+p18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p15 -> p18 [label="ch_software_versions_yaml"];
+
+p16 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p16 -> p17;
+
+p17 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="ifEmpty"];
+p21 [label="multiqc"];
+p17 -> p21;
+
+p18 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collect"];
+p21 [label="multiqc"];
+p18 -> p21;
+
+p19 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="collectFile"];
+p21 [label="multiqc"];
+p19 -> p21;
+
+p20 [shape=point,label="",fixedsize=true,width=0.1];
+p21 [label="multiqc"];
+p20 -> p21 [label="multiqc_config"];
+
+p21 [label="multiqc"];
+p22 [shape=point];
+p21 -> p22 [label="ch_multiqc_report"];
+
+}

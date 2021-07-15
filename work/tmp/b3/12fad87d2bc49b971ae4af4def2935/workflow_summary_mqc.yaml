@@ -1,0 +1,32 @@
+
+id: 'nf-core-hlatyping-summary'
+description: " - this information is collected when the pipeline is started."
+section_name: 'nf-core/hlatyping Workflow Summary'
+section_href: 'https://github.com/nf-core/hlatyping'
+plot_type: 'html'
+data: |
+    <dl class="dl-horizontal">
+        <dt>Pipeline Release</dt><dd><samp>1.2.0</samp></dd>
+        <dt>Run Name</dt><dd><samp>adoring_roentgen</samp></dd>
+        <dt>File Type</dt><dd><samp>BAM</samp></dd>
+        <dt>Seq Type</dt><dd><samp>dna</samp></dd>
+        <dt>Index Location</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping/data/indices/yara/hla_reference_dna</samp></dd>
+        <dt>IP Solver</dt><dd><samp>glpk</samp></dd>
+        <dt>Enumerations</dt><dd><samp>1</samp></dd>
+        <dt>Beta</dt><dd><samp>0.009</samp></dd>
+        <dt>Max Memory</dt><dd><samp>6 GB</samp></dd>
+        <dt>Max CPUs</dt><dd><samp>2</samp></dd>
+        <dt>Max Time</dt><dd><samp>2d</samp></dd>
+        <dt>Input</dt><dd><samp>https://github.com/nf-core/test-datasets/raw/hlatyping/bam/example_pe.bam</samp></dd>
+        <dt>Data Type</dt><dd><samp>Paired-End</samp></dd>
+        <dt>Output Dir</dt><dd><samp>results</samp></dd>
+        <dt>Launch Dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE</samp></dd>
+        <dt>Working Dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE/work</samp></dd>
+        <dt>Script Dir</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping</samp></dd>
+        <dt>User</dt><dd><samp>nirvaanreddy</samp></dd>
+        <dt>Max Resources</dt><dd><samp>6 GB memory, 2 cpus, 2d time per job</samp></dd>
+        <dt>Container</dt><dd><samp>docker - nfcore/hlatyping:1.2.0</samp></dd>
+        <dt>Config Profile</dt><dd><samp>test,docker</samp></dd>
+        <dt>Config Profile Description</dt><dd><samp>Minimal test dataset to check pipeline function</samp></dd>
+        <dt>Config Files</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/hlatyping/nextflow.config</samp></dd>
+    </dl>

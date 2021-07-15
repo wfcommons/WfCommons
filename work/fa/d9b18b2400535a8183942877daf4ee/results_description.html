@@ -1,0 +1,755 @@
+<!DOCTYPE html><html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            body {
+              font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+              padding: 3em;
+              margin-right: 350px;
+              max-width: 100%;
+            }
+            .toc {
+              position: fixed;
+              right: 20px;
+              width: 300px;
+              padding-top: 20px;
+              overflow: scroll;
+              height: calc(100% - 3em - 20px);
+            }
+            .toctitle {
+              font-size: 1.8em;
+              font-weight: bold;
+            }
+            .toc > ul {
+              padding: 0;
+              margin: 1rem 0;
+              list-style-type: none;
+            }
+            .toc > ul ul { padding-left: 20px; }
+            .toc > ul > li > a { display: none; }
+            img { max-width: 800px; }
+            pre {
+              padding: 0.6em 1em;
+            }
+            h2 {
+
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#nf-coresarek-output">nf-core/sarek: Output <!-- omit in toc --></a><ul>
+<li><a href="#warning-please-read-this-documentation-on-the-nf-core-website-httpsnf-coresarekoutput">warning Please read this documentation on the nf-core website: https://nf-co.re/sarek/output <!-- omit in toc --></a></li>
+<li><a href="#introduction">Introduction <!-- omit in toc --></a></li>
+<li><a href="#pipeline-overview">Pipeline overview <!-- omit in toc --></a></li>
+<li><a href="#preprocessing">Preprocessing</a><ul>
+<li><a href="#map-to-reference">Map to Reference</a><ul>
+<li><a href="#bwa">bwa</a></li>
+<li><a href="#bwa-mem2">BWA-mem2</a></li>
+</ul>
+</li>
+<li><a href="#mark-duplicates">Mark Duplicates</a><ul>
+<li><a href="#gatk-markduplicates">GATK MarkDuplicates</a></li>
+</ul>
+</li>
+<li><a href="#base-quality-score-recalibration">Base (Quality Score) Recalibration</a><ul>
+<li><a href="#gatk-baserecalibrator">GATK BaseRecalibrator</a></li>
+<li><a href="#gatk-applybqsr">GATK ApplyBQSR</a></li>
+</ul>
+</li>
+<li><a href="#tsv-files">TSV files</a></li>
+<li><a href="#tsv-files-with-skip_markduplicates">TSV files with --skip_markduplicates</a></li>
+<li><a href="#tsv-files-with-sentieon">TSV files with --sentieon</a></li>
+</ul>
+</li>
+<li><a href="#variant-calling">Variant Calling</a><ul>
+<li><a href="#snvs-and-small-indels">SNVs and small indels</a><ul>
+<li><a href="#freebayes">FreeBayes</a></li>
+<li><a href="#gatk-haplotypecaller">GATK HaplotypeCaller</a></li>
+<li><a href="#gatk-genotypegvcfs">GATK GenotypeGVCFs</a></li>
+<li><a href="#gatk-mutect2">GATK Mutect2</a></li>
+<li><a href="#samtools-mpileup">samtools mpileup</a></li>
+<li><a href="#strelka2">Strelka2</a></li>
+<li><a href="#sentieon-dnaseq">Sentieon DNAseq</a></li>
+<li><a href="#sentieon-dnascope">Sentieon DNAscope</a></li>
+<li><a href="#sentieon-tnscope">Sentieon TNscope</a></li>
+</ul>
+</li>
+<li><a href="#structural-variants">Structural Variants</a><ul>
+<li><a href="#manta">Manta</a></li>
+<li><a href="#tiddit">TIDDIT</a></li>
+<li><a href="#sentieon-dnascope-sv">Sentieon DNAscope SV</a></li>
+</ul>
+</li>
+<li><a href="#sample-heterogeneity-ploidy-and-cnvs">Sample heterogeneity, ploidy and CNVs</a><ul>
+<li><a href="#convertallelecounts">ConvertAlleleCounts</a></li>
+<li><a href="#ascat">ASCAT</a></li>
+<li><a href="#control-freec">Control-FREEC</a></li>
+</ul>
+</li>
+<li><a href="#msi-status">MSI status</a><ul>
+<li><a href="#msisensor">MSIsensor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#variant-annotation">Variant annotation</a><ul>
+<li><a href="#snpeff">snpEff</a></li>
+<li><a href="#vep">VEP</a></li>
+</ul>
+</li>
+<li><a href="#qc-and-reporting">QC and reporting</a><ul>
+<li><a href="#qc">QC</a><ul>
+<li><a href="#fastqc">FastQC</a></li>
+<li><a href="#bamqc">bamQC</a></li>
+<li><a href="#gatk-markduplicates-reports">GATK MarkDuplicates reports</a></li>
+<li><a href="#samtools-stats">samtools stats</a></li>
+<li><a href="#bcftools-stats">bcftools stats</a></li>
+<li><a href="#vcftools">VCFtools</a></li>
+<li><a href="#snpeff-reports">snpEff reports</a></li>
+<li><a href="#vep-reports">VEP reports</a></li>
+</ul>
+</li>
+<li><a href="#reporting">Reporting</a><ul>
+<li><a href="#multiqc">MultiQC</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#pipeline-information">Pipeline information</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="nf-coresarek-output">nf-core/sarek: Output <!-- omit in toc --></h1>
+<h2 id="warning-please-read-this-documentation-on-the-nf-core-website-httpsnf-coresarekoutput">warning Please read this documentation on the nf-core website: <a href="https://nf-co.re/sarek/output">https://nf-co.re/sarek/output</a> <!-- omit in toc --></h2>
+<blockquote>
+<p><em>Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files.</em></p>
+</blockquote>
+<h2 id="introduction">Introduction <!-- omit in toc --></h2>
+<p>This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.</p>
+<p>The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.</p>
+<h2 id="pipeline-overview">Pipeline overview <!-- omit in toc --></h2>
+<p>The pipeline is built using <a href="https://www.nextflow.io/">Nextflow</a>
+and processes data using the following steps:</p>
+<ul>
+<li><a href="#preprocessing">Preprocessing</a></li>
+<li><a href="#map-to-reference">Map to Reference</a><ul>
+<li><a href="#bwa">bwa</a></li>
+<li><a href="#bwa-mem2">BWA-mem2</a></li>
+</ul>
+</li>
+<li><a href="#mark-duplicates">Mark Duplicates</a><ul>
+<li><a href="#gatk-markduplicates">GATK MarkDuplicates</a></li>
+</ul>
+</li>
+<li><a href="#base-quality-score-recalibration">Base (Quality Score) Recalibration</a><ul>
+<li><a href="#gatk-baserecalibrator">GATK BaseRecalibrator</a></li>
+<li><a href="#gatk-applybqsr">GATK ApplyBQSR</a></li>
+</ul>
+</li>
+<li><a href="#tsv-files">TSV files</a></li>
+<li><a href="#tsv-files-with---skip_markduplicates">TSV files with <code>--skip_markduplicates</code></a></li>
+<li><a href="#tsv-files-with---sentieon">TSV files with <code>--sentieon</code></a></li>
+<li><a href="#variant-calling">Variant Calling</a></li>
+<li><a href="#snvs-and-small-indels">SNVs and small indels</a><ul>
+<li><a href="#freebayes">FreeBayes</a></li>
+<li><a href="#gatk-haplotypecaller">GATK HaplotypeCaller</a></li>
+<li><a href="#gatk-genotypegvcfs">GATK GenotypeGVCFs</a></li>
+<li><a href="#gatk-mutect2">GATK Mutect2</a></li>
+<li><a href="#samtools-mpileup">samtools mpileup</a></li>
+<li><a href="#strelka2">Strelka2</a></li>
+<li><a href="#sentieon-dnaseq">Sentieon DNAseq</a></li>
+<li><a href="#sentieon-dnascope">Sentieon DNAscope</a></li>
+<li><a href="#sentieon-tnscope">Sentieon TNscope</a></li>
+</ul>
+</li>
+<li><a href="#structural-variants">Structural Variants</a><ul>
+<li><a href="#manta">Manta</a></li>
+<li><a href="#tiddit">TIDDIT</a></li>
+<li><a href="#sentieon-dnascope-sv">Sentieon DNAscope SV</a></li>
+</ul>
+</li>
+<li><a href="#sample-heterogeneity-ploidy-and-cnvs">Sample heterogeneity, ploidy and CNVs</a><ul>
+<li><a href="#convertallelecounts">ConvertAlleleCounts</a></li>
+<li><a href="#ascat">ASCAT</a></li>
+<li><a href="#control-freec">Control-FREEC</a></li>
+</ul>
+</li>
+<li><a href="#msi-status">MSI status</a><ul>
+<li><a href="#msisensor">MSIsensor</a></li>
+</ul>
+</li>
+<li><a href="#variant-annotation">Variant annotation</a></li>
+<li><a href="#snpeff">snpEff</a></li>
+<li><a href="#vep">VEP</a></li>
+<li><a href="#qc-and-reporting">QC and reporting</a></li>
+<li><a href="#qc">QC</a><ul>
+<li><a href="#fastqc">FastQC</a></li>
+<li><a href="#bamqc">bamQC</a></li>
+<li><a href="#gatk-markduplicates-reports">GATK MarkDuplicates reports</a></li>
+<li><a href="#samtools-stats">samtools stats</a></li>
+<li><a href="#bcftools-stats">bcftools stats</a></li>
+<li><a href="#vcftools">VCFtools</a></li>
+<li><a href="#snpeff-reports">snpEff reports</a></li>
+<li><a href="#vep-reports">VEP reports</a></li>
+</ul>
+</li>
+<li><a href="#reporting">Reporting</a><ul>
+<li><a href="#multiqc">MultiQC</a></li>
+</ul>
+</li>
+<li><a href="#pipeline-information">Pipeline information</a></li>
+</ul>
+<h2 id="preprocessing">Preprocessing</h2>
+<p><code>Sarek</code> pre-processes raw <code>FASTQ</code> files or <code>unmapped BAM</code> files, based on <a href="https://gatk.broadinstitute.org/hc/en-us/sections/360007226651-Best-Practices-Workflows">GATK best practices</a>.</p>
+<h3 id="map-to-reference">Map to Reference</h3>
+<h4 id="bwa">bwa</h4>
+<p><a href="https://github.com/lh3/bwa">bwa</a> is a software package for mapping low-divergent sequences against a large reference genome.</p>
+<p>Such files are intermediate and not kept in the final files delivered to users.</p>
+<h4 id="bwa-mem2">BWA-mem2</h4>
+<p><a href="https://github.com/bwa-mem2/bwa-mem2">BWA-mem2</a> is a software package for mapping low-divergent sequences against a large reference genome.</p>
+<p>Such files are intermediate and not kept in the final files delivered to users.</p>
+<h3 id="mark-duplicates">Mark Duplicates</h3>
+<h4 id="gatk-markduplicates">GATK MarkDuplicates</h4>
+<p>By default, <code>Sarek</code> will use <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042912511-MarkDuplicatesSpark">GATK MarkDuplicatesSpark</a>, <code>Spark</code> implementation of <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042477492-MarkDuplicates-Picard">GATK MarkDuplicates</a>, which locates and tags duplicate reads in a <code>BAM</code> or <code>SAM</code> file, where duplicate reads are defined as originating from a single fragment of DNA.</p>
+<p>Specify <code>--no_gatk_spark</code> to use <code>GATK MarkDuplicates</code> instead.</p>
+<p>This directory is the location for the <code>BAM</code> files delivered to users.
+Besides the <code>duplicates-marked BAM</code> files, the recalibration tables (<code>*.recal.table</code>) are also stored, and can be used to create <code>recalibrated BAM</code> files.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/[SAMPLE]/DuplicatesMarked</code></strong></p>
+<ul>
+<li><code>[SAMPLE].md.bam</code> and <code>[SAMPLE].md.bai</code></li>
+<li><code>BAM</code> file and index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035535912-Data-pre-processing-for-variant-discovery">data pre-processing for variant discovery from the GATK best practices</a>.</p>
+<h3 id="base-quality-score-recalibration">Base (Quality Score) Recalibration</h3>
+<h4 id="gatk-baserecalibrator">GATK BaseRecalibrator</h4>
+<p><a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042477672-BaseRecalibrator">GATK BaseRecalibrator</a> generates a recalibration table based on various co-variates.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/[SAMPLE]/DuplicatesMarked</code></strong></p>
+<ul>
+<li><code>[SAMPLE].recal.table</code></li>
+<li>Recalibration table associated to the <code>duplicates-marked BAM</code> file.</li>
+</ul>
+<h4 id="gatk-applybqsr">GATK ApplyBQSR</h4>
+<p><a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042476852-ApplyBQSR">GATK ApplyBQSR</a> recalibrates the base qualities of the input reads based on the recalibration table produced by the <a href="#gatk-baserecalibrator">GATK BaseRecalibrator</a> tool.</p>
+<p>This directory is the location for the final <code>recalibrated BAM</code> files.
+<code>Recalibrated BAM</code> files are usually 2-3 times larger than the <code>duplicates-marked BAM</code> files.
+To re-generate <code>recalibrated BAM</code> file you have to apply the recalibration table delivered to the <code>DuplicatesMarked\</code> folder either using <code>Sarek</code> ( <a href="usage.md#step-recalibrate"><code>--step recalibrate</code></a> ) , or doing this recalibration yourself.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/[SAMPLE]/Recalibrated</code></strong></p>
+<ul>
+<li><code>[SAMPLE].recal.bam</code> and <code>[SAMPLE].recal.bam.bai</code></li>
+<li><code>BAM</code> file and index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035535912-Data-pre-processing-for-variant-discovery">data pre-processing for variant discovery from the GATK best practices</a>.</p>
+<h3 id="tsv-files">TSV files</h3>
+<p>The <code>TSV</code> files are auto-generated and can be used by <code>Sarek</code> for further processing and/or variant calling.</p>
+<p>For further reading and documentation see the <a href="usage.md#--input"><code>--input</code></a> section in the usage documentation.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/TSV</code></strong></p>
+<ul>
+<li><code>duplicates_marked_no_table.tsv</code>, <code>duplicates_marked.tsv</code> and <code>recalibrated.tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>prepare_recalibration</code>, <code>recalibrate</code> or <code>variantcalling</code> steps.</li>
+<li><code>duplicates_marked_no_table_[SAMPLE].tsv</code>, <code>duplicates_marked_[SAMPLE].tsv</code> and <code>recalibrated_[SAMPLE].tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>prepare_recalibration</code>, <code>recalibrate</code> or <code>variantcalling</code> steps for a specific sample.</li>
+</ul>
+<h3 id="tsv-files-with-skip_markduplicates">TSV files with <code>--skip_markduplicates</code></h3>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--skip_markduplicates"><code>--skip_markduplicates</code></a></p>
+</blockquote>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/TSV</code></strong></p>
+<ul>
+<li><code>mapped.tsv</code>, <code>mapped_no_duplicates_marked.tsv</code> and <code>recalibrated.tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>prepare_recalibration</code>, <code>recalibrate</code> or <code>variantcalling</code> steps.</li>
+<li><code>mapped_[SAMPLE].tsv</code>, <code>mapped_no_duplicates_marked_[SAMPLE].tsv</code> and <code>recalibrated_[SAMPLE].tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>prepare_recalibration</code>, <code>recalibrate</code> or <code>variantcalling</code> steps for a specific sample.</li>
+</ul>
+<h3 id="tsv-files-with-sentieon">TSV files with <code>--sentieon</code></h3>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--sentieon"><code>--sentieon</code></a></p>
+</blockquote>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Preprocessing/TSV</code></strong></p>
+<ul>
+<li><code>sentieon_deduped.tsv</code> and <code>recalibrated_sentieon.tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>variantcalling</code> step.</li>
+<li><code>sentieon_deduped_[SAMPLE].tsv</code> and <code>recalibrated_sentieon_[SAMPLE].tsv</code></li>
+<li><code>TSV</code> files to start <code>Sarek</code> from <code>variantcalling</code> step for a specific sample.</li>
+</ul>
+<h2 id="variant-calling">Variant Calling</h2>
+<p>All the results regarding Variant Calling are collected in this directory.
+If some results from a variant caller do not appear here, please check out the <a href="usage.md#--tools"><code>--tools</code></a> section in the usage documentation.</p>
+<p><code>Recalibrated BAM</code> files can used as an input to start the Variant Calling.</p>
+<h3 id="snvs-and-small-indels">SNVs and small indels</h3>
+<h4 id="freebayes">FreeBayes</h4>
+<p><a href="https://github.com/ekg/freebayes">FreeBayes</a> is a Bayesian genetic variant detector designed to find small polymorphisms, specifically SNPs, indels, MNPs, and complex events smaller than the length of a short-read sequencing alignment.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/FreeBayes</code></strong></p>
+<ul>
+<li><code>FreeBayes_[SAMPLE].vcf.gz</code> and <code>FreeBayes_[SAMPLE].vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://github.com/ekg/freebayes/blob/master/README.md#user-manual-and-guide">FreeBayes manual</a>.</p>
+<h4 id="gatk-haplotypecaller">GATK HaplotypeCaller</h4>
+<p><a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042913231-HaplotypeCaller">GATK HaplotypeCaller</a> calls germline SNPs and indels via local re-assembly of haplotypes.</p>
+<p>Germline calls are provided for all samples, to enable comparison of both, tumor and normal, for possible mixup.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/HaploTypeCaller</code></strong></p>
+<ul>
+<li><code>HaplotypeCaller_[SAMPLE].vcf.gz</code> and <code>HaplotypeCaller_[SAMPLE].vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042913231-HaplotypeCaller">HaplotypeCaller manual</a>.</p>
+<h4 id="gatk-genotypegvcfs">GATK GenotypeGVCFs</h4>
+<p><a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042914991-GenotypeGVCFs">GATK GenotypeGVCFs</a> performs joint genotyping on one or more samples pre-called with HaplotypeCaller.</p>
+<p>Germline calls are provided for all samples, to enable comparison of both, tumor and normal, for possible mixup.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/HaplotypeCallerGVCF</code></strong></p>
+<ul>
+<li><code>HaplotypeCaller_[SAMPLE].g.vcf.gz</code> and <code>HaplotypeCaller_[SAMPLE].g.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042914991-GenotypeGVCFs">GenotypeGVCFs manual</a>.</p>
+<h4 id="gatk-mutect2">GATK Mutect2</h4>
+<p><a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042477952-Mutect2">GATK Mutect2</a> calls somatic SNVs and indels via local assembly of haplotypes.</p>
+<p>For further reading and documentation see the <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360042477952-Mutect2">Mutect2 manual</a>.
+It is recommended to have <a href="https://gatk.broadinstitute.org/hc/en-us/articles/360035890631-Panel-of-Normals-PON">panel of normals (PON)</a> for this version of <code>GATK Mutect2</code> using at least 40 normal samples.
+Additionally, you can add your <code>PON</code> file to get filtered somatic calls.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/Mutect2</code></strong></p>
+<p>Files created:</p>
+<ul>
+<li><code>Mutect2_unfiltered_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz</code> and <code>Mutect2_unfiltered_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz.tbi</code></li>
+<li>unfiltered (raw) Mutect2 calls <code>VCF</code> with Tabix index</li>
+<li><code>Mutect2_filtered_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz</code> and <code>Mutect2_filtered_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz.tbi</code></li>
+<li>filtered Mutect2 calls <code>VCF</code> with Tabix index: these entries have a <code>PASS</code> filter, you can get these when supplying a panel of normals using the <code>--pon</code> option</li>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz.stats</code></li>
+<li>a stats file generated during calling of raw variants (needed for filtering)</li>
+<li><code>[TUMORSAMPLE]_contamination.table</code></li>
+<li>a text file exported when panel-of-normals about sample contamination are provided</li>
+</ul>
+<h4 id="samtools-mpileup">samtools mpileup</h4>
+<p><a href="https://www.htslib.org/doc/samtools.html">samtools mpileup</a> generates pileup of a <code>BAM</code> file.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/mpileup</code></strong></p>
+<ul>
+<li><code>[SAMPLE].pileup.gz</code></li>
+<li>The pileup format is a text-based format for summarizing the base calls of aligned reads to a reference sequence. Alignment records are grouped by sample (<code>SM</code>) identifiers in <code>@RG</code> header lines.</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://www.htslib.org/doc/samtools.html#COMMANDS_AND_OPTIONS">samtools manual</a>.</p>
+<h4 id="strelka2">Strelka2</h4>
+<p><a href="https://github.com/Illumina/strelka">Strelka2</a> is a fast and accurate small variant caller optimized for analysis of germline variation in small cohorts and somatic variation in tumor/normal sample pairs.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/Strelka</code></strong></p>
+<ul>
+<li><code>Strelka_Sample_genome.vcf.gz</code> and <code>Strelka_Sample_genome.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Strelka_Sample_variants.vcf.gz</code> and <code>Strelka_Sample_variants.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/Strelka</code></strong></p>
+<ul>
+<li><code>Strelka_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_indels.vcf.gz</code> and <code>Strelka_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_indels.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Strelka_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_snvs.vcf.gz</code> and <code>Strelka_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_snvs.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>Using <a href="https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md#somatic-configuration-example">Strelka Best Practices</a> with the <code>candidateSmallIndels</code> from <code>Manta</code>:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/Strelka</code></strong></p>
+<ul>
+<li><code>StrelkaBP_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_indels.vcf.gz</code> and <code>StrelkaBP_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_indels.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>StrelkaBP_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_snvs.vcf.gz</code> and <code>StrelkaBP_[TUMORSAMPLE]_vs_[NORMALSAMPLE]_somatic_snvs.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md">Strelka2 user guide</a>.</p>
+<h4 id="sentieon-dnaseq">Sentieon DNAseq</h4>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--sentieon"><code>--sentieon</code></a></p>
+</blockquote>
+<p><a href="https://www.sentieon.com/products/#dnaseq">Sentieon DNAseq</a> implements the same mathematics used in the Broad Institute's BWA-GATK HaplotypeCaller 3.3-4.1 Best Practices Workflow pipeline.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/SentieonDNAseq</code></strong></p>
+<ul>
+<li><code>DNAseq_Sample.vcf.gz</code> and <code>DNAseq_Sample.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://support.sentieon.com/manual/DNAseq_usage/dnaseq/">Sentieon DNAseq user guide</a>.</p>
+<h4 id="sentieon-dnascope">Sentieon DNAscope</h4>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--sentieon"><code>--sentieon</code></a></p>
+</blockquote>
+<p><a href="https://www.sentieon.com/products">Sentieon DNAscope</a> calls SNPs and small indels.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/SentieonDNAscope</code></strong></p>
+<ul>
+<li><code>DNAscope_Sample.vcf.gz</code> and <code>DNAscope_Sample.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://support.sentieon.com/manual/DNAscope_usage/dnascope/">Sentieon DNAscope user guide</a>.</p>
+<h4 id="sentieon-tnscope">Sentieon TNscope</h4>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--sentieon"><code>--sentieon</code></a></p>
+</blockquote>
+<p><a href="https://www.sentieon.com/products/#tnscope">Sentieon TNscope</a> calls SNPs and small indels on an Tumor/Normal pair.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/SentieonTNscope</code></strong></p>
+<ul>
+<li><code>TNscope_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz</code> and <code>TNscope_[TUMORSAMPLE]_vs_[NORMALSAMPLE].vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://support.sentieon.com/manual/TNscope_usage/tnscope/">Sentieon TNscope user guide</a>.</p>
+<h3 id="structural-variants">Structural Variants</h3>
+<h4 id="manta">Manta</h4>
+<p><a href="https://github.com/Illumina/manta">Manta</a> calls structural variants (SVs) and indels from mapped paired-end sequencing reads.
+It is optimized for analysis of germline variation in small sets of individuals and somatic variation in tumor/normal sample pairs.
+<code>Manta</code> provides a candidate list for small indels that can be fed to <code>Strelka</code> following <a href="https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md#somatic-configuration-example">Strelka Best Practices</a>.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/Manta</code></strong></p>
+<ul>
+<li><code>Manta_[SAMPLE].candidateSmallIndels.vcf.gz</code> and <code>Manta_[SAMPLE].candidateSmallIndels.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Manta_[SAMPLE].candidateSV.vcf.gz</code> and <code>Manta_[SAMPLE].candidateSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For Normal sample only:</p>
+<ul>
+<li><code>Manta_[NORMALSAMPLE].diploidSV.vcf.gz</code> and <code>Manta_[NORMALSAMPLE].diploidSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For a Tumor sample only:</p>
+<ul>
+<li><code>Manta_[TUMORSAMPLE].tumorSV.vcf.gz</code> and <code>Manta_[TUMORSAMPLE].tumorSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/Manta</code></strong></p>
+<ul>
+<li><code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].candidateSmallIndels.vcf.gz</code> and <code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].candidateSmallIndels.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].candidateSV.vcf.gz</code> and <code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].candidateSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].diploidSV.vcf.gz</code> and <code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].diploidSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].somaticSV.vcf.gz</code> and <code>Manta_[TUMORSAMPLE]_vs_[NORMALSAMPLE].somaticSV.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://github.com/Illumina/manta/blob/master/docs/userGuide/README.md">Manta user guide</a>.</p>
+<h4 id="tiddit">TIDDIT</h4>
+<p><a href="https://github.com/SciLifeLab/TIDDIT">TIDDIT</a> identifies intra and inter-chromosomal translocations, deletions, tandem-duplications and inversions.</p>
+<p>Germline calls are provided for all samples, to enable comparison of both, tumor and normal, for possible mixup.
+Low quality calls are removed internally, to simplify processing of variant calls but they are saved by <code>Sarek</code>.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/TIDDIT</code></strong></p>
+<ul>
+<li><code>TIDDIT_[SAMPLE].vcf.gz</code> and <code>TIDDIT_[SAMPLE].vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+<li><code>TIDDIT_[SAMPLE].signals.tab</code></li>
+<li>tab file describing coverage across the genome, binned per 50 bp</li>
+<li><code>TIDDIT_[SAMPLE].ploidy.tab</code></li>
+<li>tab file describing the estimated ploidy and coverage across each contig</li>
+<li><code>TIDDIT_[SAMPLE].old.vcf</code></li>
+<li><code>VCF</code> including the low qualiy calls</li>
+<li><code>TIDDIT_[SAMPLE].wig</code></li>
+<li>wiggle file containing coverage across the genome, binned per 50 bp</li>
+<li><code>TIDDIT_[SAMPLE].gc.wig</code></li>
+<li>wiggle file containing fraction of gc content, binned per 50 bp</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://github.com/SciLifeLab/TIDDIT/blob/master/README.md">TIDDIT manual</a>.</p>
+<h4 id="sentieon-dnascope-sv">Sentieon DNAscope SV</h4>
+<blockquote>
+<p><strong>WARNING</strong> Only with <a href="usage.md#--sentieon"><code>--sentieon</code></a></p>
+</blockquote>
+<p><a href="https://www.sentieon.com/products">Sentieon DNAscope</a> can perform structural variant calling in addition to calling SNPs and small indels.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[SAMPLE]/SentieonDNAscope</code></strong></p>
+<ul>
+<li><code>DNAscope_SV_Sample.vcf.gz</code> and <code>DNAscope_SV_Sample.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://support.sentieon.com/manual/DNAscope_usage/dnascope/">Sentieon DNAscope user guide</a>.</p>
+<h3 id="sample-heterogeneity-ploidy-and-cnvs">Sample heterogeneity, ploidy and CNVs</h3>
+<h4 id="convertallelecounts">ConvertAlleleCounts</h4>
+<p>Running ASCAT on NGS data requires that the <code>BAM</code> files are converted into BAF and LogR values.
+This can be done using the software <a href="https://github.com/cancerit/alleleCount">AlleleCount</a> followed by the provided <a href="https://github.com/nf-core/sarek/blob/master/bin/convertAlleleCounts.r">ConvertAlleleCounts</a> R-script.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/ASCAT</code></strong></p>
+<ul>
+<li><code>[TUMORSAMPLE].BAF</code> and <code>[NORMALSAMPLE].BAF</code></li>
+<li>file with beta allele frequencies</li>
+<li><code>[TUMORSAMPLE].LogR</code> and <code>[NORMALSAMPLE].LogR</code></li>
+<li>file with total copy number on a logarithmic scale</li>
+</ul>
+<h4 id="ascat">ASCAT</h4>
+<p><a href="https://github.com/Crick-CancerGenomics/ascat">ASCAT</a> is a software for performing allele-specific copy number analysis of tumor samples and for estimating tumor ploidy and purity (normal contamination).
+It infers tumor purity and ploidy and calculates whole-genome allele-specific copy number profiles.
+<code>ASCAT</code> is written in <code>R</code> and available here: <a href="https://github.com/Crick-CancerGenomics/ascat">github.com/Crick-CancerGenomics/ascat</a>.
+The <code>ASCAT</code> process gives several images as output, described in detail in this <a href="http://www.ncbi.nlm.nih.gov/pubmed/22130873">book chapter</a>.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/ASCAT</code></strong></p>
+<ul>
+<li><code>[TUMORSAMPLE].aberrationreliability.png</code></li>
+<li>Image with information about aberration reliability</li>
+<li><code>[TUMORSAMPLE].ASCATprofile.png</code></li>
+<li>Image with information about ASCAT profile</li>
+<li><code>[TUMORSAMPLE].ASPCF.png</code></li>
+<li>Image with information about ASPCF</li>
+<li><code>[TUMORSAMPLE].rawprofile.png</code></li>
+<li>Image with information about raw profile</li>
+<li><code>[TUMORSAMPLE].sunrise.png</code></li>
+<li>Image with information about sunrise</li>
+<li><code>[TUMORSAMPLE].tumour.png</code></li>
+<li>Image with information about tumor</li>
+<li><code>[TUMORSAMPLE].cnvs.txt</code></li>
+<li>file with information about CNVS</li>
+<li><code>[TUMORSAMPLE].LogR.PCFed.txt</code></li>
+<li>file with information about LogR</li>
+<li><code>[TUMORSAMPLE].purityploidy.txt</code></li>
+<li>file with information about purity ploidy</li>
+</ul>
+<p>The text file <code>[TUMORSAMPLE].cnvs.txt</code> countains predictions about copy number state for all the segments.
+The output is a tab delimited text file with the following columns:</p>
+<ul>
+<li><em>chr</em>: chromosome number</li>
+<li><em>startpos</em>: start position of the segment</li>
+<li><em>endpos</em>: end position of the segment</li>
+<li><em>nMajor</em>: number of copies of one of the allels (for example the chromosome inherited from the father)</li>
+<li><em>nMinor</em>: number of copies of the other allele (for example the chromosome inherited of the mother)</li>
+</ul>
+<p>The file <code>[TUMORSAMPLE].cnvs.txt</code> contains all segments predicted by ASCAT, both those with normal copy number (nMinor = 1 and nMajor =1) and those corresponding to copy number aberrations.</p>
+<p>For further reading and documentation see the <a href="https://www.crick.ac.uk/research/labs/peter-van-loo/software">ASCAT manual</a>.</p>
+<h4 id="control-freec">Control-FREEC</h4>
+<p><a href="https://github.com/BoevaLab/FREEC">Control-FREEC</a> is a tool for detection of copy-number changes and allelic imbalances (including loss of heterozygoity (LOH)) using deep-sequencing data.
+<code>Control-FREEC</code> automatically computes, normalizes, segments copy number and beta allele frequency profiles, then calls copy number alterations and LOH.
+And also detects subclonal gains and losses and evaluate the most likely average ploidy of the sample.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMOR_vs_NORMAL]/ControlFREEC</code></strong></p>
+<ul>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE].config.txt</code></li>
+<li>Configuration file used to run Control-FREEC</li>
+<li><code>[TUMORSAMPLE].pileup.gz_CNVs</code> and <code>[TUMORSAMPLE].pileup.gz_normal_CNVs</code></li>
+<li>file with coordinates of predicted copy number alterations</li>
+<li><code>[TUMORSAMPLE].pileup.gz_ratio.txt</code> and <code>[TUMORSAMPLE].pileup.gz_normal_ratio.txt</code></li>
+<li>file with ratios and predicted copy number alterations for each window</li>
+<li><code>[TUMORSAMPLE].pileup.gz_BAF.txt</code> and <code>[NORMALSAMPLE].pileup.gz_BAF.txt</code></li>
+<li>file with beta allele frequencies for each possibly heterozygous SNP position</li>
+</ul>
+<p>For further reading and documentation see the <a href="http://boevalab.com/FREEC/tutorial.html">Control-FREEC manual</a>.</p>
+<h3 id="msi-status">MSI status</h3>
+<p><a href="https://en.wikipedia.org/wiki/Microsatellite_instability">Microsatellite instability</a> is a genetic condition associated to deficiencies in the mismatch repair (MMR) system which causes a tendency to accumulate a high number of mutations (SNVs and indels).
+An altered distribution of microsatellite length is associated to a missed replication slippage which would be corrected under normal MMR conditions.</p>
+<h4 id="msisensor">MSIsensor</h4>
+<p><a href="https://github.com/ding-lab/msisensor">MSIsensor</a> is a tool to detect the MSI status of a tumor scanning the length of the microsatellite regions.
+It requires a normal sample for each tumour to differentiate the somatic and germline cases.</p>
+<p>For a Tumor/Normal pair:</p>
+<p><strong>Output directory: <code>results/VariantCalling/[TUMORSAMPLE]_vs_[NORMALSAMPLE]/MSIsensor</code></strong></p>
+<ul>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE]_msisensor</code></li>
+<li>MSI score output, contains information about the number of somatic sites.</li>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE]_msisensor_dis</code></li>
+<li>The normal and tumor length distribution for each microsatellite position.</li>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE]_msisensor_germline</code></li>
+<li>Somatic sites detected.</li>
+<li><code>[TUMORSAMPLE]_vs_[NORMALSAMPLE]_msisensor_somatic</code></li>
+<li>Germline sites detected.</li>
+</ul>
+<p>For further reading see the <a href="https://www.ncbi.nlm.nih.gov/pubmed/24371154">MSIsensor paper</a>.</p>
+<h2 id="variant-annotation">Variant annotation</h2>
+<p>This directory contains results from the final annotation steps: two tools are used for annotation, <a href="http://snpeff.sourceforge.net/">snpEff</a> and <a href="https://www.ensembl.org/info/docs/tools/vep/index.html">VEP</a>.
+Only a subset of the <code>VCF</code> files are annotated, and only variants that have a <code>PASS</code> filter.
+Currently, <code>FreeBayes</code> results are not annotated as we are lacking a decent somatic filter.</p>
+<h3 id="snpeff">snpEff</h3>
+<p><a href="http://snpeff.sourceforge.net/">snpeff</a> is a genetic variant annotation and effect prediction toolbox.
+It annotates and predicts the effects of variants on genes (such as amino acid changes) using multiple databases for annotations.
+The generated <code>VCF</code> header contains the software version and the used command line.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Annotation/[SAMPLE]/snpEff</code></strong></p>
+<ul>
+<li><code>VariantCaller_Sample_snpEff.ann.vcf.gz</code> and <code>VariantCaller_Sample_snpEff.ann.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="http://snpeff.sourceforge.net/SnpEff_manual.html#outputSummary">snpEff manual</a></p>
+<h3 id="vep">VEP</h3>
+<p><a href="https://www.ensembl.org/info/docs/tools/vep/index.html">VEP (Variant Effect Predictor)</a>, based on <code>Ensembl</code>, is a tool to determine the effects of all sorts of variants, including SNPs, indels, structural variants, CNVs.
+The generated <code>VCF</code> header contains the software version, also the version numbers for additional databases like <code>Clinvar</code> or <code>dbSNP</code> used in the <code>VEP</code> line.
+The format of the <a href="https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html">consequence annotations</a> is also in the <code>VCF</code> header describing the <code>INFO</code> field.
+Currently, it contains:</p>
+<ul>
+<li><em>Consequence</em>: impact of the variation, if there is any</li>
+<li><em>Codons</em>: the codon change, i.e. cGt/cAt</li>
+<li><em>Amino_acids</em>: change in amino acids, i.e. R/H if there is any</li>
+<li><em>Gene</em>: ENSEMBL gene name</li>
+<li><em>SYMBOL</em>: gene symbol</li>
+<li><em>Feature</em>: actual transcript name</li>
+<li><em>EXON</em>: affected exon</li>
+<li><em>PolyPhen</em>: prediction based on <a href="http://genetics.bwh.harvard.edu/pph2/">PolyPhen</a></li>
+<li><em>SIFT</em>: prediction by <a href="http://sift.bii.a-star.edu.sg/">SIFT</a></li>
+<li><em>Protein_position</em>: Relative position of amino acid in protein</li>
+<li><em>BIOTYPE</em>: Biotype of transcript or regulatory feature</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Annotation/[SAMPLE]/VEP</code></strong></p>
+<ul>
+<li><code>VariantCaller_Sample_VEP.ann.vcf.gz</code> and <code>VariantCaller_Sample_VEP.ann.vcf.gz.tbi</code></li>
+<li><code>VCF</code> with Tabix index</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://www.ensembl.org/info/docs/tools/vep/index.html">VEP manual</a></p>
+<h2 id="qc-and-reporting">QC and reporting</h2>
+<h3 id="qc">QC</h3>
+<h4 id="fastqc">FastQC</h4>
+<p><a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC</a> gives general quality metrics about your sequenced reads.
+It provides information about the quality score distribution across your reads, per base sequence content (<code>%A/T/G/C</code>), adapter contamination and overrepresented sequences.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/fastqc</code></strong></p>
+<ul>
+<li><code>sample_R1_XXX_fastqc.html</code> and <code>sample_R2_XXX_fastqc.html</code></li>
+<li><code>FastQC</code> report containing quality metrics for your untrimmed raw <code>FASTQ</code> files</li>
+<li><code>sample_R1_XXX_fastqc.zip</code> and <code>sample_R2_XXX_fastqc.zip</code></li>
+<li>Zip archive containing the FastQC report, tab-delimited data file and plot images</li>
+</ul>
+<blockquote>
+<p><strong>NB:</strong> The <code>FastQC</code> plots displayed in the <code>MultiQC</code> report shows <em>untrimmed</em> reads.
+They may contain adapter sequence and potentially regions with low quality.</p>
+</blockquote>
+<p>For further reading and documentation see the <a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/">FastQC help pages</a>.</p>
+<h4 id="bamqc">bamQC</h4>
+<p><a href="http://qualimap.bioinfo.cipf.es/">Qualimap bamqc</a> reports information for the evaluation of the quality of the provided alignment data.
+In short, the basic statistics of the alignment (number of reads, coverage, GC-content, etc.) are summarized and a number of useful graphs are produced.</p>
+<p>Plot will show:</p>
+<ul>
+<li>Stats by non-reference allele frequency, depth distribution, stats by quality and per-sample counts, singleton stats, etc.</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/bamQC</code></strong></p>
+<ul>
+<li><code>VariantCaller_[SAMPLE].bcf.tools.stats.out</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+</ul>
+<p>For further reading and documentation see the <a href="http://qualimap.bioinfo.cipf.es/doc_html/analysis.html#id7">Qualimap bamqc manual</a></p>
+<h4 id="gatk-markduplicates-reports">GATK MarkDuplicates reports</h4>
+<p>More information in the <a href="#gatk-markduplicates">GATK MarkDuplicates section</a></p>
+<p>Duplicates can arise during sample preparation <em>e.g.</em> library construction using PCR.
+Duplicate reads can also result from a single amplification cluster, incorrectly detected as multiple clusters by the optical sensor of the sequencing instrument.
+These duplication artifacts are referred to as optical duplicates.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/MarkDuplicates</code></strong></p>
+<ul>
+<li><code>[SAMPLE].bam.metrics</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+</ul>
+<p>For further reading and documentation see the <a href="https://software.broadinstitute.org/gatk/documentation/tooldocs/4.1.2.0/picard_sam_markduplicates_MarkDuplicates.php">MarkDuplicates manual</a>.</p>
+<h4 id="samtools-stats">samtools stats</h4>
+<p><a href="https://www.htslib.org/doc/samtools.html">samtools stats</a> collects statistics from <code>BAM</code> files and outputs in a text format.</p>
+<p>Plots will show:</p>
+<ul>
+<li>Alignment metrics.</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/SamToolsStats</code></strong></p>
+<ul>
+<li><code>[SAMPLE].bam.samtools.stats.out</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+</ul>
+<p>For further reading and documentation see the <a href="https://www.htslib.org/doc/samtools.html#COMMANDS_AND_OPTIONS"><code>samtools</code> manual</a></p>
+<h4 id="bcftools-stats">bcftools stats</h4>
+<p><a href="https://samtools.github.io/bcftools/">bcftools</a> is a program for variant calling and manipulating <code>VCF</code> files.</p>
+<p>Plot will show:</p>
+<ul>
+<li>Stats by non-reference allele frequency, depth distribution, stats by quality and per-sample counts, singleton stats, etc.</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/BCFToolsStats</code></strong></p>
+<ul>
+<li><code>VariantCaller_[SAMPLE].bcf.tools.stats.out</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+</ul>
+<p>For further reading and documentation see the <a href="https://samtools.github.io/bcftools/bcftools.html#stats">bcftools stats manual</a></p>
+<h4 id="vcftools">VCFtools</h4>
+<p><a href="https://vcftools.github.io/">VCFtools</a> is a program package designed for working with <code>VCF</code> files.</p>
+<p>Plots will show:</p>
+<ul>
+<li>the summary counts of each type of transition to transversion ratio for each <code>FILTER</code> category.</li>
+<li>the transition to transversion ratio as a function of alternative allele count (using only bi-allelic SNPs).</li>
+<li>the transition to transversion ratio as a function of SNP quality threshold (using only bi-allelic SNPs).</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/VCFTools</code></strong></p>
+<ul>
+<li><code>VariantCaller_[SAMPLE].FILTER.summary</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+<li><code>VariantCaller_[SAMPLE].TsTv.count</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+<li><code>VariantCaller_[SAMPLE].TsTv.qual</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+</ul>
+<p>For further reading and documentation see the <a href="https://vcftools.github.io/man_latest.html#OUTPUT%20OPTIONS">VCFtools manual</a></p>
+<h4 id="snpeff-reports">snpEff reports</h4>
+<p><a href="http://snpeff.sourceforge.net/">snpeff</a> is a genetic variant annotation and effect prediction toolbox.
+It annotates and predicts the effects of variants on genes (such as amino acid changes) using multiple databases for annotations.</p>
+<p>Plots will shows :</p>
+<ul>
+<li>locations of detected variants in the genome and the number of variants for each location.</li>
+<li>the putative impact of detected variants and the number of variants for each impact.</li>
+<li>the effect of variants at protein level and the number of variants for each effect type.</li>
+<li>the quantity as function of the variant quality score.</li>
+</ul>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/snpEff</code></strong></p>
+<ul>
+<li><code>VariantCaller_Sample_snpEff.csv</code></li>
+<li>Raw statistics used by <code>MultiQC</code></li>
+<li><code>VariantCaller_Sample_snpEff.html</code></li>
+<li>Statistics to be visualised with a web browser</li>
+<li><code>VariantCaller_Sample_snpEff.genes.txt</code></li>
+<li>TXT (tab separated) summary counts for variants affecting each transcript and gene</li>
+</ul>
+<p>For further reading and documentation see the <a href="http://snpeff.sourceforge.net/SnpEff_manual.html#outputSummary">snpEff manual</a></p>
+<h4 id="vep-reports">VEP reports</h4>
+<p><a href="https://www.ensembl.org/info/docs/tools/vep/index.html">VEP (Variant Effect Predictor)</a>, based on <code>Ensembl</code>, is a tools to determine the effects of all sorts of variants, including SNPs, indels, structural variants, CNVs.</p>
+<p>For all samples:</p>
+<p><strong>Output directory: <code>results/Reports/[SAMPLE]/VEP</code></strong></p>
+<ul>
+<li><code>VariantCaller_Sample_VEP.summary.html</code></li>
+<li>Summary of the VEP run to be visualised with a web browser</li>
+</ul>
+<p>For further reading and documentation see the <a href="https://www.ensembl.org/info/docs/tools/vep/index.html">VEP manual</a></p>
+<h3 id="reporting">Reporting</h3>
+<h4 id="multiqc">MultiQC</h4>
+<p><a href="http://multiqc.info">MultiQC</a> is a visualization tool that generates a single HTML report summarizing all samples in your project.
+Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.</p>
+<p>The pipeline has special steps which also allow the software versions to be reported in the <code>MultiQC</code> output for future traceability.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>multiqc/</code>  </li>
+<li><code>multiqc_report.html</code><ul>
+<li>Standalone HTML file that can be viewed in your web browser</li>
+</ul>
+</li>
+<li><code>multiqc_data/</code><ul>
+<li>Directory containing parsed statistics from the different tools used in the pipeline</li>
+</ul>
+</li>
+<li><code>multiqc_plots/</code><ul>
+<li>Directory containing static images from the report in various formats</li>
+</ul>
+</li>
+</ul>
+<p>For more information about how to use <code>MultiQC</code> reports, see <a href="https://multiqc.info">https://multiqc.info</a>.</p>
+<h2 id="pipeline-information">Pipeline information</h2>
+<p><a href="https://www.nextflow.io/docs/latest/tracing.html">Nextflow</a> provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.</p>
+<p><strong>Output files:</strong></p>
+<ul>
+<li><code>pipeline_info/</code></li>
+<li>Reports generated by Nextflow: <code>execution_report.html</code>, <code>execution_timeline.html</code>, <code>execution_trace.txt</code> and <code>pipeline_dag.dot</code>/<code>pipeline_dag.svg</code>.</li>
+<li>Reports generated by the pipeline: <code>pipeline_report.html</code>, <code>pipeline_report.txt</code> and <code>software_versions.csv</code>.</li>
+<li>Documentation for interpretation of results in HTML format: <code>results_description.html</code>.</li>
+</ul>
+    </div>
+    </body>
+    </html>
+    

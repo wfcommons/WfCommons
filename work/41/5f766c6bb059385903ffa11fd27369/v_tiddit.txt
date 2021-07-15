@@ -1,0 +1,5 @@
+usage: TIDDIT-2.7.1 [--sv] [--cov]
+
+optional arguments:
+  --sv   call structural variation
+  --cov  generate a coverage bed file

@@ -1,0 +1,56 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xmx6g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar BaseRecalibrator -I 1234N.md.bam -O 2_1-200000_1234N.recal.table --tmp-dir . -R human_g1k_v37_decoy.small.fasta -L 2_1-200000.bed --known-sites dbsnp_138.b37.small.vcf.gz --known-sites Mills_1000G_gold_standard_and_1000G_phase1.indels.b37.small.vcf.gz --verbosity INFO
+05:43:06.685 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+Mar 17, 2021 5:43:07 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+05:43:07.119 INFO  BaseRecalibrator - ------------------------------------------------------------
+05:43:07.120 INFO  BaseRecalibrator - The Genome Analysis Toolkit (GATK) v4.1.7.0
+05:43:07.120 INFO  BaseRecalibrator - For support and documentation go to https://software.broadinstitute.org/gatk/
+05:43:07.120 INFO  BaseRecalibrator - Executing as root@f7707266ef56 on Linux v4.19.76-linuxkit amd64
+05:43:07.120 INFO  BaseRecalibrator - Java runtime: OpenJDK 64-Bit Server VM v1.8.0_265-b11
+05:43:07.120 INFO  BaseRecalibrator - Start Date/Time: March 17, 2021 5:43:06 AM UTC
+05:43:07.120 INFO  BaseRecalibrator - ------------------------------------------------------------
+05:43:07.120 INFO  BaseRecalibrator - ------------------------------------------------------------
+05:43:07.121 INFO  BaseRecalibrator - HTSJDK Version: 2.21.2
+05:43:07.122 INFO  BaseRecalibrator - Picard Version: 2.21.9
+05:43:07.122 INFO  BaseRecalibrator - HTSJDK Defaults.COMPRESSION_LEVEL : 2
+05:43:07.122 INFO  BaseRecalibrator - HTSJDK Defaults.USE_ASYNC_IO_READ_FOR_SAMTOOLS : false
+05:43:07.122 INFO  BaseRecalibrator - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_SAMTOOLS : true
+05:43:07.122 INFO  BaseRecalibrator - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_TRIBBLE : false
+05:43:07.122 INFO  BaseRecalibrator - Deflater: IntelDeflater
+05:43:07.122 INFO  BaseRecalibrator - Inflater: IntelInflater
+05:43:07.122 INFO  BaseRecalibrator - GCS max retries/reopens: 20
+05:43:07.122 INFO  BaseRecalibrator - Requester pays: disabled
+05:43:07.122 INFO  BaseRecalibrator - Initializing engine
+05:43:07.731 INFO  FeatureManager - Using codec VCFCodec to read file file:///Users/nirvaanreddy/Desktop/CURVE/work/b9/6a9b28bfd4a4603e87d5b29b3bc54c/dbsnp_138.b37.small.vcf.gz
+05:43:07.825 INFO  FeatureManager - Using codec VCFCodec to read file file:///Users/nirvaanreddy/Desktop/CURVE/work/b9/6a9b28bfd4a4603e87d5b29b3bc54c/Mills_1000G_gold_standard_and_1000G_phase1.indels.b37.small.vcf.gz
+05:43:07.946 INFO  FeatureManager - Using codec BEDCodec to read file file:///Users/nirvaanreddy/Desktop/CURVE/work/b9/6a9b28bfd4a4603e87d5b29b3bc54c/2_1-200000.bed
+05:43:07.963 INFO  IntervalArgumentCollection - Processing 200000 bp from intervals
+05:43:07.973 INFO  BaseRecalibrator - Done initializing engine
+05:43:07.981 INFO  BaseRecalibrationEngine - The covariates being used here: 
+05:43:07.981 INFO  BaseRecalibrationEngine - 	ReadGroupCovariate
+05:43:07.981 INFO  BaseRecalibrationEngine - 	QualityScoreCovariate
+05:43:07.981 INFO  BaseRecalibrationEngine - 	ContextCovariate
+05:43:07.981 INFO  BaseRecalibrationEngine - 	CycleCovariate
+05:43:08.021 INFO  ProgressMeter - Starting traversal
+05:43:08.021 INFO  ProgressMeter -        Current Locus  Elapsed Minutes       Reads Processed     Reads/Minute
+05:43:08.070 INFO  BaseRecalibrator - 0 read(s) filtered by: MappingQualityNotZeroReadFilter 
+0 read(s) filtered by: MappingQualityAvailableReadFilter 
+0 read(s) filtered by: MappedReadFilter 
+0 read(s) filtered by: NotSecondaryAlignmentReadFilter 
+0 read(s) filtered by: NotDuplicateReadFilter 
+0 read(s) filtered by: PassesVendorQualityCheckReadFilter 
+0 read(s) filtered by: WellformedReadFilter 
+0 total reads filtered
+05:43:08.070 INFO  ProgressMeter -             unmapped              0.0                     0              0.0
+05:43:08.070 INFO  ProgressMeter - Traversal complete. Processed 0 total reads in 0.0 minutes.
+05:43:08.071 INFO  BaseRecalibrator - Calculating quantized quality scores...
+05:43:08.088 INFO  BaseRecalibrator - Writing recalibration report...
+05:43:08.432 INFO  BaseRecalibrator - ...done!
+05:43:08.432 INFO  BaseRecalibrator - BaseRecalibrator was able to recalibrate 0 reads
+05:43:08.432 INFO  BaseRecalibrator - Shutting down engine
+[March 17, 2021 5:43:08 AM UTC] org.broadinstitute.hellbender.tools.walkers.bqsr.BaseRecalibrator done. Elapsed time: 0.03 minutes.
+Runtime.totalMemory()=224395264
+Tool returned:
+SUCCESS

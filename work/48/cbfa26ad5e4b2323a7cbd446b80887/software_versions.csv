@@ -1,0 +1,24 @@
+nf-core/sarek	v2.7
+Nextflow	v20.10.0
+BWA	<span style="color:#999999;">N/A</span>
+GATK	<span style="color:#999999;">N/A</span>
+FreeBayes	<span style="color:#999999;">N/A</span>
+samtools	<span style="color:#999999;">N/A</span>
+Strelka	v48
+Manta	v48
+TIDDIT	<span style="color:#999999;">N/A</span>
+AlleleCount	v/Users/nirvaanreddy/Desktop/CURVE/work/48/cbfa26ad5e4b2323a7cbd446b80887/.command.sh:
+ASCAT	<span style="color:#999999;">N/A</span>
+Control-FREEC	<span style="color:#999999;">N/A</span>
+msisensor	<span style="color:#999999;">N/A</span>
+SnpEff	<span style="color:#999999;">N/A</span>
+VEP	<span style="color:#999999;">N/A</span>
+MultiQC	<span style="color:#999999;">N/A</span>
+FastQC	<span style="color:#999999;">N/A</span>
+bcftools	<span style="color:#999999;">N/A</span>
+CNVkit	v/Users/nirvaanreddy/Desktop/CURVE/work/48/cbfa26ad5e4b2323a7cbd446b80887/.command.sh:
+htslib	<span style="color:#999999;">N/A</span>
+QualiMap	<span style="color:#999999;">N/A</span>
+Trim Galore	<span style="color:#999999;">N/A</span>
+vcftools	v48
+R	<span style="color:#999999;">N/A</span>

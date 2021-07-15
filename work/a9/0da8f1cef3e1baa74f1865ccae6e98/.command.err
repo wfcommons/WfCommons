@@ -1,0 +1,32 @@
+Unable to find image 'nfcore/hlatyping:1.2.0' locally
+1.2.0: Pulling from nfcore/hlatyping
+68ced04f60ab: Already exists
+9c388eb6d33c: Already exists
+96cf53b3a9dd: Already exists
+6b5e6e9d0010: Pulling fs layer
+1d445eb21e71: Pulling fs layer
+6780979b99f8: Pulling fs layer
+589b4a2c2c59: Pulling fs layer
+d779e72fc187: Pulling fs layer
+49e14b8350ac: Pulling fs layer
+589b4a2c2c59: Waiting
+d779e72fc187: Waiting
+49e14b8350ac: Waiting
+1d445eb21e71: Verifying Checksum
+1d445eb21e71: Download complete
+6b5e6e9d0010: Verifying Checksum
+6b5e6e9d0010: Download complete
+589b4a2c2c59: Download complete
+d779e72fc187: Download complete
+6b5e6e9d0010: Pull complete
+1d445eb21e71: Pull complete
+49e14b8350ac: Verifying Checksum
+49e14b8350ac: Download complete
+6780979b99f8: Verifying Checksum
+6780979b99f8: Download complete
+6780979b99f8: Pull complete
+589b4a2c2c59: Pull complete
+d779e72fc187: Pull complete
+49e14b8350ac: Pull complete
+Digest: sha256:786f4cf4af90a3d4b6c082d3bfd417bafd401cafe2866cd5fe2f1fee8b2fe3f4
+Status: Downloaded newer image for nfcore/hlatyping:1.2.0

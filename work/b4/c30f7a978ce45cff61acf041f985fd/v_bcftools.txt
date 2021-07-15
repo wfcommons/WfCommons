@@ -1,0 +1,6 @@
+bcftools 1.9
+Using htslib 1.9
+Copyright (C) 2018 Genome Research Ltd.
+License Expat: The MIT/Expat license
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

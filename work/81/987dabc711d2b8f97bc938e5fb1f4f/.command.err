@@ -1,0 +1,14 @@
+Writing bisulfite genomes out into a single MFA (multi FastA) file
+
+Bisulfite Genome Indexer version v0.23.0 (last modified: 14 April 2019)
+
+Step I - Prepare genome folders - completed
+
+
+
+Step II - Genome bisulfite conversions - completed
+
+
+Bismark Genome Preparation - Step III: Launching the Bowtie 2 indexer
+Building a SMALL index
+Building a SMALL index

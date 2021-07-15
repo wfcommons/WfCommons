@@ -1,0 +1,7 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	a9/0da8f1	12402	make_ot_config	COMPLETED	0	2021-03-29 19:50:21.822	4m 19s	1.8s	24.1%	3.1 MB	5.4 MB	637.9 KB	1.8 KB
+3	71/5ec824	12464	get_software_versions	COMPLETED	0	2021-03-29 19:54:41.949	19s	7.3s	34.5%	44.7 MB	200.7 MB	10.3 MB	41.5 KB
+2	02/0f3625	12493	output_documentation	COMPLETED	0	2021-03-29 19:55:01.007	3.2s	1.1s	50.2%	3.1 MB	5.4 MB	3.9 MB	952.5 KB
+4	53/40f1bc	12525	remap_to_hla (1)	COMPLETED	0	2021-03-29 19:55:04.247	54.8s	53.3s	32.8%	141.1 MB	919.8 MB	237.7 MB	103 MB
+5	fc/484d35	12569	multiqc (1)	COMPLETED	0	2021-03-29 19:55:59.075	17.4s	14s	58.3%	74.3 MB	349.3 MB	22 MB	2 MB
+6	9a/7f4d5e	12605	run_optitype (1)	COMPLETED	0	2021-03-29 19:56:16.522	1m 47s	1m 45s	106.3%	1.5 GB	1.9 GB	43.7 MB	964.5 KB

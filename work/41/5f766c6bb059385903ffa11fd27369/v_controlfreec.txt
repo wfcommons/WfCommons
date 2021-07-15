@@ -1,0 +1,13 @@
+Control-FREEC v11.6 : a method for automatic detection of copy number alterations, subclones and for accurate estimation of contamination and main ploidy using deep-sequencing data
+
+	Please specify a config file
+
+Usage:
+
+	freec -conf <config file>
+
+	See config.txt for example
+	or
+	freec -conf <config file> -sample <mySample.bam> -control <myControl.bam>
+
+	See config.txt for example

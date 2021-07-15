@@ -1,0 +1,127 @@
+
+ *** Bismark methylation extractor version v0.23.0 ***
+
+Setting core usage to single-threaded (default). Consider using --multicore <int> to speed up the extraction process.
+
+Summarising Bismark methylation extractor parameters:
+===============================================================
+Bismark single-end SAM format specified (default)
+Number of cores to be used: 1
+Output will be written to the current directory ('/Users/nirvaanreddy/Desktop/CURVE/work/38/a936326bed848c30159acddebfc85e')
+
+
+Summarising bedGraph parameters:
+===============================================================
+Generating additional output in bedGraph and coverage format
+bedGraph format:	<Chromosome> <Start Position> <End Position> <Methylation Percentage>
+coverage format:	<Chromosome> <Start Position> <End Position> <Methylation Percentage> <count methylated> <count non-methylated>
+
+Using a cutoff of 1 read(s) to report cytosine positions
+Reporting and sorting cytosine methylation information in CpG context only (default)
+The bedGraph UNIX sort command will use the following memory setting:	'2G'. Temporary directory used for sorting is the output directory
+
+Checking file >>SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bam<< for signs of file truncation...
+
+Writing result file containing methylation information for C in CpG context from the original top strand to CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CpG context from the complementary to original top strand to CpG_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CpG context from the complementary to original bottom strand to CpG_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CpG context from the original bottom strand to CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Writing result file containing methylation information for C in CHG context from the original top strand to CHG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHG context from the complementary to original top strand to CHG_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHG context from the complementary to original bottom strand to CHG_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHG context from the original bottom strand to CHG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Writing result file containing methylation information for C in CHH context from the original top strand to CHH_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHH context from the complementary to original top strand to CHH_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHH context from the complementary to original bottom strand to CHH_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Writing result file containing methylation information for C in CHH context from the original bottom strand to CHH_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Now reading in Bismark result file SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bam
+skipping SAM header line:	@HD	VN:1.0	SO:unsorted
+skipping SAM header line:	@SQ	SN:chr	LN:48502
+skipping SAM header line:	@PG	ID:Bismark	VN:v0.23.0	CL:"bismark SRR389222_sub1_trimmed.fq.gz --bowtie2 --bam --genome BismarkIndex SRR389222_sub1_trimmed.fq.gz"
+skipping SAM header line:	@PG	ID:samtools	PN:samtools	PP:Bismark	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -bSh -
+skipping SAM header line:	@PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -h --threads 1 SRR389222_sub1_trimmed_bismark_bt2.bam
+skipping SAM header line:	@PG	ID:samtools.2	PN:samtools	PP:samtools.1	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -bS --threads 1 -
+skipping SAM header line:	@PG	ID:samtools.3	PN:samtools	PP:samtools.2	VN:1.11	CL:/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools view -h SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bam
+
+Processed 310 lines in total
+Total number of methylation call strings processed: 310
+
+Final Cytosine Methylation Report
+=================================
+Total number of C's analysed:	2899
+
+Total methylated C's in CpG context:	48
+Total methylated C's in CHG context:	29
+Total methylated C's in CHH context:	48
+
+Total C to T conversions in CpG context:	853
+Total C to T conversions in CHG context:	996
+Total C to T conversions in CHH context:	925
+
+C methylated in CpG context:	5.3%
+C methylated in CHG context:	2.8%
+C methylated in CHH context:	4.9%
+
+
+Determining maximum read length for M-Bias plot
+Maximum read length of Read 1: 36
+
+Perl module GD::Graph::lines is not installed, skipping drawing M-bias plots (only writing out M-bias plot table)
+Determining maximum read length for M-Bias plot
+Maximum read length of Read 1: 36
+
+Perl module GD::Graph::lines is not installed, skipping drawing M-bias plots (only writing out M-bias plot table)
+Deleting unused files ...
+
+CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+CpG_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CpG_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+CHG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+CHG_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CHG_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CHG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+CHH_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+CHH_CTOT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CHH_CTOB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz was empty ->	deleted
+CHH_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz contains data ->	kept
+
+
+Using these input files: CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz CHG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz CHG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz CHH_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz CHH_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Summary of parameters for bismark2bedGraph conversion:
+======================================================
+bedGraph output:		SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bedGraph.gz
+output directory:		><
+remove whitespaces:		no
+CX context:			no (CpG context only, default)
+No-header selected:		no
+Sorting method:			Unix sort-based (smaller memory footprint, but slower)
+Sort buffer size:		2G
+Coverage threshold:		1
+=============================================================================
+Methylation information will now be written into a bedGraph and coverage file
+=============================================================================
+
+Using the following files as Input:
+/Users/nirvaanreddy/Desktop/CURVE/work/38/a936326bed848c30159acddebfc85e/CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz	/Users/nirvaanreddy/Desktop/CURVE/work/38/a936326bed848c30159acddebfc85e/CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Writing bedGraph to file: SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bedGraph.gz
+Also writing out a coverage file including counts methylated and unmethylated residues to file: SRR389222_sub1_trimmed_bismark_bt2.deduplicated.bismark.cov.gz
+
+Now writing methylation information for file >>CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz<< to individual files for each chromosome
+Finished writing out individual chromosome files for CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+Now writing methylation information for file >>CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz<< to individual files for each chromosome
+Finished writing out individual chromosome files for CpG_OB_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz
+
+Collecting temporary chromosome file information... Processing the following input file(s):
+CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz.chrchr.methXtractor.temp
+
+Sorting input file CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz.chrchr.methXtractor.temp by positions (using -S of 2G)
+Successfully deleted the temporary input file CpG_OT_SRR389222_sub1_trimmed_bismark_bt2.deduplicated.txt.gz.chrchr.methXtractor.temp
+
+Finished BedGraph conversion ...
+

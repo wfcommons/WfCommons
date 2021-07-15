@@ -1,0 +1,5 @@
+[M::bam2fq_mainloop] discarded 0 singletons
+[M::bam2fq_mainloop] processed 44315 reads
+[M::bam2fq_mainloop] discarded 0 singletons
+[M::bam2fq_mainloop] processed 44315 reads
+mkdir: cannot create directory ‘//.config’: Permission denied

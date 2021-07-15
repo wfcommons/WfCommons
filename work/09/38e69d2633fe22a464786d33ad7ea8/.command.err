@@ -1,0 +1,25 @@
+[ERROR  ]          config : Config 'custom_logo' path not found, skipping (../../../docs/images/nf-core_sarek_logo.png)
+[WARNING]         multiqc : MultiQC Version v1.10 now available!
+[INFO   ]         multiqc : This is MultiQC v1.8
+[INFO   ]         multiqc : Template    : default
+[WARNING]         multiqc : You are running MultiQC with Python 2.7.15
+[WARNING]         multiqc : Please upgrade! MultiQC will soon drop support for Python < 3.6
+[INFO   ]         multiqc : Searching   : /Users/nirvaanreddy/Desktop/CURVE/work/09/38e69d2633fe22a464786d33ad7ea8
+[INFO   ]          fastqc : Found 22 reports
+[INFO   ]          picard : Found 2 MarkDuplicates reports
+[INFO   ] base_recalibrator : Found 2 BaseRecalibrator reports
+[INFO   ]        samtools : Found 2 stats reports
+/opt/conda/envs/nf-core-sarek-2.7/lib/python2.7/site-packages/matplotlib/axes/_base.py:3152: UserWarning: Attempting to set identical left==right results
+in singular transformations; automatically expanding.
+left=0, right=0
+  'left=%s, right=%s') % (left, right))
+[INFO   ]        qualimap : Found 13 BamQC reports
+[INFO   ]  custom_content : sarek-summary: Found 1 sample (html)
+[INFO   ]  custom_content : sarek-summary: Found 2474 samples (html)
+[INFO   ]  custom_content : software_versions: Found 1 sample (html)
+[INFO   ]  custom_content : software_versions: Found 1247 samples (html)
+[INFO   ]         multiqc : Compressing plot data
+[INFO   ]         multiqc : Report      : multiqc_report.html
+[INFO   ]         multiqc : Data        : multiqc_data
+[INFO   ]         multiqc : Plots       : multiqc_plots
+[INFO   ]         multiqc : MultiQC complete

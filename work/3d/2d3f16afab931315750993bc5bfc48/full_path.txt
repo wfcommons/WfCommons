@@ -1,0 +1,8 @@
+/Users/nirvaanreddy/Desktop/CURVE/work/c0/1fae8de237d92f8febcdce985afb94/trimmed/2_S115_L001_R1_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/c0/1fae8de237d92f8febcdce985afb94/trimmed/2_S115_L001_R2_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/ca/7c5def69a00cbcd428feac28045ef9/trimmed/1_S103_L001_R1_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/ca/7c5def69a00cbcd428feac28045ef9/trimmed/1_S103_L001_R2_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/14/7e937f7716cc6b044e00713b017953/trimmed/2a_S115_L001_R1_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/14/7e937f7716cc6b044e00713b017953/trimmed/2a_S115_L001_R2_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/dd/072c50fd46ca1f5bed4330d6c1be32/trimmed/1a_S103_L001_R1_001.fastq.gz
+/Users/nirvaanreddy/Desktop/CURVE/work/dd/072c50fd46ca1f5bed4330d6c1be32/trimmed/1a_S103_L001_R2_001.fastq.gz

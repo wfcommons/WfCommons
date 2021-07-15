@@ -1,0 +1,3 @@
+Sample	Unmapped Reads	Unpaired Read Duplicates	Unpaired Read Unique	Read Pair Optical Duplicates	Read Pair Not Optical Duplicates	Read Pair Unique
+1234N	39.0	8.0	29.0	0.0	11.0	386.0
+9876T	233.0	118.0	107.0	1.0	404.0	3685.0

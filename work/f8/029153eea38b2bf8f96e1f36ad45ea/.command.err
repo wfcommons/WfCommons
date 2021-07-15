@@ -1,0 +1,115 @@
+Proceeding with single-core trimming (user-defined)
+Path to Cutadapt set as: 'cutadapt' (default)
+Cutadapt seems to be working fine (tested command 'cutadapt --version')
+Cutadapt version: 3.3
+single-core operation.
+No quality encoding type selected. Assuming that the data provided uses Sanger encoded Phred scores (default)
+
+
+
+AUTO-DETECTING ADAPTER TYPE
+===========================
+Attempting to auto-detect adapter type from the first 1 million sequences of the first file (>> SRR389222_sub3.fastq.gz <<)
+
+Found perfect matches for the following adapter sequences:
+Adapter type	Count	Sequence	Sequences analysed	Percentage
+Illumina	0	AGATCGGAAGAGC	80000	0.00
+smallRNA	0	TGGAATTCTCGG	80000	0.00
+Nextera	0	CTGTCTCTTATA	80000	0.00
+Unable to auto-detect most prominent adapter from the first specified file (count Illumina: 0, count smallRNA: 0, count Nextera: 0)
+Defaulting to Illumina universal adapter ( AGATCGGAAGAGC ). Specify -a SEQUENCE to avoid this behavior).
+
+Writing report to 'SRR389222_sub3.fastq.gz_trimming_report.txt'
+
+SUMMARISING RUN PARAMETERS
+==========================
+Input filename: SRR389222_sub3.fastq.gz
+Trimming mode: single-end
+Trim Galore version: 0.6.6
+Cutadapt version: 3.3
+Number of cores used for trimming: 1
+Quality Phred score cutoff: 20
+Quality encoding type selected: ASCII+33
+Adapter sequence: 'AGATCGGAAGAGC' (Illumina TruSeq, Sanger iPCR; default (inconclusive auto-detection))
+Maximum trimming error rate: 0.1 (default)
+Minimum required adapter overlap (stringency): 1 bp
+Minimum required sequence length before a sequence gets removed: 20 bp
+Running FastQC on the data once trimming has completed
+Output file(s) will be GZIP compressed
+
+Cutadapt seems to be fairly up-to-date (version 3.3). Setting -j 1
+Writing final adapter and quality trimmed output to SRR389222_sub3_trimmed.fq.gz
+
+
+  >>> Now performing quality (cutoff '-q 20') and adapter trimming in a single pass for the adapter sequence: 'AGATCGGAAGAGC' from file SRR389222_sub3.fastq.gz <<< 
+This is cutadapt 3.3 with Python 3.8.8
+Command line parameters: -j 1 -e 0.1 -q 20 -O 1 -a AGATCGGAAGAGC SRR389222_sub3.fastq.gz
+Processing reads on 1 core in single-end mode ...
+Finished in 1.18 s (15 µs/read; 4.08 M reads/minute).
+
+=== Summary ===
+
+Total reads processed:                  80,000
+Reads with adapters:                    28,986 (36.2%)
+Reads written (passing filters):        80,000 (100.0%)
+
+Total basepairs processed:     2,880,000 bp
+Quality-trimmed:                  17,739 bp (0.6%)
+Total written (filtered):      2,827,473 bp (98.2%)
+
+=== Adapter 1 ===
+
+Sequence: AGATCGGAAGAGC; Type: regular 3'; Length: 13; Trimmed: 28986 times
+
+No. of allowed errors:
+1-9 bp: 0; 10-13 bp: 1
+
+Bases preceding removed adapters:
+  A: 27.0%
+  C: 34.3%
+  G: 3.8%
+  T: 34.9%
+  none/other: 0.0%
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+1	25283	20000.0	0	25283
+2	2467	5000.0	0	2467
+3	688	1250.0	0	688
+4	403	312.5	0	403
+5	62	78.1	0	62
+6	35	19.5	0	35
+7	27	4.9	0	27
+8	8	1.2	0	8
+9	9	0.3	0	9
+10	3	0.1	1	3
+11	1	0.0	1	1
+
+RUN STATISTICS FOR INPUT FILE: SRR389222_sub3.fastq.gz
+=============================================
+80000 sequences processed in total
+Sequences removed because they became shorter than the length cutoff of 20 bp:	123 (0.2%)
+
+
+  >>> Now running FastQC on the data <<<
+
+Started analysis of SRR389222_sub3_trimmed.fq.gz
+Approx 5% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 10% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 15% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 20% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 25% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 30% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 35% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 40% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 45% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 50% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 55% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 60% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 65% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 70% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 75% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 80% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 85% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 90% complete for SRR389222_sub3_trimmed.fq.gz
+Approx 95% complete for SRR389222_sub3_trimmed.fq.gz

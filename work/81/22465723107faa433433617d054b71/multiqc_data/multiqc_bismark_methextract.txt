@@ -1,0 +1,4 @@
+Sample	meth_chg	meth_chh	meth_cpg	percent_chg_meth	percent_chh_meth	percent_cpg_meth	total_c	unmeth_chg	unmeth_chh	unmeth_cpg
+SRR389222_sub1	29.0	48.0	48.0	2.8	4.9	5.3	2899.0	996.0	925.0	853.0
+SRR389222_sub2	55.0	101.0	77.0	5.2	9.8	8.2	3028.0	996.0	934.0	865.0
+SRR389222_sub3	36.0	49.0	42.0	3.5	5.0	4.6	2923.0	998.0	934.0	864.0

@@ -1,0 +1,39 @@
+
+id: 'nf-core-chipseq-summary'
+description: " - this information is collected when the pipeline is started."
+section_name: 'nf-core/chipseq Workflow Summary'
+section_href: 'https://github.com/nf-core/chipseq'
+plot_type: 'html'
+data: |
+    <dl class="dl-horizontal">
+        <dt>Pipeline Release</dt><dd><samp>1.2.2</samp></dd>
+        <dt>Run Name</dt><dd><samp>sick_pasteur</samp></dd>
+        <dt>Input</dt><dd><samp>data/*{1,2}.fastq.gz</samp></dd>
+        <dt>splitFastq</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Fasta Ref</dt><dd><samp>https://github.com/nf-core/test-datasets/raw/hic/reference/W303_SGD_2015_JRIU00000000.fsa</samp></dd>
+        <dt>Restriction Motif</dt><dd><samp>A^AGCTT</samp></dd>
+        <dt>Ligation Motif</dt><dd><samp>AAGCTAGCTT</samp></dd>
+        <dt>DNase Mode</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Remove Dup</dt><dd><samp>true</samp></dd>
+        <dt>Remove MultiHits</dt><dd><samp>true</samp></dd>
+        <dt>Min MAPQ</dt><dd><samp>2</samp></dd>
+        <dt>Min Fragment Size</dt><dd><samp>100</samp></dd>
+        <dt>Max Fragment Size</dt><dd><samp>100000</samp></dd>
+        <dt>Min Insert Size</dt><dd><samp>100</samp></dd>
+        <dt>Max Insert Size</dt><dd><samp>600</samp></dd>
+        <dt>Min CIS dist</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Maps resolution</dt><dd><samp>1000000,500000</samp></dd>
+        <dt>Max Memory</dt><dd><samp>4 GB</samp></dd>
+        <dt>Max CPUs</dt><dd><samp>2</samp></dd>
+        <dt>Max Time</dt><dd><samp>1h</samp></dd>
+        <dt>Output dir</dt><dd><samp>./results</samp></dd>
+        <dt>Working dir</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE/work</samp></dd>
+        <dt>Container Engine</dt><dd><samp><span style="color:#999999;">N/A</a></samp></dd>
+        <dt>Current home</dt><dd><samp>/Users/nirvaanreddy</samp></dd>
+        <dt>Current user</dt><dd><samp>nirvaanreddy</samp></dd>
+        <dt>Current path</dt><dd><samp>/Users/nirvaanreddy/Desktop/CURVE</samp></dd>
+        <dt>Script dir</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/hic</samp></dd>
+        <dt>Config Profile</dt><dd><samp>test</samp></dd>
+        <dt>Config Profile Description</dt><dd><samp>Minimal test dataset to check pipeline function</samp></dd>
+        <dt>Config Files</dt><dd><samp>/Users/nirvaanreddy/.nextflow/assets/nf-core/hic/nextflow.config</samp></dd>
+    </dl>

@@ -1,0 +1,4 @@
+awk: syntax error at source line 3
+ context is
+	  printf("%s\t%d\t%d\n", $1, $2-1, $3) > name >>>  ".bed" <<< 
+awk: illegal statement at source line 3

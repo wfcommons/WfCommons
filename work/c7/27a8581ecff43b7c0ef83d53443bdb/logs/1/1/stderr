@@ -1,0 +1,22 @@
+2021-03-30 03:17:18.641920: W third_party/nucleus/io/sam_reader.cc:537] Unrecognized SAM header type, ignoring: 
+I0330 03:17:18.642558 139860012771072 genomics_reader.py:213] Reading NA12878_S1.chr20.10_10p1mb.bam with NativeSamReader
+I0330 03:17:18.662317 139860012771072 make_examples.py:1075] Preparing inputs
+2021-03-30 03:17:18.689914: W third_party/nucleus/io/sam_reader.cc:537] Unrecognized SAM header type, ignoring: 
+I0330 03:17:18.690536 139860012771072 genomics_reader.py:213] Reading NA12878_S1.chr20.10_10p1mb.bam with NativeSamReader
+I0330 03:17:18.692131 139860012771072 make_examples.py:991] Common contigs are [u'chr20']
+I0330 03:17:18.699968 139860012771072 genomics_reader.py:213] Reading test_nist.b37_chr20_100kbp_at_10mb.bed with NativeBedReader
+I0330 03:17:18.705240 139860012771072 make_examples.py:1081] Writing examples to NA12878_S1.chr20.10_10p1mb_shardedExamples/NA12878_S1.chr20.10_10p1mb.bam.tfrecord-00001-of-00002.gz
+2021-03-30 03:17:18.728035: I third_party/nucleus/io/sam_reader.cc:573] Setting HTS_OPT_BLOCK_SIZE to 134217728
+2021-03-30 03:17:18.767096: W third_party/nucleus/io/sam_reader.cc:537] Unrecognized SAM header type, ignoring: 
+I0330 03:17:18.767852 139860012771072 genomics_reader.py:213] Reading NA12878_S1.chr20.10_10p1mb.bam with NativeSamReader
+I0330 03:17:20.334235 139860012771072 make_examples.py:825] Found 4 candidates in chr20:10001847-10002407 [561 bp] [1.63s elapsed]
+I0330 03:17:20.398356 139860012771072 make_examples.py:825] Found 5 candidates in chr20:10003521-10004171 [651 bp] [0.05s elapsed]
+2021-03-30 03:17:20.423991: W deepvariant/allelecounter.cc:274] Found duplicate read: HSQ1004:134:C0D8DACXX:4:1102:1932:51331/1 at reference_name: "chr20" position: 10005009
+I0330 03:17:20.493467 139860012771072 make_examples.py:825] Found 5 candidates in chr20:10004995-10005994 [1000 bp] [0.08s elapsed]
+I0330 03:17:20.600497 139860012771072 make_examples.py:825] Found 5 candidates in chr20:10006410-10007409 [1000 bp] [0.09s elapsed]
+I0330 03:17:20.636879 139860012771072 make_examples.py:825] Found 1 candidates in chr20:10007825-10008018 [194 bp] [0.02s elapsed]
+I0330 03:17:20.697958 139860012771072 make_examples.py:825] Found 3 candidates in chr20:10008101-10008707 [607 bp] [0.06s elapsed]
+I0330 03:17:20.782046 139860012771072 make_examples.py:825] Found 5 candidates in chr20:10009003-10009791 [789 bp] [0.08s elapsed]
+I0330 03:17:20.802244 139860012771072 make_examples.py:1117] Writing MakeExamplesRunInfo to NA12878_S1.chr20.10_10p1mb_shardedExamples/NA12878_S1.chr20.10_10p1mb.bam.tfrecord-00001-of-00002.gz.run_info.pbtxt
+I0330 03:17:20.858457 139860012771072 make_examples.py:1120] Found 28 candidate variants
+I0330 03:17:20.859108 139860012771072 make_examples.py:1121] Created 28 examples

@@ -1,0 +1,4 @@
+Sample	Deduplicated reads (remaining)	Duplicate reads (removed)
+SRR389222_sub1	310.0	49279.0
+SRR389222_sub2	323.0	59418.0
+SRR389222_sub3	311.0	39316.0

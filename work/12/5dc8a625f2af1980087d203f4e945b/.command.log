@@ -1,0 +1,59 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xmx6g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar GatherBQSRReports -I 11_1-3679_1234N.recal.table -I 3_1-200000_1234N.recal.table -I 1_1-200000_1234N.recal.table -I X_1-200000_1234N.recal.table -I 2_1-200000_1234N.recal.table -I 8_1-1276_1234N.recal.table -O 1234N.recal.table
+05:50:49.949 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+Mar 17, 2021 5:50:50 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+05:50:50.287 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:50:50.288 INFO  GatherBQSRReports - The Genome Analysis Toolkit (GATK) v4.1.7.0
+05:50:50.288 INFO  GatherBQSRReports - For support and documentation go to https://software.broadinstitute.org/gatk/
+05:50:50.289 INFO  GatherBQSRReports - Executing as root@9ba12b29c4ca on Linux v4.19.76-linuxkit amd64
+05:50:50.289 INFO  GatherBQSRReports - Java runtime: OpenJDK 64-Bit Server VM v1.8.0_265-b11
+05:50:50.290 INFO  GatherBQSRReports - Start Date/Time: March 17, 2021 5:50:49 AM UTC
+05:50:50.290 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:50:50.290 INFO  GatherBQSRReports - ------------------------------------------------------------
+05:50:50.291 INFO  GatherBQSRReports - HTSJDK Version: 2.21.2
+05:50:50.291 INFO  GatherBQSRReports - Picard Version: 2.21.9
+05:50:50.291 INFO  GatherBQSRReports - HTSJDK Defaults.COMPRESSION_LEVEL : 2
+05:50:50.291 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_READ_FOR_SAMTOOLS : false
+05:50:50.292 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_SAMTOOLS : true
+05:50:50.292 INFO  GatherBQSRReports - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_TRIBBLE : false
+05:50:50.293 INFO  GatherBQSRReports - Deflater: IntelDeflater
+05:50:50.293 INFO  GatherBQSRReports - Inflater: IntelInflater
+05:50:50.293 INFO  GatherBQSRReports - GCS max retries/reopens: 20
+05:50:50.293 INFO  GatherBQSRReports - Requester pays: disabled
+05:50:50.294 INFO  GatherBQSRReports - Initializing engine
+05:50:50.294 INFO  GatherBQSRReports - Done initializing engine
+05:50:50.883 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/12/5dc8a625f2af1980087d203f4e945b/3_1-200000_1234N.recal.table
+05:50:50.889 INFO  RecalibrationReport -   1234N_M1
+05:50:50.889 INFO  RecalibrationReport -   1234N_M2
+05:50:50.889 INFO  RecalibrationReport -   1234N_M4
+05:50:50.889 INFO  RecalibrationReport -   1234N_M5
+05:50:50.890 INFO  RecalibrationReport -   1234N_M6
+05:50:50.890 INFO  RecalibrationReport -   1234N_M7
+05:50:50.890 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/12/5dc8a625f2af1980087d203f4e945b/1_1-200000_1234N.recal.table
+05:50:50.891 INFO  RecalibrationReport -   1234N_M1
+05:50:50.891 INFO  RecalibrationReport -   1234N_M2
+05:50:50.891 INFO  RecalibrationReport -   1234N_M4
+05:50:50.892 INFO  RecalibrationReport -   1234N_M5
+05:50:50.892 INFO  RecalibrationReport -   1234N_M6
+05:50:50.893 INFO  RecalibrationReport -   1234N_M7
+05:50:50.893 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/12/5dc8a625f2af1980087d203f4e945b/X_1-200000_1234N.recal.table
+05:50:50.893 INFO  RecalibrationReport -   1234N_M1
+05:50:50.894 INFO  RecalibrationReport -   1234N_M2
+05:50:50.894 INFO  RecalibrationReport -   1234N_M4
+05:50:50.894 INFO  RecalibrationReport -   1234N_M5
+05:50:50.894 INFO  RecalibrationReport -   1234N_M6
+05:50:50.895 INFO  RecalibrationReport -   1234N_M7
+05:50:50.895 INFO  RecalibrationReport - Missing read group(s): /Users/nirvaanreddy/Desktop/CURVE/work/12/5dc8a625f2af1980087d203f4e945b/2_1-200000_1234N.recal.table
+05:50:50.896 INFO  RecalibrationReport -   1234N_M1
+05:50:50.896 INFO  RecalibrationReport -   1234N_M2
+05:50:50.897 INFO  RecalibrationReport -   1234N_M4
+05:50:50.898 INFO  RecalibrationReport -   1234N_M5
+05:50:50.898 INFO  RecalibrationReport -   1234N_M6
+05:50:50.899 INFO  RecalibrationReport -   1234N_M7
+Tool returned:
+0
+05:51:59.338 INFO  GatherBQSRReports - Shutting down engine
+[March 17, 2021 5:51:59 AM UTC] org.broadinstitute.hellbender.tools.walkers.bqsr.GatherBQSRReports done. Elapsed time: 1.16 minutes.
+Runtime.totalMemory()=293076992

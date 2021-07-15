@@ -1,0 +1,33 @@
+QIIME is caching your current deployment for improved performance. This may take a few moments and should only happen once per deployment.
+Loading required package: Rcpp
+Error in names(answer) <- names1 : 
+  'names' attribute [4] must be the same length as the vector [3]
+Execution halted
+Traceback (most recent call last):
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/q2_dada2/_denoise.py", line 257, in denoise_paired
+    run_commands([cmd])
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/q2_dada2/_denoise.py", line 36, in run_commands
+    subprocess.run(cmd, check=True)
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/subprocess.py", line 418, in run
+    output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['run_dada_paired.R', '/tmp/tmpp5wa2973/forward', '/tmp/tmpp5wa2973/reverse', '/tmp/tmpp5wa2973/output.tsv.biom', '/tmp/tmpp5wa2973/track.tsv', '/tmp/tmpp5wa2973/filt_f', '/tmp/tmpp5wa2973/filt_r', '230', '229', '0', '0', '2.0', '2.0', '2', 'consensus', '1.0', '0', '1000000']' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/q2cli/commands.py", line 328, in __call__
+    results = action(**arguments)
+  File "</opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/decorator.py:decorator-gen-459>", line 2, in denoise_paired
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/qiime2/sdk/action.py", line 240, in bound_callable
+    output_types, provenance)
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/qiime2/sdk/action.py", line 383, in _callable_executor_
+    output_views = self._callable(**view_args)
+  File "/opt/conda/envs/nf-core-ampliseq-1.2.0/lib/python3.6/site-packages/q2_dada2/_denoise.py", line 272, in denoise_paired
+    " and stderr to learn more." % e.returncode)
+Exception: An error was encountered while running DADA2 in R (return code 1), please inspect stdout and stderr to learn more.
+
+Plugin error from dada2:
+
+  An error was encountered while running DADA2 in R (return code 1), please inspect stdout and stderr to learn more.
+
+See above for debug info.

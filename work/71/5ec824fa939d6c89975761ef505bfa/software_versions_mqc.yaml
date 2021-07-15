@@ -1,0 +1,16 @@
+
+id: 'software_versions'
+section_name: 'nf-core/hlatyping Software Versions'
+section_href: 'https://github.com/nf-core/hlatyping'
+plot_type: 'html'
+description: 'are collected at run time from the software output.'
+data: |
+    <dl class="dl-horizontal">
+
+        <dt>nf-core/hlatyping</dt><dd><samp>v1.2.0</samp></dd>
+        <dt>Nextflow</dt><dd><samp>v20.10.0</samp></dd>
+        <dt>Samtools</dt><dd><samp>v1.9</samp></dd>
+        <dt>Yara</dt><dd><samp>v1.0.2</samp></dd>
+        <dt>Optitype</dt><dd><samp>v1.3.1</samp></dd>
+        <dt>MultiQC</dt><dd><samp>v1.9</samp></dd>
+    </dl>

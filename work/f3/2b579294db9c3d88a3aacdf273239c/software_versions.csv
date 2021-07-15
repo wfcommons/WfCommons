@@ -1,0 +1,20 @@
+nf-core/methylseq	v1.6
+Nextflow	v20.10.0
+Bismark genomePrep	v0.23.0
+FastQC	v0.11.9
+Cutadapt	v3.3
+Trim Galore!	v0.6.6
+Bismark	v0.23.0
+Bismark Deduplication	v0.23.0
+Bismark methXtract	v0.23.0
+Bismark Report	v0.23.0
+Bismark Summary	v0.22.4
+Samtools	v1.11
+BWA	v0.7.17-r1188
+bwa-meth	v0.2.2
+Picard MarkDuplicates	v1.6
+MethylDackel	v0.5.2 (using HTSlib version 1.11)
+Qualimap	v2.2.2-dev
+Preseq	v2.0.3
+MultiQC	v1.10
+HISAT2	v2.2.1

@@ -1,0 +1,6 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+2	7e/e8ba86	12854	get_software_versions	COMPLETED	0	2021-03-29 20:06:06.979	10m 51s	1s	54.1%	3.1 MB	19.3 MB	7.2 MB	29.5 KB
+1	e8/e6ef42	13047	preprocess_bam (NA12878_S1.chr20.10_10p1mb.bam)	COMPLETED	0	2021-03-29 20:16:57.863	1.2s	294ms	38.9%	3.1 MB	19.3 MB	3.8 MB	6.2 KB
+3	c7/27a858	13084	make_examples (NA12878_S1.chr20.10_10p1mb.bam)	COMPLETED	0	2021-03-29 20:17:14.329	7.1s	5.9s	155.2%	408.6 MB	1.9 GB	81.7 MB	58.4 MB
+4	c3/e1b65d	13125	call_variants (NA12878_S1.chr20.10_10p1mb.bam)	COMPLETED	0	2021-03-29 20:17:21.512	11.3s	10.4s	138.4%	826.2 MB	2.8 GB	330.4 MB	20.2 MB
+5	56/8cc5b8	13169	postprocess_variants (NA12878_S1.chr20.10_10p1mb.bam)	COMPLETED	0	2021-03-29 20:17:38.770	3s	2.2s	83.4%	132.1 MB	620.5 MB	34.3 MB	25.9 MB

@@ -1,0 +1,22 @@
+[INFO   ]         multiqc : This is MultiQC v1.10
+[INFO   ]         multiqc : Template    : default
+[INFO   ]         multiqc : Searching   : /Users/nirvaanreddy/Desktop/CURVE/work/81/22465723107faa433433617d054b71
+[INFO   ]         multiqc : Only using modules custom_content, picard, qualimap, bismark, samtools, preseq, cutadapt, fastqc
+Searching   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 178/178  Matplotlib created a temporary config/cache directory at /tmp/matplotlib-lhz9s9wf because the default path (/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+[INFO   ]         bismark : Found 3 alignment reports
+[INFO   ]         bismark : Found 3 dedup reports
+[INFO   ]         bismark : Found 3 methextract reports
+[INFO   ]  custom_content : nf-core-methylseq-summary: Found 1 sample (html)
+[INFO   ]  custom_content : software_versions: Found 1 sample (html)
+/opt/conda/envs/nf-core-methylseq-1.6/lib/python3.8/site-packages/multiqc/plots/linegraph.py:461: UserWarning: Attempting to set identical left == right == 0 results in singular transformations; automatically expanding.
+  axes.set_xlim((xmin, xmax))
+/opt/conda/envs/nf-core-methylseq-1.6/lib/python3.8/site-packages/multiqc/plots/linegraph.py:461: UserWarning: Attempting to set identical left == right == 0 results in singular transformations; automatically expanding.
+  axes.set_xlim((xmin, xmax))
+[INFO   ]        qualimap : Found 3 BamQC reports
+[INFO   ]        cutadapt : Found 3 reports
+[INFO   ]          fastqc : Found 3 reports
+[INFO   ]         multiqc : Compressing plot data
+[INFO   ]         multiqc : Report      : multiqc_report.html
+[INFO   ]         multiqc : Data        : multiqc_data
+[INFO   ]         multiqc : Plots       : multiqc_plots
+[INFO   ]         multiqc : MultiQC complete

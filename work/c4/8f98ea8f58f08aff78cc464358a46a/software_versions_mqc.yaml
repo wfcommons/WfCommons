@@ -1,0 +1,16 @@
+
+id: 'software_versions'
+section_name: 'nf-core/ampliseq Software Versions'
+section_href: 'https://github.com/nf-core/ampliseq'
+plot_type: 'html'
+description: 'are collected at run time from the software output.'
+data: |
+    <dl class="dl-horizontal">
+
+        <dt>nf-core/ampliseq</dt><dd><samp>v1.2.0</samp></dd>
+        <dt>Nextflow</dt><dd><samp>v20.10.0</samp></dd>
+        <dt>FastQC</dt><dd><samp>v0.11.8</samp></dd>
+        <dt>MultiQC</dt><dd><samp>v1.9</samp></dd>
+        <dt>Cutadapt</dt><dd><samp>v2.8</samp></dd>
+        <dt>QIIME2</dt><dd><samp>v2019.10.0</samp></dd>
+    </dl>

@@ -1,0 +1,195 @@
+Bowtie 2 seems to be working fine (tested command 'bowtie2 --version' [2.4.2])
+Output format is BAM (default)
+Alignments will be written out in BAM format. Samtools found here: '/opt/conda/envs/nf-core-methylseq-1.6/bin/samtools'
+Reference genome folder provided is BismarkIndex/	(absolute path is '/Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/)'
+FastQ format assumed (by default)
+
+Input files to be analysed (in current folder '/Users/nirvaanreddy/Desktop/CURVE/work/23/c87adb80539246785cbb577b5559a6'):
+SRR389222_sub1_trimmed.fq.gz
+SRR389222_sub1_trimmed.fq.gz
+Library is assumed to be strand-specific (directional), alignments to strands complementary to the original top or bottom strands will be ignored (i.e. not performed!)
+Setting parallelization to single-threaded (default)
+
+Summary of all aligner options:	-q --score-min L,0,-0.2 --ignore-quals
+Current working directory is: /Users/nirvaanreddy/Desktop/CURVE/work/23/c87adb80539246785cbb577b5559a6
+
+Now reading in and storing sequence information of the genome specified in: /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/
+
+chr chr (48502 bp)
+
+Single-core mode: setting pid to 1
+
+Single-end alignments will be performed
+=======================================
+
+Input file is in FastQ format
+Writing a C -> T converted version of the input file SRR389222_sub1_trimmed.fq.gz to SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq
+
+Created C -> T converted version of the FastQ file SRR389222_sub1_trimmed.fq.gz (99829 sequences in total)
+
+Input file is SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq (FastQ)
+
+Now running 2 instances of Bowtie 2 against the bisulfite genome of /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/ with the specified options: -q --score-min L,0,-0.2 --ignore-quals
+
+Now starting the Bowtie 2 aligner for CTreadCTgenome (reading in sequences from SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq with options -q --score-min L,0,-0.2 --ignore-quals --norc)
+Using Bowtie 2 index: /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/Bisulfite_Genome/CT_conversion/BS_CT
+
+Found first alignment:	SRR389222_GSM848930_lambda_validation_Enterobacteria_phage_lambda_Bisulfite-Seq.216106_GA1_0033_FC:1:90:3451:9614_length=36	4	*	0	0	*	*	0	0	TATTATAATATTAATAAAATTTATTTAAATAATTT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIGIIIHHH	YT:Z:UU
+Now starting the Bowtie 2 aligner for CTreadGAgenome (reading in sequences from SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq with options -q --score-min L,0,-0.2 --ignore-quals --nofw)
+Using Bowtie 2 index: /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/Bisulfite_Genome/GA_conversion/BS_GA
+
+Found first alignment:	SRR389222_GSM848930_lambda_validation_Enterobacteria_phage_lambda_Bisulfite-Seq.216106_GA1_0033_FC:1:90:3451:9614_length=36	4	*	0	0	*	*	0	0	TATTATAATATTAATAAAATTTATTTAAATAATTT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIGIIIHHH	YT:Z:UU
+
+>>> Writing bisulfite mapping results to SRR389222_sub1_trimmed_bismark_bt2.bam <<<
+
+
+Reading in the sequence file SRR389222_sub1_trimmed.fq.gz
+99829 reads; of these:
+  99829 (100.00%) were unpaired; of these:
+    99815 (99.99%) aligned 0 times
+    14 (0.01%) aligned exactly 1 time
+    0 (0.00%) aligned >1 times
+0.01% overall alignment rate
+99829 reads; of these:
+  99829 (100.00%) were unpaired; of these:
+    50254 (50.34%) aligned 0 times
+    49575 (49.66%) aligned exactly 1 time
+    0 (0.00%) aligned >1 times
+49.66% overall alignment rate
+Processed 99829 sequences in total
+
+Sequences with no alignments under any condition:	50240
+Sequences did not map uniquely:	0
+Sequences which were discarded because genomic sequence could not be extracted:	0
+
+Number of sequences with unique best (first) alignment came from the bowtie output:
+CT/CT:	49575	((converted) top strand)
+CT/GA:	14	((converted) bottom strand)
+GA/CT:	0	(complementary to (converted) top strand)
+GA/GA:	0	(complementary to (converted) bottom strand)
+
+Number of alignments to (merely theoretical) complementary strands being rejected in total:	0
+
+
+Successfully deleted the temporary file SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq
+
+Final Alignment report
+======================
+Sequences analysed in total:	99829
+Number of alignments with a unique best hit from the different alignments:	49589
+Mapping efficiency:	49.7%
+
+Final Cytosine Methylation Report
+=================================
+Total number of C's analysed:	451198
+
+Total methylated C's in CpG context:	1173
+Total methylated C's in CHG context:	1178
+Total methylated C's in CHH context:	1010
+Total methylated C's in Unknown context:	0
+
+Total unmethylated C's in CpG context:	125416
+Total unmethylated C's in CHG context:	178381
+Total unmethylated C's in CHH context:	144040
+Total unmethylated C's in Unknown context:	0
+
+C methylated in CpG context:	0.9%
+C methylated in CHG context:	0.7%
+C methylated in CHH context:	0.7%
+Can't determine percentage of methylated Cs in Unknown context (CN or CHN) if value was 0
+
+
+Bismark completed in 0d 0h 0m 17s
+
+====================
+Bismark run complete
+====================
+
+Single-core mode: setting pid to 1
+
+Single-end alignments will be performed
+=======================================
+
+Input file is in FastQ format
+Writing a C -> T converted version of the input file SRR389222_sub1_trimmed.fq.gz to SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq
+
+Created C -> T converted version of the FastQ file SRR389222_sub1_trimmed.fq.gz (99829 sequences in total)
+
+Input file is SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq (FastQ)
+
+Now running 2 instances of Bowtie 2 against the bisulfite genome of /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/ with the specified options: -q --score-min L,0,-0.2 --ignore-quals
+
+Now starting the Bowtie 2 aligner for CTreadCTgenome (reading in sequences from SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq with options -q --score-min L,0,-0.2 --ignore-quals --norc)
+Using Bowtie 2 index: /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/Bisulfite_Genome/CT_conversion/BS_CT
+
+Found first alignment:	SRR389222_GSM848930_lambda_validation_Enterobacteria_phage_lambda_Bisulfite-Seq.216106_GA1_0033_FC:1:90:3451:9614_length=36	4	*	0	0	*	*	0	0	TATTATAATATTAATAAAATTTATTTAAATAATTT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIGIIIHHH	YT:Z:UU
+Now starting the Bowtie 2 aligner for CTreadGAgenome (reading in sequences from SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq with options -q --score-min L,0,-0.2 --ignore-quals --nofw)
+Using Bowtie 2 index: /Users/nirvaanreddy/Desktop/CURVE/work/81/987dabc711d2b8f97bc938e5fb1f4f/BismarkIndex/Bisulfite_Genome/GA_conversion/BS_GA
+
+Found first alignment:	SRR389222_GSM848930_lambda_validation_Enterobacteria_phage_lambda_Bisulfite-Seq.216106_GA1_0033_FC:1:90:3451:9614_length=36	4	*	0	0	*	*	0	0	TATTATAATATTAATAAAATTTATTTAAATAATTT	IIIIIIIIIIIIIIIIIIIIIIIIIIIIGIIIHHH	YT:Z:UU
+
+>>> Writing bisulfite mapping results to SRR389222_sub1_trimmed_bismark_bt2.bam <<<
+
+
+Reading in the sequence file SRR389222_sub1_trimmed.fq.gz
+99829 reads; of these:
+  99829 (100.00%) were unpaired; of these:
+    50254 (50.34%) aligned 0 times
+    49575 (49.66%99829 reads; of these:
+  99829 (100.00%) were unpaired; of these:
+    99815 (99.99%) aligned 0 times
+    14 (0.01%) aligned exactly 1 time
+    0 (0.00%) aligned >1 times
+0.01% overall alignment rate
+) aligned exactly 1 time
+    0 (0.00%) aligned >1 times
+49.66% overall alignment rate
+Processed 99829 sequences in total
+
+Sequences with no alignments under any condition:	50240
+
+Successfully deleted the temporary file SRR389222_sub1_trimmed.fq.gz_C_to_T.fastq
+
+Final Alignment report
+======================
+Sequences analysed in total:	99829
+Number of alignments with a unique best hit from the different alignments:	49589
+Mapping efficiency:	49.7%
+
+Sequences did not map uniquely:	0
+Sequences which were discarded because genomic sequence could not be extracted:	0
+
+Number of sequences with unique best (first) alignment came from the bowtie output:
+CT/CT:	49575	((converted) top strand)
+CT/GA:	14	((converted) bottom strand)
+GA/CT:	0	(complementary to (converted) top strand)
+GA/GA:	0	(complementary to (converted) bottom strand)
+
+Number of alignments to (merely theoretical) complementary strands being rejected in total:	0
+
+Final Cytosine Methylation Report
+=================================
+Total number of C's analysed:	451198
+
+Total methylated C's in CpG context:	1173
+Total methylated C's in CHG context:	1178
+Total methylated C's in CHH context:	1010
+Total methylated C's in Unknown context:	0
+
+Total unmethylated C's in CpG context:	125416
+Total unmethylated C's in CHG context:	178381
+Total unmethylated C's in CHH context:	144040
+Total unmethylated C's in Unknown context:	0
+
+C methylated in CpG context:	0.9%
+C methylated in CHG context:	0.7%
+C methylated in CHH context:	0.7%
+Can't determine percentage of methylated Cs in Unknown context (CN or CHN) if value was 0
+
+
+Bismark completed in 0d 0h 0m 34s
+
+====================
+Bismark run complete
+====================
+

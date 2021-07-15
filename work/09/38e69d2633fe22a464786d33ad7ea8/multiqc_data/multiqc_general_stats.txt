@@ -1,0 +1,38 @@
+Sample	Picard_mqc-generalstats-picard-PERCENT_DUPLICATION	Samtools Stats_mqc-generalstats-samtools_stats-reads_mapped	QualiMap_mqc-generalstats-qualimap-percentage_aligned	Samtools Stats_mqc-generalstats-samtools_stats-reads_mapped_percent	QualiMap_mqc-generalstats-qualimap-median_insert_size	QualiMap_mqc-generalstats-qualimap-mean_coverage	QualiMap_mqc-generalstats-qualimap-general_error_rate	QualiMap_mqc-generalstats-qualimap-30_x_pc	QualiMap_mqc-generalstats-qualimap-10_x_pc	Samtools Stats_mqc-generalstats-samtools_stats-raw_total_sequences	QualiMap_mqc-generalstats-qualimap-1_x_pc	QualiMap_mqc-generalstats-qualimap-avg_gc	QualiMap_mqc-generalstats-qualimap-median_coverage	QualiMap_mqc-generalstats-qualimap-mapped_reads	Samtools Stats_mqc-generalstats-samtools_stats-error_rate	QualiMap_mqc-generalstats-qualimap-50_x_pc	QualiMap_mqc-generalstats-qualimap-5_x_pc	Samtools Stats_mqc-generalstats-samtools_stats-non_primary_alignments	QualiMap_mqc-generalstats-qualimap-total_reads	Samtools Stats_mqc-generalstats-samtools_stats-reads_MQ0_percent	Samtools Stats_mqc-generalstats-samtools_stats-reads_properly_paired_percent	FastQC_mqc-generalstats-fastqc-percent_duplicates	FastQC_mqc-generalstats-fastqc-avg_sequence_length	FastQC_mqc-generalstats-fastqc-total_sequences	FastQC_mqc-generalstats-fastqc-percent_fails	FastQC_mqc-generalstats-fastqc-percent_gc
+1234N	0.036101																									
+1234N.recal		831.0	95.7373271889	95.7373271889	341	0.0	0.24	0.102611499942	0.382122244335	868.0	0.397899073018	39.9493670886	0	831.0	0.002504226	0.000248453995016	0.397402165028	1.0	868.0	0.0	85.9447004608					
+1234N_1234N_M1			95.6896551724		216	0.0	0.56	0.0	0.0		0.366718096644	38.9166666667	0	111.0		0.0	0.109940892795		116.0							
+1234N_1234N_M1_R1																						0.0	101.0	58.0	36.3636363636	38.0
+1234N_1234N_M1_R2																						0.0	101.0	58.0	27.2727272727	39.0
+1234N_1234N_M2			98.3870967742		346	0.0	0.08	0.0	0.0		0.334170623297	40.625	0	61.0		0.0	0.0182613686337		62.0							
+1234N_1234N_M2_R1																						0.0	101.0	31.0	36.3636363636	39.0
+1234N_1234N_M2_R2																						0.0	101.0	31.0	36.3636363636	39.0
+1234N_1234N_M4			95.0704225352		339	0.0	0.31	0.0	0.00298144794019		0.368829955601	39.9285714286	0	135.0		0.0	0.1595074648		142.0							
+1234N_1234N_M4_R1																						0.0	101.0	71.0	36.3636363636	40.0
+1234N_1234N_M4_R2																						1.40845070423	101.0	71.0	27.2727272727	39.0
+1234N_1234N_M5			95.0980392157		340	0.0	0.19	0.0	0.0449701730979		0.396035668056	39.7142857143	0	194.0		0.0	0.262988553724		204.0							
+1234N_1234N_M5_R1																						1.96078431373	101.0	102.0	18.1818181818	39.0
+1234N_1234N_M5_R2																						0.980392156863	101.0	102.0	36.3636363636	41.0
+1234N_1234N_M6			95.7446808511		343	0.0	0.08	0.0	0.0380134612374		0.39131504215	39.7894736842	0	180.0		0.0	0.242615326133		188.0							
+1234N_1234N_M6_R1																						3.1914893617	101.0	94.0	18.1818181818	39.0
+1234N_1234N_M6_R2																						3.1914893617	101.0	94.0	27.2727272727	40.0
+1234N_1234N_M7			94.9367088608		342	0.0	0.33	0.0	0.00335412893272		0.367960366619	40.7647058824	0	150.0		0.0	0.194663705095		158.0							
+1234N_1234N_M7_R1																						0.0	101.0	79.0	27.2727272727	40.0
+1234N_1234N_M7_R2																						0.0	101.0	79.0	36.3636363636	41.0
+9876T	0.11041																									
+9876T.recal		8405.0	97.392815759	97.392815759	332	0.0	0.19	0.397899073018	0.397899073018	8630.0	0.398395981008	38.0151515152	0	8405.0	0.002086831	0.385227919272	0.397899073018	55.0	8630.0	0.0	85.214368482					
+9876T_9876T_M1			97.7011494253		333	0.0	0.22	0.245596774073	0.384606784285		0.398023300016	38.2335329341	0	1700.0		0.122363592545	0.397899073018		1740.0							
+9876T_9876T_M1_R1																						10.5747126437	101.0	870.0	9.09090909091	37.0
+9876T_9876T_M1_R2																						10.8045977011	101.0	870.0	18.1818181818	38.0
+9876T_9876T_M2			96.4956195244		335	0.0	0.19	0.170812121574	0.387588232225		0.398023300016	38.137254902	0	1542.0		0.100996548974	0.397899073018		1598.0							
+9876T_9876T_M2_R1																						11.8898623279	101.0	799.0	9.09090909091	37.0
+9876T_9876T_M2_R2																						9.51188986233	101.0	799.0	18.1818181818	37.0
+9876T_9876T_M3			97.3939393939		333	0.0	0.2	0.186837404252	0.380258839372		0.398023300016	37.9556962025	0	1607.0		0.11813987463	0.397899073018		1650.0							
+9876T_9876T_M3_R1																						10.7878787879	101.0	825.0	9.09090909091	37.0
+9876T_9876T_M3_R2																						10.303030303	101.0	825.0	9.09090909091	37.0
+9876T_9876T_M4			97.3233404711		333	0.0	0.18	0.224602411494	0.394669171083		0.397899073018	38.106741573	0	1818.0		0.140624961179	0.397899073018		1868.0							
+9876T_9876T_M4_R1																						12.8479657388	101.0	934.0	18.1818181818	37.0
+9876T_9876T_M4_R2																						12.8479657388	101.0	934.0	18.1818181818	37.0
+9876T_9876T_M5			97.5308641975		333	0.0	0.25	0.241124602163	0.390569680165		0.398271754011	37.8187134503	0	1738.0		0.129444531403	0.396656803043		1782.0							
+9876T_9876T_M5_R1																						11.4478114478	101.0	891.0	18.1818181818	37.0
+9876T_9876T_M5_R2																						9.42760942761	101.0	891.0	9.09090909091	37.0

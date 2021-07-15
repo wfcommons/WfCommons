@@ -1,0 +1,12 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xmx6g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar CreateSequenceDictionary --REFERENCE human_g1k_v37_decoy.small.fasta --OUTPUT human_g1k_v37_decoy.small.dict
+05:38:40.423 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+[Wed Mar 17 05:38:40 UTC 2021] CreateSequenceDictionary  --OUTPUT human_g1k_v37_decoy.small.dict --REFERENCE human_g1k_v37_decoy.small.fasta  --TRUNCATE_NAMES_AT_WHITESPACE true --NUM_SEQUENCES 2147483647 --VERBOSITY INFO --QUIET false --VALIDATION_STRINGENCY STRICT --COMPRESSION_LEVEL 2 --MAX_RECORDS_IN_RAM 500000 --CREATE_INDEX false --CREATE_MD5_FILE false --GA4GH_CLIENT_SECRETS client_secrets.json --help false --version false --showHidden false --USE_JDK_DEFLATER false --USE_JDK_INFLATER false
+Mar 17, 2021 5:38:40 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+[Wed Mar 17 05:38:40 UTC 2021] Executing as root@5666607c61c0 on Linux 4.19.76-linuxkit amd64; OpenJDK 64-Bit Server VM 1.8.0_265-b11; Deflater: Intel; Inflater: Intel; Provider GCS is available; Picard version: Version:4.1.7.0
+[Wed Mar 17 05:38:41 UTC 2021] picard.sam.CreateSequenceDictionary done. Elapsed time: 0.01 minutes.
+Runtime.totalMemory()=184025088
+Tool returned:
+0

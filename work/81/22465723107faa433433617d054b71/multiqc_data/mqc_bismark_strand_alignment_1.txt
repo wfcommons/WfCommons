@@ -1,0 +1,4 @@
+Sample	Original bottom strand	Original top strand
+SRR389222_sub1	14.0	49575.0
+SRR389222_sub2	28.0	59713.0
+SRR389222_sub3	11.0	39616.0

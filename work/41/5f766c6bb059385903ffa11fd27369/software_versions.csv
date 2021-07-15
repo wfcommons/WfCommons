@@ -1,0 +1,24 @@
+nf-core/sarek	v2.7
+Nextflow	v20.10.0
+BWA	<span style="color:#999999;">N/A</span>
+GATK	v4.1.7.0
+FreeBayes	v1.3.2
+samtools	v1.9
+Strelka	v2.9.10
+Manta	v1.6.0
+TIDDIT	v2.7.1
+AlleleCount	v4.0.2
+ASCAT	v2.5.2
+Control-FREEC	vv11.6
+msisensor	v0.5
+SnpEff	v4.3t
+VEP	v99.2
+MultiQC	v1.8
+FastQC	v0.11.9
+bcftools	v1.9
+CNVkit	v0.9.6
+htslib	v1.9
+QualiMap	v2.2.2-dev
+Trim Galore	v0.6.4_dev
+vcftools	v0.1.16
+R	v4.0.2

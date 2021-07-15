@@ -1,0 +1,4 @@
+sample,barcode,input_file,genome,gtf,is_transcripts
+CALIBRATION_RUN_R1,barcode03,,,,0
+HEPG2_RUN3_R1,barcode02,,,,0
+K562_RUN1_R1,barcode01,,https://raw.githubusercontent.com/nf-core/test-datasets/nanoseq/reference/hg19_KCMF1.fa,,0

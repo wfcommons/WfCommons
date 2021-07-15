@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq/bin/markdown_to_html.py", line 4, in <module>
+    import markdown
+ModuleNotFoundError: No module named 'markdown'

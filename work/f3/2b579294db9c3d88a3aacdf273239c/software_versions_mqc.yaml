@@ -1,0 +1,30 @@
+
+id: 'software_versions'
+section_name: 'nf-core/methylseq Software Versions'
+section_href: 'https://github.com/nf-core/methylseq'
+plot_type: 'html'
+description: 'are collected at run time from the software output.'
+data: |
+    <dl class="dl-horizontal">
+
+        <dt>nf-core/methylseq</dt><dd><samp>v1.6</samp></dd>
+        <dt>Nextflow</dt><dd><samp>v20.10.0</samp></dd>
+        <dt>Bismark genomePrep</dt><dd><samp>v0.23.0</samp></dd>
+        <dt>FastQC</dt><dd><samp>v0.11.9</samp></dd>
+        <dt>Cutadapt</dt><dd><samp>v3.3</samp></dd>
+        <dt>Trim Galore!</dt><dd><samp>v0.6.6</samp></dd>
+        <dt>Bismark</dt><dd><samp>v0.23.0</samp></dd>
+        <dt>Bismark Deduplication</dt><dd><samp>v0.23.0</samp></dd>
+        <dt>Bismark methXtract</dt><dd><samp>v0.23.0</samp></dd>
+        <dt>Bismark Report</dt><dd><samp>v0.23.0</samp></dd>
+        <dt>Bismark Summary</dt><dd><samp>v0.22.4</samp></dd>
+        <dt>Samtools</dt><dd><samp>v1.11</samp></dd>
+        <dt>BWA</dt><dd><samp>v0.7.17-r1188</samp></dd>
+        <dt>bwa-meth</dt><dd><samp>v0.2.2</samp></dd>
+        <dt>Picard MarkDuplicates</dt><dd><samp>v1.6</samp></dd>
+        <dt>MethylDackel</dt><dd><samp>v0.5.2 (using HTSlib version 1.11)</samp></dd>
+        <dt>Qualimap</dt><dd><samp>v2.2.2-dev</samp></dd>
+        <dt>Preseq</dt><dd><samp>v2.0.3</samp></dd>
+        <dt>MultiQC</dt><dd><samp>v1.10</samp></dd>
+        <dt>HISAT2</dt><dd><samp>v2.2.1</samp></dd>
+    </dl>

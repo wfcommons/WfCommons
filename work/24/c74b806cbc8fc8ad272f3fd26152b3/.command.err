@@ -1,0 +1,29 @@
+Using GATK jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar
+Running:
+    java -Dsamjdk.use_async_io_read_samtools=false -Dsamjdk.use_async_io_write_samtools=true -Dsamjdk.use_async_io_write_tribble=false -Dsamjdk.compression_level=2 -Xms3g -Xmx5g -jar /opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar MarkDuplicates --INPUT 9876T.bam --METRICS_FILE 9876T.bam.metrics --TMP_DIR . --ASSUME_SORT_ORDER coordinate --CREATE_INDEX true --OUTPUT 9876T.md.bam
+05:41:18.678 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/opt/conda/envs/nf-core-sarek-2.7/share/gatk4-4.1.7.0-0/gatk-package-4.1.7.0-local.jar!/com/intel/gkl/native/libgkl_compression.so
+[Wed Mar 17 05:41:18 UTC 2021] MarkDuplicates  --INPUT 9876T.bam --OUTPUT 9876T.md.bam --METRICS_FILE 9876T.bam.metrics --ASSUME_SORT_ORDER coordinate --TMP_DIR . --CREATE_INDEX true  --MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP 50000 --MAX_FILE_HANDLES_FOR_READ_ENDS_MAP 8000 --SORTING_COLLECTION_SIZE_RATIO 0.25 --TAG_DUPLICATE_SET_MEMBERS false --REMOVE_SEQUENCING_DUPLICATES false --TAGGING_POLICY DontTag --CLEAR_DT true --DUPLEX_UMI false --ADD_PG_TAG_TO_READS true --REMOVE_DUPLICATES false --ASSUME_SORTED false --DUPLICATE_SCORING_STRATEGY SUM_OF_BASE_QUALITIES --PROGRAM_RECORD_ID MarkDuplicates --PROGRAM_GROUP_NAME MarkDuplicates --READ_NAME_REGEX <optimized capture of last three ':' separated fields as numeric values> --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 --MAX_OPTICAL_DUPLICATE_SET_SIZE 300000 --VERBOSITY INFO --QUIET false --VALIDATION_STRINGENCY STRICT --COMPRESSION_LEVEL 2 --MAX_RECORDS_IN_RAM 500000 --CREATE_MD5_FILE false --GA4GH_CLIENT_SECRETS client_secrets.json --help false --version false --showHidden false --USE_JDK_DEFLATER false --USE_JDK_INFLATER false
+Mar 17, 2021 5:41:19 AM shaded.cloud_nio.com.google.auth.oauth2.ComputeEngineCredentials runningOnComputeEngine
+INFO: Failed to detect whether we are running on Google Compute Engine.
+[Wed Mar 17 05:41:19 UTC 2021] Executing as root@86021b35dcd9 on Linux 4.19.76-linuxkit amd64; OpenJDK 64-Bit Server VM 1.8.0_265-b11; Deflater: Intel; Inflater: Intel; Provider GCS is available; Picard version: Version:4.1.7.0
+INFO	2021-03-17 05:41:19	MarkDuplicates	Start of doWork freeMemory: 3064050824; totalMemory: 3087007744; maxMemory: 4772593664
+INFO	2021-03-17 05:41:19	MarkDuplicates	Reading input file and constructing read end information.
+INFO	2021-03-17 05:41:19	MarkDuplicates	Will retain up to 17292006 data points before spilling to disk.
+INFO	2021-03-17 05:41:19	MarkDuplicates	Read 8685 records. 0 pairs never matched.
+INFO	2021-03-17 05:41:19	MarkDuplicates	After buildSortedReadEndLists freeMemory: 3257763392; totalMemory: 3427270656; maxMemory: 4772593664
+INFO	2021-03-17 05:41:19	MarkDuplicates	Will retain up to 149143552 duplicate indices before spilling to disk.
+INFO	2021-03-17 05:41:21	MarkDuplicates	Traversing read pair information and detecting duplicates.
+INFO	2021-03-17 05:41:21	MarkDuplicates	Traversing fragment information and detecting duplicates.
+INFO	2021-03-17 05:41:21	MarkDuplicates	Sorting list of duplicate records.
+INFO	2021-03-17 05:41:22	MarkDuplicates	After generateDuplicateIndexes freeMemory: 2204258104; totalMemory: 3427270656; maxMemory: 4772593664
+INFO	2021-03-17 05:41:22	MarkDuplicates	Marking 928 records as duplicates.
+INFO	2021-03-17 05:41:22	MarkDuplicates	Found 1 optical duplicate clusters.
+INFO	2021-03-17 05:41:22	MarkDuplicates	Reads are assumed to be ordered by: coordinate
+INFO	2021-03-17 05:41:22	MarkDuplicates	Writing complete. Closing input iterator.
+INFO	2021-03-17 05:41:22	MarkDuplicates	Duplicate Index cleanup.
+INFO	2021-03-17 05:41:22	MarkDuplicates	Getting Memory Stats.
+INFO	2021-03-17 05:41:22	MarkDuplicates	Before output close freeMemory: 3396430992; totalMemory: 3427270656; maxMemory: 4772593664
+INFO	2021-03-17 05:41:22	MarkDuplicates	Closed outputs. Getting more Memory Stats.
+INFO	2021-03-17 05:41:23	MarkDuplicates	After output close freeMemory: 3396606008; totalMemory: 3427270656; maxMemory: 4772593664
+[Wed Mar 17 05:41:23 UTC 2021] picard.sam.markduplicates.MarkDuplicates done. Elapsed time: 0.07 minutes.
+Runtime.totalMemory()=3427270656

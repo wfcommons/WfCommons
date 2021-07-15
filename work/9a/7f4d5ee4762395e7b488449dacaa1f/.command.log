@@ -1,0 +1,6 @@
+Matplotlib created a temporary config/cache directory at /tmp/matplotlib-27dsagpp because the default path (/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+[E::idx_find_and_load] Could not retrieve index file for 'mapped_1.bam'
+[E::idx_find_and_load] Could not retrieve index file for 'mapped_2.bam'
+WARNING: Initializing ordered Set R with a fundamentally unordered data source
+    (type: set).  This WILL potentially lead to nondeterministic behavior in
+    Pyomo

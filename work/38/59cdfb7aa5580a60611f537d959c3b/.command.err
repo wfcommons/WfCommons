@@ -1,0 +1,12 @@
+[WARNING]         multiqc : MultiQC Version v1.10 now available!
+[INFO   ]         multiqc : This is MultiQC v1.9
+[INFO   ]         multiqc : Template    : default
+[INFO   ]         multiqc : Searching   : /Users/nirvaanreddy/Desktop/CURVE/work/38/59cdfb7aa5580a60611f537d959c3b
+[INFO   ]  custom_content : nf-core-ampliseq-summary: Found 1 sample (html)
+[INFO   ]  custom_content : software_versions: Found 1 sample (html)
+[INFO   ]        cutadapt : Found 4 reports
+[INFO   ]          fastqc : Found 8 reports
+[INFO   ]         multiqc : Compressing plot data
+[INFO   ]         multiqc : Report      : multiqc_report.html
+[INFO   ]         multiqc : Data        : multiqc_data
+[INFO   ]         multiqc : MultiQC complete

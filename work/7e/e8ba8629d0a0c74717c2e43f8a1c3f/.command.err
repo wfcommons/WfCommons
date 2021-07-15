@@ -1,0 +1,39 @@
+Unable to find image 'nfcore/deepvariant:1.0' locally
+1.0: Pulling from nfcore/deepvariant
+cc1a78bfd46b: Pulling fs layer
+420ea9ce27d9: Pulling fs layer
+1b219c050547: Pulling fs layer
+1c177edca126: Pulling fs layer
+edb26cfd63dc: Pulling fs layer
+1c177edca126: Waiting
+e75e43089ae5: Pulling fs layer
+5fef3730a5ce: Pulling fs layer
+c7ba800367e3: Pulling fs layer
+edb26cfd63dc: Waiting
+e75e43089ae5: Waiting
+5fef3730a5ce: Waiting
+c7ba800367e3: Waiting
+cc1a78bfd46b: Verifying Checksum
+cc1a78bfd46b: Download complete
+1c177edca126: Verifying Checksum
+1c177edca126: Download complete
+cc1a78bfd46b: Pull complete
+edb26cfd63dc: Verifying Checksum
+edb26cfd63dc: Download complete
+420ea9ce27d9: Download complete
+5fef3730a5ce: Verifying Checksum
+5fef3730a5ce: Download complete
+420ea9ce27d9: Pull complete
+1b219c050547: Verifying Checksum
+1b219c050547: Download complete
+1b219c050547: Pull complete
+1c177edca126: Pull complete
+edb26cfd63dc: Pull complete
+e75e43089ae5: Verifying Checksum
+e75e43089ae5: Download complete
+e75e43089ae5: Pull complete
+5fef3730a5ce: Pull complete
+c7ba800367e3: Download complete
+c7ba800367e3: Pull complete
+Digest: sha256:04b04cf9011e20b5510fe88f4173145a131e8374def21f070ca673f616116c28
+Status: Downloaded newer image for nfcore/deepvariant:1.0

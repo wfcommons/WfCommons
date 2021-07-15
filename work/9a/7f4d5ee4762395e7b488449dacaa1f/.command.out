@@ -1,0 +1,3 @@
+WARNING: Initializing ordered Set R with a fundamentally unordered data source
+    (type: set).  This WILL potentially lead to nondeterministic behavior in
+    Pyomo

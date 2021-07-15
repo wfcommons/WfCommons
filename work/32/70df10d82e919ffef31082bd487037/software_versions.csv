@@ -1,0 +1,6 @@
+nf-core/ampliseq	v1.2.0
+Nextflow	v20.10.0
+FastQC	v0.11.8
+MultiQC	v1.9
+Cutadapt	v2.8
+QIIME2	v2019.10.0

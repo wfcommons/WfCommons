@@ -1,0 +1,4 @@
+Sample	aligned_reads	ambig_reads	discarded_reads	meth_chg	meth_chh	meth_cpg	no_alignments	percent_aligned	percent_chg_meth	percent_chh_meth	percent_cpg_meth	strand_ctob	strand_ctot	strand_directional	strand_ob	strand_ot	total_c	total_reads	unmeth_chg	unmeth_chh	unmeth_cpg
+SRR389222_sub1	49589.0	0.0	0.0	1178.0	1010.0	1173.0	50240.0	49.67394244157509	0.7	0.7	0.9	0.0	0.0	directional	14.0	49575.0	451198.0	99829.0	178381.0	144040.0	125416.0
+SRR389222_sub2	59741.0	0.0	0.0	1376.0	1352.0	1406.0	60087.0	49.8556263978369	0.6	0.8	0.9	0.0	0.0	directional	28.0	59713.0	543990.0	119828.0	214886.0	173608.0	151362.0
+SRR389222_sub3	39627.0	0.0	0.0	939.0	836.0	907.0	40250.0	49.61002541407414	0.7	0.7	0.9	0.0	0.0	directional	11.0	39616.0	361611.0	79877.0	142664.0	115913.0	100352.0

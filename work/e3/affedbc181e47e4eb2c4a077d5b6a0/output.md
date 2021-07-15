@@ -1,0 +1,1 @@
+/Users/nirvaanreddy/.nextflow/assets/nf-core/ampliseq/docs/output.md
