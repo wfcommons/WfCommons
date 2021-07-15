@@ -47,25 +47,31 @@ class WorkflowBenchmark():
 
         with open(f'{save_dir.joinpath(workflow.name)}.json') as json_file:
             wf = json.load(json_file)
+        
+
+        params_fileio = [f"--file-test-mode={test_mode}",
+                         f"--file-total-size={total_size}G",
+                         f"--file-block-size={file_block_size}",
+                         f"--file-rw-ratio={rw_ratio}",
+                         "--file-num=1"]
+
+        params_memory = [f"--memory-block-size={block_size}",
+                         f"--memory-scope={scope}"]
+
+        params_cpu = f"--cpu-max-prime={max_prime}"
 
         for job in wf["workflow"]["jobs"]:
             job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
             job["files"] = []
             job.setdefault("command", {})
             job["command"]["program"] = f"wfperf_benchmark.py"
-            job["command"]["arguments"] = [
-                job["benchmark"],
-                job["name"],
-                f"--file-test-mode={test_mode}",
-                f"--memory-block-size={block_size}" 
-                f"--file-total-size={total_size}G", 
-                f"--memory-scope={scope}",
-                f"--cpu-max-prime={max_prime}",
-                f"--file-block-size={file_block_size}"
-                f"--file-rw-ratio={rw_ratio}",
-                "--file-num=1"
-            ]
-
+            job["command"]["arguments"] = [job["benchmark"], job["name"]]
+            if job["benchmark"] == "fileio":
+               job["command"]["arguments"].extend(params_fileio)
+            elif job["benchmark"] == "memory":
+                job["command"]["arguments"].extend(params_memory)
+            elif job["benchmark"] == "cpu":
+                job["command"]["arguments"].append(params_cpu)          
 
         num_sys_files, num_total_files = self.input_files(wf)
         
