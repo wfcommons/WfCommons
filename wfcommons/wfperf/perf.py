@@ -26,6 +26,7 @@ class WorkflowBenchmark():
                max_prime: int = 10000,
                file_block_size: int = 16384,
                rw_ratio: float = 1.5,
+               threads: int = 1,
                verbose: bool = False) -> Dict:
 
         if verbose:
@@ -53,12 +54,15 @@ class WorkflowBenchmark():
                          f"--file-total-size={total_size}G",
                          f"--file-block-size={file_block_size}",
                          f"--file-rw-ratio={rw_ratio}",
+                         f"--threads={threads}",
                          "--file-num=1"]
 
         params_memory = [f"--memory-block-size={block_size}",
+                         f"--threads={threads}",
                          f"--memory-scope={scope}"]
 
-        params_cpu = f"--cpu-max-prime={max_prime}"
+        params_cpu =   [f"--cpu-max-prime={max_prime}",
+                        f"--threads={threads}"]
 
         for job in wf["workflow"]["jobs"]:
             job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
@@ -71,7 +75,7 @@ class WorkflowBenchmark():
             elif job["benchmark"] == "memory":
                 job["command"]["arguments"].extend(params_memory)
             elif job["benchmark"] == "cpu":
-                job["command"]["arguments"].append(params_cpu)          
+                job["command"]["arguments"].extend(params_cpu)          
 
         num_sys_files, num_total_files = self.input_files(wf)
         

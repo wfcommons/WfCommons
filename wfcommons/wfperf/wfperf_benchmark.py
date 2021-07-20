@@ -33,11 +33,11 @@ def main():
 
     elif args.benchmark == "cpu":
         sysbench_args = [arg for arg in other if arg.startswith("--cpu")]
-        proc = subprocess.Popen(["sysbench", "cpu", *sysbench_args])
+        proc = subprocess.Popen(["sysbench", "cpu", "run", *sysbench_args])
         proc.wait()
     elif args.benchmark == "memory":
         sysbench_args = [arg for arg in other if arg.startswith("--memory")]
-        proc = subprocess.Popen(["sysbench", "memory", *sysbench_args])
+        proc = subprocess.Popen(["sysbench", "memory", "run", *sysbench_args])
         proc.wait()
 
 
