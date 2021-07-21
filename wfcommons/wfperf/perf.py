@@ -14,14 +14,11 @@ class WorkflowBenchmark():
         self.num_tasks = num_tasks
 
     def create(self,
-               cpu: float,
-               mem: float,
-               fileio: float,
                save_dir: pathlib.Path,
-               data_footprint: int,
+               data_footprint: int = 100,
                test_mode: str = "seqwr",
                block_size: str = "1K",
-               total_size: str = "100G",
+            #    total_size: str = "100G",
                scope: str = "global",   
                max_prime: int = 10000,
                file_block_size: int = 16384,
@@ -29,9 +26,9 @@ class WorkflowBenchmark():
                threads: int = 1,
                verbose: bool = False) -> Dict:
 
-        if verbose:
-            print("Checking if the percentages sum up to 1.")
-        self._check(cpu, mem, fileio)
+        # if verbose:
+        #     print("Checking if the percentages sum up to 1.")
+        # self._check(cpu, mem, fileio)
         if verbose:
             print("Checking if the sysbench is installed.")
         self._check_sysbench()
@@ -50,33 +47,23 @@ class WorkflowBenchmark():
             wf = json.load(json_file)
         
 
-        params_fileio = [f"--file-test-mode={test_mode}",
-                         f"--file-total-size={total_size}G",
-                         f"--file-block-size={file_block_size}",
-                         f"--file-rw-ratio={rw_ratio}",
-                         f"--threads={threads}",
-                         "--file-num=1"]
-
-        params_memory = [f"--memory-block-size={block_size}",
-                         f"--threads={threads}",
-                         f"--memory-scope={scope}"]
-
-        params_cpu =   [f"--cpu-max-prime={max_prime}",
-                        f"--threads={threads}"]
+        params = [f"--file-test-mode={test_mode}",
+                  f"--file-total-size={data_footprint}G",
+                  f"--file-block-size={file_block_size}",
+                  f"--file-rw-ratio={rw_ratio}",
+                  f"--file-num=1",
+                  f"--memory-block-size={block_size}",
+                  f"--memory-scope={scope}",
+                  f"--cpu-max-prime={max_prime}",
+                  f"--threads={threads}"]
 
         for job in wf["workflow"]["jobs"]:
-            job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
+            # job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
             job["files"] = []
             job.setdefault("command", {})
             job["command"]["program"] = f"wfperf_benchmark.py"
-            job["command"]["arguments"] = [job["benchmark"], job["name"]]
-            if job["benchmark"] == "fileio":
-               job["command"]["arguments"].extend(params_fileio)
-            elif job["benchmark"] == "memory":
-                job["command"]["arguments"].extend(params_memory)
-            elif job["benchmark"] == "cpu":
-                job["command"]["arguments"].extend(params_cpu)          
-
+            job["command"]["arguments"] = [job["name"], params]
+            
         num_sys_files, num_total_files = self.input_files(wf)
         
         if verbose:
@@ -93,7 +80,7 @@ class WorkflowBenchmark():
         
         if verbose:
             print("Generating system files.")
-        generate_sys_data(num_sys_files, file_size)
+        generate_sys_data(num_sys_files, data_footprint)
         
 
         with open(f'{save_dir.joinpath(workflow.name)}.json', 'w') as fp:
@@ -108,18 +95,12 @@ class WorkflowBenchmark():
         tasks_need_input = 0
         tasks_dont_need_input = 0
         
-        all_jobs = {
-            job["name"]: job
-            for job in wf["workflow"]["jobs"]
-        }
-        
         for job in wf["workflow"]["jobs"]:
-            if job["benchmark"] == "fileio":
-                parents = [parent for parent in job["parents"] if all_jobs[parent]["benchmark"] == "fileio"]
-                if not parents:
-                    tasks_need_input +=1                  
-                else:
-                    tasks_dont_need_input += 1 
+            parents = [parent for parent in job["parents"]] 
+            if not parents:
+                tasks_need_input +=1                  
+            else:
+                tasks_dont_need_input += 1 
                             
         total_num_files = tasks_need_input*2 + tasks_dont_need_input
                 
@@ -133,45 +114,42 @@ class WorkflowBenchmark():
         }
         
         for job in wf["workflow"]["jobs"]:
-            if job["benchmark"] == "fileio":
-                job.setdefault("files", [])
+            job.setdefault("files", [])
+            job["files"].append(
+                {
+                    "link": "output",
+                    "name": f"{job['name']}_test_file.0",
+                    "size": file_size
+                }
+            )
+
+            parents = [parent for parent in job["parents"]] 
+            if not parents:
                 job["files"].append(
                     {
-                        "link": "output",
-                        "name": f"{job['name']}_test_file.0",
+                        "link": "input",
+                        "name": f"sys_test_file.{i}",
                         "size": file_size
-                    }
+                    } 
                 )
-
-        for job in wf["workflow"]["jobs"]:
-            if job["benchmark"] == "fileio":
-                parents = [parent for parent in job["parents"] if all_jobs[parent]["benchmark"] == "fileio"] 
-                if not parents:
-                    job["files"].append(
-                        {
-                            "link": "input",
-                            "name": f"sys_test_file.{i}",
-                            "size": file_size
-                        } 
+                i+=1
+            else:
+                for parent in parents:
+                    job["files"].extend(
+                        [
+                            {
+                                "link": "input",
+                                "name": item["name"],
+                                "size": item["size"]
+                            } 
+                            for item in all_jobs[parent]["files"] if item["link"] == "output"
+                        ]
                     )
-                    i+=1
-                else:
-                    for parent in parents:
-                        job["files"].extend(
-                            [
-                                {
-                                    "link": "input",
-                                    "name": item["name"],
-                                    "size": item["size"]
-                                } 
-                                for item in all_jobs[parent]["files"] if item["link"] == "output"
-                            ]
-                        )
         
 
-    def _check(self, cpu: float, mem: float, fileio: float) -> None:
-        if not np.isclose(cpu + fileio + mem, 1.0):
-            raise("CPU + Memory + IO must sum up to 1.")
+    # def _check(self, cpu: float, mem: float, fileio: float) -> None:
+        # if not np.isclose(cpu + fileio + mem, 1.0):
+            # raise("CPU + Memory + IO must sum up to 1.")
     
     def _check_sysbench(self,):
         proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
