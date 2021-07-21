@@ -10,7 +10,6 @@ this_dir = pathlib.Path(__file__).resolve().parent
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    # parser.add_argument("benchmark", help="Benchmark")
     parser.add_argument("name", help="Task Name")
     return parser 
 
@@ -18,7 +17,6 @@ def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
  
-    # if args.benchmark == "fileio":
     for path in this_dir.glob("*test_file*"):
         _, rest = path.name.split("test_file", 1)
         path.rename(path.parent.joinpath(f"test_file{rest}"))

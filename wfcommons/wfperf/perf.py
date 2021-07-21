@@ -51,7 +51,7 @@ class WorkflowBenchmark():
                   f"--file-total-size={data_footprint}G",
                   f"--file-block-size={file_block_size}",
                   f"--file-rw-ratio={rw_ratio}",
-                  f"--file-num=1",
+                  "--file-num=1",
                   f"--memory-block-size={block_size}",
                   f"--memory-scope={scope}",
                   f"--cpu-max-prime={max_prime}",
@@ -62,7 +62,8 @@ class WorkflowBenchmark():
             job["files"] = []
             job.setdefault("command", {})
             job["command"]["program"] = f"wfperf_benchmark.py"
-            job["command"]["arguments"] = [job["name"], params]
+            job["command"]["arguments"] = [job["name"]]
+            job["command"]["arguments"].extend(params)
             
         num_sys_files, num_total_files = self.input_files(wf)
         
