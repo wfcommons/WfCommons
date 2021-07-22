@@ -18,17 +18,14 @@ class WorkflowBenchmark():
                data_footprint: int = 100,
                test_mode: str = "seqwr",
                block_size: str = "1K",
-            #    total_size: str = "100G",
                scope: str = "global",   
                max_prime: int = 10000,
                file_block_size: int = 16384,
                rw_ratio: float = 1.5,
-               threads: int = 1,
+               max_time: int = 150,
+               threads: int = 2, #cpu threads
                verbose: bool = False) -> Dict:
 
-        # if verbose:
-        #     print("Checking if the percentages sum up to 1.")
-        # self._check(cpu, mem, fileio)
         if verbose:
             print("Checking if the sysbench is installed.")
         self._check_sysbench()
@@ -56,6 +53,7 @@ class WorkflowBenchmark():
                   f"--memory-block-size={block_size}",
                   f"--memory-scope={scope}",
                   f"--cpu-max-prime={max_prime}",
+                  f"--max-time={max_time}", 
                   f"--threads={threads}"]
 
         for job in wf["workflow"]["jobs"]:

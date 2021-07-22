@@ -25,11 +25,13 @@ def main():
         _, rest = path.name.split("test_file", 1)
         path.rename(path.parent.joinpath(f"test_file{rest}"))
 
-    sysbench_file_input_args = [arg for arg in other if arg.startswith("--file")]   
-    to_remove = [item for item in sysbench_file_input_args if "num" in item]
-    sysbench_file_input_args.remove(to_remove[0])
- 
+    sysbench_file_input_args = [
+        arg for arg in other 
+        if arg.startswith("--file") or arg.startswith("--max-time") and not arg.startswith("--file-num")
+    ] + ["--threads=1"] 
+    
     with save_dir.joinpath(f"{name}_fileio_run.txt").open("w+") as fp:
+        print("Starting IO benchmark...")
         proc = subprocess.Popen(["sysbench", "fileio", *sysbench_file_input_args, "run"], stdout=fp, stderr=fp)
         proc.wait()
 
@@ -37,18 +39,19 @@ def main():
         proc = subprocess.Popen(["sysbench", "fileio", *sysbench_file_input_args, "cleanup"], stdout=fp, stderr=fp)
         proc.wait()
 
-    with save_dir.joinpath(f"{name}_cpu.txt").open("w+") as fp:
-        sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu")]
-        proc = subprocess.Popen(["sysbench", "cpu", "run", *sysbench_cpu_args], stdout=fp, stderr=fp)
-        proc.wait()
-    
-    with save_dir.joinpath(f"{name}_memory.txt").open("w+") as fp:
-        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory")]
-        proc = subprocess.Popen(["sysbench", "memory", "run", *sysbench_mem_args], stdout=fp, stderr=fp)
-        proc.wait()
+    with save_dir.joinpath(f"{name}_cpu.txt").open("w+") as fp_cpu, save_dir.joinpath(f"{name}_memory.txt").open("w+") as fp_mem:
+        print("Starting CPU benchmark...")
+        sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or arg.startswith("--threads") or arg.startswith("--max-time")]        
+        proc_cpu = subprocess.Popen(["sysbench", "cpu", "run", *sysbench_cpu_args], stdout=fp_cpu, stderr=fp_cpu)
+        print("Starting Memory benchmark...")
+        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or arg.startswith("--max-time")] + ["--threads=1"]
+        proc_mem = subprocess.Popen(["sysbench", "memory", "run", *sysbench_mem_args], stdout=fp_mem, stderr=fp_mem)
+        proc_cpu.wait()
+        proc_mem.wait()
 
     with save_dir.joinpath(f"{name}_fileio_output.txt").open("w+") as fp:
-        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")]
+        print("Writing output...")
+        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or arg.startswith("--max-time")] + ["--threads=1"]
         proc = subprocess.Popen(["sysbench", "fileio", *sysbench_file_output_args, "prepare"], stdout=fp, stderr=fp)
         proc.wait()
     
