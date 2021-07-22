@@ -47,7 +47,8 @@ class WorkflowBenchmark():
             wf = json.load(json_file)
         
 
-        params = [f"--file-test-mode={test_mode}",
+        params = [f"save_dir={save_dir}",
+                  f"--file-test-mode={test_mode}",
                   f"--file-total-size={data_footprint}G",
                   f"--file-block-size={file_block_size}",
                   f"--file-rw-ratio={rw_ratio}",
@@ -148,9 +149,6 @@ class WorkflowBenchmark():
                     )
         
 
-    # def _check(self, cpu: float, mem: float, fileio: float) -> None:
-        # if not np.isclose(cpu + fileio + mem, 1.0):
-            # raise("CPU + Memory + IO must sum up to 1.")
     
     def _check_sysbench(self,):
         proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
