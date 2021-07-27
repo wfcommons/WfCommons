@@ -1,3 +1,4 @@
+from fractions import Fraction
 from wfcommons.wfgen.abstract_recipe import WorkflowRecipe
 from wfcommons import WorkflowGenerator
 from typing import Dict, Union, List, Type
@@ -15,8 +16,11 @@ class WorkflowBenchmark():
 
     def create(self,
                save_dir: pathlib.Path,
+               cpu: int = 50,
+               mem: int = 50,
                data_footprint: int = 100,
                test_mode: str = "seqwr",
+               mem_total_size: str = "1000000G",
                block_size: str = "1K",
                scope: str = "global",   
                max_prime: int = 10000,
@@ -25,6 +29,10 @@ class WorkflowBenchmark():
                max_time: int = 150,
                threads: int = 2, #cpu threads
                verbose: bool = False) -> Dict:
+
+        self.check_percent(cpu, mem)
+        cpu_threads= cpu/10
+        mem_threads= mem/10
 
         if verbose:
             print("Checking if the sysbench is installed.")
@@ -52,9 +60,11 @@ class WorkflowBenchmark():
                   "--file-num=1",
                   f"--memory-block-size={block_size}",
                   f"--memory-scope={scope}",
+                  f"--memory-total-size={mem_total_size}",
+                  f"memory-threads={mem_threads}"
                   f"--cpu-max-prime={max_prime}",
-                  f"--max-time={max_time}", 
-                  f"--threads={threads}"]
+                  f"cpu-threads={cpu_threads}",
+                  f"--time={max_time}"]
 
         for job in wf["workflow"]["jobs"]:
             # job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
@@ -147,9 +157,18 @@ class WorkflowBenchmark():
                     )
         
 
-    
+    def check_percent(self, cpu:int, mem:int):
+        if not cpu % 10:
+            raise ValueError("CPU percentage must be multiple of 10.")
+        
+        if not mem % 10:
+            raise ValueError("Memory percentage must be multiple of 10.")
+        
+        if cpu + mem != 100:
+           raise ValueError("CPU + Memory must be 100.") 
+
     def _check_sysbench(self,):
         proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
         out, _ = proc.communicate()
         if not out:
-            raise FileNotFoundError("Sysbench not found. Please install sysbench: https://github.com/akopytov/sysbench")
+            raise FileNotFoundError("Sysbench not found. Please install sysbench: https://github.com/aakopytov/sysbench")
