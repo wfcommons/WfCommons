@@ -16,8 +16,7 @@ class WorkflowBenchmark():
 
     def create(self,
                save_dir: pathlib.Path,
-               cpu: int = 50,
-               mem: int = 50,
+               percent_cpu: float = 0.5,
                data_footprint: int = 100,
                test_mode: str = "seqwr",
                mem_total_size: str = "1000000G",
@@ -30,9 +29,6 @@ class WorkflowBenchmark():
                threads: int = 2, #cpu threads
                verbose: bool = False) -> Dict:
 
-        self.check_percent(cpu, mem)
-        cpu_threads= cpu/10
-        mem_threads= mem/10
 
         if verbose:
             print("Checking if the sysbench is installed.")
@@ -61,9 +57,8 @@ class WorkflowBenchmark():
                   f"--memory-block-size={block_size}",
                   f"--memory-scope={scope}",
                   f"--memory-total-size={mem_total_size}",
-                  f"memory-threads={mem_threads}"
                   f"--cpu-max-prime={max_prime}",
-                  f"cpu-threads={cpu_threads}",
+                  f"--percent_cpu={percent_cpu}",
                   f"--time={max_time}"]
 
         for job in wf["workflow"]["jobs"]:
@@ -157,15 +152,6 @@ class WorkflowBenchmark():
                     )
         
 
-    def check_percent(self, cpu:int, mem:int):
-        if not cpu % 10:
-            raise ValueError("CPU percentage must be multiple of 10.")
-        
-        if not mem % 10:
-            raise ValueError("Memory percentage must be multiple of 10.")
-        
-        if cpu + mem != 100:
-           raise ValueError("CPU + Memory must be 100.") 
 
     def _check_sysbench(self,):
         proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)

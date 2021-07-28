@@ -20,7 +20,7 @@ def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
     name = args.name
-    assert(args.percent_cpu >= 0 and args.percent_cpu <= 1)
+    assert(args.percent_cpu >= 0.0 and args.percent_cpu <= 1.0)
 
     save_dir = [item for item in other if "save" in item][0]
     save_dir = pathlib.Path(save_dir.split("=")[1]) 
