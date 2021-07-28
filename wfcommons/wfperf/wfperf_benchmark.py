@@ -43,31 +43,35 @@ def main():
         proc = subprocess.Popen(["sysbench", "fileio", *sysbench_file_input_args, "cleanup"], stdout=fp, stderr=fp)
         proc.wait()
 
-    with save_dir.joinpath(f"{name}_cpu.txt").open("w+") as fp_cpu, save_dir.joinpath(f"{name}_memory.txt").open("w+") as fp_mem:
+    with save_dir.joinpath(f"{name}_cpu.txt").open("w+") as fp_cpu, save_dir.joinpath(f"{name}_memory.txt").open("w+") as fp_mem, save_dir.joinpath(f"{name}_ps_log.txt").open("w+") as fp_ps:
         num_cores = os.cpu_count()
         cpu_threads = int(args.percent_cpu*10)
         mem_threads = int(10 - cpu_threads)
         
         print(cpu_threads, mem_threads)
         
-        for _ in range(num_cores):
+        for i in range(num_cores):
             print("Starting CPU benchmark...")
-            sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu")] + [f"--threads={cpu_threads}"]
+            sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu")] + [f"--time={args.time}", f"--threads={cpu_threads}"]
             proc_cpu = subprocess.Popen(
                 [
-                    "time", "timeout", f"{args.time}s", "sysbench", "cpu", 
+                    "sysbench", "cpu", "--forced-shutdown=0", #time", "timeout", f"{args.time}s",
                     *sysbench_cpu_args, "run"
                 ], 
                 stdout=fp_cpu, stderr=fp_cpu
             )
+            os.sched_setaffinity(proc_cpu.pid, {i})
         
             print("Starting Memory benchmark...")     
             sysbench_mem_args = [arg for arg in other if arg.startswith("--memory")] + [f"--time={args.time}", f"--threads={mem_threads}"]
             proc_mem = subprocess.Popen(
-                ["time", "sysbench", "memory", "run",*sysbench_mem_args], 
+                ["sysbench", "memory", "run",*sysbench_mem_args], #"time",  
                 stdout=fp_mem, stderr=fp_mem
             )
-            
+            os.sched_setaffinity(proc_mem.pid, {i})
+
+        proc = subprocess.Popen(["ps", "-o","pid,psr,comm,thcount"], stdout=fp_ps)
+        proc.wait()    
         proc_cpu.wait()
         proc_mem.wait()
 

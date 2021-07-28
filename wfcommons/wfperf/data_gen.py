@@ -13,6 +13,7 @@ def generate_sys_data(num_files: int, file_total_size: int, test_mode: str = "se
             f"--file-total-size={file_total_size}G",
             f"--file-test-mode={test_mode}"
         ]
+    print(" ".join(["sysbench","fileio", *params,"prepare"]))
     proc = subprocess.Popen(["sysbench","fileio", *params,"prepare"], stdout=subprocess.PIPE)
     proc.wait()
     out, _ = proc.communicate()

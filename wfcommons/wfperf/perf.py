@@ -85,7 +85,7 @@ class WorkflowBenchmark():
         
         if verbose:
             print("Generating system files.")
-        generate_sys_data(num_sys_files, data_footprint)
+        generate_sys_data(num_sys_files, file_size)
         
 
         with open(f'{save_dir.joinpath(workflow.name)}.json', 'w') as fp:
