@@ -6,7 +6,6 @@ from numpy.random import choice
 from .data_gen import generate_sys_data, cleanup_sys_files
 import pathlib
 import json
-import numpy as np
 import subprocess
 
 class WorkflowBenchmark():

@@ -2,8 +2,7 @@ import subprocess
 from typing import List, Union
 import glob
 import os
-import pathlib
-import pathlib
+
 
 
 def generate_sys_data(num_files: int, file_total_size: int, test_mode: str = "seqwr"):
