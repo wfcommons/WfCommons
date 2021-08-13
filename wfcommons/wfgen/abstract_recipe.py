@@ -143,7 +143,7 @@ class WorkflowRecipe(ABC):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name,
-                            makespan=None)
+                            makespan=0)
         graph = self.generate_nx_graph()
 
         task_names = {}
