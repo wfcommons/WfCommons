@@ -131,6 +131,10 @@ class Task:
         }
         if self.cores:
             task_obj['cores'] = self.cores
+        if self.task_id:
+            task_obj['id'] = self.task_id
+        if self.category:
+            task_obj['category'] = self.category
         if self.avg_cpu:
             task_obj['avgCPU'] = self.avg_cpu
         if self.bytes_read:
