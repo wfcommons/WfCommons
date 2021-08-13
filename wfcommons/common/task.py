@@ -35,9 +35,15 @@ class Task:
     :param runtime: Task runtime in seconds.
     :type runtime: float
     :param cores: Number of cores required by the task.
-    :type cores: int
+    :type cores: float
+    :param task_id: Job unique ID (e.g., ID0000001).
+    :type task_id: str
+    :param category: Job category (can be used, for example, to define jobs that use the same program).
+    :type category: str
     :param machine: Machine on which is the task has been executed.
     :type machine: Machine
+    :param program: Program name.
+    :type program: str
     :param args: List of task arguments.
     :type args: List[str]
     :param avg_cpu: Average CPU utilization in %.
@@ -64,8 +70,11 @@ class Task:
                  name: str,
                  task_type: TaskType,
                  runtime: float,
-                 cores: int,
+                 cores: float = 1.0,
+                 task_id: Optional[str] = None,
+                 category: Optional[str] = None,
                  machine: Optional[Machine] = None,
+                 program: Optional[str] = None,
                  args: List[str] = [],
                  avg_cpu: Optional[float] = None,
                  bytes_read: Optional[int] = None,
@@ -82,7 +91,10 @@ class Task:
         self.name: str = name
         self.type: TaskType = task_type
         self.runtime: float = runtime
-        self.cores: Optional[int] = cores
+        self.cores: Optional[float] = cores
+        self.task_id: Optional[str] = task_id
+        self.category: Optional[str] = category
+        self.program: Optional[str] = program
         self.args: List[str] = args
         self.avg_cpu: Optional[float] = avg_cpu
         self.bytes_read: Optional[int] = bytes_read
@@ -112,6 +124,7 @@ class Task:
             'name': self.name,
             'type': self.type.value,
             'runtime': self.runtime,
+            'command': {},
             'parents': [],
             'children': [],
             'files': task_files,
@@ -132,8 +145,10 @@ class Task:
             task_obj['avgPower'] = self.avg_power
         if self.priority:
             task_obj['priority'] = self.priority
+        if self.program:
+            task_obj['command']['program'] = self.program
         if self.args:
-            task_obj['arguments'] = self.args
+            task_obj['command']['arguments'] = self.args
         if self.machine:
             task_obj['machine'] = self.machine.name
 

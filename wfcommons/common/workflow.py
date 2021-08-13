@@ -20,6 +20,7 @@ from ..version import __version__
 from ..wfchef.utils import annotate, create_graph
 import tempfile
 
+
 class Workflow(nx.DiGraph):
     """
     Representation of a workflow. The workflow representation is an extension of the

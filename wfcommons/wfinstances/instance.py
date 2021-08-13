@@ -117,14 +117,20 @@ class Instance:
             machine = task.get('machine', None)
             machine = None if machine is None else self.machines[machine]
 
+            # Fetch the command associated to this task
+            command = task.get('command', None)
+
             self.workflow.add_node(
                 task['name'],
                 task=Task(
                     name=task['name'],
+                    task_id=task.get('id', None),
+                    category=task.get('category', None),
                     task_type=TaskType(task['type']),
                     runtime=task['runtime'],
                     machine=machine,
-                    args=task.get('arguments', None),
+                    program=command.get('program', None) if command else None,
+                    args=command.get('arguments', None) if command else None,
                     cores=task.get('cores', None),
                     avg_cpu=task.get('avgCPU', None),
                     bytes_read=task.get('bytesRead', None),

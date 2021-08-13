@@ -119,7 +119,7 @@ class MakeflowLogsParser(LogsParser):
                 elif len(line.strip()) > 0:
                     # task execution command
                     prefix = line.replace('./', '').replace('perl', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "{}_ID{:06d}".format(prefix, task_id_counter)
+                    task_name = "{}_ID{:07d}".format(prefix, task_id_counter)
                     task_id_counter += 1
 
                     # create list of task files
