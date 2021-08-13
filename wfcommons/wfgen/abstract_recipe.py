@@ -142,7 +142,8 @@ class WorkflowRecipe(ABC):
         :return: A synthetic workflow instance object.
         :rtype: Workflow
         """
-        workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name, makespan=None)
+        workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name,
+                            makespan=None)
         graph = self.generate_nx_graph()
 
         task_names = {}
@@ -210,9 +211,12 @@ class WorkflowRecipe(ABC):
 
         return Task(
             name=task_id,
+            task_id='0{}'.format(task_id.split('_0')[1]),
+            category=task_name,
             task_type=TaskType.COMPUTE,
             runtime=runtime,
             machine=None,
+            program=task_name,
             args=[],
             cores=1,
             avg_cpu=None,
