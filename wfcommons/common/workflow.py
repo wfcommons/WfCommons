@@ -17,8 +17,9 @@ from typing import Optional
 from ..common.task import Task
 from ..version import __version__
 
-from ..wfchef.utils import annotate, create_graph
+from ..wfchef.utils import create_graph
 import tempfile
+
 
 class Workflow(nx.DiGraph):
     """
@@ -53,7 +54,7 @@ class Workflow(nx.DiGraph):
         """Create an object of a workflow representation."""
         self.description = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
         self.created_at = str(datetime.utcnow().isoformat())
-        self.schema_version = '1.0'
+        self.schema_version = '1.2'
         self.wms_name = 'WfCommons' if not wms_name else wms_name
         self.wms_version = str(__version__) if not wms_version else wms_version
         self.wms_url = 'https://docs.wfcommons.org/en/v{}/'.format(__version__) if not wms_url else wms_url
