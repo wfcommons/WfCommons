@@ -1,13 +1,16 @@
-import fnmatch
-import json
-import os
-import itertools
-import glob
-import csv
-import yaml
-import xml.etree.ElementTree
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
-from datetime import datetime
+import glob
+import os
+
 from logging import Logger
 from typing import Optional
 
@@ -17,145 +20,105 @@ from ...common.machine import Machine, MachineSystem
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
 
-class NextflowLogsParser(LogsParser):
-    """ Parse Nextflow submit directory to generate workflow trace."""
-    def __init__(self,
-                 submit_dir: str, #
-                 description: Optional[str] = None,
-                 logger:Optional[Logger] = None) -> None:
-        super.__init__('Nextflow','https://www.nextflow.io', description, logger)
 
-        if not os.path.isdir(submit_dir):
-            raise OSError('The provided path does not exist or is not a directory: {}'.format(submit_dir))
-        self.submit_dir = submit_dir
+def _storage_unit_conversion(value: str) -> int:
+    if '-' in value:
+        return 0
+    if 'KB' in value:
+        return round(float(value.replace('KB', '')))
+    if 'MB' in value:
+        return round(float(value.replace('MB', '')) * 1000)
+
+
+class NextflowLogsParser(LogsParser):
+    """
+    Parse Nextflow submit directory to generate workflow trace.
+
+    :param execution_dir: Nextflow's execution directory.
+    :type execution_dir: str
+    :param description: Workflow instance description.
+    :type description: str
+    :param logger: The logger where to log information/warning or errors (optional).
+    :type logger: Logger
+    """
+
+    def __init__(self,
+                 execution_dir: str,
+                 description: Optional[str] = None,
+                 logger: Optional[Logger] = None) -> None:
+        """Create an object of the nextflow log parser."""
+        super().__init__('Nextflow', 'https://www.nextflow.io', description, logger)
+
+        # Sanity check
+        if not os.path.isdir(execution_dir):
+            raise OSError('The provided path does not exist or is not a directory: {}'.format(execution_dir))
+
+        self.execution_dir = execution_dir
         self.files_map = {}
         self.text_files = None
         self.line_count = None
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
-               Create workflow trace based on the workflow execution logs.
+        Create workflow trace based on the workflow execution logs.
 
-               :param workflow_name: The workflow name.
-               :type workflow_name: str
+        :param workflow_name: The workflow name.
+        :type workflow_name: str
 
-               :return: A workflow trace object.
-               :rtype: Workflow
+        :return: A workflow trace object.
+        :rtype: Workflow
         """
         self.workflow_name = workflow_name
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  executed_at=self.executed_at,
-                                 makespan=self.makespan
-                                 )
+                                 makespan=self.makespan)
 
         self._parse_workflow_file()
 
-        # parse makeflow log file
-        self._parse_makeflow_log_file()
-
-        # parse resource monitor files
-        self._parse_resource_monitor_logs()
-
         return self.workflow
 
-    def parseFiles(self):
-        self.text_files = glob.glob(self.submit_dir + "/execution_trace.txt", recursive=True)
-        # text_files is now the file "execution_trace.txt
-        file = open(self.text_files, "r")
-        self.line_count = 0
-        for line in file:
-            if line != "\n":
-                self.line_count += 1
-        file.close()
-        data = [12][self.line_count]
-        table = open(self.text_files,"r")
-        #parses the table format as a 2D array
-        for i in len(15):
-            for j in len(self.line_count):
-                temp = table.readline()
-                string_list = temp.split(" ")
-                for x in string_list:
-                    data[i][j] = string_list[x]
-        for i in len(data):
-            temp = {
-                "name": data[i][3],
-                "type": "compute",
-                "runtime": None,
-                "parents": [],
-                "files": [],
-                "avgCPU": data[i][10],
-                "arguments": [],
-                "bytesRead": data[i][13],
-                "bytesWritten": data[i][14],
-                "memory": data[i][12]
-            }
-            self.files_map[i] = temp
-
     def _parse_workflow_file(self):
-        """Parse the nextlflow workflow file and build the workflow structure."""
-        task_id_counter = 1
+        """Parse the Nextflow workflow file and build the workflow structure."""
+        # find execution trace file
+        files = glob.glob('{}/execution_trace_*.txt'.format(self.execution_dir))
+        if len(files) == 0:
+            raise OSError('Unable to find execution_trace_*.txt file in: {}'.format(self.execution_dir))
+        execution_trace_file = files[0]
 
-        with open(self.mf_file) as f:
-            outputs = []
-            inputs = []
+        with open(execution_trace_file) as f:
             for line in f:
-                if ':' in line:
-                    outputs = line.split(':')[0].split()
-                    inputs = line.split(':')[1].split()
+                if line.startswith('task_id'):
+                    continue
 
-                    for file in itertools.chain(outputs, inputs):
-                        if not file in self.files_map:
-                            self.files_map[file] = {'task_name': None, 'children': [], 'file': []}
+                contents = line.strip().split('\t')
+                task_id = "ID{:06d}".format(int(contents[0]))
+                category = contents[3].lower().split(' ')[0]
+                category = category[category.rfind(':') + 1:]
+                task_name = '{}_{}'.format(category, task_id)
+                duration = contents[7].split(' ')
+                runtime = 0
+                for d in duration:
+                    if 'ms' in d:
+                        runtime += float(d.replace('ms', '')) / 100
+                    elif 's' in d:
+                        runtime += float(d.replace('s', ''))
+                    elif 'm' in d:
+                        runtime += float(d.replace('m', '')) * 60
 
-                elif len(line.strip()) > 0:
-                    # task execution command
-                    prefix = line.replace('./', '').replace('perl', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "{}_ID{:06d}".format(prefix, task_id_counter)
-                    task_id_counter += 1
-
-                    # create list of task files
-                    list_files = []
-                    list_files.extend(self._create_files(outputs, FileLink.OUTPUT, task_name))
-                    list_files.extend(self._create_files(inputs, FileLink.INPUT, task_name))
-
-                    # create task
-                    args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
-                    task = Task(name=task_name,
-                                task_type=TaskType.COMPUTE,
-                                runtime=0,
-                                args=args.split(),
-                                cores=1,
-                                files=list_files,
-                                logger=self.logger)
-                    self.workflow.add_node(task_name, task=task)
-                    self.args_map[args] = task
-
-        # adding edges
-        for file in self.files_map:
-            for child in self.files_map[file]['children']:
-                if self.files_map[file]['task_name']:
-                    self.workflow.add_edge(self.files_map[file]['task_name'], child)
-
-    def _fetch_all_files(self, extension: str, file_name: str = ""):
-        """
-        Fetch all files from the directory and its hierarchy
-
-        :param extension: file extension to be searched for
-        :type extension: str
-        :param file_name: file_name to be searched
-        :type file_name: str
-
-        :return: List of file names that match
-        :rtype: List[str]
-        """
-        files = []
-        for root, dirnames, filenames in os.walk(self.submit_dir):
-            if len(file_name) == 0:
-                for filename in fnmatch.filter(filenames, '*.{}'.format(extension)):
-                    files.append(os.path.join(root, filename))
-            else:
-                for filename in fnmatch.filter(filenames, '{}.{}'.format(file_name, extension)):
-                    files.append(os.path.join(root, filename))
-        return files
-
+                task = Task(name=task_name,
+                            task_id=task_id,
+                            category=category,
+                            task_type=TaskType.COMPUTE,
+                            runtime=runtime,
+                            program=category,
+                            args=[],
+                            cores=1,
+                            files=[],
+                            avg_cpu=float(contents[9].replace('-', '0').replace('%', '')),
+                            bytes_read=_storage_unit_conversion(contents[12]),
+                            bytes_written=_storage_unit_conversion(contents[13]),
+                            memory=_storage_unit_conversion(contents[10]),
+                            logger=self.logger)
+                self.workflow.add_node(task_name, task=task)
+                print(task.as_dict())

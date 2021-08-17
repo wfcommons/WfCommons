@@ -35,7 +35,7 @@ stored in a local folder (execution dir), for a workflow execution using the
     from wfcommons.wfinstances import MakeflowLogsParser
 
     # creating the parser for the Makeflow workflow
-    parser = MakeflowLogsParser(execution_dir='/path/to/makeflow/execution/dir/blast/chameleon-small-001/'
+    parser = MakeflowLogsParser(execution_dir='/path/to/makeflow/execution/dir/blast/chameleon-small-001/',
                                 resource_monitor_logs_dir='/path/to/makeflow/resource/monitor/logs/dir')
 
     # generating the workflow instance object
