@@ -1,9 +1,0 @@
-nextflow.trace/v2
-realtime=0
-%cpu=
-rchar=
-wchar=
-syscr=
-syscw=
-read_bytes=
-write_bytes=

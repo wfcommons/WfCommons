@@ -1,1 +1,0 @@
-/Users/nirvaanreddy/.nextflow/assets/nf-core/sarek/docs/output.md

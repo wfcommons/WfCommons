@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import glob
+import json
 import os
 
 from logging import Logger
@@ -19,15 +20,6 @@ from ...common.file import File, FileLink
 from ...common.machine import Machine, MachineSystem
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
-
-
-def _storage_unit_conversion(value: str) -> int:
-    if '-' in value:
-        return 0
-    if 'KB' in value:
-        return round(float(value.replace('KB', '')))
-    if 'MB' in value:
-        return round(float(value.replace('MB', '')) * 1000)
 
 
 class NextflowLogsParser(LogsParser):
@@ -80,45 +72,48 @@ class NextflowLogsParser(LogsParser):
 
     def _parse_workflow_file(self):
         """Parse the Nextflow workflow file and build the workflow structure."""
-        # find execution trace file
-        files = glob.glob('{}/execution_trace_*.txt'.format(self.execution_dir))
+        # find execution report file
+        files = glob.glob('{}/execution_report_*.html'.format(self.execution_dir))
         if len(files) == 0:
-            raise OSError('Unable to find execution_trace_*.txt file in: {}'.format(self.execution_dir))
-        execution_trace_file = files[0]
+            raise OSError('Unable to find execution_report_*.html file in: {}'.format(self.execution_dir))
+        execution_report_file = files[0]
+        trace_data = None
 
-        with open(execution_trace_file) as f:
+        # parsing execution report file
+        with open(execution_report_file) as f:
+            read_trace_data = False
             for line in f:
-                if line.startswith('task_id'):
+                if 'Nextflow report data' in line:
+                    read_trace_data = True
                     continue
 
-                contents = line.strip().split('\t')
-                task_id = "ID{:06d}".format(int(contents[0]))
-                category = contents[3].lower().split(' ')[0]
-                category = category[category.rfind(':') + 1:]
-                task_name = '{}_{}'.format(category, task_id)
-                duration = contents[7].split(' ')
-                runtime = 0
-                for d in duration:
-                    if 'ms' in d:
-                        runtime += float(d.replace('ms', '')) / 100
-                    elif 's' in d:
-                        runtime += float(d.replace('s', ''))
-                    elif 'm' in d:
-                        runtime += float(d.replace('m', '')) * 60
+                if not read_trace_data:
+                    continue
 
-                task = Task(name=task_name,
-                            task_id=task_id,
-                            category=category,
-                            task_type=TaskType.COMPUTE,
-                            runtime=runtime,
-                            program=category,
-                            args=[],
-                            cores=1,
-                            files=[],
-                            avg_cpu=float(contents[9].replace('-', '0').replace('%', '')),
-                            bytes_read=_storage_unit_conversion(contents[12]),
-                            bytes_written=_storage_unit_conversion(contents[13]),
-                            memory=_storage_unit_conversion(contents[10]),
-                            logger=self.logger)
-                self.workflow.add_node(task_name, task=task)
-                print(task.as_dict())
+                if 'window.data =' in line:
+                    trace_data = line.replace('window.data = ', '').strip()
+                else:
+                    trace_data += line.replace('\\\\', '').replace('\\/', '/').replace('\\\'', '').replace(';', '')
+                    read_trace_data = False
+
+        trace_data = json.loads(trace_data)
+        for t in trace_data['trace']:
+            task_id = "ID{:06d}".format(int(t['task_id']))
+            category = t['process'].lower().split(' ')[0]
+            category = category[category.rfind(':') + 1:]
+            task_name = '{}_{}'.format(category, task_id)
+            task = Task(name=task_name,
+                        task_id=task_id,
+                        category=category,
+                        task_type=TaskType.COMPUTE,
+                        runtime=float(t['duration']) / 1000,
+                        program=category,
+                        args=list(filter(None, t['script'].replace('\n', '').split(' '))),
+                        cores=float(t['cpus']),
+                        files=[],
+                        avg_cpu=float(t['%cpu'].replace('-', '0')),
+                        bytes_read=round((int(t['rchar']) + int(t['read_bytes'])) / 1024),
+                        bytes_written=round((int(t['wchar']) + int(t['write_bytes'])) / 1024),
+                        memory=round(int(t['rss']) / 1024),
+                        logger=self.logger)
+            self.workflow.add_node(task_name, task=task)

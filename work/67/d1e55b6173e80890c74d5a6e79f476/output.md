@@ -1,1 +1,0 @@
-/Users/nirvaanreddy/.nextflow/assets/nf-core/cageseq/docs/output.md

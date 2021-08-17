@@ -1,2 +1,0 @@
-q2cli version 2019.10.0
-Run `qiime info` for more version details.
