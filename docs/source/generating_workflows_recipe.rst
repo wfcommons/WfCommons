@@ -79,9 +79,7 @@ package for an application in WfCommons: ::
 
 The snippet below shows an example of how to import the recipes: ::
 
-    # creating an Epigenomics workflow recipe
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
-
 
 To check which recipes are installed in a system and how to import them use: ::
     

@@ -156,6 +156,8 @@ class PegasusLogsParser(LogsParser):
                     task_name,
                     task=Task(
                         name=task_name,
+                        task_id=j['id'],
+                        category=j['name'],
                         task_type=TaskType.COMPUTE,
                         runtime=0,
                         args=j['arguments'],
@@ -212,6 +214,8 @@ class PegasusLogsParser(LogsParser):
                     task_name,
                     task=Task(
                         name=task_name,
+                        task_id=str(j.get('id')),
+                        category=str(j.get('name')),
                         task_type=TaskType.COMPUTE,
                         runtime=0,
                         args=[],
@@ -406,6 +410,8 @@ class PegasusLogsParser(LogsParser):
         with open(tmp_file) as f:
             data = yaml.load(f, Loader=yaml.FullLoader)[0]
 
+            task.program = data['transformation']
+
             if data['transformation'].startswith('pegasus:') or task.name.lower().startswith('chmod_'):
                 task.type = TaskType.AUXILIARY
 
@@ -486,6 +492,7 @@ class PegasusLogsParser(LogsParser):
         try:
             e = xml.etree.ElementTree.parse(output_file).getroot()
             # main job information
+            task.program = e.get('transformation')
             if e.get('transformation').startswith('pegasus:') or task.name.lower().startswith('chmod_'):
                 task.type = TaskType.AUXILIARY
 
