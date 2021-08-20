@@ -4,6 +4,8 @@ import pathlib
 import argparse
 import subprocess 
 import os
+from filelock import FileLock
+
 
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -86,3 +88,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+# with FileLock("myfile.txt.lock"):
+#     print("Lock acquired.")
+#     with open("myfile.txt"):
+#     # work with the file as it is now locked
