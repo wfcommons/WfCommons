@@ -113,14 +113,13 @@ class MakeflowLogsParser(LogsParser):
                     inputs = line.split(':')[1].split()
 
                     for file in itertools.chain(outputs, inputs):
-                        if not file in self.files_map:
+                        if file not in self.files_map:
                             self.files_map[file] = {'task_name': None, 'children': [], 'file': []}
 
                 elif len(line.strip()) > 0:
                     # task execution command
                     prefix = line.replace('./', '').replace('perl', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "{}_ID{:06d}".format(prefix, task_id_counter)
-                    task_id_counter += 1
+                    task_name = "{}_ID{:07d}".format(prefix, task_id_counter)
 
                     # create list of task files
                     list_files = []
@@ -130,14 +129,18 @@ class MakeflowLogsParser(LogsParser):
                     # create task
                     args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
                     task = Task(name=task_name,
+                                task_id="ID{:07d}".format(task_id_counter),
+                                category=prefix,
                                 task_type=TaskType.COMPUTE,
                                 runtime=0,
+                                program=prefix,
                                 args=args.split(),
                                 cores=1,
                                 files=list_files,
                                 logger=self.logger)
                     self.workflow.add_node(task_name, task=task)
                     self.args_map[args] = task
+                    task_id_counter += 1
 
         # adding edges
         for file in self.files_map:
@@ -219,7 +222,7 @@ class MakeflowLogsParser(LogsParser):
                 # task
                 task = self.args_map[data['command'].replace('perl', '').strip()]
                 task.runtime = float(data['wall_time'][0])
-                task.cores = int(data['cores'][0])
+                task.cores = float(data['cores'][0])
                 task.memory = int(data['memory'][0]) * 1000  # MB to KB
                 task.bytes_read = int(data['bytes_read'][0] * 1000)  # MB to KB
                 task.bytes_written = int(data['bytes_written'][0] * 1000)  # MB to KB

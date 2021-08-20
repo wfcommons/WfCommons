@@ -75,13 +75,11 @@ When citing WfCommons, please use the following paper. You should also actually 
 that paper, as it provides a recent and general overview on the framework.
 
 ```
-@inproceedings{ferreiradasilva2020works,
-  title = {WorkflowHub: Community Framework for Enabling Scientific Workflow Research and Development},
-  author = {Ferreira da Silva, Rafael and Pottier, Lo\"ic and Coleman, Tain\~a and Deelman, Ewa and Casanova, Henri},
-  booktitle = {2020 IEEE/ACM Workflows in Support of Large-Scale Science (WORKS)},
-  year = {2020},
-  pages = {49--56},
-  doi = {10.1109/WORKS51914.2020.00012}
+@article{coleman2021wfcommons,
+  title={WfCommons: A Framework for Enabling Scientific Workflow Research and Development},
+  author={Coleman, Tain{\~a} and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
+  journal={arXiv preprint arXiv:2105.14352},
+  year={2021}
 }
 ```
 
