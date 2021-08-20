@@ -8,14 +8,8 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import json
 import logging
-import pickle
 import uuid
-
-import pandas as pd
-import networkx as nx
-import numpy as np
 
 from abc import ABC, abstractmethod
 from os import path
@@ -26,7 +20,6 @@ from wfcommons.common.file import File, FileLink
 from wfcommons.common.task import Task, TaskType
 from wfcommons.common.workflow import Workflow
 from wfcommons.utils import generate_rvs
-from wfcommons.wfchef.duplicate import duplicate
 
 
 class WorkflowRecipe(ABC):
@@ -51,12 +44,10 @@ class WorkflowRecipe(ABC):
     def __init__(self, name: str,
                  data_footprint: Optional[int],
                  num_tasks: Optional[int],
-                 exclude_graphs: Set[str] = set(),
                  runtime_factor: Optional[float] = 1.0,
                  input_file_size_factor: Optional[float] = 1.0,
                  output_file_size_factor: Optional[float] = 1.0,
-                 logger: Optional[Logger] = None,
-                 this_dir=None) -> None:
+                 logger: Optional[Logger] = None) -> None:
         """Create an object of the workflow recipe."""
         # sanity checks
         if runtime_factor <= 0.0:
@@ -70,18 +61,12 @@ class WorkflowRecipe(ABC):
         self.name = name
         self.data_footprint = data_footprint
         self.num_tasks = num_tasks
-        self.exclude_graphs = exclude_graphs
         self.runtime_factor = runtime_factor
         self.input_file_size_factor = input_file_size_factor
         self.output_file_size_factor = output_file_size_factor
-        self.workflows: List[Workflow] = []
-        self.tasks_map = {}
         self.tasks_files: Dict[str, List[File]] = {}
         self.tasks_files_names: Dict[str, List[str]] = {}
         self.task_id_counter = 1
-        self.this_dir = this_dir
-        self.tasks_children = {}
-        self.tasks_parents = {}
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict[str, Any]:
@@ -91,6 +76,7 @@ class WorkflowRecipe(ABC):
         :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -117,26 +103,9 @@ class WorkflowRecipe(ABC):
                  the total number of tasks provided.
         :rtype: WorkflowRecipe
         """
+        raise NotImplementedError
 
-    def generate_nx_graph(self) -> nx.DiGraph:
-        summary_path = self.this_dir.joinpath("microstructures", "summary.json")
-        summary = json.loads(summary_path.read_text())
-
-        metric_path = self.this_dir.joinpath("microstructures", "metric", "err.csv")
-        df = pd.read_csv(str(metric_path), index_col=0)
-        df = df.drop(self.exclude_graphs, axis=0, errors="ignore")
-        df = df.drop(self.exclude_graphs, axis=1, errors="ignore")
-        for col in df.columns:
-            df.loc[col, col] = np.nan
-
-        reference_orders = [summary["base_graphs"][col]["order"] for col in df.columns]
-        idx = np.argmin([abs(self.num_tasks - ref_num_tasks) for ref_num_tasks in reference_orders])
-        reference = df.columns[idx]
-
-        base = df.index[df[reference].argmin()]
-        graph = duplicate(self.this_dir.joinpath("microstructures"), base, self.num_tasks)
-        return graph
-
+    @abstractmethod
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """Generate a synthetic workflow instance.
 
@@ -146,54 +115,7 @@ class WorkflowRecipe(ABC):
         :return: A synthetic workflow instance object.
         :rtype: Workflow
         """
-        workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name,
-                            makespan=0)
-        graph = self.generate_nx_graph()
-
-        task_names = {}
-        for node in graph.nodes:
-            if node in ["SRC", "DST"]:
-                continue
-            node_type = graph.nodes[node]["type"]
-            task_name = self._generate_task_name(node_type)
-            task = self._generate_task(node_type, task_name)
-            workflow.add_node(task_name, task=task)
-
-            task_names[node] = task_name
-
-        # tasks dependencies
-        for (src, dst) in graph.edges:
-            if src in ["SRC", "DST"] or dst in ["SRC", "DST"]:
-                continue
-            workflow.add_edge(task_names[src], task_names[dst])
-
-            if task_names[src] not in self.tasks_children:
-                self.tasks_children[task_names[src]] = []
-            if task_names[dst] not in self.tasks_parents:
-                self.tasks_parents[task_names[dst]] = []
-
-            self.tasks_children[task_names[src]].append(task_names[dst])
-            self.tasks_parents[task_names[dst]].append(task_names[src])
-
-        # find leaf tasks
-        leaf_tasks = []
-        for node_name in workflow.nodes:
-            task: Task = workflow.nodes[node_name]['task']
-            if task.name not in self.tasks_children:
-                leaf_tasks.append(task)
-
-        for task in leaf_tasks:
-            self._generate_task_files(task)
-
-        workflow.nxgraph = graph
-        self.workflows.append(workflow)
-        return workflow
-
-    def _load_base_graph(self) -> nx.DiGraph:
-        return pickle.loads(self.this_dir.joinpath("base_graph.pickle").read_bytes())
-
-    def _load_microstructures(self) -> Dict:
-        return json.loads(self.this_dir.joinpath("microstructures.json").read_text())
+        raise NotImplementedError
 
     def _generate_task(self, task_name: str, task_id: str) -> Task:
         """Generate a synthetic task.

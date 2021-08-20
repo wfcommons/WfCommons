@@ -8,9 +8,13 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import pathlib
 import argparse
+from email.mime import base
 import json
-import math
+import traceback
+from typing import Dict, Optional, Union
+import argparse
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -19,16 +23,15 @@ import pickle
 import pkg_resources
 import subprocess
 import traceback
-
 from typing import Dict, Optional, Union
 from stringcase import capitalcase
-
 from .duplicate import duplicate, NoMicrostructuresError
 from .find_microstructures import save_microstructures
 from .utils import create_graph
 from ..wfgen.abstract_recipe import WorkflowRecipe
 from ..wfinstances.instance import Instance
 from ..wfinstances.instance_analyzer import InstanceAnalyzer
+import math
 
 this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
@@ -170,12 +173,13 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
 
     return stats_dict
 
+def get_recipe(recipe: str) -> "Module":
+    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
+        att  = entry_point.attrs[0]
+        if att == recipe:
+            return entry_point.load()
 
-def ls_recipe():
-    """
-    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
-    how to import it to use.
-    """
+def get_recipes() -> pd.DataFrame:
     rows = []
     for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
         try:
@@ -185,8 +189,14 @@ def ls_recipe():
         except Exception as e:
             traceback.print_exc()
             print(f"Could not load {entry_point.module_name}")
-    df = pd.DataFrame(rows, columns=["name", "module", "import command"])
-    print(df.to_string(index=None))
+    return pd.DataFrame(rows, columns=["name", "module", "import command"])
+
+def ls_recipe():
+    """
+    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
+    how to import it to use.
+    """
+    print(get_recipes())
 
 
 def uninstall_recipe(module_name: str):
@@ -209,7 +219,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
                   wf_name: str,
                   cutoff: int = 4000,
                   verbose: bool = False,
-                  runs: int = 1) -> WorkflowRecipe:
+                  runs: int = 1) -> "WorkflowRecipe":
     """
     Creates a recipe for a workflow application by automatically replacing custom information 
     from the recipe skeleton.
@@ -218,7 +228,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     :type path_to_instances: str or pathlib.Path 
     :param savedir: path to save the recipe.
     :type savedir: pathlib.Path
-    :param wf_name: name of the workflow apllication.
+    :param wf_name: name of the workflow application.
     :type wf_name: str 
     :param cutoff: when set, only consider instances of smaller or equal sizes.
     :type cutoff: int
@@ -242,8 +252,8 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     err_savepath = microstructures_path.joinpath("metric", "err.csv")
     err_savepath.parent.mkdir(exist_ok=True, parents=True)
     df = find_err(microstructures_path, runs=runs)
-
     err_savepath.write_text(df.to_csv())
+    
     # Recipe 
     with skeleton_path.joinpath("recipe.py").open() as fp:
         skeleton_str = fp.read()
