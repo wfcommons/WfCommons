@@ -60,7 +60,8 @@ setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'wfchef=wfcommons.wfchef.chef:main',
+            'wfchef=wfcommons.wfchef.chef:main'
+
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',

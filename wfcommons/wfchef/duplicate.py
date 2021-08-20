@@ -12,15 +12,10 @@ import pathlib
 import json
 import pickle
 import networkx as nx
-from typing import Set, Optional, List, Union, Dict
+from typing import Set, List, Union, Dict
 from uuid import uuid4
-
 import numpy as np
-from .utils import draw
 import random
-import argparse
-import pandas as pd
-from functools import partial
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -73,23 +68,24 @@ def duplicate(path: pathlib.Path,
     :param path: path to the summary JSON file.
     :type path: pathlib.Path.
     :param base: name (for samples available in WfCommons) or path to the specific 
-                graph to be used as base (if not set WfChef chooses the best fitting one). 
+                 graph to be used as base (if not set WfChef chooses the best fitting one). 
     :type base: str or pathlib.Path.
     :param num_nodes: total amount of nodes desired in the synthetic instance.
     :type num_nodes: int.
-
 
     :return: graph with the desired number of tasks.
     :rtype: networkX DiGraph.
     """
     summary = json.loads(path.joinpath("summary.json").read_text())
+   
     if base:
         base_path = pathlib.Path(base)
         if not base_path.is_absolute():
             base_path = path.joinpath(base_path)
     else:
         base_path = path.joinpath(min(summary["base_graphs"].keys(), key=lambda k: summary["base_graphs"][k]["order"]))
-
+    
+        
     graph = pickle.loads(base_path.joinpath("base_graph.pickle").read_bytes())
     if num_nodes < graph.order():
         raise ValueError(
