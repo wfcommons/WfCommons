@@ -196,3 +196,4 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
     def _load_microstructures(self) -> Dict:
         return json.loads(self.this_dir.joinpath("microstructures.json").read_text())
 
+
