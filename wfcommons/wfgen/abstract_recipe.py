@@ -67,6 +67,9 @@ class WorkflowRecipe(ABC):
         self.tasks_files: Dict[str, List[File]] = {}
         self.tasks_files_names: Dict[str, List[str]] = {}
         self.task_id_counter = 1
+        self.tasks_map = {}
+        self.tasks_children = {}
+        self.tasks_parents = {}
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict[str, Any]:
