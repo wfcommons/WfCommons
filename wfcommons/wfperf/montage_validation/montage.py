@@ -39,7 +39,11 @@ def main():
 
     
     bench = WorkflowBenchmark(MontageRecipe, num_tasks)
-    bench.create(this_dir.joinpath("Montage"), tasks, verbose=True)
+    bench.create("/home/tgcoleman/tests/Montage", tasks, verbose=True)
+    # return
+    # locked = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt.lock")
+    # coresfile = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt")
+    
 
     
     

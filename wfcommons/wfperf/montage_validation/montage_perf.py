@@ -3,7 +3,6 @@ from wfcommons.wfgen.abstract_recipe import WorkflowRecipe
 from wfcommons import WorkflowGenerator
 from typing import Dict, Union, List, Type, Tuple
 from numpy.random import choice
-from wfcommons.wfperf.data_gen import generate_sys_data, cleanup_sys_files
 import pathlib
 import json
 import subprocess

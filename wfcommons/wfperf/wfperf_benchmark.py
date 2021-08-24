@@ -90,9 +90,3 @@ if __name__ == "__main__":
     main()
 
 
-
-
-# with FileLock("myfile.txt.lock"):
-#     print("Lock acquired.")
-#     with open("myfile.txt"):
-#     # work with the file as it is now locked
