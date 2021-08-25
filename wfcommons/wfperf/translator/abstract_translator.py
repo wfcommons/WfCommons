@@ -33,6 +33,17 @@ class Translator(ABC):
         self.logger = logging.getLogger(__name__) if logger is None else logger
         self.instance = Instance(workflow_json_file, logger=logger)
 
+        # find all tasks
+        self.tasks = {}
+        for node in self.instance.workflow.nodes.data():
+            self.tasks[node[0]] = node[1]['task']
+
+        # find parent tasks
+        self.parent_task_names = []
+        for node in self.instance.instance['workflow']['jobs']:
+            if len(node['parents']) == 0 and node['name'] not in self.parent_task_names:
+                self.parent_task_names.append(node['name'])
+
     @abstractmethod
     def translate(self, output_file: str) -> None:
         """
