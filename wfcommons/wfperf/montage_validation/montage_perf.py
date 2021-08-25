@@ -1,14 +1,12 @@
-from fractions import Fraction
-from wfcommons.wfgen.abstract_recipe import WorkflowRecipe
-from wfcommons import WorkflowGenerator
-from typing import Dict, Union, List, Type, Tuple
-from numpy.random import choice
+from wfcommons.wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
+from wfcommons.wfgen import WorkflowGenerator
+from typing import Dict, Type, Tuple
 import pathlib
 import json
 import subprocess
 
 class WorkflowBenchmark():
-    def __init__(self, Recipe: Type[WorkflowRecipe], num_tasks: int) -> None:
+    def __init__(self, Recipe: Type[WfChefWorkflowRecipe], num_tasks: int) -> None:
         self.Recipe = Recipe
         self.num_tasks = num_tasks
 
@@ -21,7 +19,7 @@ class WorkflowBenchmark():
 
 
         if verbose:
-            print("Checking if the sysbench is installed.")
+            print("Checking if sysbench is installed.")
         self._check_sysbench()
         if verbose:
             print("Creating directory.")
