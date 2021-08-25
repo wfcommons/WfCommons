@@ -60,8 +60,9 @@ class InstanceAnalyzer:
             self.instances.append(instance)
             self.logger.debug('Appended instance: {} ({} tasks)'.format(instance.name, len(instance.workflow.nodes)))
 
-    def build_summary(self, tasks_list: List[str], include_raw_data: Optional[bool] = True) -> Dict[
-        str, Dict[str, Any]]:
+    def build_summary(self,
+                      tasks_list: List[str],
+                      include_raw_data: Optional[bool] = True) -> Dict[str, Dict[str, Any]]:
         """Analyzes appended instances and produce a summary of the analysis per task prefix.
 
         .. code-block:: python

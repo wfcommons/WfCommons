@@ -14,19 +14,30 @@ from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Optional
 
+from ...wfinstances.instance import Instance
+
 
 class Translator(ABC):
-    """An abstract class of logs parser for creating workflow instances.
+    """An abstract class of WfFormat parser for creating workflow applications.
+
+    :param workflow_json_file:
+    :type workflow_json_file: str
+    :param logger: The logger where to log information/warning or errors (optional).
+    :type logger: Logger
     """
 
     def __init__(self,
+                 workflow_json_file: str,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         self.logger = logging.getLogger(__name__) if logger is None else logger
+        self.instance = Instance(workflow_json_file, logger=logger)
 
     @abstractmethod
     def translate(self, output_file: str) -> None:
         """
+        Translates a workflow description (WfFormat) into an actual workflow application.
+
         :param output_file: The name of the output file.
         :type output_file: str
         """
