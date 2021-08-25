@@ -14,6 +14,14 @@ def get_parser() -> argparse.ArgumentParser:
 
     return parser
 
+def set_affinity(lockfile_path: pathlib.Path, 
+                 corefile_path: pathlib.Path, 
+                 pid: int,
+                 core: int) -> None:
+        file_lock(lockfile_path, corefile_path, core)
+        os.sched_setaffinity(pid, {core})   
+        file_unlock(lockfile_path, corefile_path, core)
+
 def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
@@ -52,8 +60,7 @@ def main():
                     stdout=fp_cpu, stderr=fp_cpu, 
                 ))
                 
-                file_lock(path_locked,path_cores, i)
-                os.sched_setaffinity(proc_cpus[-1].pid, {i})   
+                set_affinity(path_locked, path_cores, proc_cpus[-1].pid, i)
 
                 print("Starting Memory benchmark...")
                 sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg]
@@ -65,11 +72,8 @@ def main():
                     stdout=fp_mem, stderr=fp_mem
                 ))
                 
-                os.sched_setaffinity(proc_mems[-1].pid, {i})
-
-                file_unlock(path_locked, path_cores, i)
+                set_affinity(path_locked, path_cores, proc_mems[-1].pid, i)
             else:
-                file_lock(path_locked,path_cores, i)
                 proc_cpus.append(subprocess.Popen(
                     [
                         "sysbench", "cpu",
@@ -77,7 +81,8 @@ def main():
                     ], 
                     stdout=fp_cpu, stderr=fp_cpu, 
                 ))
-                file_unlock(path_locked, path_cores, i)
+                
+                set_affinity(path_locked, path_cores, proc_cpus[-1].pid, i)
 
 
         for proc_cpu in proc_cpus:

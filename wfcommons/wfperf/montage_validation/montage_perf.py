@@ -5,6 +5,8 @@ import pathlib
 import json
 import subprocess
 
+
+this_dir = pathlib.Path(__file__).resolve().parent
 class WorkflowBenchmark():
     def __init__(self, Recipe: Type[WfChefWorkflowRecipe], num_tasks: int) -> None:
         self.Recipe = Recipe
@@ -50,7 +52,7 @@ class WorkflowBenchmark():
         for job in wf["workflow"]["jobs"]:
             job["files"] = []
             job.setdefault("command", {})
-            job["command"]["program"] = f"sys_test.py"
+            job["command"]["program"] = this_dir.joinpath("montage_sys_test.py")
             job_name = job["name"].rsplit("_", 1)[0]
             job["command"]["arguments"] = params[job_name]
 
