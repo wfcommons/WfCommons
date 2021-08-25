@@ -1,4 +1,3 @@
-import os
 import pathlib
 from typing import Union
 from filelock import FileLock
