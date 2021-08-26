@@ -32,11 +32,11 @@ class WorkflowBenchmark():
             print("Generating workflow")
         generator = WorkflowGenerator(self.Recipe.from_num_tasks(self.num_tasks))
         workflow = generator.build_workflow()
-        workflow.write_json(f'{save_dir.joinpath(workflow.name)}.json')
+        workflow_savepath = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
+        workflow.write_json(workflow_savepath)
 
-        with open(f'{save_dir.joinpath(workflow.name)}.json') as json_file:
-            wf = json.load(json_file)
-
+        wf = json.loads(workflow_savepath.read_text())
+        
         params = {
             job: [
                 f"--memory-block-size={block_size}",
@@ -52,13 +52,15 @@ class WorkflowBenchmark():
         for job in wf["workflow"]["jobs"]:
             job["files"] = []
             job.setdefault("command", {})
-            job["command"]["program"] = this_dir.joinpath("montage_sys_test.py")
+            job["command"]["program"] = "montage_sys_test.py"
             job_name = job["name"].rsplit("_", 1)[0]
             job["command"]["arguments"] = params[job_name]
 
 
-        with open(f'{save_dir.joinpath(workflow.name)}.json', 'w') as fp:
-            json.dump(wf, fp, indent=4)
+        json_path = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
+        print("SAVING:", json_path)
+        json_path.write_text(json.dumps(wf, indent=4))
+            
 
 
     def _check_sysbench(self,):

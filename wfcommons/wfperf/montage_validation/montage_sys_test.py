@@ -3,93 +3,78 @@ import argparse
 import subprocess 
 import os
 from typing import List
-from wfcommons.wfperf.montage_validation.lock import file_lock, file_unlock
+from wfcommons.wfperf.montage_validation.lock import lock_core, unlock_core
+
+import threading
+import subprocess
 
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
-    parser.add_argument("--save", type=pathlib.Path, help="directory to save to.")
+    # parser.add_argument("--save", type=pathlib.Path, required=True, help="directory to save to.")
 
 
     return parser
 
-def set_affinity(lockfile_path: pathlib.Path, 
-                 corefile_path: pathlib.Path, 
-                 pid: int,
-                 core: int) -> None:
-        file_lock(lockfile_path, corefile_path, core)
-        os.sched_setaffinity(pid, {core})   
-        file_unlock(lockfile_path, corefile_path, core)
-
 def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
-    name = args.name
-    save_dir = pathlib.Path(args.save)
 
-    path_locked = "/home/tgcoleman/tests/Montage/cores.txt.lock"
-    path_cores = "/home/tgcoleman/tests/Montage/cores.txt"
+    print(f"Starting {args.name}")
+
+    path_locked = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt.lock")
+    path_cores = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt")
     
-    with save_dir.joinpath(f"{name}_cpu.txt").open("w+") as fp_cpu, save_dir.joinpath(f"{name}_memory.txt").open("w+") as fp_mem:
-        num_cores = os.cpu_count()
-        sysbench_cpu_args = [arg for arg in other if "cpu" in arg or "time" in arg]
-        percent_cpu = [arg for arg in sysbench_cpu_args if arg.startswith("--percent")][0]
-        cpu_threads = int(float(percent_cpu.split("=")[1])*10)
-        mem_threads = int(10 - cpu_threads)
-        print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
+    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" in arg]
+    percent_cpu = [arg for arg in other if arg.startswith("--percent")][0]
+    cpu_threads = int(float(percent_cpu.split("=")[1])*10)
+    mem_threads = int(10 - cpu_threads)
 
-        print(sysbench_cpu_args)
+    print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
+    print(sysbench_cpu_args)
+    print("Starting CPU benchmark...")
+    
+    time = [arg for arg in sysbench_cpu_args if arg.startswith("--time")][0]
+    time = int(time.split("=")[1])
 
-        print("Starting CPU benchmark...")
+    #if time is relevant do cpu and memory, else only cpu
+    core = lock_core(path_locked, path_cores)
+    print(f"{args.name} acquired core {core}")
+    if time > 100:
+        prog = [
+            "sysbench", "cpu",
+            *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+        ]
+        proc_cpu = subprocess.Popen(prog)
         
-        proc_cpus: List[subprocess.Popen] = []
-        proc_mems: List[subprocess.Popen] = []
+        os.sched_setaffinity(proc_cpu.pid, {core})
+
+        print("Starting Memory benchmark...")
+        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg]
+        prog = [
+            "sysbench", "memory", "run",
+            *sysbench_mem_args, f"--threads={mem_threads}"
+        ]
+        proc_mem = subprocess.Popen(prog)
         
-        for i in range(num_cores):
-            time =[arg for arg in sysbench_cpu_args if arg.startswith("--time")][0]
-            time = int(time.split("=")[1])
-
-            #if time is relevant do cpu and memory, else only cpu
-            if time > 100:
-                proc_cpus.append(subprocess.Popen(
-                    [
-                        "sysbench", "cpu",
-                        *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
-                    ], 
-                    stdout=fp_cpu, stderr=fp_cpu, 
-                ))
-                
-                set_affinity(path_locked, path_cores, proc_cpus[-1].pid, i)
-
-                print("Starting Memory benchmark...")
-                sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg]
-                proc_mems.append(subprocess.Popen(
-                    [
-                        "sysbench", "memory","run",
-                        *sysbench_mem_args, f"--threads={mem_threads}"
-                    ], 
-                    stdout=fp_mem, stderr=fp_mem
-                ))
-                
-                set_affinity(path_locked, path_cores, proc_mems[-1].pid, i)
-            else:
-                proc_cpus.append(subprocess.Popen(
-                    [
-                        "sysbench", "cpu",
-                        *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
-                    ], 
-                    stdout=fp_cpu, stderr=fp_cpu, 
-                ))
-                
-                set_affinity(path_locked, path_cores, proc_cpus[-1].pid, i)
+        os.sched_setaffinity(proc_mem.pid, {core})
+    else:
+        proc_mem = None
+        proc_cpu = subprocess.Popen(
+            [
+                "sysbench", "cpu",
+                *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+            ]
+        )
+        os.sched_setaffinity(proc_cpu.pid, {core})
 
 
-        for proc_cpu in proc_cpus:
-            proc_cpu.wait()
-        for proc_mem in proc_mems:
-            proc_mem.kill()
- 
+    proc_cpu.wait()
+    if proc_mem is not None:
+        proc_mem.kill()
+    unlock_core(path_locked, path_cores, core)
+            
     
 if __name__ == "__main__":
     main()
