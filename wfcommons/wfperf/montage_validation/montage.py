@@ -54,8 +54,8 @@ def main():
     path_cores.write_text("")
   
     
-    num_tasks = 65 
-    #num_tasks = total_tasks()
+    # num_tasks = 65 
+    num_tasks = total_tasks()
     tasks = {'mProject': (12800000, 0.7, 120), 
              'mDiffFit': (24900000 , 0.7, 1), 
              'mConcatFit': (24900000 , 0.7, 5), 
@@ -73,6 +73,7 @@ def main():
 
      
     json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
+    
     
     try:
         wf = json.loads(json_path.read_text())
