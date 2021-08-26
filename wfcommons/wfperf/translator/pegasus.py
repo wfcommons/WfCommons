@@ -57,7 +57,7 @@ class PegasusTranslator(Translator):
                        "if full_path is None:\n" \
                        "    raise RuntimeError('sys_test.py is not in the $PATH')\n" \
                        "base_dir = os.path.dirname(full_path)\n" \
-                       "transformation = Transformation('sys_test.py', site='local',\n" \
+                       "transformation = Transformation('wfperf', site='local',\n" \
                        "                                pfn=os.path.join(base_dir, 'sys_test.py'),\n" \
                        "                                is_stageable=True)\n" \
                        "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
@@ -88,7 +88,7 @@ class PegasusTranslator(Translator):
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
             job_name = "job_{}".format(self.task_counter)
-            self.script += "{} = Job('{}')\n".format(job_name, task_name)
+            self.script += "{} = Job(transformation=transformation, _id='{}')\n".format(job_name, task_name)
             self.script += "{}.add_args({})\n".format(job_name, ", ".join(f"'{a}'" for a in task.args))
             self.script += "wf.add_jobs({})\n".format(job_name)
             self.script += "\n"
