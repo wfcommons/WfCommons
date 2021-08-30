@@ -149,14 +149,15 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         elif self.base_method == BaseMethod.BIGGEST:
             base = max(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k]["order"] <= self.num_tasks and
-                 summary["base_graphs"][k] not in self.exclude_graphs],
+                summary["base_graphs"][k] not in self.exclude_graphs],
                 key=lambda k: summary["base_graphs"][k]["order"]
             )
         else:
             base = random.choice(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k]["order"] <= self.num_tasks and
-                 summary["base_graphs"][k] not in self.exclude_graphs]
+                summary["base_graphs"][k] not in self.exclude_graphs]
             )
+     
 
         graph = duplicate(self.this_dir.joinpath("microstructures"), base, self.num_tasks)
         return graph

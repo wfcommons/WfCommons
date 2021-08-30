@@ -1,6 +1,6 @@
 from wfcommons.wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from wfcommons.wfgen import WorkflowGenerator
-from typing import Dict, Type, Tuple
+from typing import Dict, Optional, Type, Tuple, Union
 import pathlib
 import json
 import subprocess
@@ -17,6 +17,8 @@ class WorkflowBenchmark():
                tasks: Dict[str, Tuple[int, int]],
                mem_total_size: str = "1000T",
                block_size: str = "4096",
+               create: bool = " True",
+               path: Optional[pathlib.Path] = " ",
                verbose: bool = False) -> Dict:
 
 
@@ -28,14 +30,16 @@ class WorkflowBenchmark():
         save_dir = pathlib.Path(save_dir).resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
-        if verbose:
-            print("Generating workflow")
-        generator = WorkflowGenerator(self.Recipe.from_num_tasks(self.num_tasks))
-        workflow = generator.build_workflow()
-        workflow_savepath = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
-        workflow.write_json(workflow_savepath)
-
-        wf = json.loads(workflow_savepath.read_text())
+        if create:
+            if verbose:
+                print("Generating workflow")
+            generator = WorkflowGenerator(self.Recipe.from_num_tasks(self.num_tasks))
+            workflow = generator.build_workflow()
+            workflow_savepath = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
+            workflow.write_json(workflow_savepath)
+            wf = json.loads(workflow_savepath.read_text())
+        else:
+            wf = json.loads(path.read_text())        
         
         params = {
             job: [
@@ -57,7 +61,7 @@ class WorkflowBenchmark():
             job["command"]["arguments"] = params[job_name]
 
 
-        json_path = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
+        json_path = save_dir.joinpath(f"{wf['name']}_{self.num_tasks}").with_suffix(".json")
         print("SAVING:", json_path)
         json_path.write_text(json.dumps(wf, indent=4))
             

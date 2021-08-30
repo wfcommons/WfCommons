@@ -14,6 +14,10 @@ def get_parser() ->  argparse.ArgumentParser:
     parser.add_argument("-c", "--create", action="store_true", help="Generate Workflow Benchmark when set.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Prints status information when set to true.")
     parser.add_argument("-s", "--save", help="Path to save directory.")
+    parser.add_argument("-l", "--lock", help="Path to lock file.")
+    parser.add_argument("-n", "--num-cores", help="Path to cores file.")
+
+
 
     return parser
 
@@ -43,12 +47,15 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     savedir = pathlib.Path(args.save)
+    path = pathlib.Path(args.path)
 
-    print("RUnning")
+    print("Running")
 
-    
-    path_locked = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt.lock")
-    path_cores = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt")
+    path_locked = pathlib.Path(args.lock)
+    path_cores = pathlib.Path(args.num_cores)
+
+    # path_locked = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt.lock")
+    # path_cores = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt")
 
     path_locked.write_text("")
     path_cores.write_text("")
@@ -65,16 +72,19 @@ def main():
              'mAdd': (1050000, 0.6, 120),
              'mViewer': (7400000, 0.6, 120)}
 
+    
+    bench = WorkflowBenchmark(MontageRecipe, num_tasks)
+
     if args.create:
         if args.verbose:
             print("Creating Recipe...")
-        bench = WorkflowBenchmark(MontageRecipe, num_tasks)
         bench.create(str(savedir), tasks, verbose=True)
+        json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
+    else:
+        bench.create(str(savedir), tasks, create=False, path=path, verbose=True)
+        json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
 
-     
-    json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
-    
-    
+    return
     try:
         wf = json.loads(json_path.read_text())
         with savedir.joinpath(f"run.txt").open("w+") as fp:
