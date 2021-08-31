@@ -31,13 +31,7 @@ def total_tasks():
                  'mAdd': 1, 
                  'mViewer': 1}
     total = 0
-    # for (k, v) in num_tasks.items():
-        
-        # if k == 'mViewer':
-        #     num_tasks[k] = v*3 + 1 
-        # else: 
-        #     num_tasks[k] = v*3
-
+  
     for values in num_tasks.values():
         total += values
 
@@ -84,7 +78,6 @@ def main():
         bench.create(str(savedir), tasks, create=False, path=path, verbose=True)
         json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
 
-    return
     try:
         wf = json.loads(json_path.read_text())
         with savedir.joinpath(f"run.txt").open("w+") as fp:
