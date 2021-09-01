@@ -1,7 +1,7 @@
 from fractions import Fraction
 from wfcommons.wfgen.abstract_recipe import WorkflowRecipe
 from wfcommons import WorkflowGenerator
-from typing import Dict, Union, List, Type
+from typing import Dict, Optional, Union, List, Type
 from numpy.random import choice
 from wfcommons.wfperf.data_gen import generate_sys_data, cleanup_sys_files
 import pathlib
@@ -25,7 +25,10 @@ class WorkflowBenchmark():
                file_block_size: int = 16384,
                rw_ratio: float = 1.5,
                max_time: int = 150,
-               threads: int = 2, #cpu threads
+               create: bool = " True",
+               path: Optional[pathlib.Path] = " ",
+               lock: Union[pathlib.Path, str] = "cores.txt.lock",
+               cores: Union[pathlib.Path, str] = "cores.txt",
                verbose: bool = False) -> Dict:
 
 
@@ -37,14 +40,16 @@ class WorkflowBenchmark():
         save_dir = pathlib.Path(save_dir).resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
-        if verbose:
-            print("Generating workflow")
-        generator = WorkflowGenerator(self.Recipe.from_num_tasks(self.num_tasks))
-        workflow = generator.build_workflow()
-        workflow.write_json(f'{save_dir.joinpath(workflow.name)}.json')
-
-        with open(f'{save_dir.joinpath(workflow.name)}.json') as json_file:
-            wf = json.load(json_file)
+        if create:
+            if verbose:
+                print("Generating workflow")
+            generator = WorkflowGenerator(self.Recipe.from_num_tasks(self.num_tasks))
+            workflow = generator.build_workflow()
+            workflow_savepath = save_dir.joinpath(f"{workflow.name}_{self.num_tasks}").with_suffix(".json")
+            workflow.write_json(workflow_savepath)
+            wf = json.loads(workflow_savepath.read_text())
+        else:
+            wf = json.loads(path.read_text())    
         
 
         params = [f"save_dir={save_dir}",
@@ -53,6 +58,9 @@ class WorkflowBenchmark():
                   f"--file-block-size={file_block_size}",
                   f"--file-rw-ratio={rw_ratio}",
                   "--file-num=1",
+                  "--forced-shutdown=0",  
+                  f"path_lock={lock}",
+                  f"path_cores={cores}",
                   f"--memory-block-size={block_size}",
                   f"--memory-scope={scope}",
                   f"--memory-total-size={mem_total_size}",
@@ -61,12 +69,13 @@ class WorkflowBenchmark():
                   f"--time={max_time}"]
 
         for job in wf["workflow"]["jobs"]:
-            # job["benchmark"] = choice(["cpu", "fileio", "memory"], p=[cpu, fileio, mem])
             job["files"] = []
             job.setdefault("command", {})
             job["command"]["program"] = f"wfperf_benchmark.py"
             job["command"]["arguments"] = [job["name"]]
             job["command"]["arguments"].extend(params)
+            if "runtime" in job:
+                del job["runtime"]
             
         num_sys_files, num_total_files = self.input_files(wf)
         

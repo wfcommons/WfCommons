@@ -59,7 +59,8 @@ class WorkflowBenchmark():
             job["command"]["program"] = "montage_sys_test.py"
             job_name = job["name"].rsplit("_", 1)[0]
             job["command"]["arguments"] = params[job_name]
-
+            if "runtime" in job:
+                del job["runtime"]
 
         json_path = save_dir.joinpath(f"{wf['name']}_{self.num_tasks}").with_suffix(".json")
         print("SAVING:", json_path)
