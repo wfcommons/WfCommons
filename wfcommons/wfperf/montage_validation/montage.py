@@ -16,6 +16,7 @@ def get_parser() ->  argparse.ArgumentParser:
     parser.add_argument("-s", "--save", help="Path to save directory.")
     parser.add_argument("-l", "--lock", help="Path to lock file.")
     parser.add_argument("-n", "--num-cores", help="Path to cores file.")
+    parser.add_argument("-t", "--num-tasks", help="Number os tasks when create is true.")
 
 
 
@@ -41,22 +42,23 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     savedir = pathlib.Path(args.save)
-    path = pathlib.Path(args.path)
+    if args.path:
+        path = pathlib.Path(args.path)
+    num_tasks = int(args.num_tasks)
 
     print("Running")
 
-    path_locked = pathlib.Path(args.lock)
-    path_cores = pathlib.Path(args.num_cores)
+    if args.lock and args.num_cores:
+        path_locked = pathlib.Path(args.lock)
+        path_cores = pathlib.Path(args.num_cores)
 
-    # path_locked = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt.lock")
-    # path_cores = pathlib.Path("/home/tgcoleman/tests/Montage/cores.txt")
 
-    path_locked.write_text("")
-    path_cores.write_text("")
+        path_locked.write_text("")
+        path_cores.write_text("")
   
     
     # num_tasks = 65 
-    num_tasks = total_tasks()
+    # num_tasks = total_tasks()
     tasks = {'mProject': (12800000, 0.7, 120), 
              'mDiffFit': (24900000 , 0.7, 1), 
              'mConcatFit': (24900000 , 0.7, 5), 
@@ -78,6 +80,7 @@ def main():
         bench.create(str(savedir), tasks, create=False, path=path, verbose=True)
         json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
 
+    
     try:
         wf = json.loads(json_path.read_text())
         with savedir.joinpath(f"run.txt").open("w+") as fp:
