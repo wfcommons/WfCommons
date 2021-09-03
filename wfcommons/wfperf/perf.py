@@ -86,9 +86,6 @@ class WorkflowBenchmark():
                 del job["runtime"]
             
 
-        with open(f"{name}-{self.num_tasks}.json", 'w') as fp:
-            json.dump(wf, fp, indent=4)
-
         num_sys_files, num_total_files = input_files(wf)
     
         if verbose:
@@ -115,12 +112,12 @@ class WorkflowBenchmark():
         return json_path
 
        
-    def run(self, json_path: Union[str, pathlib.Path], savedir: Union[str, pathlib.Path], verbose: bool =True):
+    def run(self, json_path: Union[str, pathlib.Path], save_dir: Union[str, pathlib.Path], verbose: bool =True):
         if verbose:
             print("Running")
         try:
             wf = json.loads(json_path.read_text())
-            with savedir.joinpath(f"run.txt").open("w+") as fp:
+            with save_dir.joinpath(f"run.txt").open("w+") as fp:
                 procs: List[subprocess.Popen] = []
                 for item in wf["workflow"]["jobs"]:
                     exec = item["command"]["program"]
@@ -130,12 +127,14 @@ class WorkflowBenchmark():
                         item["name"].split("_")[0], 
                         *arguments, 
                     ]
-                    procs.append(subprocess.Popen(prog), stdout=fp, stderr=fp)
+                    procs.append(subprocess.Popen(prog, stdout=fp, stderr=fp))
                 
                 for proc in procs:
                     proc.wait()
 
         except:
+            import traceback 
+            traceback.print_exc()
             raise FileNotFoundError("Not able to find the executable.")
 
 
@@ -147,7 +146,6 @@ def generate_sys_data(num_files: int, file_total_size: int, test_mode: str = "se
             f"--file-total-size={file_total_size}G",
             f"--file-test-mode={test_mode}"
         ]
-    print(" ".join(["sysbench","fileio", *params,"prepare"]))
     proc = subprocess.Popen(["sysbench","fileio", *params,"prepare"], stdout=subprocess.PIPE)
     proc.wait()
     out, _ = proc.communicate()

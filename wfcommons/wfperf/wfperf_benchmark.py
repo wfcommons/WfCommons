@@ -4,7 +4,6 @@ import pathlib
 import argparse
 import subprocess 
 import os
-import glob
 import time
 from filelock import FileLock
 
@@ -94,41 +93,36 @@ def main():
 
         sysbench_file_input_args = [
             arg for arg in other 
-            if arg.startswith("--file") and not arg.startswith("--file-num")
+            if arg.startswith("--file") and not arg.startswith("--file-num") or "forced" in arg
         ] 
 
         core = lock_core(path_locked, path_cores)
         io_threads = int(args.percent_io*10)
 
-        with save_dir.joinpath(f"{name}_fileio_run.txt").open("w+") as fp:
-            print("Starting IO benchmark...")
-            proc = subprocess.Popen(
-                [
-                    "sysbench", "fileio", *sysbench_file_input_args, f"--threads={io_threads}","run"
-                ], 
-                stdout=fp, stderr=fp
-            )
-            proc.wait()
+        print("Starting IO benchmark...")
+        proc = subprocess.Popen(
+            [
+                "sysbench", "fileio", *sysbench_file_input_args, f"--threads={io_threads}","run"
+            ]
+        )
+        proc.wait()
         
-        with save_dir.joinpath(f"{name}_fileio_cleanup.txt").open("w+") as fp:
-            proc = subprocess.Popen(
-                [
-                    "sysbench", "fileio", *sysbench_file_input_args, "cleanup"
-                ], 
-                stdout=fp, stderr=fp
-            )
-            proc.wait()
+        proc = subprocess.Popen(
+            [
+                "sysbench", "fileio", *sysbench_file_input_args, "cleanup"
+            ]
+        )
+        proc.wait()
 
     else:
         core = lock_core(path_locked, path_cores)
-        
-    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" in arg]
+
+    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" or arg and "forced" in arg]
 
     cpu_threads = int(args.percent_cpu*10)
     mem_threads = int(args.percent_mem*10)
 
     print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
-    print(sysbench_cpu_args)
     print("Starting CPU benchmark...")
     
     time = args.time
@@ -144,7 +138,7 @@ def main():
         os.sched_setaffinity(proc_cpu.pid, {core})
 
         print("Starting Memory benchmark...")
-        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg]
+        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg or "forced" in arg]
         prog = [
                     "sysbench", "memory", "run",
                     *sysbench_mem_args, f"--threads={mem_threads}"
@@ -170,17 +164,15 @@ def main():
     unlock_core(path_locked, path_cores, core)
 
     if args.percent_io:
-        with save_dir.joinpath(f"{name}_fileio_output.txt").open("w+") as fp:
-            print("Writing output...")
-            sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")] 
-            proc = subprocess.Popen(
-                [
-                    "sysbench", "fileio", *sysbench_file_output_args, io_threads, "prepare"
-                ], 
-                stdout=fp, stderr=fp
-            )
-            proc.wait()
-        
+        print("Writing output...")
+        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or "forced" in arg] 
+        proc = subprocess.Popen(
+            [
+                "sysbench", "fileio", *sysbench_file_output_args, io_threads, "prepare"
+            ]
+        )
+        proc.wait()
+    
         for path in this_dir.glob("*test_file*"):
             path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
 
