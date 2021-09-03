@@ -1,6 +1,7 @@
 from typing import List
 from wfcommons.wfperf.montage_validation.montage_perf import WorkflowBenchmark
 from wfcommons.wfchef.recipes import MontageRecipe
+from tentativa_recipes.Tentativa import TentativaRecipe
 import pathlib
 import argparse
 import json
@@ -14,11 +15,7 @@ def get_parser() ->  argparse.ArgumentParser:
     parser.add_argument("-c", "--create", action="store_true", help="Generate Workflow Benchmark when set.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Prints status information when set to true.")
     parser.add_argument("-s", "--save", help="Path to save directory.")
-    parser.add_argument("-l", "--lock", help="Path to lock file.")
-    parser.add_argument("-n", "--num-cores", help="Path to cores file.")
     parser.add_argument("-t", "--num-tasks", help="Number os tasks when create is true.")
-
-
 
     return parser
 
@@ -47,15 +44,6 @@ def main():
     num_tasks = int(args.num_tasks)
 
     print("Running")
-
-    if args.lock and args.num_cores:
-        path_locked = pathlib.Path(args.lock)
-        path_cores = pathlib.Path(args.num_cores)
-
-
-        path_locked.write_text("")
-        path_cores.write_text("")
-  
     
     # num_tasks = 65 
     # num_tasks = total_tasks()
@@ -68,39 +56,18 @@ def main():
              'mAdd': (1050000, 0.6, 120),
              'mViewer': (7400000, 0.6, 120)}
 
-    
-    bench = WorkflowBenchmark(MontageRecipe, num_tasks)
+    bench = WorkflowBenchmark(TentativaRecipe, num_tasks)
 
     if args.create:
+        
         if args.verbose:
             print("Creating Recipe...")
-        bench.create(str(savedir), tasks, verbose=True)
-        json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
+        json_path = bench.create(str(savedir), tasks, verbose=True)
+        
     else:
-        bench.create(str(savedir), tasks, create=False, path=path, verbose=True)
-        json_path = savedir.joinpath(f"Montage-synthetic-instance_{num_tasks}.json")
+        json_path = bench.create(str(savedir), tasks, create=False, path=path, verbose=True)
 
-    
-    try:
-        wf = json.loads(json_path.read_text())
-        with savedir.joinpath(f"run.txt").open("w+") as fp:
-            procs: List[subprocess.Popen] = []
-            for item in wf["workflow"]["jobs"]:
-                exec = item["command"]["program"]
-                arguments = item["command"]["arguments"]
-                prog = [
-                    "time", "python", exec, 
-                    item["name"].split("_")[0], 
-                    *arguments, 
-                    # "--save", str(savedir)
-                ]
-                procs.append(subprocess.Popen(prog))
-            
-            for proc in procs:
-                proc.wait()
-
-    except:
-        raise FileNotFoundError("Not able to find the executable.")
+    bench.run(json_path, savedir)
 
 
     

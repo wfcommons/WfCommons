@@ -4,8 +4,6 @@ import subprocess
 import os
 from typing import List
 from wfcommons.wfperf.montage_validation.lock import lock_core, unlock_core
-
-import threading
 import subprocess
 
 
@@ -14,6 +12,9 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("name", help="Task Name")
     parser.add_argument("-l", "--lock", help="Path to lock file.")
     parser.add_argument("-n", "--num-cores", help="Path to cores file.")
+    parser.add_argument("--path-cores", help="Path to cores file.")
+    parser.add_argument("--path-lock", help="Path to lock file.")
+
     # parser.add_argument("--save", type=pathlib.Path, required=True, help="directory to save to.")
 
 
@@ -26,8 +27,8 @@ def main():
     print(f"Starting {args.name}")
     
 
-    path_locked = pathlib.Path(args.lock)
-    path_cores = pathlib.Path(args.num_cores)
+    path_locked = pathlib.Path(args.path_lock)
+    path_cores = pathlib.Path(args.path_cores)
     
     sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" in arg or "forced" in arg]
     percent_cpu = [arg for arg in other if arg.startswith("--percent")][0]
