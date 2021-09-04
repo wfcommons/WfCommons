@@ -56,7 +56,9 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
 
     # get histogram of original data
     bins = math.ceil(len(data) / 10)
-    normalized = (data - np.min(data)) / (np.max(data) - np.min(data))
+    
+
+    normalized = (data - np.min(data)) / (np.max(data) - np.min(data)) if not np.min(data) == np.max(data) else np.min(data)
     y, x = np.histogram(normalized, bins=bins)
     if np.max(y) - np.min(y) > 0:
         y = (y - np.min(y)) / (np.max(y) - np.min(y))
