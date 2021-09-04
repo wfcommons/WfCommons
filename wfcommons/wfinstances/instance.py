@@ -131,7 +131,7 @@ class Instance:
                     task_id=task.get('id', None),
                     category=task.get('category', None),
                     task_type=TaskType(task['type']),
-                    runtime=task['runtime'],
+                    runtime=task['runtime'] if 'runtime' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
                     args=command.get('arguments', None) if command else None,
