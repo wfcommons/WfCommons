@@ -40,3 +40,6 @@ venv
 
 # VSCode settings
 **/*.vscode
+
+# Workflow Schema
+workflow-schema.json
