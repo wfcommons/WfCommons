@@ -64,56 +64,136 @@ class NextflowLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  executed_at=self.executed_at,
-                                 makespan=self.makespan)
+                                 makespan=self.makespan,
+                                 wms_name=self.wms_name,
+                                 wms_url=self.wms_url)
 
-        self._parse_workflow_file()
+        self._parse_execution_report_file()
+        self._parse_execution_timeline_file()
 
         return self.workflow
 
-    def _parse_workflow_file(self):
-        """Parse the Nextflow workflow file and build the workflow structure."""
-        # find execution report file
-        files = glob.glob('{}/execution_report_*.html'.format(self.execution_dir))
+    def _parse_execution_report_file(self):
+        """Parse the Nextflow execution report file and gather the tasks information."""
+        trace_data = self._read_data('execution_report_*.html')
+
+        for t in trace_data['trace']:
+            task_id = "ID{:06d}".format(int(t['task_id']))
+            category = t['process'].lower().split(' ')[0]
+            category = _parse_task_name(category)
+            task_name = _parse_task_name(t['name'])
+            task = Task(name=task_name,
+                        task_id=task_id,
+                        category=category,
+                        task_type=TaskType.COMPUTE,
+                        runtime=float(_parse_number(t['duration'])) / 1000,
+                        program=category,
+                        args=list(filter(None, t['script'].replace('\n', '').split(' '))),
+                        cores=float(t['cpus']),
+                        files=[],
+                        avg_cpu=float(_parse_number(t['%cpu'])),
+                        bytes_read=round((int(_parse_number(t['rchar'])) + int(_parse_number(t['read_bytes']))) / 1024),
+                        bytes_written=round(
+                            (int(_parse_number(t['wchar'])) + int(_parse_number(t['write_bytes']))) / 1024),
+                        memory=round(int(_parse_number(t['rss'])) / 1024),
+                        logger=self.logger)
+            self.workflow.add_node(task_name, task=task)
+
+    def _parse_execution_timeline_file(self):
+        """Parse the Nextflow execution timeline file and build the workflow structure."""
+        timeline_data = self._read_data('execution_timeline_*.html')
+        tasks_map = {}
+        max_index = 0
+
+        for e in timeline_data['processes']:
+            task_name = _parse_task_name(e['label'])
+            index = int(e['index'])
+            max_index = max(index, max_index)
+            if index not in tasks_map:
+                tasks_map[index] = []
+            tasks_map[index].append(task_name)
+
+        for index in range(max_index + 1):
+            if index > 0:
+                for c in tasks_map[index]:
+                    for p in tasks_map[index - 1]:
+                        self.workflow.add_edge(p, c)
+
+        self.workflow.makespan = round(
+            (int(timeline_data['endingMillis']) - int(timeline_data['beginningMillis'])) / 1024)
+
+    def _read_data(self, file_format: str):
+        """
+        Read data into a JSON from a file that matches the format.
+
+        :param file_format: File format to be searched
+        :type file_format: str
+
+        :return: Data in JSON format
+        :rtype: Dict
+        """
+        files = glob.glob('{}/{}'.format(self.execution_dir, file_format))
         if len(files) == 0:
-            raise OSError('Unable to find execution_report_*.html file in: {}'.format(self.execution_dir))
-        execution_report_file = files[0]
-        trace_data = None
+            raise OSError('Unable to find {} file in: {}'.format(self.execution_dir, file_format))
+
+        data = None
+        version = None
 
         # parsing execution report file
-        with open(execution_report_file) as f:
+        with open(files[0]) as f:
+            self.logger.debug('Reading data from: {}'.format(files[0]))
             read_trace_data = False
+            read_nextflow_version = False
+
             for line in f:
                 if 'Nextflow report data' in line:
                     read_trace_data = True
                     continue
 
-                if not read_trace_data:
+                if 'Nextflow version' in line:
+                    read_nextflow_version = True
+                    continue
+
+                if not read_trace_data and not read_nextflow_version:
+                    continue
+
+                if read_nextflow_version:
+                    version = line.strip().split(' ')[2].replace(',', '')
+                    self.workflow.wms_version = version
+                    read_nextflow_version = False
                     continue
 
                 if 'window.data =' in line:
-                    trace_data = line.replace('window.data = ', '').strip()
-                else:
-                    trace_data += line.replace('\\\\', '').replace('\\/', '/').replace('\\\'', '').replace(';', '')
+                    data = line.replace('window.data = ', '').strip()
+                elif line.startswith(';') or '</script>' in line:
                     read_trace_data = False
+                elif len(line) > 0:
+                    data += line.replace('\\\\', '').replace('\\/', '/').replace('\\\'', '').replace(';', '')
 
-        trace_data = json.loads(trace_data)
-        for t in trace_data['trace']:
-            task_id = "ID{:06d}".format(int(t['task_id']))
-            category = t['process'].lower().split(' ')[0]
-            category = category[category.rfind(':') + 1:]
-            task_name = '{}_{}'.format(category, task_id)
-            task = Task(name=task_name,
-                        task_id=task_id,
-                        category=category,
-                        task_type=TaskType.COMPUTE,
-                        runtime=float(t['duration']) / 1000,
-                        program=category,
-                        args=list(filter(None, t['script'].replace('\n', '').split(' '))),
-                        cores=float(t['cpus']),
-                        files=[],
-                        avg_cpu=float(t['%cpu'].replace('-', '0')),
-                        bytes_read=round((int(t['rchar']) + int(t['read_bytes'])) / 1024),
-                        bytes_written=round((int(t['wchar']) + int(t['write_bytes'])) / 1024),
-                        memory=round(int(t['rss']) / 1024),
-                        logger=self.logger)
-            self.workflow.add_node(task_name, task=task)
+        return json.loads(data)
+
+
+def _parse_task_name(task_name: str):
+    """
+    Format the task name.
+
+    :param task_name: Raw task name
+    :type task_name: str
+
+    :return: Formatted task name
+    :rtype: str
+    """
+    return task_name[task_name.rfind(':') + 1:].replace('(', '').replace(')', '').replace(' ', '_').lower()
+
+
+def _parse_number(number: str):
+    """
+    Format a number.
+
+    :param number: Raw number
+    :type number: str
+
+    :return: Formatted number
+    :rtype: str
+    """
+    return number.replace('-', '0')
