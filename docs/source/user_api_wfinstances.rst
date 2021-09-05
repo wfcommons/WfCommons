@@ -25,6 +25,14 @@ wfcommons.wfinstances.logs.makeflow
    :undoc-members:
    :show-inheritance:
 
+wfcommons.wfinstances.logs.nextflow
+-----------------------------------
+
+.. automodule:: wfcommons.wfinstances.logs.nextflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 wfcommons.wfinstances.logs.pegasus
 ----------------------------------
 

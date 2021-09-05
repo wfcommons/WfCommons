@@ -9,4 +9,5 @@
 # (at your option) any later version.
 
 from .makeflow import MakeflowLogsParser
+from .nextflow import NextflowLogsParser
 from .pegasus import PegasusLogsParser
