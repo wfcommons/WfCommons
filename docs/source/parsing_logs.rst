@@ -29,7 +29,7 @@ mining, high energy physics, image processing, and bioinformatics. It has run on
 campus clusters, the Open Science Grid, NSF XSEDE machines, NCSA Blue Waters, and
 Amazon Web Services. Makeflow logs provide time-stamped event instances from these
 executions. The following example shows the analysis of Makeflow execution logs,
-stored in a local folder (execution dir), for a workflow execution using the
+stored in a local folder (:code:`execution_dir`), for a workflow execution using the
 :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class: ::
 
     from wfcommons.wfinstances import MakeflowLogsParser
@@ -39,16 +39,45 @@ stored in a local folder (execution dir), for a workflow execution using the
                                 resource_monitor_logs_dir='/path/to/makeflow/resource/monitor/logs/dir')
 
     # generating the workflow instance object
-    workflow = parser.build_workflow('workflow-test')
+    workflow = parser.build_workflow('makeflow-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow.write_json('workflow.json')
+    workflow.write_json('makeflow-workflow.json')
 
 .. note::
     The :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class requires
     that Makeflow workflows to run with the
     `Resource Monitor <https://cctools.readthedocs.io/en/latest/resource_monitor/>`_
     tool (e.g., execute the workflow using the :code:`--monitor=logs`).
+
+Nextflow
+--------
+
+`Nextflow <https://nextflow.io>`_ is a reactive workflow framework and a programming DSL
+that eases the writing of data-intensive computational pipelines. It is designed around
+the idea that the Linux platform is the lingua franca of data science. Linux provides
+many simple but powerful command-line and scripting tools that, when chained together,
+facilitate complex data manipulations. Nextflow extends this approach, adding the ability
+to define complex program interactions and a high-level parallel computational environment
+based on the dataflow programming model. The following example shows the analysis of
+Nextflow execution logs, stored in a local folder (:code:`execution_dir`), for a workflow
+execution using the :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class: ::
+
+    from wfcommons.wfinstances import NextflowLogsParser
+
+    # creating the parser for the Nextflow workflow
+    parser = NextflowLogsParser(execution_dir='/path/to/nextflow/execution/dir/')
+
+    # generating the workflow instance object
+    workflow = parser.build_workflow('nextflow-workflow-test')
+
+    # writing the workflow instance to a JSON file
+    workflow.write_json('nextflow-workflow.json')
+
+.. note::
+    The :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class assumes
+    that workflow executions will produce an :code:`execution_report_*.html` and an
+    :code:`execution_timeline_*.html` files.
 
 Pegasus WMS
 -----------
@@ -62,7 +91,7 @@ includes data management, monitoring, and failure handling, and is managed by HT
 DAGMan. Individual workflow tasks are managed by a workload management framework,
 HTCondor, which supervises task executions on local and remote resources. Pegasus
 logs provide time-stamped event instances from these executions. The following example shows
-the analysis of Pegasus execution logs, stored in a local folder (submit dir), for a
+the analysis of Pegasus execution logs, stored in a local folder (:code:`submit_dir`), for a
 workflow execution using the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
 class: ::
 
@@ -72,10 +101,10 @@ class: ::
     parser = PegasusLogsParser(submit_dir='/path/to/pegasus/submit/dir/seismology/chameleon-100p-001/')
 
     # generating the workflow instance object
-    workflow = parser.build_workflow('workflow-test')
+    workflow = parser.build_workflow('pegasus-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow.write_json('workflow.json')
+    workflow.write_json('pegasus-workflow.json')
 
 .. warning::
     By default, the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
