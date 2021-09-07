@@ -2,6 +2,10 @@ from wfcommons.wfperf.perf import WorkflowBenchmark
 from wfcommons.wfchef.recipes import BlastRecipe
 import pathlib
 import argparse
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -27,16 +31,16 @@ def main():
 
     print("Running")
 
-    bench = WorkflowBenchmark(BlastRecipe, num_tasks)
+    bench = WorkflowBenchmark(BlastRecipe, num_tasks, logger=logger)
 
     if args.create:
         
         if args.verbose:
             print("Creating Recipe...")
-        json_path = bench.create(str(savedir), percent_cpu=0.5, percent_mem=0.3, percent_io=0.2, verbose=True)
+        json_path = bench.create(str(savedir), percent_cpu=0.5, percent_mem=0.3, percent_io=0.2)
         
     else:
-        json_path = bench.create(str(savedir), create=False, path=path, verbose=True)
+        json_path = bench.create(str(savedir), create=False, path=path)
 
     bench.run(json_path, savedir)
 
