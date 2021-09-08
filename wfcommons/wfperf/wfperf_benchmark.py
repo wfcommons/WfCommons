@@ -74,6 +74,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--percent-io", type=float, help="percent of threads that will be io")
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
+    parser.add_argument("--out", help="Output filename.")
     return parser
 
 
@@ -181,7 +182,8 @@ def main():
         proc.wait()
 
         for path in this_dir.glob("*test_file*"):
-            path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
+            # path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
+            path.rename(path.parent.joinpath(f"{args.out}"))
 
 
 if __name__ == "__main__":
