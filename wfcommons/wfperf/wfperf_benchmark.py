@@ -13,6 +13,7 @@ import pathlib
 import os
 import subprocess
 import time
+
 from filelock import FileLock
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -80,9 +81,8 @@ def get_parser() -> argparse.ArgumentParser:
 def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
-    name = args.name
 
-    print("Checking if the sysbench is installed.")
+    print("Checking if sysbench is installed.")
     check_sysbench()
 
     save_dir = [item for item in other if "save" in item][0]
@@ -178,7 +178,7 @@ def main():
         sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or "forced" in arg]
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_output_args, io_threads, "prepare"
+                "sysbench", "fileio", *sysbench_file_output_args, f"--threads={io_threads}", "prepare"
             ]
         )
         proc.wait()

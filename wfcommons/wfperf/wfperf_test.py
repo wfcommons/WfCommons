@@ -9,7 +9,8 @@ logger = logging.getLogger()
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
-def get_parser() ->  argparse.ArgumentParser:
+
+def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to JSON")
     parser.add_argument("-c", "--create", action="store_true", help="Generate Workflow Benchmark when set.")
@@ -23,10 +24,6 @@ def get_parser() ->  argparse.ArgumentParser:
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    savedir = pathlib.Path(args.save)
-   
-    if args.path:
-        path = pathlib.Path(args.path)
     num_tasks = int(args.num_tasks)
 
     print("Running")
@@ -34,21 +31,16 @@ def main():
     bench = WorkflowBenchmark(BlastRecipe, num_tasks, logger=logger)
 
     if args.create:
-        
+
         if args.verbose:
             print("Creating Recipe...")
-        json_path = bench.create(savedir, percent_cpu=0.5, percent_mem=0.3, percent_io=0.2, data_footprint=1)
-        
+        json_path = bench.create(args.save, percent_cpu=0.5, percent_mem=0.3, percent_io=0.2, data_footprint=1)
+
     else:
-        json_path = bench.create(savedir, create=False, path=path)
+        json_path = bench.create(args.save, create=False, path=args.path)
 
-    bench.run(json_path, savedir)
+    bench.run(json_path, args.save)
 
 
-
-    
-
-    
-    
 if __name__ == "__main__":
     main()

@@ -14,6 +14,7 @@ import logging
 import os
 import pathlib
 import subprocess
+import uuid
 
 from logging import Logger
 from typing import Dict, Optional, Union, List, Type
@@ -56,9 +57,9 @@ class WorkflowBenchmark:
                rw_ratio: float = 1.5,
                max_time: int = 150,
                create: bool = " True",
-               path: Optional[pathlib.Path] = " ") -> Dict:
+               path: Optional[pathlib.Path] = None) -> pathlib.Path:
 
-        save_dir = pathlib.Path(save_dir).resolve()
+        save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
         if create:
@@ -67,7 +68,7 @@ class WorkflowBenchmark:
             workflow = generator.build_workflow()
             name = f"{workflow.name.split('-')[0]}-Benchmark"
             workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
-            workflow.write_json(workflow_savepath)
+            workflow.write_json(workflow_savepath.read_text())
             wf = json.loads(workflow_savepath.read_text())
         else:
             wf = json.loads(path.read_text())
@@ -124,12 +125,12 @@ class WorkflowBenchmark:
         cleanup_sys_files()
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
-        self.logger.info("Saving benchmark workflow: {}".format(json_path))
+        self.logger.info(f"Saving benchmark workflow: {json_path}")
         json_path.write_text(json.dumps(wf, indent=4))
 
         return json_path
 
-    def run(self, json_path: Union[str, pathlib.Path], save_dir: Union[str, pathlib.Path]):
+    def run(self, json_path: pathlib.Path, save_dir: pathlib.Path):
         """Run the benchmark workflow locally (for test purposes only).
         """
         self.logger.debug("Running")
@@ -145,7 +146,11 @@ class WorkflowBenchmark:
                         item["name"].split("_")[0],
                         *arguments,
                     ]
+                    folder = f"./wfperf_execution/{uuid.uuid4()}"
+                    os.makedirs(folder, exist_ok=True)
+                    os.chdir(folder)
                     procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
+                    os.chdir("../..")
 
                 for proc in procs:
                     proc.wait()
