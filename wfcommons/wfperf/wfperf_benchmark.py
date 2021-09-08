@@ -32,7 +32,6 @@ def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
     """Lock cores in use.
     """
     all_cores = set(range(os.cpu_count()))
-    available = set()
     while True:
         with FileLock(path_locked) as lock:
             try:
@@ -141,8 +140,7 @@ def main():
     print(f"{args.name} acquired core {core}")
     if time > 100:
         prog = [
-            "sysbench", "cpu",
-            *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
         ]
         proc_cpu = subprocess.Popen(prog)
 
@@ -161,8 +159,7 @@ def main():
         proc_mem = None
         proc_cpu = subprocess.Popen(
             [
-                "sysbench", "cpu",
-                *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
             ]
         )
         os.sched_setaffinity(proc_cpu.pid, {core})
