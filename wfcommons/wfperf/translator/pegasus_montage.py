@@ -14,7 +14,6 @@ from logging import Logger
 from typing import Optional
 
 from .abstract_translator import Translator
-from ...common.file import FileLink
 
 
 class PegasusTranslator(Translator):
@@ -51,45 +50,39 @@ class PegasusTranslator(Translator):
         :type output_file: str
         """
         # overall workflow
-        self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
+        self.script += "wf = Workflow('{}', infer_dependencies=True)\n" \
                        "tc = TransformationCatalog()\n" \
-                       "rc = ReplicaCatalog()\n\n"
+                       "rc = ReplicaCatalog()\n\n".format(self.instance.name)
         self.script += "task_output_files = {}\n\n"
 
         # transformation catalog
-        transformations = []
-        for task in self.tasks.values():
-            if task.category not in transformations:
-                transformations.append(task.category)
-                self.script += f"transformation_path = which('{task.program}')\n" \
-                               "if transformation_path is None:\n" \
-                               f"    raise RuntimeError('Unable to find {task.program}')\n" \
-                               f"transformation = Transformation('{task.category}', site='local',\n" \
-                               f"                                pfn='{task.program}',\n" \
-                               "                                is_stageable=True)\n" \
-                               "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
-                               "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
-                               "tc.add_transformations(transformation)\n\n"
-
+        self.script += "full_path = which('sys_test.py')\n" \
+                       "if full_path is None:\n" \
+                       "    raise RuntimeError('sys_test.py is not in the $PATH')\n" \
+                       "base_dir = os.path.dirname(full_path)\n" \
+                       "transformation = Transformation('wfperf', site='local',\n" \
+                       "                                pfn=os.path.join(base_dir, 'sys_test.py'),\n" \
+                       "                                is_stageable=True)\n" \
+                       "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
+                       "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
+                       "tc.add_transformations(transformation)\n\n"
         # adding tasks
         for task_name in self.parent_task_names:
             self._add_task(task_name)
             # input file
-            task = self.tasks[task_name]
-            for file in task.files:
-                if file.link == FileLink.INPUT:
-                    self.script += f"in_file_{self.task_counter} = File('{file.name}')\n"
-                    self.script += f"rc.add_replica('local', '{file.name}', 'file://' + os.getcwd() + " \
-                                   f"'/data/{file.name}')\n"
-                    self.script += f"{self.tasks_map[task_name]}.add_inputs(in_file_{self.task_counter})\n" \
-                                   f"print('{file.name}')\n"
+            input_file = str(uuid.uuid4())
+            self.script += "in_file_{} = File('{}')\n".format(self.task_counter, input_file)
+            self.script += "rc.add_replica('local', '{}', 'file://' + os.getcwd() + '/data/{}')\n".format(input_file,
+                                                                                                          input_file)
+            self.script += "{}.add_inputs(in_file_{})\n".format(self.tasks_map[task_name], self.task_counter)
+            self.script += "print('{}')\n".format(input_file)
 
         self.script += "\n"
 
         # write out the workflow
         self.script += "wf.add_replica_catalog(rc)\n" \
                        "wf.add_transformation_catalog(tc)\n" \
-                       f"wf.write('{self.instance.name}-benchmark-workflow.yml')\n"
+                       "wf.write('{}-benchmark-workflow.yml')\n".format(self.instance.name)
 
         # write script to file
         with open(output_file, 'w') as out:
@@ -106,25 +99,19 @@ class PegasusTranslator(Translator):
         """
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
-            job_name = f"job_{self.task_counter}"
-            self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
+            job_name = "job_{}".format(self.task_counter)
+            out_file = str(uuid.uuid4())
+            self.script += "{} = Job(transformation=transformation, _id='{}')\n".format(job_name, task_name)
             task.args.insert(0, task_name.split("_")[0])
+            task.args.append("--out={}".format(out_file))
+            self.script += "{}.add_args({})\n".format(job_name, ", ".join(f"'{a}'" for a in task.args))
 
-            # output file
-            for file in task.files:
-                if file.link == FileLink.OUTPUT:
-                    out_file = file.name
-                    task.args.append(f"--out={out_file}")
-                    self.script += f"out_file_{self.task_counter} = File('{out_file}')\n"
-                    self.script += f"task_output_files['{job_name}'] = out_file_{self.task_counter}\n"
-                    self.script += f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
-                                   "stage_out=True, register_replica=True)\n"
+            self.script += "out_file_{} = File('{}')\n".format(self.task_counter, out_file)
+            self.script += "task_output_files['{}'] = out_file_{}\n".format(job_name, self.task_counter)
+            self.script += "{}.add_outputs(out_file_{}, stage_out=False, register_replica=False)\n".format(
+                job_name, self.task_counter)
 
-            # arguments
-            args = ", ".join(f"'{a}'" for a in task.args)
-            self.script += f"{job_name}.add_args({args})\n"
-
-            self.script += f"wf.add_jobs({job_name})\n\n"
+            self.script += "wf.add_jobs({})\n\n".format(job_name)
             self.task_counter += 1
             self.parsed_tasks.append(task_name)
             self.tasks_map[task_name] = job_name
@@ -135,5 +122,5 @@ class PegasusTranslator(Translator):
                         self._add_task(child_task_name, job_name)
 
         if parent_task:
-            self.script += f"{self.tasks_map[task_name]}.add_inputs(task_output_files['{parent_task}'])\n"
-            self.script += f"wf.add_dependency({self.tasks_map[task_name]}, parents=[{parent_task}])\n\n"
+            self.script += "{}.add_inputs(task_output_files['{}'])\n".format(self.tasks_map[task_name], parent_task)
+            self.script += "wf.add_dependency({}, parents=[{}])\n\n".format(self.tasks_map[task_name], parent_task)
