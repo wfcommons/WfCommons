@@ -45,9 +45,7 @@ class WorkflowBenchmark:
     def create(self,
                save_dir: pathlib.Path,
                percent_cpu: float = 0.6,
-               percent_mem: float = 0.4,
-               percent_io: float = 0.0,
-               data_footprint: int = 100,
+               data_footprint: int = 1,
                test_mode: str = "seqwr",
                mem_total_size: str = "1000000G",
                block_size: str = "1K",
@@ -68,7 +66,7 @@ class WorkflowBenchmark:
             workflow = generator.build_workflow()
             name = f"{workflow.name.split('-')[0]}-Benchmark"
             workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
-            workflow.write_json(workflow_savepath.read_text())
+            workflow.write_json(workflow_savepath)
             wf = json.loads(workflow_savepath.read_text())
         else:
             wf = json.loads(path.read_text())
@@ -81,8 +79,11 @@ class WorkflowBenchmark:
         lock = save_dir.joinpath("cores.txt.lock")
         cores = save_dir.joinpath("cores.txt")
 
+        if data_footprint:
+            data = True
+
         # Setting the parameters for the arguments section of the JSON
-        params = [f"save_dir={save_dir}",
+        params = [f"--data={data}",
                   f"--file-test-mode={test_mode}",
                   f"--file-total-size={data_footprint}G",
                   f"--file-block-size={file_block_size}",
@@ -96,8 +97,6 @@ class WorkflowBenchmark:
                   f"--memory-total-size={mem_total_size}",
                   f"--cpu-max-prime={max_prime}",
                   f"--percent-cpu={percent_cpu}",
-                  f"--percent-mem={percent_mem}",
-                  f"--percent-io={percent_io}",
                   f"--time={max_time}"]
 
         wf["name"] = name
@@ -146,9 +145,9 @@ class WorkflowBenchmark:
                         item["name"].split("_")[0],
                         *arguments,
                     ]
-                    folder = f"./wfperf_execution/{uuid.uuid4()}"
-                    os.makedirs(folder, exist_ok=True)
-                    os.chdir(folder)
+                    folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
+                    folder.mkdir(exist_ok=True, parents=True)
+                    os.chdir(str(folder))
                     procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
                     os.chdir("../..")
 
