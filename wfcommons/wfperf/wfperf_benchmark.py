@@ -32,7 +32,6 @@ def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
     """Lock cores in use.
     """
     all_cores = set(range(os.cpu_count()))
-    available = set()
     while True:
         with FileLock(path_locked) as lock:
             try:
@@ -73,6 +72,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--percent-cpu", type=float, help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
+    parser.add_argument("--out", help="Output filename.")
     return parser
 
 
@@ -139,8 +139,7 @@ def main():
     print(f"{args.name} acquired core {core}")
     if time > 100:
         prog = [
-            "sysbench", "cpu",
-            *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
         ]
         proc_cpu = subprocess.Popen(prog)
 
@@ -159,8 +158,7 @@ def main():
         proc_mem = None
         proc_cpu = subprocess.Popen(
             [
-                "sysbench", "cpu",
-                *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
             ]
         )
         os.sched_setaffinity(proc_cpu.pid, {core})
@@ -182,7 +180,8 @@ def main():
         proc.wait()
 
         for path in this_dir.glob("*test_file*"):
-            path.rename(path.parent.joinpath(f"{this_dir}/{args.name}_{path.name}"))
+            # path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
+            path.rename(path.parent.joinpath(f"{args.out}"))
 
 
 if __name__ == "__main__":

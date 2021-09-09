@@ -54,7 +54,7 @@ class WorkflowBenchmark:
                file_block_size: int = 16384,
                rw_ratio: float = 1.5,
                max_time: int = 150,
-               create: bool = " True",
+               create: bool = True,
                path: Optional[pathlib.Path] = None) -> pathlib.Path:
 
         save_dir = save_dir.resolve()
@@ -66,7 +66,7 @@ class WorkflowBenchmark:
             workflow = generator.build_workflow()
             name = f"{workflow.name.split('-')[0]}-Benchmark"
             workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
-            workflow.write_json(workflow_savepath)
+            workflow.write_json(str(workflow_savepath))
             wf = json.loads(workflow_savepath.read_text())
         else:
             wf = json.loads(path.read_text())

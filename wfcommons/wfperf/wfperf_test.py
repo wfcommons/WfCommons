@@ -32,7 +32,6 @@ def main():
     bench = WorkflowBenchmark(BlastRecipe, num_tasks, logger=logger)
 
     if args.create:
-
         if args.verbose:
             print("Creating Recipe...")
         json_path = bench.create(save_dir, percent_cpu=0.5, percent_mem=0.3, percent_io=0.2, data_footprint=1)
