@@ -102,7 +102,7 @@ def main():
 
         sysbench_file_input_args = [
             arg for arg in other
-            if arg.startswith("--file") and not arg.startswith("--file-num") or "forced" in arg
+            if arg.startswith("--file-test-mode")
         ]
 
         core = lock_core(path_locked, path_cores)
@@ -110,7 +110,7 @@ def main():
         print("Starting IO benchmark...")
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_input_args, f"--threads=1", "run"
+                "sysbench", "fileio", *sysbench_file_input_args, f"--file-num={counter}", "run"
             ]
         )
         proc.wait()
