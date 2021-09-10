@@ -79,11 +79,10 @@ class WorkflowBenchmark:
         lock = save_dir.joinpath("cores.txt.lock")
         cores = save_dir.joinpath("cores.txt")
 
-        if data_footprint:
-            data = True
+        data = "--data" if data_footprint else ""
 
         # Setting the parameters for the arguments section of the JSON
-        params = [f"--data={data}",
+        params = [data,
                   f"--file-test-mode={test_mode}",
                   f"--file-total-size={data_footprint}G",
                   f"--file-block-size={file_block_size}",
