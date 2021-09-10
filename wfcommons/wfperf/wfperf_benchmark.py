@@ -94,9 +94,9 @@ def main():
     print(f"Starting {args.name}")
 
     if "--data=True" in other:
-        
+
         counter = 0
-        for file in this_dir.glob("*test_file*"):        
+        for file in this_dir.glob("*test_file*"):
             file.rename(file.parent.joinpath(f"test_file.{counter}"))
             counter += 1
 
@@ -127,7 +127,7 @@ def main():
 
     sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" or arg and "forced" in arg]
 
-    percent_mem = 1 - args.percent_cpu 
+    percent_mem = 1 - args.percent_cpu
     cpu_threads = int(args.percent_cpu * 10)
     mem_threads = int(percent_mem * 10)
 
@@ -148,8 +148,7 @@ def main():
         print("Starting Memory benchmark...")
         sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg or "forced" in arg]
         prog = [
-            "sysbench", "memory", "run",
-            *sysbench_mem_args, f"--threads={mem_threads}"
+            "sysbench", "memory", *sysbench_mem_args, f"--threads={mem_threads}", "run"
         ]
         proc_mem = subprocess.Popen(prog)
 
@@ -171,10 +170,10 @@ def main():
 
     if "data=True" in other:
         print("Writing output...")
-        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or "forced" in arg]
+        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")]
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_output_args, f"--threads=1", "prepare"
+                "sysbench", "fileio", *sysbench_file_output_args, "--threads=1", "prepare"
             ]
         )
         proc.wait()
