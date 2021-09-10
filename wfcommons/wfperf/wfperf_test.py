@@ -34,7 +34,7 @@ def main():
     if args.create:
         if args.verbose:
             print("Creating Recipe...")
-        json_path = bench.create(save_dir, percent_cpu=0.5, percent_mem=0.3, percent_io=0.2, data_footprint=1)
+        json_path = bench.create(save_dir, percent_cpu=0.5, data_footprint=1)
 
     else:
         json_path = bench.create(save_dir, create=False, path=pathlib.Path(args.path))
