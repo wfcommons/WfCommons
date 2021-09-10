@@ -69,11 +69,10 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
     parser.add_argument("--time", type=int, help="maximum compute time in seconds")
-    parser.add_argument("--percent-cpu", type=float, help="percent of threads that will be cpu")
-    parser.add_argument("--percent-mem", type=float, help="percent of threads that will be mem")
-    parser.add_argument("--percent-io", type=float, help="percent of threads that will be io")
+    parser.add_argument("--percent-cpu", type=float, help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
+    parser.add_argument("--out", help="Output filename.")
     return parser
 
 
@@ -84,8 +83,8 @@ def main():
     print("Checking if sysbench is installed.")
     check_sysbench()
 
-    save_dir = [item for item in other if "save" in item][0]
-    save_dir = pathlib.Path(save_dir.split("=")[1])
+    # save_dir = [item for item in other if "save" in item][0]
+    # save_dir = pathlib.Path(save_dir.split("=")[1])
 
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
@@ -94,12 +93,12 @@ def main():
 
     print(f"Starting {args.name}")
 
-    assert (0.0 <= args.percent_cpu + args.percent_mem + args.percent_io <= 1.0)
-
-    if args.percent_io:
-        for path in save_dir.glob("*test_file*"):
-            _, rest = path.name.split("test_file", 1)
-            path.rename(path.parent.joinpath(f"test_file{rest}"))
+    if "--data=True" in other:
+        
+        counter = 0
+        for file in this_dir.glob("*test_file*"):        
+            file.rename(file.parent.joinpath(f"test_file.{counter}"))
+            counter += 1
 
         sysbench_file_input_args = [
             arg for arg in other
@@ -107,12 +106,11 @@ def main():
         ]
 
         core = lock_core(path_locked, path_cores)
-        io_threads = int(args.percent_io * 10)
 
         print("Starting IO benchmark...")
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_input_args, f"--threads={io_threads}", "run"
+                "sysbench", "fileio", *sysbench_file_input_args, f"--threads=1", "run"
             ]
         )
         proc.wait()
@@ -129,8 +127,9 @@ def main():
 
     sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" or arg and "forced" in arg]
 
+    percent_mem = 1 - args.percent_cpu 
     cpu_threads = int(args.percent_cpu * 10)
-    mem_threads = int(args.percent_mem * 10)
+    mem_threads = int(percent_mem * 10)
 
     print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
     print("Starting CPU benchmark...")
@@ -170,18 +169,19 @@ def main():
 
     unlock_core(path_locked, path_cores, core)
 
-    if args.percent_io:
+    if "data=True" in other:
         print("Writing output...")
         sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or "forced" in arg]
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_output_args, f"--threads={io_threads}", "prepare"
+                "sysbench", "fileio", *sysbench_file_output_args, f"--threads=1", "prepare"
             ]
         )
         proc.wait()
 
         for path in this_dir.glob("*test_file*"):
-            path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
+            # path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
+            path.rename(path.parent.joinpath(f"{args.out}"))
 
 
 if __name__ == "__main__":
