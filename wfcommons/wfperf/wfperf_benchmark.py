@@ -68,11 +68,12 @@ def unlock_core(path_locked: pathlib.Path, path_cores: pathlib.Path, core: int):
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
-    parser.add_argument("--time", type=int, help="maximum compute time in seconds")
+    parser.add_argument("--time", type=int, help="Maximum compute time in seconds")
     parser.add_argument("--percent-cpu", type=float, help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--out", help="Output filename.")
+    parser.add_argument("--data", type=bool, help="Whether to process IO")
     return parser
 
 
@@ -93,16 +94,17 @@ def main():
 
     print(f"Starting {args.name}")
 
-    if "--data=True" in other:
-        
+    if args.data:
+
         counter = 0
-        for file in this_dir.glob("*test_file*"):        
+        for file in this_dir.glob("*test_file*"):
             file.rename(file.parent.joinpath(f"test_file.{counter}"))
             counter += 1
 
         sysbench_file_input_args = [
             arg for arg in other
-            if arg.startswith("--file") and not arg.startswith("--file-num") or "forced" in arg
+            if arg.startswith("--file-test-mode") or arg.startswith("--file-block-size=") or arg.startswith(
+                "--file-rw-ratio=")
         ]
 
         core = lock_core(path_locked, path_cores)
@@ -110,14 +112,14 @@ def main():
         print("Starting IO benchmark...")
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_input_args, f"--threads=1", "run"
+                "sysbench", "fileio", *sysbench_file_input_args, f"--file-num={counter}", "run"
             ]
         )
         proc.wait()
 
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_input_args, "cleanup"
+                "sysbench", "fileio", *sysbench_file_input_args, f"--file-num={counter}", "cleanup"
             ]
         )
         proc.wait()
@@ -125,31 +127,28 @@ def main():
     else:
         core = lock_core(path_locked, path_cores)
 
-    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "time" or arg and "forced" in arg]
+    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "forced" in arg]
 
-    percent_mem = 1 - args.percent_cpu 
+    percent_mem = 1 - args.percent_cpu
     cpu_threads = int(args.percent_cpu * 10)
     mem_threads = int(percent_mem * 10)
 
     print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
     print("Starting CPU benchmark...")
 
-    time = args.time
-
     print(f"{args.name} acquired core {core}")
-    if time > 100:
+    if args.time > 100:
         prog = [
-            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
         ]
         proc_cpu = subprocess.Popen(prog)
 
         os.sched_setaffinity(proc_cpu.pid, {core})
 
         print("Starting Memory benchmark...")
-        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "time" in arg or "forced" in arg]
+        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "forced" in arg]
         prog = [
-            "sysbench", "memory", "run",
-            *sysbench_mem_args, f"--threads={mem_threads}"
+            "sysbench", "memory", *sysbench_mem_args, f"--threads={mem_threads}", f"--time={args.time}", "run"
         ]
         proc_mem = subprocess.Popen(prog)
 
@@ -169,18 +168,17 @@ def main():
 
     unlock_core(path_locked, path_cores, core)
 
-    if "data=True" in other:
+    if args.data:
         print("Writing output...")
-        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file") or "forced" in arg]
+        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")]
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_output_args, f"--threads=1", "prepare"
+                "sysbench", "fileio", *sysbench_file_output_args, "--threads=1", "prepare"
             ]
         )
         proc.wait()
 
         for path in this_dir.glob("*test_file*"):
-            # path.rename(path.parent.joinpath(f"{save_dir}/{args.name}_{path.name}"))
             path.rename(path.parent.joinpath(f"{args.out}"))
 
 
