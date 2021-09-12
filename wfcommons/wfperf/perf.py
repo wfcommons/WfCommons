@@ -17,7 +17,7 @@ import subprocess
 import uuid
 
 from logging import Logger
-from typing import Dict, Optional, Union, List, Type
+from typing import Dict, Optional, List, Type
 
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
@@ -26,18 +26,18 @@ this_dir = pathlib.Path(__file__).resolve().parent
 
 
 class WorkflowBenchmark:
-    """
+    """Generate a workflow benchmark instance based on a workflow recipe (WfChefWorkflowRecipe)
 
-    :param recipe:
+    :param recipe: A workflow recipe.
     :type recipe: Type[WfChefWorkflowRecipe]
-    :param num_tasks:
+    :param num_tasks: Total number of tasks in the benchmark workflow.
     :type num_tasks: int
     :param logger: The logger where to log information/warning or errors.
     :type logger: Optional[Logger]
     """
 
     def __init__(self, recipe: Type[WfChefWorkflowRecipe], num_tasks: int, logger: Optional[Logger] = None) -> None:
-        """Create an object that represents a workflow benchmark."""
+        """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
@@ -45,18 +45,52 @@ class WorkflowBenchmark:
     def create(self,
                save_dir: pathlib.Path,
                percent_cpu: float = 0.6,
-               data_footprint: int = 1,
-               test_mode: str = "seqwr",
-               mem_total_size: str = "1000000G",
-               block_size: str = "1K",
-               scope: str = "global",
-               max_prime: int = 10000,
-               file_block_size: int = 16384,
-               rw_ratio: float = 1.5,
+               data_footprint: int = 100,
                max_time: int = 150,
+               max_prime: int = 10000,
+               mem_total_size: str = "1000000G",
+               mem_block_size: str = "1K",
+               mem_scope: str = "global",
+               io_test_mode: str = "seqwr",
+               io_block_size: int = 16384,
+               io_rw_ratio: float = 1.5,
+               lock_files_folder: Optional[pathlib.Path] = None,
                create: bool = True,
                path: Optional[pathlib.Path] = None) -> pathlib.Path:
+        """Create a workflow benchmark.
 
+        :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
+        :type save_dir: pathlib.Path
+        :param percent_cpu:
+        :type percent_cpu: float
+        :param data_footprint: Size of input/output data files per workflow task (in MB).
+        :type data_footprint: int
+        :param max_time:
+        :type max_time: int
+        :param max_prime:
+        :type max_prime: int
+        :param mem_total_size:
+        :type mem_total_size: str
+        :param mem_block_size:
+        :type mem_block_size: str
+        :param mem_scope:
+        :type mem_scope: str
+        :param io_test_mode:
+        :type io_test_mode: str
+        :param io_block_size:
+        :type io_block_size: int
+        :param io_rw_ratio:
+        :type io_rw_ratio: float
+        :param lock_files_folder:
+        :type lock_files_folder: Optional[pathlib.Path]
+        :param create:
+        :type create: bool
+        :param path:
+        :type path: Optional[pathlib.Path]
+
+        :return: The path to the workflow benchmark JSON instance.
+        :rtype: pathlib.Path
+        """
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
@@ -69,30 +103,44 @@ class WorkflowBenchmark:
             workflow.write_json(str(workflow_savepath))
             wf = json.loads(workflow_savepath.read_text())
         else:
+            # TODO: should we keep this, or is it only for testing?
             wf = json.loads(path.read_text())
 
         # Creating the lock files
-        self.logger.debug("Creating lock files.")
-        with save_dir.joinpath("cores.txt").open("w+") as fp, save_dir.joinpath("cores.txt.lock").open("w+") as fpl:
-            pass
+        create_lock_files = True
+        if lock_files_folder:
+            if lock_files_folder.exists():
+                self.logger.debug(f"Creating lock files at: {lock_files_folder.resolve()}")
+            else:
+                self.logger.warning(f"Could not find folder to create lock files: {lock_files_folder.resolve()}\n"
+                                    f"You will need to create them manually: 'cores.txt.lock' and 'cores.txt'")
+                create_lock_files = False
+        else:
+            self.logger.warning("No lock files folder provided. Benchmark workflow will be generated using '/tmp' "
+                                "as the folder for creating lock files.")
+            lock_files_folder = pathlib.Path("/tmp")
 
-        lock = save_dir.joinpath("cores.txt.lock")
-        cores = save_dir.joinpath("cores.txt")
+        lock = lock_files_folder.joinpath("cores.txt.lock")
+        cores = lock_files_folder.joinpath("cores.txt")
+        if create_lock_files:
+            with lock.open("w+"), cores.open("w+"):
+                pass
 
+        # whether to generate IO
         data = "--data" if data_footprint else ""
 
         # Setting the parameters for the arguments section of the JSON
         params = [data,
-                  f"--file-test-mode={test_mode}",
-                  f"--file-total-size={data_footprint}G",
-                  f"--file-block-size={file_block_size}",
-                  f"--file-rw-ratio={rw_ratio}",
+                  f"--file-test-mode={io_test_mode}",
+                  f"--file-total-size={data_footprint}M",
+                  f"--file-block-size={io_block_size}",
+                  f"--file-rw-ratio={io_rw_ratio}",
                   "--file-num=1",
                   "--forced-shutdown=0",
                   f"--path-lock={lock}",
                   f"--path-cores={cores}",
-                  f"--memory-block-size={block_size}",
-                  f"--memory-scope={scope}",
+                  f"--memory-block-size={mem_block_size}",
+                  f"--memory-scope={mem_scope}",
                   f"--memory-total-size={mem_total_size}",
                   f"--cpu-max-prime={max_prime}",
                   f"--percent-cpu={percent_cpu}",
@@ -117,10 +165,10 @@ class WorkflowBenchmark:
         add_io_to_json(wf, file_size)
 
         self.logger.debug("Generating system files.")
-        generate_sys_data(num_sys_files, file_size)
+        generate_sys_data(num_sys_files, file_size, save_dir)
 
-        self.logger.debug("Removing system files.")
-        cleanup_sys_files()
+        # self.logger.debug("Removing system files.")
+        # cleanup_sys_files()
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
@@ -159,23 +207,32 @@ class WorkflowBenchmark:
             raise FileNotFoundError("Not able to find the executable.")
 
 
-def generate_sys_data(num_files: int, file_total_size: int, test_mode: str = "seqwr"):
+def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Path):
     """Generate workflow's input data
+
+    :param num_files:
+    :type num_files: int
+    :param file_total_size:
+    :type file_total_size: int
+    :param save_dir: Folder to generate the workflow benchmark's input data files.
+    :type save_dir: pathlib.Path
     """
     params = [
         f"--file-num={num_files}",
-        f"--file-total-size={file_total_size}G",
-        f"--file-test-mode={test_mode}"
+        f"--file-total-size={num_files * file_total_size}M"
     ]
     proc = subprocess.Popen(["sysbench", "fileio", *params, "prepare"], stdout=subprocess.PIPE)
     proc.wait()
     out, _ = proc.communicate()
     if not out:
-        raise FileNotFoundError("Couldn't create files. Check parameters.")
+        raise FileNotFoundError("Could not create files. Check parameters.")
 
     # have to change the name back to test_file on bash
+    data_path = save_dir.joinpath("data")
+    data_path.mkdir(exist_ok=True, parents=True)
+
     for t in glob.glob("test_file.*"):
-        os.rename(t, f"sys_{t}")
+        os.rename(t, data_path.joinpath(f"sys_{t}"))
 
 
 def cleanup_sys_files():
