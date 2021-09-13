@@ -73,7 +73,8 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--out", help="Output filename.")
-    parser.add_argument("--data", type=bool, help="Whether to process IO")
+    parser.add_argument("--data", action='store_true', help="Whether to process IO")
+    parser.set_defaults(data=False)
     return parser
 
 
@@ -83,9 +84,6 @@ def main():
 
     print("Checking if sysbench is installed.")
     check_sysbench()
-
-    # save_dir = [item for item in other if "save" in item][0]
-    # save_dir = pathlib.Path(save_dir.split("=")[1])
 
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)

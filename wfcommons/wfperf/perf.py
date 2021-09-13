@@ -45,17 +45,17 @@ class WorkflowBenchmark:
     def create(self,
                save_dir: pathlib.Path,
                percent_cpu: float = 0.6,
-               data_footprint: int = 100,
-               max_time: int = 150,
-               max_prime: int = 10000,
-               mem_total_size: str = "1000000G",
-               mem_block_size: str = "1K",
-               mem_scope: str = "global",
-               io_test_mode: str = "seqwr",
-               io_block_size: int = 16384,
-               io_rw_ratio: float = 1.5,
+               data_footprint: Optional[int] = None,
+               max_time: Optional[int] = 150,
+               max_prime: Optional[int] = 10000,
+               mem_total_size: Optional[str] = "1000000G",
+               mem_block_size: Optional[str] = "1K",
+               mem_scope: Optional[str] = "global",
+               io_test_mode: Optional[str] = "seqwr",
+               io_block_size: Optional[int] = 16384,
+               io_rw_ratio: Optional[float] = 1.5,
                lock_files_folder: Optional[pathlib.Path] = None,
-               create: bool = True,
+               create: Optional[bool] = True,
                path: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -64,27 +64,27 @@ class WorkflowBenchmark:
         :param percent_cpu:
         :type percent_cpu: float
         :param data_footprint: Size of input/output data files per workflow task (in MB).
-        :type data_footprint: int
+        :type data_footprint: Optional[int]
         :param max_time:
-        :type max_time: int
+        :type max_time: Optional[int]
         :param max_prime:
-        :type max_prime: int
+        :type max_prime: Optional[int]
         :param mem_total_size:
-        :type mem_total_size: str
+        :type mem_total_size: Optional[str]
         :param mem_block_size:
-        :type mem_block_size: str
+        :type mem_block_size: Optional[str]
         :param mem_scope:
-        :type mem_scope: str
+        :type mem_scope: Optional[str]
         :param io_test_mode:
-        :type io_test_mode: str
+        :type io_test_mode: Optional[str]
         :param io_block_size:
-        :type io_block_size: int
+        :type io_block_size: Optional[int]
         :param io_rw_ratio:
-        :type io_rw_ratio: float
+        :type io_rw_ratio: Optional[float]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
         :param create:
-        :type create: bool
+        :type create: Optional[bool]
         :param path:
         :type path: Optional[pathlib.Path]
 
@@ -126,17 +126,8 @@ class WorkflowBenchmark:
             with lock.open("w+"), cores.open("w+"):
                 pass
 
-        # whether to generate IO
-        data = "--data" if data_footprint else ""
-
         # Setting the parameters for the arguments section of the JSON
-        params = [data,
-                  f"--file-test-mode={io_test_mode}",
-                  f"--file-total-size={data_footprint}M",
-                  f"--file-block-size={io_block_size}",
-                  f"--file-rw-ratio={io_rw_ratio}",
-                  "--file-num=1",
-                  "--forced-shutdown=0",
+        params = ["--forced-shutdown=0",
                   f"--path-lock={lock}",
                   f"--path-cores={cores}",
                   f"--memory-block-size={mem_block_size}",
@@ -145,6 +136,16 @@ class WorkflowBenchmark:
                   f"--cpu-max-prime={max_prime}",
                   f"--percent-cpu={percent_cpu}",
                   f"--time={max_time}"]
+
+        # whether to generate IO
+        if data_footprint:
+            params.extend([
+                "--data",
+                f"--file-test-mode={io_test_mode}",
+                f"--file-total-size={data_footprint}M",
+                f"--file-block-size={io_block_size}",
+                f"--file-rw-ratio={io_rw_ratio}"
+            ])
 
         wf["name"] = name
         for job in wf["workflow"]["jobs"]:
@@ -158,17 +159,18 @@ class WorkflowBenchmark:
 
         num_sys_files, num_total_files = input_files(wf)
 
-        self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
-        self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-        file_size = round(data_footprint / num_total_files)
-        self.logger.debug(f"Every input/output file is of size: {file_size}")
-        add_io_to_json(wf, file_size)
+        if data_footprint:
+            self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
+            self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
+            file_size = round(data_footprint / num_total_files)
+            self.logger.debug(f"Every input/output file is of size: {file_size}")
+            add_io_to_json(wf, file_size)
 
-        self.logger.debug("Generating system files.")
-        generate_sys_data(num_sys_files, file_size, save_dir)
+            self.logger.debug("Generating system files.")
+            generate_sys_data(num_sys_files, file_size, save_dir)
 
-        # self.logger.debug("Removing system files.")
-        # cleanup_sys_files()
+            # self.logger.debug("Removing system files.")
+            # cleanup_sys_files()
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
