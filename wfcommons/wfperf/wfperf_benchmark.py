@@ -171,7 +171,7 @@ def main():
         sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")]
         proc = subprocess.Popen(
             [
-                "sysbench", "fileio", *sysbench_file_output_args, "--threads=1", "prepare"
+                "sysbench", "fileio", *sysbench_file_output_args, "--file-num=1", "--threads=1", "prepare"
             ]
         )
         proc.wait()

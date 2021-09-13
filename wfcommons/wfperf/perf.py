@@ -137,16 +137,6 @@ class WorkflowBenchmark:
                   f"--percent-cpu={percent_cpu}",
                   f"--time={max_time}"]
 
-        # whether to generate IO
-        if data_footprint:
-            params.extend([
-                "--data",
-                f"--file-test-mode={io_test_mode}",
-                f"--file-total-size={data_footprint}M",
-                f"--file-block-size={io_block_size}",
-                f"--file-rw-ratio={io_rw_ratio}"
-            ])
-
         wf["name"] = name
         for job in wf["workflow"]["jobs"]:
             job["files"] = []
@@ -159,11 +149,22 @@ class WorkflowBenchmark:
 
         num_sys_files, num_total_files = input_files(wf)
 
+        # whether to generate IO
         if data_footprint:
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
             file_size = round(data_footprint / num_total_files)
             self.logger.debug(f"Every input/output file is of size: {file_size}")
+
+            for job in wf["workflow"]["jobs"]:
+                job["command"]["arguments"].extend([
+                    "--data",
+                    f"--file-test-mode={io_test_mode}",
+                    f"--file-total-size={file_size}M",
+                    f"--file-block-size={io_block_size}",
+                    f"--file-rw-ratio={io_rw_ratio}"
+                ])
+
             add_io_to_json(wf, file_size)
 
             self.logger.debug("Generating system files.")
