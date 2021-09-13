@@ -54,10 +54,10 @@ class Workflow(nx.DiGraph):
         """Create an object of a workflow representation."""
         self.description = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
         self.created_at = str(datetime.utcnow().isoformat())
-        self.schema_version = '1.2'
-        self.wms_name = 'WfCommons' if not wms_name else wms_name
+        self.schema_version = "1.2"
+        self.wms_name = "WfCommons" if not wms_name else wms_name
         self.wms_version = str(__version__) if not wms_version else wms_version
-        self.wms_url = 'https://docs.wfcommons.org/en/v{}/'.format(__version__) if not wms_url else wms_url
+        self.wms_url = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
         self.executed_at = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z") if not executed_at else executed_at
         self.makespan = makespan
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
@@ -89,8 +89,7 @@ class Workflow(nx.DiGraph):
             'workflow': {
                 'executedAt': self.executed_at,
                 'makespan': self.makespan,
-                'jobs': workflow_tasks,
-                'machines': workflow_machines
+                'jobs': workflow_tasks
             }
         }
 
@@ -119,9 +118,12 @@ class Workflow(nx.DiGraph):
                 machines_list.append(task.machine.name)
                 workflow_machines.append(task.machine.as_dict())
 
+        if workflow_machines:
+            workflow_json['workflow']['machines'] = workflow_machines
+
         # write to file
         if not json_filename:
-            json_filename = '{}.json'.format(self.name.lower())
+            json_filename = f'{self.name.lower()}.json'
         with open(json_filename, 'w') as outfile:
             outfile.write(json.dumps(workflow_json, indent=4))
 
@@ -132,7 +134,7 @@ class Workflow(nx.DiGraph):
         :type dot_filename: str
         """
         if not dot_filename:
-            dot_filename = "{}.dot".format(self.name.lower())
+            dot_filename = f"{self.name.lower()}.dot"
         nx.nx_agraph.write_dot(self, dot_filename)
 
     def to_nx_digraph(self) -> nx.DiGraph:
