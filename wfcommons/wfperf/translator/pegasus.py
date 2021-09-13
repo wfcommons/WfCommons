@@ -44,12 +44,12 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file_name: Optional[str] = None) -> None:
+    def translate(self, output_file_name: str) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
         :param output_file_name: The name of the output file (e.g., workflow.py).
-        :type output_file_name: Optional[str]
+        :type output_file_name: str
         """
         # overall workflow
         self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \

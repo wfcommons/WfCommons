@@ -47,26 +47,23 @@ class Translator(ABC):
                 self.parent_task_names.append(node['name'])
 
     @abstractmethod
-    def translate(self, output_file_name: Optional[str] = None) -> None:
+    def translate(self, output_file_name: str) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into an actual workflow application.
 
         :param output_file_name: The name of the output file.
-        :type output_file_name: Optional[str]
+        :type output_file_name: str
         """
 
-    def _write_output_file(self, contents: str, output_file_name: Optional[str] = None) -> None:
+    def _write_output_file(self, contents: str, output_file_name: str) -> None:
         """
         Write the translated content to a file.
 
         :param contents: Contents to be written to the output file.
         :type contents: str
-        :param output_file_name: The name of the output file (e.g., workflow.py).
-        :type output_file_name: Optional[str]
+        :param output_file_name: The name of the output file.
+        :type output_file_name: str
         """
-        if not output_file_name:
-            output_file_name = self.workflow_json_file_path.name.replace('.json', '.py')
-
         # file will be written to the same folder as for the original JSON instance.
         out_file = self.workflow_json_file_path.parent.joinpath(output_file_name)
 
