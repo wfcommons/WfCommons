@@ -8,7 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import uuid
+import pathlib
 
 from logging import Logger
 from typing import Optional
@@ -18,19 +18,20 @@ from ...common.file import FileLink
 
 
 class PegasusTranslator(Translator):
-    """A WfFormat parser for creating Pegasus workflow applications.
+    """
+    A WfFormat parser for creating Pegasus workflow applications.
 
-    :param workflow_json_file:
-    :type workflow_json_file: str
+    :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
+    :type workflow_json_file_path: pathlib.Path
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
     def __init__(self,
-                 workflow_json_file: str,
+                 workflow_json_file_path: pathlib.Path,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
-        super().__init__(workflow_json_file, logger)
+        super().__init__(workflow_json_file_path, logger)
 
         self.script = "import os\n" \
                       "from Pegasus.api import *\n\n\n" \
@@ -43,12 +44,12 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file: str) -> None:
+    def translate(self, output_file_name: Optional[str] = None) -> None:
         """
-        Translates a workflow description (WfFormat) into a Pegasus workflow application.
+        Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
-        :param output_file: The name of the output file (e.g., workflow.py).
-        :type output_file: str
+        :param output_file_name: The name of the output file (e.g., workflow.py).
+        :type output_file_name: Optional[str]
         """
         # overall workflow
         self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
@@ -82,7 +83,7 @@ class PegasusTranslator(Translator):
                     self.script += f"rc.add_replica('local', '{file.name}', 'file://' + os.getcwd() + " \
                                    f"'/data/{file.name}')\n"
                     self.script += f"{self.tasks_map[task_name]}.add_inputs(in_file_{self.task_counter})\n" \
-                                   f"print('{file.name}')\n"
+                                   f"print('Using input data: ' + os.getcwd() + '/data/{file.name}')\n"
 
         self.script += "\n"
 
@@ -92,8 +93,7 @@ class PegasusTranslator(Translator):
                        f"wf.write('{self.instance.name}-benchmark-workflow.yml')\n"
 
         # write script to file
-        with open(output_file, 'w') as out:
-            out.write(self.script)
+        self._write_output_file(self.script, output_file_name)
 
     def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
         """
