@@ -155,7 +155,7 @@ def main():
         proc_mem = None
         proc_cpu = subprocess.Popen(
             [
-                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", "run"
+                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
             ]
         )
         os.sched_setaffinity(proc_cpu.pid, {core})
