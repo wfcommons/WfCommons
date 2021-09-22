@@ -110,15 +110,22 @@ class PegasusTranslator(Translator):
             self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
             task.args.insert(0, task_name.split("_")[0])
 
+            # find children
+            children = None
+            for node in self.instance.instance['workflow']['jobs']:
+                if node['name'] == task_name:
+                    children = node['children']
+
             # output file
             for file in task.files:
                 if file.link == FileLink.OUTPUT:
                     out_file = file.name
                     task.args.append(f"--out={out_file}")
+                    stage_out = "True" if len(children) == 0 else "False"
                     self.script += f"out_file_{self.task_counter} = File('{out_file}')\n"
                     self.script += f"task_output_files['{job_name}'] = out_file_{self.task_counter}\n"
                     self.script += f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
-                                   "stage_out=True, register_replica=True)\n"
+                                   f"stage_out={stage_out}, register_replica={stage_out})\n"
 
             # arguments
             args = ", ".join(f"'{a}'" for a in task.args)
@@ -129,10 +136,8 @@ class PegasusTranslator(Translator):
             self.parsed_tasks.append(task_name)
             self.tasks_map[task_name] = job_name
 
-            for node in self.instance.instance['workflow']['jobs']:
-                if node['name'] == task_name:
-                    for child_task_name in node['children']:
-                        self._add_task(child_task_name, job_name)
+            for child_task_name in children:
+                self._add_task(child_task_name, job_name)
 
         if parent_task:
             self.script += f"if '{parent_task}' in task_output_files:\n"
