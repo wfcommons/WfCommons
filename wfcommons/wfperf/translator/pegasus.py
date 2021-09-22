@@ -135,5 +135,6 @@ class PegasusTranslator(Translator):
                         self._add_task(child_task_name, job_name)
 
         if parent_task:
-            self.script += f"{self.tasks_map[task_name]}.add_inputs(task_output_files['{parent_task}'])\n"
+            self.script += f"if '{parent_task}' in task_output_files:\n"
+            self.script += f"  {self.tasks_map[task_name]}.add_inputs(task_output_files['{parent_task}'])\n"
             self.script += f"wf.add_dependency({self.tasks_map[task_name]}, parents=[{parent_task}])\n\n"
