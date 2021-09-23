@@ -224,7 +224,7 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
         f"--file-num={num_files}",
         f"--file-total-size={num_files * file_total_size}M"
     ]
-    proc = subprocess.Popen(["sysbench", "fileio", *params, "prepare"], stdout=subprocess.PIPE)
+    proc = subprocess.Popen(["sysbench", "fileio", *params, "--verbosity=2", "prepare"], stdout=subprocess.PIPE)
     proc.wait()
     out, _ = proc.communicate()
     if not out:
