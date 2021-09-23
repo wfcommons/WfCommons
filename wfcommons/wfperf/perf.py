@@ -227,7 +227,7 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
     proc = subprocess.Popen(["sysbench", "fileio", *params, "--verbosity=2", "prepare"], stdout=subprocess.PIPE)
     proc.wait()
     out, _ = proc.communicate()
-    if not out:
+    if proc.returncode != 0:
         raise FileNotFoundError("Could not create files. Check parameters.")
 
     # have to change the name back to test_file on bash
