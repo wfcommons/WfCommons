@@ -52,7 +52,7 @@ class WorkflowGenerator:
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
         self.logger.info(
-            "Generated a synthetic workflow with {} tasks".format(self.workflow_recipe.task_id_counter - 1))
+            "Generated a synthetic workflow with {} tasks".format(len(workflow.nodes)))
         return workflow
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
