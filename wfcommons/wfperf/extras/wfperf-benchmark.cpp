@@ -7,6 +7,7 @@
  * (at your option) any later version.
  */
 
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <functional>
@@ -39,7 +40,6 @@ void computeGoodPi(long work) {
 
 }
 
-
 /**
  * This function computes pi using work trials for a Monte Carlo method. It's
  * TERRIBLE because it uses a custom, bad, number generator, which has too
@@ -47,11 +47,11 @@ void computeGoodPi(long work) {
  * is that it does not cause extra memory references, and thus keeps this benchmark
  * 100% CPU intensive.
  */
-void computeTerriblePi(long work) {
-    long rng = (long) &work;
+void computeTerriblePi(unsigned long work) {
+    unsigned long rng = (unsigned long) &work;
     double terrible_pi = 0.0;
     double x_value, y_value;
-    for (long sample = 0; sample < work; sample++) {
+    for (unsigned long sample = 0; sample < work; sample++) {
         rng = (((rng * 214013L + 2531011L) >> 16) & 32767);
         x_value = -0.5 + (rng % PRECISION) / (double) PRECISION;
         rng = (((rng * 214013L + 2531011L) >> 16) & 32767);
@@ -61,31 +61,33 @@ void computeTerriblePi(long work) {
     //   std::cout << "terrible pi = " << (terrible_pi/(double)work)/ (0.5*0.5) << "\n";
 }
 
-/**This function randomly accesses positions in an array much bigger than the cache and sums 1 unit to it.*/
-void computeMemAccess(long work) {
-    long max = 7000000000;
-    long *arr = new long[max];
+/**
+ * This function randomly accesses positions in an array much bigger than
+ * the cache and sums 1 unit to it.
+ */
+void computeMemAccess(unsigned long work) {
+    unsigned long max = 7000000000;
+    unsigned long *arr = new unsigned long[max];
     srandom(time(nullptr));
-    for (long i = 0; i < work; i++) {
+    for (unsigned long i = 0; i < work; i++) {
         arr[random() % max]++;
     }
 }
 
-int getCmdOption(char **begin, char **end, const std::string &option) {
+long getCmdOption(char **begin, char **end, const std::string &option) {
     char **itr = std::find(begin, end, option);
     if (itr != end && ++itr != end) {
-        return std::stoi(*itr);
+        return std::stol(*itr);
     }
     return 0;
 }
 
 int main(int argc, char **argv) {
-
     auto start = std::chrono::system_clock::now();
 
     // process command-line args
-    int cpu_work = getCmdOption(argv, argv + argc, "--cpu-work");
-    int mem_work = getCmdOption(argv, argv + argc, "--mem-work");
+    long cpu_work = getCmdOption(argv, argv + argc, "--cpu-work");
+    long mem_work = getCmdOption(argv, argv + argc, "--mem-work");
 
     // sanity check
     if (cpu_work > 0 && mem_work > 0) {
