@@ -10,8 +10,8 @@ import subprocess
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
-    parser.add_argument("-l", "--lock", help="Path to lock file.")
-    parser.add_argument("-n", "--num-cores", help="Path to cores file.")
+    # parser.add_argument("-l", "--lock", help="Path to lock file.")
+    # parser.add_argument("-n", "--num-cores", help="Path to cores file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--path-lock", help="Path to lock file.")
 
