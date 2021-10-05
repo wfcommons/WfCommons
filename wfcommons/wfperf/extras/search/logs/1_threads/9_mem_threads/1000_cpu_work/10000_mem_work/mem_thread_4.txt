@@ -1,0 +1,39 @@
+Command terminated by signal 2
+0.54user 3.13system 0:57.29elapsed 6%CPU (0avgtext+0avgdata 3015852maxresident)k
+520inputs+0outputs (52major+1529153minor)pagefaults 0swaps
+Command terminated by signal 2
+0.70user 3.99system 2:37.64elapsed 2%CPU (0avgtext+0avgdata 2923420maxresident)k
+31272inputs+0outputs (3586major+1588247minor)pagefaults 0swaps
+Command terminated by signal 2
+0.69user 4.15system 3:10.02elapsed 2%CPU (0avgtext+0avgdata 3302392maxresident)k
+32384inputs+0outputs (3672major+1773632minor)pagefaults 0swaps
+Command terminated by signal 2
+0.64user 4.26system 3:48.48elapsed 2%CPU (0avgtext+0avgdata 2929228maxresident)k
+47600inputs+0outputs (5676major+1607085minor)pagefaults 0swaps
+Memory: 1.4702
+0.94user 0.58system 0:01.57elapsed 97%CPU (0avgtext+0avgdata 550348maxresident)k
+0inputs+0outputs (0major+273568minor)pagefaults 0swaps
+Memory: 1.4712
+0.92user 0.59system 0:01.53elapsed 99%CPU (0avgtext+0avgdata 550332maxresident)k
+0inputs+8outputs (0major+273564minor)pagefaults 0swaps
+Memory: 1.70713
+1.03user 0.77system 0:01.80elapsed 99%CPU (0avgtext+0avgdata 784744maxresident)k
+0inputs+0outputs (0major+390751minor)pagefaults 0swaps
+Command terminated by signal 2
+0.56user 3.92system 3:10.39elapsed 2%CPU (0avgtext+0avgdata 2862632maxresident)k
+56808inputs+0outputs (6767major+1528716minor)pagefaults 0swaps
+Memory: 3.17869
+1.32user 2.14system 0:03.47elapsed 99%CPU (0avgtext+0avgdata 2347176maxresident)k
+0inputs+0outputs (0major+1172001minor)pagefaults 0swaps
+Command terminated by signal 2
+0.66user 3.61system 1:12.22elapsed 5%CPU (0avgtext+0avgdata 2918992maxresident)k
+12640inputs+0outputs (1449major+1473795minor)pagefaults 0swaps
+Memory: 27.6142
+1.83user 4.35system 0:28.20elapsed 21%CPU (0avgtext+0avgdata 3127788maxresident)k
+40328inputs+8outputs (1963major+1798441minor)pagefaults 0swaps
+Memory: 18.8781
+1.51user 3.34system 0:19.39elapsed 25%CPU (0avgtext+0avgdata 3127372maxresident)k
+8808inputs+8outputs (365major+1641219minor)pagefaults 0swaps
+Memory: 3.26202
+1.39user 2.15system 0:03.56elapsed 99%CPU (0avgtext+0avgdata 2347200maxresident)k
+24inputs+8outputs (1major+1172009minor)pagefaults 0swaps

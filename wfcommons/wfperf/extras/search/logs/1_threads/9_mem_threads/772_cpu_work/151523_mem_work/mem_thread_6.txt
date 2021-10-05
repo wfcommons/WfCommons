@@ -1,0 +1,3 @@
+Memory: 40.86
+17.55user 7.04system 0:41.24elapsed 59%CPU (0avgtext+0avgdata 2737116maxresident)k
+31304inputs+8outputs (3450major+2448680minor)pagefaults 0swaps

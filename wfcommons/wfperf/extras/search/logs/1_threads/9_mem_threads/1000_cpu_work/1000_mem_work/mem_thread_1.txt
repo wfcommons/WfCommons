@@ -1,0 +1,9 @@
+Command terminated by signal 2
+0.59user 3.95system 1:41.15elapsed 4%CPU (0avgtext+0avgdata 3225748maxresident)k
+1696inputs+0outputs (177major+1667567minor)pagefaults 0swaps
+Memory: 2.70813
+0.48user 2.68system 0:03.16elapsed 100%CPU (0avgtext+0avgdata 2834104maxresident)k
+0inputs+8outputs (0major+1415456minor)pagefaults 0swaps
+Command terminated by signal 2
+0.87user 6.08system 5:56.05elapsed 1%CPU (0avgtext+0avgdata 2705236maxresident)k
+67432inputs+0outputs (8132major+1645055minor)pagefaults 0swaps
