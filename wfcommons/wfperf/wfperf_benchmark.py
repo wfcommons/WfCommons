@@ -19,14 +19,6 @@ from filelock import FileLock
 this_dir = pathlib.Path(__file__).resolve().parent
 
 
-def check_sysbench():
-    """Check if sysbench is installed.
-    """
-    proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
-    out, _ = proc.communicate()
-    if not out:
-        raise FileNotFoundError("Sysbench not found. Please install sysbench: https://github.com/aakopytov/sysbench")
-
 
 def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
     """Lock cores in use.
@@ -64,6 +56,19 @@ def unlock_core(path_locked: pathlib.Path, path_cores: pathlib.Path, core: int):
         finally:
             lock.release()
 
+def cpu_mem_benchmark(percent_cpu:float = 0.5, percent_mem:float = 0.5, timeout:int = 30, core:int = 7):
+    """ Runs cpu and mem benchmark.
+    """
+    cpu = int(percent_cpu*10)
+    mem = int(percent_mem*10)
+    num_cpus = os.cpu_count()
+
+    prog = ["stress", "--cpu", str(cpu), "--vm", str(mem), "timeout", f"{timeout}s")]
+    proc = subprocess.Popen(prog)
+    os.sched_setaffinity(proc.pid, {core})
+    proc.wait()
+
+    
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -81,9 +86,6 @@ def get_parser() -> argparse.ArgumentParser:
 def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
-
-    print("Checking if sysbench is installed.")
-    check_sysbench()
 
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
@@ -122,48 +124,13 @@ def main():
         )
         proc.wait()
 
-    else:
-        core = lock_core(path_locked, path_cores)
-
-    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "forced" in arg]
-
+    core = lock_core(path_locked, path_cores)
     percent_mem = 1 - args.percent_cpu
-    cpu_threads = int(args.percent_cpu * 10)
-    mem_threads = int(percent_mem * 10)
 
-    print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
-    print("Starting CPU benchmark...")
-
+    print("Starting CPU and Memory benchmark...")
     print(f"{args.name} acquired core {core}")
-    if args.time > 100:
-        prog = [
-            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
-        ]
-        proc_cpu = subprocess.Popen(prog)
-
-        os.sched_setaffinity(proc_cpu.pid, {core})
-
-        print("Starting Memory benchmark...")
-        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "forced" in arg]
-        prog = [
-            "sysbench", "memory", *sysbench_mem_args, f"--threads={mem_threads}", f"--time={args.time}", "run"
-        ]
-        proc_mem = subprocess.Popen(prog)
-
-        os.sched_setaffinity(proc_mem.pid, {core})
-    else:
-        proc_mem = None
-        proc_cpu = subprocess.Popen(
-            [
-                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
-            ]
-        )
-        os.sched_setaffinity(proc_cpu.pid, {core})
-
-    proc_cpu.wait()
-    if proc_mem is not None:
-        proc_mem.kill()
-
+    
+    cpu_mem_benchmark(percent_cpu=args.percent_cpu, percent_mem=args.percent_mem, core=core, timeout=args.time)
     unlock_core(path_locked, path_cores, core)
 
     if args.data:

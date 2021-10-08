@@ -11,6 +11,12 @@ from typing import List, Tuple
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
+program_real = {
+                "individuals": ["/home/tgcoleman/1000genome-sequential/bin/individuals.py",
+                                "/home/tgcoleman/1000genome-sequential/data/20130502/ALL.chr1.250000.vcf",
+                                "1","1","1001", "3000"]
+                }
+
 def cpu_call(work: float, output: pathlib.Path) -> float:
     prog = ["./wfperf-benchmark", "--cpu-work", str(work)]
     output.parent.mkdir(exist_ok=True, parents=True)
@@ -120,10 +126,7 @@ def real_stress_test():
         proc_mem = subprocess.Popen(prog)
         os.sched_setaffinity(proc_mem.pid, {core})
     start = time.time()
-    prog = ["/home/tgcoleman/Montage/bin/mViewer", "-ct", "1", "-gray", 
-            "/home/tgcoleman/montage-workflow-for-tina/data/1-mosaic.fits", 
-            "-1s", "max", "gaussian", "-png", 
-            "/home/tgcoleman/montage-workflow-for-tina/data/1-mosaic.png" ]
+    prog = program_real["individuals"]
     proc_real = subprocess.Popen(prog)
     proc_real.wait()
     duration = time.time() - start
