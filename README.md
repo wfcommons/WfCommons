@@ -80,11 +80,11 @@ that paper, as it provides a recent and general overview on the framework.
     title = {{WfCommons: A Framework for Enabling Scientific Workflow Research and Development}},
     author = {Coleman, Tain\~a and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
     journal = {Future Generation Computer Systems},
-    volume = {},
+    volume = {128},
     number = {},
-    pages = {},
+    pages = {16--27},
     doi = {10.1016/j.future.2021.09.043},
-    year = {2021},
+    year = {2022},
 }
 ```
 
