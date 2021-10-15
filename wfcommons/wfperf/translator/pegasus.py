@@ -8,28 +8,30 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import uuid
+import pathlib
 
 from logging import Logger
 from typing import Optional
 
 from .abstract_translator import Translator
+from ...common.file import FileLink
 
 
 class PegasusTranslator(Translator):
-    """A WfFormat parser for creating Pegasus workflow applications.
+    """
+    A WfFormat parser for creating Pegasus workflow applications.
 
-    :param workflow_json_file:
-    :type workflow_json_file: str
+    :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
+    :type workflow_json_file_path: pathlib.Path
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
     def __init__(self,
-                 workflow_json_file: str,
+                 workflow_json_file_path: pathlib.Path,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
-        super().__init__(workflow_json_file, logger)
+        super().__init__(workflow_json_file_path, logger)
 
         self.script = "import os\n" \
                       "from Pegasus.api import *\n\n\n" \
@@ -42,51 +44,56 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file: str) -> None:
+    def translate(self, output_file_name: str) -> None:
         """
-        Translates a workflow description (WfFormat) into a Pegasus workflow application.
+        Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
-        :param output_file: The name of the output file (e.g., workflow.py).
-        :type output_file: str
+        :param output_file_name: The name of the output file (e.g., workflow.py).
+        :type output_file_name: str
         """
         # overall workflow
-        self.script += "wf = Workflow('{}', infer_dependencies=True)\n" \
+        self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
                        "tc = TransformationCatalog()\n" \
-                       "rc = ReplicaCatalog()\n\n".format(self.instance.name)
+                       "rc = ReplicaCatalog()\n\n"
         self.script += "task_output_files = {}\n\n"
 
         # transformation catalog
-        self.script += "full_path = which('sys_test.py')\n" \
-                       "if full_path is None:\n" \
-                       "    raise RuntimeError('sys_test.py is not in the $PATH')\n" \
-                       "base_dir = os.path.dirname(full_path)\n" \
-                       "transformation = Transformation('wfperf', site='local',\n" \
-                       "                                pfn=os.path.join(base_dir, 'sys_test.py'),\n" \
-                       "                                is_stageable=True)\n" \
-                       "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
-                       "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
-                       "tc.add_transformations(transformation)\n\n"
+        transformations = []
+        for task in self.tasks.values():
+            if task.category not in transformations:
+                transformations.append(task.category)
+                self.script += f"transformation_path = which('{task.program}')\n" \
+                               "if transformation_path is None:\n" \
+                               f"    raise RuntimeError('Unable to find {task.program}')\n" \
+                               f"transformation = Transformation('{task.category}', site='local',\n" \
+                               f"                                pfn='{task.program}',\n" \
+                               "                                is_stageable=True)\n" \
+                               "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
+                               "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
+                               "tc.add_transformations(transformation)\n\n"
+
         # adding tasks
         for task_name in self.parent_task_names:
             self._add_task(task_name)
             # input file
-            input_file = str(uuid.uuid4())
-            self.script += "in_file_{} = File('{}')\n".format(self.task_counter, input_file)
-            self.script += "rc.add_replica('local', '{}', 'file://' + os.getcwd() + '/data/{}')\n".format(input_file,
-                                                                                                          input_file)
-            self.script += "{}.add_inputs(in_file_{})\n".format(self.tasks_map[task_name], self.task_counter)
-            self.script += "print('{}')\n".format(input_file)
+            task = self.tasks[task_name]
+            for file in task.files:
+                if file.link == FileLink.INPUT:
+                    self.script += f"in_file_{self.task_counter} = File('{file.name}')\n"
+                    self.script += f"rc.add_replica('local', '{file.name}', 'file://' + os.getcwd() + " \
+                                   f"'/data/{file.name}')\n"
+                    self.script += f"{self.tasks_map[task_name]}.add_inputs(in_file_{self.task_counter})\n" \
+                                   f"print('Using input data: ' + os.getcwd() + '/data/{file.name}')\n"
 
         self.script += "\n"
 
         # write out the workflow
         self.script += "wf.add_replica_catalog(rc)\n" \
                        "wf.add_transformation_catalog(tc)\n" \
-                       "wf.write('{}-benchmark-workflow.yml')\n".format(self.instance.name)
+                       f"wf.write('{self.instance.name}-benchmark-workflow.yml')\n"
 
         # write script to file
-        with open(output_file, 'w') as out:
-            out.write(self.script)
+        self._write_output_file(self.script, output_file_name)
 
     def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
         """
@@ -99,28 +106,40 @@ class PegasusTranslator(Translator):
         """
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
-            job_name = "job_{}".format(self.task_counter)
-            out_file = str(uuid.uuid4())
-            self.script += "{} = Job(transformation=transformation, _id='{}')\n".format(job_name, task_name)
+            job_name = f"job_{self.task_counter}"
+            self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
             task.args.insert(0, task_name.split("_")[0])
-            task.args.append("--out={}".format(out_file))
-            self.script += "{}.add_args({})\n".format(job_name, ", ".join(f"'{a}'" for a in task.args))
 
-            self.script += "out_file_{} = File('{}')\n".format(self.task_counter, out_file)
-            self.script += "task_output_files['{}'] = out_file_{}\n".format(job_name, self.task_counter)
-            self.script += "{}.add_outputs(out_file_{}, stage_out=False, register_replica=False)\n".format(
-                job_name, self.task_counter)
+            # find children
+            children = None
+            for node in self.instance.instance['workflow']['jobs']:
+                if node['name'] == task_name:
+                    children = node['children']
 
-            self.script += "wf.add_jobs({})\n\n".format(job_name)
+            # output file
+            for file in task.files:
+                if file.link == FileLink.OUTPUT:
+                    out_file = file.name
+                    task.args.append(f"--out={out_file}")
+                    stage_out = "True" if len(children) == 0 else "False"
+                    self.script += f"out_file_{self.task_counter} = File('{out_file}')\n"
+                    self.script += f"task_output_files['{job_name}'] = out_file_{self.task_counter}\n"
+                    self.script += f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
+                                   f"stage_out={stage_out}, register_replica={stage_out})\n"
+
+            # arguments
+            args = ", ".join(f"'{a}'" for a in task.args)
+            self.script += f"{job_name}.add_args({args})\n"
+
+            self.script += f"wf.add_jobs({job_name})\n\n"
             self.task_counter += 1
             self.parsed_tasks.append(task_name)
             self.tasks_map[task_name] = job_name
 
-            for node in self.instance.instance['workflow']['jobs']:
-                if node['name'] == task_name:
-                    for child_task_name in node['children']:
-                        self._add_task(child_task_name, job_name)
+            for child_task_name in children:
+                self._add_task(child_task_name, job_name)
 
         if parent_task:
-            self.script += "{}.add_inputs(task_output_files['{}'])\n".format(self.tasks_map[task_name], parent_task)
-            self.script += "wf.add_dependency({}, parents=[{}])\n\n".format(self.tasks_map[task_name], parent_task)
+            self.script += f"if '{parent_task}' in task_output_files:\n"
+            self.script += f"  {self.tasks_map[task_name]}.add_inputs(task_output_files['{parent_task}'])\n"
+            self.script += f"wf.add_dependency({self.tasks_map[task_name]}, parents=[{parent_task}])\n\n"
