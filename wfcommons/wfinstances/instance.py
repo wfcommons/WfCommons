@@ -38,16 +38,19 @@ class Instance:
     :type input_instance: str
     :param schema_file: The path to the JSON schema that defines the instance.
                         If no schema file is provided, it will look for a local
-                        copy of the WfCommons schema, and if not available
-                        it will fetch the latest schema from the
-                        `WfCommons schema GitHub <https://github.com/wfcommons/workflow-schema>`_
+                        copy of the WfFormat, and if not available it will fetch
+                        the latest schema from the
+                        `WfFormat GitHub <https://github.com/wfcommons/wfformat>`_
                         repository.
     :type schema_file: str
     :param logger: The logger where to log information/warning or errors.
     :type logger: Logger
     """
 
-    def __init__(self, input_instance: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+    def __init__(self,
+                 input_instance: str,
+                 schema_file: Optional[str] = None,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow execution instance."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
@@ -59,7 +62,7 @@ class Instance:
         self.logger.info("Read a JSON instance: " + input_instance)
 
         # validate instance
-        schema_validator = SchemaValidator(schema_file)
+        schema_validator = SchemaValidator(schema_file, logger=logger)
         schema_validator.validate_instance(self.instance)
 
         # Basic global properties
@@ -84,18 +87,19 @@ class Instance:
         self.makespan: int = self.instance['workflow']['makespan']
 
         # Machines
-        self.machines: Dict[str, Machine] = {
-            machine['nodeName']: Machine(
-                name=machine['nodeName'],
-                cpu={k: v for k, v in machine['cpu'].items()},
-                system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
-                architecture=machine.get('architecture', None),
-                memory=machine.get('memory', None),
-                release=machine.get('release', None),
-                hashcode=machine.get('machine_code', None),
-                logger=self.logger
-            ) for machine in self.instance['workflow']['machines']
-        }
+        if 'machines' in self.instance['workflow'].keys():
+            self.machines: Dict[str, Machine] = {
+                machine['nodeName']: Machine(
+                    name=machine['nodeName'],
+                    cpu={k: v for k, v in machine['cpu'].items()},
+                    system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
+                    architecture=machine.get('architecture', None),
+                    memory=machine.get('memory', None),
+                    release=machine.get('release', None),
+                    hashcode=machine.get('machine_code', None),
+                    logger=self.logger
+                ) for machine in self.instance['workflow']['machines']
+            }
 
         # Tasks
         self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
@@ -127,7 +131,7 @@ class Instance:
                     task_id=task.get('id', None),
                     category=task.get('category', None),
                     task_type=TaskType(task['type']),
-                    runtime=task['runtime'],
+                    runtime=task['runtime'] if 'runtime' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
                     args=command.get('arguments', None) if command else None,
