@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import argparse
+import glob
 import pathlib
 import os
 import subprocess
@@ -17,15 +18,6 @@ import time
 from filelock import FileLock
 
 this_dir = pathlib.Path(__file__).resolve().parent
-
-
-def check_sysbench():
-    """Check if sysbench is installed.
-    """
-    proc = subprocess.Popen(["which", "sysbench"], stdout=subprocess.PIPE)
-    out, _ = proc.communicate()
-    if not out:
-        raise FileNotFoundError("Sysbench not found. Please install sysbench: https://github.com/aakopytov/sysbench")
 
 
 def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
@@ -64,26 +56,42 @@ def unlock_core(path_locked: pathlib.Path, path_cores: pathlib.Path, core: int):
         finally:
             lock.release()
 
+def cpu_mem_benchmark(percent_cpu:float = 0.5, percent_mem:float = 0.5, cpu_work:int = 100, core:int = 7):
+    """ Runs cpu and memory benchmark.
+    """
+    cpu_threads = int(percent_cpu*10)
+    mem_threads = int(percent_mem*10)
 
+    cpu_procs = []
+    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", str(cpu_work)]
+    mem_prog = ["stress", "--vm", "1"]
+
+    for i in range(cpu_threads):
+        cpu_proc = subprocess.Popen(cpu_prog)
+        os.sched_setaffinity(cpu_proc.pid, {core})
+        cpu_procs.append(cpu_proc)
+    
+    for _ in range(mem_threads):
+        mem_proc = subprocess.Popen(mem_prog)
+        os.sched_setaffinity(mem_proc.pid, {core})
+
+    return cpu_procs
+    
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
-    parser.add_argument("--time", type=int, help="Maximum compute time in seconds")
     parser.add_argument("--percent-cpu", type=float, help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
-    parser.add_argument("--out", help="Output filename.")
-    parser.add_argument("--data", action='store_true', help="Whether to process IO")
-    parser.set_defaults(data=False)
+    parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
+    parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO")
+    parser.add_argument("--file-size", help="Size of an input/output file.")
     return parser
 
 
 def main():
     parser = get_parser()
     args, other = parser.parse_known_args()
-
-    print("Checking if sysbench is installed.")
-    check_sysbench()
 
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
@@ -93,91 +101,28 @@ def main():
     print(f"Starting {args.name}")
 
     if args.data:
-
-        counter = 0
-        for file in this_dir.glob("*test_file*"):
-            file.rename(file.parent.joinpath(f"test_file.{counter}"))
-            counter += 1
-
-        sysbench_file_input_args = [
-            arg for arg in other
-            if arg.startswith("--file-test-mode") or arg.startswith("--file-block-size=") or arg.startswith(
-                "--file-rw-ratio=")
-        ]
-
-        core = lock_core(path_locked, path_cores)
-
         print("Starting IO benchmark...")
-        proc = subprocess.Popen(
-            [
-                "sysbench", "fileio", *sysbench_file_input_args, f"--file-num={counter}", "run"
-            ]
-        )
-        proc.wait()
-
-        proc = subprocess.Popen(
-            [
-                "sysbench", "fileio", *sysbench_file_input_args, f"--file-num={counter}", "cleanup"
-            ]
-        )
-        proc.wait()
-
-    else:
-        core = lock_core(path_locked, path_cores)
-
-    sysbench_cpu_args = [arg for arg in other if arg.startswith("--cpu") or "forced" in arg]
-
-    percent_mem = 1 - args.percent_cpu
-    cpu_threads = int(args.percent_cpu * 10)
-    mem_threads = int(percent_mem * 10)
-
-    print(f"cpu_threads={cpu_threads}, mem_threads={mem_threads}")
-    print("Starting CPU benchmark...")
-
-    print(f"{args.name} acquired core {core}")
-    if args.time > 100:
-        prog = [
-            "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
-        ]
-        proc_cpu = subprocess.Popen(prog)
-
-        os.sched_setaffinity(proc_cpu.pid, {core})
-
-        print("Starting Memory benchmark...")
-        sysbench_mem_args = [arg for arg in other if arg.startswith("--memory") or "forced" in arg]
-        prog = [
-            "sysbench", "memory", *sysbench_mem_args, f"--threads={mem_threads}", f"--time={args.time}", "run"
-        ]
-        proc_mem = subprocess.Popen(prog)
-
-        os.sched_setaffinity(proc_mem.pid, {core})
-    else:
-        proc_mem = None
-        proc_cpu = subprocess.Popen(
-            [
-                "sysbench", "cpu", *sysbench_cpu_args, f"--threads={cpu_threads}", f"--time={args.time}", "run"
-            ]
-        )
-        os.sched_setaffinity(proc_cpu.pid, {core})
-
-    proc_cpu.wait()
-    if proc_mem is not None:
-        proc_mem.kill()
-
-    unlock_core(path_locked, path_cores, core)
+        for file in other:
+            with open(file, "w+") as fp:
+                fp.readlines()
+                
+    # print("Starting CPU and Memory benchmark...")
+    # core = lock_core(path_locked, path_cores)
+    # print(f"{args.name} acquired core {core}")
+    
+    # cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu, 
+    #                               percent_mem=(1-args.percent_cpu),
+    #                               cpu_work=args.cpu_work,  
+    #                               core=core)
+    # for proc in cpu_procs:
+    #     proc.wait()
+    # subprocess.Popen(["killall", "stress"])
+    # unlock_core(path_locked, path_cores, core)
 
     if args.data:
-        print("Writing output...")
-        sysbench_file_output_args = [arg for arg in other if arg.startswith("--file")]
-        proc = subprocess.Popen(
-            [
-                "sysbench", "fileio", *sysbench_file_output_args, "--file-num=1", "--threads=1", "prepare"
-            ]
-        )
-        proc.wait()
-
-        for path in this_dir.glob("*test_file*"):
-            path.rename(path.parent.joinpath(f"{args.out}"))
+        with open(this_dir.joinpath(f"{args.name}_output.txt"), "wb") as fp:
+            fp.write(os.urandom(int(args.file_size)))
+        
 
 
 if __name__ == "__main__":

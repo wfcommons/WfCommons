@@ -12,6 +12,12 @@ from typing import List, Tuple
 this_dir = pathlib.Path(__file__).resolve().parent
 
 
+program_real = {
+                "individuals": ["/home/tgcoleman/1000genome-sequential/bin/individuals.py",
+                                "/home/tgcoleman/1000genome-sequential/data/20130502/ALL.chr1.250000.vcf",
+                                "1","1","1001", "3000"]
+                }
+
 def cpu_call(work: float, output: pathlib.Path) -> float:
     prog = ["./wfperf-benchmark", "--cpu-work", str(work)]
     output.parent.mkdir(exist_ok=True, parents=True)

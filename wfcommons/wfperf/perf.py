@@ -19,6 +19,8 @@ import uuid
 from logging import Logger
 from typing import Dict, Optional, List, Type
 
+from numpy import copyto
+
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
 
@@ -42,18 +44,11 @@ class WorkflowBenchmark:
         self.recipe = recipe
         self.num_tasks = num_tasks
 
-    def create(self,
+    def create_benchmark(self,
                save_dir: pathlib.Path,
                percent_cpu: float = 0.6,
+               cpu_work: Optional[int] = 100,
                data_footprint: Optional[int] = None,
-               max_time: Optional[int] = 150,
-               max_prime: Optional[int] = 10000,
-               mem_total_size: Optional[str] = "1000000G",
-               mem_block_size: Optional[str] = "1K",
-               mem_scope: Optional[str] = "global",
-               io_test_mode: Optional[str] = "seqwr",
-               io_block_size: Optional[int] = 16384,
-               io_rw_ratio: Optional[float] = 1.5,
                lock_files_folder: Optional[pathlib.Path] = None,
                create: Optional[bool] = True,
                path: Optional[pathlib.Path] = None) -> pathlib.Path:
@@ -63,24 +58,10 @@ class WorkflowBenchmark:
         :type save_dir: pathlib.Path
         :param percent_cpu:
         :type percent_cpu: float
+        :param cpu_work:
+        :type cpu_work: int
         :param data_footprint: Size of input/output data files per workflow task (in MB).
         :type data_footprint: Optional[int]
-        :param max_time:
-        :type max_time: Optional[int]
-        :param max_prime:
-        :type max_prime: Optional[int]
-        :param mem_total_size:
-        :type mem_total_size: Optional[str]
-        :param mem_block_size:
-        :type mem_block_size: Optional[str]
-        :param mem_scope:
-        :type mem_scope: Optional[str]
-        :param io_test_mode:
-        :type io_test_mode: Optional[str]
-        :param io_block_size:
-        :type io_block_size: Optional[int]
-        :param io_rw_ratio:
-        :type io_rw_ratio: Optional[float]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
         :param create:
@@ -127,15 +108,10 @@ class WorkflowBenchmark:
                 pass
 
         # Setting the parameters for the arguments section of the JSON
-        params = ["--forced-shutdown=0",
-                  f"--path-lock={lock}",
+        params = [f"--path-lock={lock}",
                   f"--path-cores={cores}",
-                  f"--memory-block-size={mem_block_size}",
-                  f"--memory-scope={mem_scope}",
-                  f"--memory-total-size={mem_total_size}",
-                  f"--cpu-max-prime={max_prime}",
                   f"--percent-cpu={percent_cpu}",
-                  f"--time={max_time}"]
+                  f"--cpu-work={cpu_work}"]
 
         wf["name"] = name
         for job in wf["workflow"]["jobs"]:
@@ -159,10 +135,7 @@ class WorkflowBenchmark:
             for job in wf["workflow"]["jobs"]:
                 job["command"]["arguments"].extend([
                     "--data",
-                    f"--file-test-mode={io_test_mode}",
-                    f"--file-total-size={file_size}M",
-                    f"--file-block-size={io_block_size}",
-                    f"--file-rw-ratio={io_rw_ratio}"
+                    f"--file-size={file_size}"
                 ])
 
             add_io_to_json(wf, file_size)
@@ -170,14 +143,12 @@ class WorkflowBenchmark:
             self.logger.debug("Generating system files.")
             generate_sys_data(num_sys_files, file_size, save_dir)
 
-            # self.logger.debug("Removing system files.")
-            # cleanup_sys_files()
-
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
         json_path.write_text(json.dumps(wf, indent=4))
 
         return json_path
+
 
     def run(self, json_path: pathlib.Path, save_dir: pathlib.Path):
         """Run the benchmark workflow locally (for test purposes only).
@@ -187,29 +158,29 @@ class WorkflowBenchmark:
             wf = json.loads(json_path.read_text())
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
                 procs: List[subprocess.Popen] = []
-                for item in wf["workflow"]["jobs"]:
-                    executable = item["command"]["program"]
-                    arguments = item["command"]["arguments"]
-                    program = [
-                        "time", "python", executable,
-                        item["name"].split("_")[0],
-                        *arguments,
-                    ]
+                for job in wf["workflow"]["jobs"]:
+                    executable = job["command"]["program"]
+                    arguments = job["command"]["arguments"]
+                    if "--data" in arguments:
+                        files = assigning_correct_files(job)
+                        program = ["time","python", executable, *arguments, *files]
+                    else:
+                        program = ["time","python", executable, *arguments]
                     folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
                     folder.mkdir(exist_ok=True, parents=True)
                     os.chdir(str(folder))
                     procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
                     os.chdir("../..")
-
                 for proc in procs:
-                    proc.wait()
-
+                    proc.wait()  
+            cleanup_sys_files()
         except Exception as e:
+            subprocess.Popen(["killall", "stress"])
+            cleanup_sys_files()
             import traceback
             traceback.print_exc()
             raise FileNotFoundError("Not able to find the executable.")
-
-
+        
 def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Path):
     """Generate workflow's input data
 
@@ -220,37 +191,29 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
     :param save_dir: Folder to generate the workflow benchmark's input data files.
     :type save_dir: pathlib.Path
     """
-    params = [
-        f"--file-num={num_files}",
-        f"--file-total-size={num_files * file_total_size}M"
-    ]
-    proc = subprocess.Popen(["sysbench", "fileio", *params, "--verbosity=2", "prepare"], stdout=subprocess.PIPE)
-    proc.wait()
-    out, _ = proc.communicate()
-    if proc.returncode != 0:
-        raise FileNotFoundError("Could not create files. Check parameters.")
+    file_total_size = num_files * file_total_size
+    for i in range(num_files):
+        file = f"{save_dir.joinpath(f'sys_input_{i}.txt')}"
+        with open(file, 'wb') as fp:
+            fp.write(os.urandom(file_total_size)) 
+        print(f"Created file: {file}")
 
-    # have to change the name back to test_file on bash
-    data_path = save_dir.joinpath("data")
-    data_path.mkdir(exist_ok=True, parents=True)
-
-    for t in glob.glob("test_file.*"):
-        os.rename(t, data_path.joinpath(f"sys_{t}"))
+def assigning_correct_files(job: Dict[str, str]) -> List[str]:
+    files = []
+    for file in job["files"]:
+        if file["link"] == "input":
+            files.append(file["name"])
+    return files
 
 
 def cleanup_sys_files():
     """Remove files already used
     """
-    for t in glob.glob("*test_file.*"):
-        new = t.split("_")[1:]
-        new = "_".join(new)
-        os.rename(t, new)
-    proc = subprocess.Popen(["sysbench", "fileio", "cleanup"], stdout=subprocess.PIPE)
-    proc.wait()
-    out, _ = proc.communicate()
-    if not out:
-        raise FileNotFoundError("Couldn't delete files.")
-
+    input_files = glob.glob("*input*.txt")
+    output_files = glob.glob("*output.txt")
+    all_files = input_files + output_files
+    for t in all_files:
+        os.remove(t)
 
 def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
     """Add input and output files to JSON
@@ -266,7 +229,7 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
         job["files"].append(
             {
                 "link": "output",
-                "name": f"{job['name']}_test_file.0",
+                "name": f"{job['name']}_output.txt",
                 "size": file_size
             }
         )
@@ -276,7 +239,7 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
             job["files"].append(
                 {
                     "link": "input",
-                    "name": f"sys_test_file.{i}",
+                    "name": f"sys_input_{i}.txt",
                     "size": file_size
                 }
             )
