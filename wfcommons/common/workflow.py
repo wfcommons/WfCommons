@@ -11,6 +11,7 @@
 import getpass
 import json
 import networkx as nx
+import pathlib
 
 from datetime import datetime
 from typing import Optional
@@ -29,17 +30,17 @@ class Workflow(nx.DiGraph):
     :param name: Workflow name.
     :type name: str
     :param description: Workflow instance description.
-    :type description: str
+    :type description: Optional[str]
     :param wms_name: WMS name.
-    :type wms_name: str
+    :type wms_name: Optional[str]
     :param wms_version: WMS version.
-    :type wms_version: str
+    :type wms_version: Optional[str]
     :param wms_url: URL for the WMS website.
-    :type wms_url: str
+    :type wms_url: Optional[str]
     :param executed_at: Workflow start timestamp in the ISO 8601 format.
-    :type executed_at: str
+    :type executed_at: Optional[str]
     :param makespan: Workflow makespan in seconds.
-    :type makespan: int
+    :type makespan: Optional[int]
     """
 
     def __init__(self,
@@ -52,21 +53,23 @@ class Workflow(nx.DiGraph):
                  makespan: Optional[int] = 0.0
                  ) -> None:
         """Create an object of a workflow representation."""
-        self.description = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
-        self.created_at = str(datetime.utcnow().isoformat())
-        self.schema_version = "1.2"
-        self.wms_name = "WfCommons" if not wms_name else wms_name
-        self.wms_version = str(__version__) if not wms_version else wms_version
-        self.wms_url = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
-        self.executed_at = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z") if not executed_at else executed_at
-        self.makespan = makespan
+        self.description: Optional[
+            str] = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
+        self.created_at: str = str(datetime.utcnow().isoformat())
+        self.schema_version: str = "1.2"
+        self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
+        self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
+        self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
+        self.executed_at: Optional[str] = datetime.now().astimezone().strftime(
+            "%Y%m%dT%H%M%S%z") if not executed_at else executed_at
+        self.makespan: Optional[int] = makespan
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
-    def write_json(self, json_filename: Optional[str] = None) -> None:
+    def write_json(self, json_file_path: Optional[pathlib.Path] = None) -> None:
         """Write a JSON file of the workflow instance.
 
-        :param json_filename: JSON output file name.
-        :type json_filename: str
+        :param json_file_path: JSON output file name.
+        :type json_file_path: Optional[pathlib.Path]
         """
         workflow_machines = []
         machines_list = []
@@ -122,22 +125,22 @@ class Workflow(nx.DiGraph):
             workflow_json['workflow']['machines'] = workflow_machines
 
         # write to file
-        if not json_filename:
-            json_filename = f'{self.name.lower()}.json'
-        with open(json_filename, 'w') as outfile:
+        if not json_file_path:
+            json_file_path = pathlib.Path(f'{self.name.lower()}.json')
+        with open(json_file_path, 'w') as outfile:
             outfile.write(json.dumps(workflow_json, indent=4))
 
-    def write_dot(self, dot_filename: str = None) -> None:
+    def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:
         """Write a dot file of the workflow instance.
 
-        :param dot_filename: DOT output file name.
-        :type dot_filename: str
+        :param dot_file_path: DOT output file name.
+        :type dot_file_path: Optional[pathlib.Path]
         """
-        if not dot_filename:
-            dot_filename = f"{self.name.lower()}.dot"
-        nx.nx_agraph.write_dot(self, dot_filename)
+        if not dot_file_path:
+            dot_file_path = pathlib.Path(f"{self.name.lower()}.dot")
+        nx.nx_agraph.write_dot(self, dot_file_path)
 
     def to_nx_digraph(self) -> nx.DiGraph:
         with tempfile.NamedTemporaryFile() as temp:
-            self.write_json(temp.name)
-            return create_graph(temp.name)
+            self.write_json(pathlib.Path(temp.name))
+            return create_graph(pathlib.Path(temp.name))

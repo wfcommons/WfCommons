@@ -78,15 +78,13 @@ class Machine:
         self.cpu_flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6 if 'speed' in cpu else 0
         self.cpu_vendor: str = cpu['vendor'] if 'vendor' in cpu else None
 
-        self.logger.debug("created machine: {0} with {1} cores and {2} FLOPS.".format(
-            self.name, self.cpu_cores, self.cpu_flops)
-        )
+        self.logger.debug(f"created machine: {self.name} with {self.cpu_cores} cores and {self.cpu_flops} FLOPS.")
 
-    def as_dict(self) -> Dict:
+    def as_dict(self) -> Dict[str, Union[int, str]]:
         """A JSON representation of the machine.
 
         :return: A JSON object representation of the machine.
-        :rtype: Dict
+        :rtype: Dict[str, Union[int, str]]
         """
         machine = {"nodeName": self.name}
         if self.system:
