@@ -1,0 +1,25 @@
+[
+ { "type": "transfer",
+   "linkage": "output",
+   "lfn": "cat_00000043_output.txt",
+   "id": 1,
+   "verify_checksum_remote": true,
+   "src_urls": [
+     { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./cat_00000043_output.txt" }
+   ],
+   "dest_urls": [
+     { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-output/cat_00000043_output.txt" }
+   ] }
+ ,
+ { "type": "transfer",
+   "linkage": "output",
+   "lfn": "cat_blast_00000042_output.txt",
+   "id": 2,
+   "verify_checksum_remote": true,
+   "src_urls": [
+     { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./cat_blast_00000042_output.txt" }
+   ],
+   "dest_urls": [
+     { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-output/cat_blast_00000042_output.txt" }
+   ] }
+]

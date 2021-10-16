@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "type": "remove",
+    "target": { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./split_fasta", "recursive": "False" } }
+  ,
+  {
+    "id": 2,
+    "type": "remove",
+    "target": { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./sys_input_0.txt", "recursive": "False" } }
+]

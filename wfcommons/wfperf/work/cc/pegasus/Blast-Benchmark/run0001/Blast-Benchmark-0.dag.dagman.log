@@ -1,0 +1,15 @@
+000 (166687.000.000) 2021-10-16 00:23:00 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+...
+001 (166687.000.000) 2021-10-16 00:23:00 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+...
+005 (166687.000.000) 2021-10-16 00:55:33 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
