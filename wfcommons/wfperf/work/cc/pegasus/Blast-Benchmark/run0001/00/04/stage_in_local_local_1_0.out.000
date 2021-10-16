@@ -1,0 +1,278 @@
+- invocation: True
+  version: 3.0
+  start: 2021-10-16T00:23:24.995+00:00
+  duration: 442.370
+  transformation: "pegasus::transfer"
+  derivation: "null"
+  resource: "local"
+  wf-label: "Blast-Benchmark"
+  wf-stamp: "2021-10-16T00:21:36+00:00"
+  interface: eno1np0
+  hostaddr: 10.52.2.166
+  hostname: wfperf
+  pid: 421884
+  uid: 1000
+  user: cc
+  gid: 1011
+  group: cc
+  umask: 0o0022
+  mainjob:
+    start: 2021-10-16T00:23:25.029+00:00
+    duration: 442.336
+    pid: 421887
+    usage:
+      utime: 0.100
+      stime: 0.031
+      maxrss: 20256
+      minflt: 9555
+      majflt: 0
+      nswap: 0
+      inblock: 0
+      outblock: 24
+      msgsnd: 0
+      msgrcv: 0
+      nsignals: 0
+      nvcsw: 50
+      nivcsw: 0
+    status:
+      raw: 256
+      regular_exitcode: 1
+    executable:
+      file_name: /usr/bin/pegasus-transfer
+      mode: 0o100755
+      size: 2303
+      inode: 46976
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2020-11-12T23:02:42+00:00
+      atime: 2021-10-16T00:23:06+00:00
+      ctime: 2021-08-25T20:56:50+00:00
+      uid: 0
+      user: root
+      gid: 0
+      group: root
+    argument_vector:
+      - "--threads"
+      - "2"
+    procs:
+  jobids:
+    condor: 166691.0
+  cwd: /home/cc/test/wfcommons/wfcommons/wfperf/work/cc/pegasus/Blast-Benchmark/run0001
+  usage:
+    utime: 0.008
+    stime: 0.029
+    maxrss: 4932
+    minflt: 211
+    majflt: 0
+    nswap: 0
+    inblock: 0
+    outblock: 0
+    msgsnd: 0
+    msgrcv: 0
+    nsignals: 0
+    nvcsw: 3
+    nivcsw: 0
+  machine:
+    page-size: 4096
+    uname_system: linux
+    uname_nodename: wfperf
+    uname_release: 5.4.0-70-generic
+    uname_machine: x86_64
+    ram_total: 196489328
+    ram_free: 114496784
+    ram_shared: 2732
+    ram_buffer: 619372
+    swap_total: 0
+    swap_free: 0
+    cpu_count: 64
+    cpu_speed: 3451
+    cpu_vendor: GenuineIntel
+    cpu_model: Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz
+    load_min1: 0.12
+    load_min5: 0.05
+    load_min15: 0.01
+    procs_total: 700
+    procs_running: 3
+    procs_sleeping: 359
+    procs_other: 338
+    procs_vmsize: 17767312
+    procs_rss: 774320
+    task_total: 902
+    task_running: 3
+    task_sleeping: 561
+    task_other: 338
+  files:
+    stdin:
+      descriptor_number: 0
+      mode: 0o100664
+      size: 434
+      inode: 1589697
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2021-10-16T00:22:58+00:00
+      atime: 2021-10-16T00:22:58+00:00
+      ctime: 2021-10-16T00:22:58+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+    stdout:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_421882/ks.out.4Ao9F4
+      descriptor: 3
+      mode: 0o100600
+      size: 1725
+      inode: 1590175
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2021-10-16T00:30:47+00:00
+      atime: 2021-10-16T00:23:25+00:00
+      ctime: 2021-10-16T00:30:47+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+      data_truncated: false
+      data: |
+        2021-10-16 00:23:25,120    INFO:  Reading URL pairs from stdin
+        2021-10-16 00:23:25,120    INFO:  1 transfers loaded
+        2021-10-16 00:23:25,120    INFO:  PATH=/home/cc/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+        2021-10-16 00:23:25,120    INFO:  LD_LIBRARY_PATH=
+        2021-10-16 00:23:25,139    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:23:25,139    INFO:  Starting transfers - attempt 1
+        2021-10-16 00:23:27,142   ERROR:  Expected local file does not exist: ,/home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py
+        2021-10-16 00:25:43,242    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:25:43,243    INFO:  Starting transfers - attempt 2
+        2021-10-16 00:25:45,245   ERROR:  Expected local file does not exist: ,/home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py
+        2021-10-16 00:30:45,346    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:30:45,346    INFO:  Starting transfers - attempt 3
+        2021-10-16 00:30:47,349   ERROR:  Expected local file does not exist: ,/home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py
+        2021-10-16 00:30:47,350    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:30:47,350    INFO:  Stats: Total 3 transfers, 0.0 B transferred in 442 seconds. Rate: 0.0 B/s (0.0 b/s)
+        2021-10-16 00:30:47,350    INFO:         Between sites local->local : 3 transfers, 0.0 B transferred in 442 seconds. Rate: 0.0 B/s (0.0 b/s)
+        2021-10-16 00:30:47,350 CRITICAL:  Some transfers failed! See above, and possibly stderr.
+        
+    stderr:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_421882/ks.err.VIw1k5
+      descriptor: 4
+      mode: 0o100600
+      size: 0
+      inode: 1590176
+      nlink: 1
+      blksize: 4096
+      blocks: 0
+      mtime: 2021-10-16T00:23:25+00:00
+      atime: 2021-10-16T00:23:25+00:00
+      ctime: 2021-10-16T00:23:25+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+    metadata:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_421882/ks.meta.JO22G6
+      descriptor: 5
+      mode: 0o100600
+      size: 0
+      inode: 1590177
+      nlink: 1
+      blksize: 4096
+      blocks: 0
+      mtime: 2021-10-16T00:23:25+00:00
+      atime: 2021-10-16T00:23:25+00:00
+      ctime: 2021-10-16T00:23:25+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+    kickstart:
+      file_name: /usr/bin/pegasus-kickstart
+      mode: 0o100755
+      size: 116800
+      inode: 46959
+      nlink: 1
+      blksize: 4096
+      blocks: 232
+      mtime: 2020-11-12T23:02:42+00:00
+      atime: 2021-10-16T00:23:06+00:00
+      ctime: 2021-08-25T20:56:50+00:00
+      uid: 0
+      user: root
+      gid: 0
+      group: root
+    logfile:
+      descriptor_number: 1
+      mode: 0o100644
+      size: 4096
+      inode: 1590156
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2021-10-16T00:30:47+00:00
+      atime: 2021-10-16T00:23:24+00:00
+      ctime: 2021-10-16T00:30:47+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+  environment:
+    "BATCH_SYSTEM": "HTCondor"
+    "CONDOR_JOBID": "166691.0"
+    "KICKSTART_INTEGRITY_DATA": "/var/spool/condor/local_univ_execute/dir_421882/ks.integrity.ToBLd4"
+    "KICKSTART_METADATA": "/var/spool/condor/local_univ_execute/dir_421882/ks.meta.JO22G6"
+    "LANG": "en_US.UTF-8"
+    "PATH": "/home/cc/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+    "PEGASUS_DAG_JOB_ID": "stage_in_local_local_1_0"
+    "PEGASUS_HOME": "/usr"
+    "PEGASUS_SITE": "local"
+    "PEGASUS_WF_LABEL": "Blast-Benchmark"
+    "PEGASUS_WF_UUID": "2215f5e5-f95a-4c32-bbdd-1035513c7c0b"
+    "PYTHONPATH": ":/usr/lib/python3.6/dist-packages"
+    "TEMP": "/var/spool/condor/local_univ_execute/dir_421882"
+    "TMP": "/var/spool/condor/local_univ_execute/dir_421882"
+    "TMPDIR": "/var/spool/condor/local_univ_execute/dir_421882"
+    "_CHIRP_DELAYED_UPDATE_PREFIX": "Chirp*"
+    "_CONDOR_ANCESTOR_2147193": "2147251:1632490094:2779962078"
+    "_CONDOR_ANCESTOR_2147251": "421882:1634343804:2548861513"
+    "_CONDOR_ANCESTOR_421882": "421884:1634343804:2797806607"
+    "_CONDOR_BIN": "/usr/bin"
+    "_CONDOR_JOB_AD": "/var/spool/condor/local_univ_execute/dir_421882/.job.ad"
+    "_CONDOR_JOB_IWD": "/home/cc/test/wfcommons/wfcommons/wfperf/work/cc/pegasus/Blast-Benchmark/run0001"
+    "_CONDOR_JOB_PIDS": ""
+    "_CONDOR_MACHINE_AD": "/var/spool/condor/local_univ_execute/dir_421882/.machine.ad"
+    "_CONDOR_SCRATCH_DIR": "/var/spool/condor/local_univ_execute/dir_421882"
+    "_CONDOR_SLOT": ""
+  limits:
+    RLIMIT_CPU_soft: unlimited
+    RLIMIT_CPU_hard: unlimited
+    RLIMIT_FSIZE_soft: unlimited
+    RLIMIT_FSIZE_hard: unlimited
+    RLIMIT_DATA_soft: unlimited
+    RLIMIT_DATA_hard: unlimited
+    RLIMIT_STACK_soft: unlimited
+    RLIMIT_STACK_hard: unlimited
+    RLIMIT_CORE_soft: 0
+    RLIMIT_CORE_hard: 0
+    RESOURCE_5_soft: unlimited
+    RESOURCE_5_hard: unlimited
+    RLIMIT_NPROC_soft: 767189
+    RLIMIT_NPROC_hard: 767189
+    RLIMIT_NOFILE_soft: 4096
+    RLIMIT_NOFILE_hard: 32768
+    RLIMIT_MEMLOCK_soft: 65536
+    RLIMIT_MEMLOCK_hard: 65536
+    RLIMIT_AS_soft: unlimited
+    RLIMIT_AS_hard: unlimited
+    RLIMIT_LOCKS_soft: unlimited
+    RLIMIT_LOCKS_hard: unlimited
+    RLIMIT_SIGPENDING_soft: 767189
+    RLIMIT_SIGPENDING_hard: 767189
+    RLIMIT_MSGQUEUE_soft: 819200
+    RLIMIT_MSGQUEUE_hard: 819200
+    RLIMIT_NICE_soft: 0
+    RLIMIT_NICE_hard: 0
+    RLIMIT_RTPRIO_soft: 0
+    RLIMIT_RTPRIO_hard: 0
+    RESOURCE_15_soft: unlimited
+    RESOURCE_15_hard: unlimited

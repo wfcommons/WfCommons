@@ -1,0 +1,180 @@
+- invocation: True
+  version: 3.0
+  start: 2021-10-16T00:55:10.359+00:00
+  duration: 4.169
+  transformation: "pegasus::cleanup"
+  derivation: "null"
+  resource: "local"
+  wf-label: "Blast-Benchmark"
+  wf-stamp: "2021-10-16T00:21:36+00:00"
+  interface: eno1np0
+  hostaddr: 10.52.2.166
+  hostname: wfperf
+  pid: 426891
+  uid: 1000
+  user: cc
+  gid: 1011
+  group: cc
+  umask: 0o0022
+  mainjob:
+    start: 2021-10-16T00:55:10.392+00:00
+    duration: 4.137
+    pid: 426892
+    usage:
+      utime: 0.111
+      stime: 0.038
+      maxrss: 19940
+      minflt: 11357
+      majflt: 0
+      nswap: 0
+      inblock: 0
+      outblock: 16
+      msgsnd: 0
+      msgrcv: 0
+      nsignals: 0
+      nvcsw: 61
+      nivcsw: 4
+    status:
+      raw: 0
+      regular_exitcode: 0
+    executable:
+      file_name: /usr/bin/pegasus-transfer
+      mode: 0o100755
+      size: 2303
+      inode: 46976
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2020-11-12T23:02:42+00:00
+      atime: 2021-10-16T00:23:06+00:00
+      ctime: 2021-08-25T20:56:50+00:00
+      uid: 0
+      user: root
+      gid: 0
+      group: root
+    argument_vector:
+    procs:
+  jobids:
+    condor: 166696.0
+  cwd: /home/cc/test/wfcommons/wfcommons/wfperf/work/cc/pegasus/Blast-Benchmark/run0001
+  usage:
+    utime: 0.004
+    stime: 0.031
+    maxrss: 4876
+    minflt: 201
+    majflt: 0
+    nswap: 0
+    inblock: 0
+    outblock: 0
+    msgsnd: 0
+    msgrcv: 0
+    nsignals: 0
+    nvcsw: 3
+    nivcsw: 0
+  machine:
+    page-size: 4096
+    uname_system: linux
+    uname_nodename: wfperf
+    uname_release: 5.4.0-70-generic
+    uname_machine: x86_64
+    ram_total: 196489328
+    ram_free: 114476304
+    ram_shared: 2732
+    ram_buffer: 619600
+    swap_total: 0
+    swap_free: 0
+    cpu_count: 64
+    cpu_speed: 1638
+    cpu_vendor: GenuineIntel
+    cpu_model: Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz
+    load_min1: 0.00
+    load_min5: 0.00
+    load_min15: 0.00
+    procs_total: 683
+    procs_running: 1
+    procs_sleeping: 357
+    procs_other: 325
+    procs_vmsize: 17740904
+    procs_rss: 752836
+    task_total: 885
+    task_running: 1
+    task_sleeping: 559
+    task_other: 325
+  files:
+    stdin:
+      descriptor_number: 0
+      mode: 0o100664
+      size: 468
+      inode: 1589706
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2021-10-16T00:22:58+00:00
+      atime: 2021-10-16T00:22:58+00:00
+      ctime: 2021-10-16T00:22:58+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+    stdout:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_426890/ks.out.2p1iaH
+      descriptor: 3
+      mode: 0o100600
+      size: 1084
+      inode: 1590177
+      nlink: 1
+      blksize: 4096
+      blocks: 8
+      mtime: 2021-10-16T00:55:14+00:00
+      atime: 2021-10-16T00:55:10+00:00
+      ctime: 2021-10-16T00:55:14+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+      data_truncated: false
+      data: |
+        2021-10-16 00:55:10,489    INFO:  Reading URL pairs from stdin
+        2021-10-16 00:55:10,489    INFO:  2 transfers loaded
+        2021-10-16 00:55:10,489    INFO:  PATH=/home/cc/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+        2021-10-16 00:55:10,489    INFO:  LD_LIBRARY_PATH=
+        2021-10-16 00:55:10,508    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:55:10,508    INFO:  Starting transfers - attempt 1
+        2021-10-16 00:55:12,511    INFO:  /bin/rm -f '//home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./split_fasta' 
+        2021-10-16 00:55:12,517    INFO:  /bin/rm -f '//home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001/./sys_input_0.txt' 
+        2021-10-16 00:55:14,513    INFO:  --------------------------------------------------------------------------------
+        2021-10-16 00:55:14,513    INFO:  Stats: no local files in the transfer set
+        2021-10-16 00:55:14,513    INFO:  All transfers completed successfully.
+        
+    stderr:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_426890/ks.err.zLkrbH
+      descriptor: 4
+      mode: 0o100600
+      size: 0
+      inode: 1590178
+      nlink: 1
+      blksize: 4096
+      blocks: 0
+      mtime: 2021-10-16T00:55:10+00:00
+      atime: 2021-10-16T00:55:10+00:00
+      ctime: 2021-10-16T00:55:10+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc
+    metadata:
+      temporary_name: /var/spool/condor/local_univ_execute/dir_426890/ks.meta.CZ5jwI
+      descriptor: 5
+      mode: 0o100600
+      size: 0
+      inode: 1590181
+      nlink: 1
+      blksize: 4096
+      blocks: 0
+      mtime: 2021-10-16T00:55:10+00:00
+      atime: 2021-10-16T00:55:10+00:00
+      ctime: 2021-10-16T00:55:10+00:00
+      uid: 1000
+      user: cc
+      gid: 1011
+      group: cc

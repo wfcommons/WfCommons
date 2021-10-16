@@ -1,0 +1,192 @@
+000 (166688.000.000) 2021-10-16 00:23:02 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: create_dir_Blast-Benchmark_0_local
+    pool:local
+...
+001 (166688.000.000) 2021-10-16 00:23:06 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_5>
+...
+005 (166688.000.000) 2021-10-16 00:23:08 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166688.000.000) 2021-10-16 00:23:12 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: create_dir_Blast-Benchmark_0_local
+...
+000 (166689.000.000) 2021-10-16 00:23:22 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_remote_local_2_0
+    pool:local
+...
+000 (166690.000.000) 2021-10-16 00:23:22 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_remote_local_0_0
+    pool:local
+...
+001 (166689.000.000) 2021-10-16 00:23:22 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_6>
+...
+000 (166691.000.000) 2021-10-16 00:23:22 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_local_local_1_0
+    pool:local
+...
+000 (166692.000.000) 2021-10-16 00:23:22 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_local_local_2_0
+    pool:local
+...
+005 (166689.000.000) 2021-10-16 00:23:24 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+001 (166691.000.000) 2021-10-16 00:23:24 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_8>
+...
+001 (166692.000.000) 2021-10-16 00:23:24 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_9>
+...
+001 (166690.000.000) 2021-10-16 00:23:24 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_7>
+...
+016 (166689.000.000) 2021-10-16 00:23:27 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: stage_in_remote_local_2_0
+...
+005 (166690.000.000) 2021-10-16 00:23:29 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166690.000.000) 2021-10-16 00:23:33 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: stage_in_remote_local_0_0
+...
+000 (166693.000.000) 2021-10-16 00:23:42 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: split_fasta_split_fasta_00000001
+    pool:condorpool
+...
+001 (166693.000.000) 2021-10-16 00:24:01 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=startd_2147193_6170>
+...
+007 (166693.000.000) 2021-10-16 00:24:01 Shadow exception!
+	Error from slot1@wfperf.novalocal: STARTER at 10.52.2.166 failed to send file(s) to <10.52.2.166:9618>: error reading from /var/lib/condor/execute/dir_422273/split_fasta_00000001_output.txt: (errno 2) No such file or directory; SHADOW failed to receive file(s) from <10.52.2.166:3625>
+	5529  -  Run Bytes Sent By Job
+	10834686  -  Run Bytes Received By Job
+...
+012 (166693.000.000) 2021-10-16 00:24:01 Job was held.
+	Error from slot1@wfperf.novalocal: STARTER at 10.52.2.166 failed to send file(s) to <10.52.2.166:9618>: error reading from /var/lib/condor/execute/dir_422273/split_fasta_00000001_output.txt: (errno 2) No such file or directory; SHADOW failed to receive file(s) from <10.52.2.166:3625>
+	Code 13 Subcode 2
+...
+005 (166692.000.000) 2021-10-16 00:30:39 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166692.000.000) 2021-10-16 00:30:42 POST Script terminated.
+	(1) Normal termination (return value 1)
+    DAG Node: stage_in_local_local_2_0
+...
+005 (166691.000.000) 2021-10-16 00:30:47 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166691.000.000) 2021-10-16 00:30:47 POST Script terminated.
+	(1) Normal termination (return value 1)
+    DAG Node: stage_in_local_local_1_0
+...
+000 (166694.000.000) 2021-10-16 00:30:53 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_local_local_2_0
+    pool:local
+...
+001 (166694.000.000) 2021-10-16 00:30:53 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_11>
+...
+000 (166695.000.000) 2021-10-16 00:30:58 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: stage_in_local_local_1_0
+    pool:local
+...
+001 (166695.000.000) 2021-10-16 00:30:58 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_12>
+...
+005 (166695.000.000) 2021-10-16 00:38:11 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166695.000.000) 2021-10-16 00:38:13 POST Script terminated.
+	(1) Normal termination (return value 1)
+    DAG Node: stage_in_local_local_1_0
+...
+005 (166694.000.000) 2021-10-16 00:38:17 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166694.000.000) 2021-10-16 00:38:18 POST Script terminated.
+	(1) Normal termination (return value 1)
+    DAG Node: stage_in_local_local_2_0
+...
+009 (166693.000.000) 2021-10-16 00:55:00 Job was aborted.
+	The job attribute PeriodicRemove expression '(JobStatus == 5) && ((CurrentTime - EnteredCurrentStatus) > 1800)' evaluated to TRUE
+
+	Job terminated by itself at 2021-10-16T00:24:01Z (using method 0: OF_ITS_OWN_ACCORD).
+...
+016 (166693.000.000) 2021-10-16 00:55:00 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: split_fasta_split_fasta_00000001
+...
+000 (166696.000.000) 2021-10-16 00:55:10 Job submitted from host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=schedd_2147193_6170>
+    DAG Node: clean_up_local_level_3_0
+    pool:local
+...
+001 (166696.000.000) 2021-10-16 00:55:10 Job executing on host: <10.52.2.166:9618?addrs=10.52.2.166-9618&alias=wfperf.novalocal&noUDP&sock=starter_2147251_542e_13>
+...
+005 (166696.000.000) 2021-10-16 00:55:14 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+...
+016 (166696.000.000) 2021-10-16 00:55:15 POST Script terminated.
+	(1) Normal termination (return value 0)
+    DAG Node: clean_up_local_level_3_0
+...

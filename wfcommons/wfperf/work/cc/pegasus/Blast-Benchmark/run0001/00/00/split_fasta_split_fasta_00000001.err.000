@@ -1,0 +1,17 @@
+2021-10-16 00:24:01: PegasusLite: version 5.0.0
+2021-10-16 00:24:01: Executing on host wfperf.novalocal IP=127.0.1.1
+
+########################[Pegasus Lite] Setting up workdir ########################
+2021-10-16 00:24:01: Not creating a new work directory as it is already set to /var/lib/condor/execute/dir_422273
+
+##############[Pegasus Lite] Figuring out the worker package to use ##############
+2021-10-16 00:24:01: The job contained a Pegasus worker package
+2021-10-16 00:24:01: Warning: worker package pegasus-worker-5.0.0-x86_64_ubuntu_18.tar.gz does not seem to match the system x86_64_ubuntu_20
+2021-10-16 00:24:01: Using existing Pegasus binaries in /usr/bin
+
+##################### Setting the xbit for executables staged #####################
+
+##################### Checking file integrity for input files #####################
+
+######################[Pegasus Lite] Executing the user task ######################
+PegasusLite: exitcode 0

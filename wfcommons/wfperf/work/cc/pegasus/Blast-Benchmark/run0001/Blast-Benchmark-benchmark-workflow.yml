@@ -1,0 +1,5769 @@
+x-pegasus:
+  apiLang: python
+  createdBy: cc
+  createdOn: 10-16-21T00:21:36Z
+pegasus: '5.0'
+name: Blast-Benchmark
+replicaCatalog:
+  replicas:
+  - lfn: sys_input_0.txt
+    pfns:
+    - site: local
+      pfn: file:///home/cc/test/wfcommons/wfcommons/wfperf/data/sys_input_0.txt
+transformationCatalog:
+  transformations:
+  - name: split_fasta
+    sites:
+    - name: local
+      pfn: /home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py
+      type: stageable
+    profiles:
+      env:
+        PATH: /usr/bin:/bin:.
+      condor:
+        request_disk: '10'
+  - name: blastall
+    sites:
+    - name: local
+      pfn: ',/home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py'
+      type: stageable
+    profiles:
+      env:
+        PATH: /usr/bin:/bin:.
+      condor:
+        request_disk: '10'
+  - name: cat_blast
+    sites:
+    - name: local
+      pfn: ',/home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py'
+      type: stageable
+    profiles:
+      env:
+        PATH: /usr/bin:/bin:.
+      condor:
+        request_disk: '10'
+  - name: cat
+    sites:
+    - name: local
+      pfn: /home/cc/test/wfcommons/wfcommons/wfperf/wfperf_benchmark.py
+      type: stageable
+    profiles:
+      env:
+        PATH: /usr/bin:/bin:.
+      condor:
+        request_disk: '10'
+jobs:
+- type: job
+  name: split_fasta
+  id: split_fasta_00000001
+  arguments:
+  - split
+  - split_fasta_00000001
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=split_fasta_00000001_output.txt
+  uses:
+  - lfn: sys_input_0.txt
+    type: input
+  - lfn: split_fasta_00000001_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000002
+  arguments:
+  - blastall
+  - blastall_00000002
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000002_output.txt
+  uses:
+  - lfn: blastall_00000002_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: cat_blast
+  id: cat_blast_00000042
+  arguments:
+  - cat
+  - cat_blast_00000042
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=cat_blast_00000042_output.txt
+  uses:
+  - lfn: blastall_00000054_output.txt
+    type: input
+  - lfn: blastall_00000175_output.txt
+    type: input
+  - lfn: blastall_00000133_output.txt
+    type: input
+  - lfn: blastall_00000157_output.txt
+    type: input
+  - lfn: blastall_00000129_output.txt
+    type: input
+  - lfn: blastall_00000088_output.txt
+    type: input
+  - lfn: blastall_00000145_output.txt
+    type: input
+  - lfn: blastall_00000190_output.txt
+    type: input
+  - lfn: blastall_00000126_output.txt
+    type: input
+  - lfn: blastall_00000131_output.txt
+    type: input
+  - lfn: blastall_00000098_output.txt
+    type: input
+  - lfn: blastall_00000078_output.txt
+    type: input
+  - lfn: blastall_00000092_output.txt
+    type: input
+  - lfn: blastall_00000144_output.txt
+    type: input
+  - lfn: blastall_00000003_output.txt
+    type: input
+  - lfn: blastall_00000015_output.txt
+    type: input
+  - lfn: blastall_00000046_output.txt
+    type: input
+  - lfn: blastall_00000011_output.txt
+    type: input
+  - lfn: blastall_00000032_output.txt
+    type: input
+  - lfn: blastall_00000062_output.txt
+    type: input
+  - lfn: blastall_00000086_output.txt
+    type: input
+  - lfn: blastall_00000089_output.txt
+    type: input
+  - lfn: blastall_00000187_output.txt
+    type: input
+  - lfn: blastall_00000044_output.txt
+    type: input
+  - lfn: blastall_00000105_output.txt
+    type: input
+  - lfn: blastall_00000099_output.txt
+    type: input
+  - lfn: blastall_00000077_output.txt
+    type: input
+  - lfn: blastall_00000122_output.txt
+    type: input
+  - lfn: blastall_00000173_output.txt
+    type: input
+  - lfn: blastall_00000069_output.txt
+    type: input
+  - lfn: blastall_00000002_output.txt
+    type: input
+  - lfn: blastall_00000008_output.txt
+    type: input
+  - lfn: blastall_00000074_output.txt
+    type: input
+  - lfn: blastall_00000058_output.txt
+    type: input
+  - lfn: blastall_00000138_output.txt
+    type: input
+  - lfn: blastall_00000045_output.txt
+    type: input
+  - lfn: blastall_00000060_output.txt
+    type: input
+  - lfn: blastall_00000113_output.txt
+    type: input
+  - lfn: blastall_00000153_output.txt
+    type: input
+  - lfn: blastall_00000142_output.txt
+    type: input
+  - lfn: blastall_00000031_output.txt
+    type: input
+  - lfn: blastall_00000037_output.txt
+    type: input
+  - lfn: blastall_00000147_output.txt
+    type: input
+  - lfn: blastall_00000171_output.txt
+    type: input
+  - lfn: blastall_00000178_output.txt
+    type: input
+  - lfn: blastall_00000179_output.txt
+    type: input
+  - lfn: blastall_00000023_output.txt
+    type: input
+  - lfn: blastall_00000095_output.txt
+    type: input
+  - lfn: blastall_00000076_output.txt
+    type: input
+  - lfn: blastall_00000048_output.txt
+    type: input
+  - lfn: blastall_00000188_output.txt
+    type: input
+  - lfn: blastall_00000194_output.txt
+    type: input
+  - lfn: blastall_00000162_output.txt
+    type: input
+  - lfn: blastall_00000020_output.txt
+    type: input
+  - lfn: blastall_00000115_output.txt
+    type: input
+  - lfn: blastall_00000196_output.txt
+    type: input
+  - lfn: blastall_00000176_output.txt
+    type: input
+  - lfn: blastall_00000163_output.txt
+    type: input
+  - lfn: blastall_00000040_output.txt
+    type: input
+  - lfn: blastall_00000065_output.txt
+    type: input
+  - lfn: blastall_00000014_output.txt
+    type: input
+  - lfn: blastall_00000071_output.txt
+    type: input
+  - lfn: blastall_00000021_output.txt
+    type: input
+  - lfn: blastall_00000059_output.txt
+    type: input
+  - lfn: blastall_00000112_output.txt
+    type: input
+  - lfn: blastall_00000096_output.txt
+    type: input
+  - lfn: blastall_00000051_output.txt
+    type: input
+  - lfn: blastall_00000148_output.txt
+    type: input
+  - lfn: blastall_00000038_output.txt
+    type: input
+  - lfn: blastall_00000009_output.txt
+    type: input
+  - lfn: blastall_00000104_output.txt
+    type: input
+  - lfn: blastall_00000181_output.txt
+    type: input
+  - lfn: blastall_00000101_output.txt
+    type: input
+  - lfn: blastall_00000110_output.txt
+    type: input
+  - lfn: cat_blast_00000042_output.txt
+    type: output
+    stageOut: true
+    registerReplica: true
+  - lfn: blastall_00000180_output.txt
+    type: input
+  - lfn: blastall_00000182_output.txt
+    type: input
+  - lfn: blastall_00000140_output.txt
+    type: input
+  - lfn: blastall_00000150_output.txt
+    type: input
+  - lfn: blastall_00000116_output.txt
+    type: input
+  - lfn: blastall_00000056_output.txt
+    type: input
+  - lfn: blastall_00000154_output.txt
+    type: input
+  - lfn: blastall_00000127_output.txt
+    type: input
+  - lfn: blastall_00000064_output.txt
+    type: input
+  - lfn: blastall_00000018_output.txt
+    type: input
+  - lfn: blastall_00000049_output.txt
+    type: input
+  - lfn: blastall_00000072_output.txt
+    type: input
+  - lfn: blastall_00000012_output.txt
+    type: input
+  - lfn: blastall_00000166_output.txt
+    type: input
+  - lfn: blastall_00000103_output.txt
+    type: input
+  - lfn: blastall_00000007_output.txt
+    type: input
+  - lfn: blastall_00000108_output.txt
+    type: input
+  - lfn: blastall_00000090_output.txt
+    type: input
+  - lfn: blastall_00000141_output.txt
+    type: input
+  - lfn: blastall_00000151_output.txt
+    type: input
+  - lfn: blastall_00000159_output.txt
+    type: input
+  - lfn: blastall_00000118_output.txt
+    type: input
+  - lfn: blastall_00000192_output.txt
+    type: input
+  - lfn: blastall_00000019_output.txt
+    type: input
+  - lfn: blastall_00000061_output.txt
+    type: input
+  - lfn: blastall_00000035_output.txt
+    type: input
+  - lfn: blastall_00000033_output.txt
+    type: input
+  - lfn: blastall_00000030_output.txt
+    type: input
+  - lfn: blastall_00000039_output.txt
+    type: input
+  - lfn: blastall_00000026_output.txt
+    type: input
+  - lfn: blastall_00000075_output.txt
+    type: input
+  - lfn: blastall_00000013_output.txt
+    type: input
+  - lfn: blastall_00000091_output.txt
+    type: input
+  - lfn: blastall_00000185_output.txt
+    type: input
+  - lfn: blastall_00000132_output.txt
+    type: input
+  - lfn: blastall_00000169_output.txt
+    type: input
+  - lfn: blastall_00000160_output.txt
+    type: input
+  - lfn: blastall_00000193_output.txt
+    type: input
+  - lfn: blastall_00000016_output.txt
+    type: input
+  - lfn: blastall_00000106_output.txt
+    type: input
+  - lfn: blastall_00000017_output.txt
+    type: input
+  - lfn: blastall_00000198_output.txt
+    type: input
+  - lfn: blastall_00000022_output.txt
+    type: input
+  - lfn: blastall_00000066_output.txt
+    type: input
+  - lfn: blastall_00000134_output.txt
+    type: input
+  - lfn: blastall_00000063_output.txt
+    type: input
+  - lfn: blastall_00000097_output.txt
+    type: input
+  - lfn: blastall_00000161_output.txt
+    type: input
+  - lfn: blastall_00000083_output.txt
+    type: input
+  - lfn: blastall_00000117_output.txt
+    type: input
+  - lfn: blastall_00000087_output.txt
+    type: input
+  - lfn: blastall_00000177_output.txt
+    type: input
+  - lfn: blastall_00000158_output.txt
+    type: input
+  - lfn: blastall_00000186_output.txt
+    type: input
+  - lfn: blastall_00000168_output.txt
+    type: input
+  - lfn: blastall_00000005_output.txt
+    type: input
+  - lfn: blastall_00000070_output.txt
+    type: input
+  - lfn: blastall_00000094_output.txt
+    type: input
+  - lfn: blastall_00000135_output.txt
+    type: input
+  - lfn: blastall_00000085_output.txt
+    type: input
+  - lfn: blastall_00000146_output.txt
+    type: input
+  - lfn: blastall_00000111_output.txt
+    type: input
+  - lfn: blastall_00000174_output.txt
+    type: input
+  - lfn: blastall_00000189_output.txt
+    type: input
+  - lfn: blastall_00000123_output.txt
+    type: input
+  - lfn: blastall_00000081_output.txt
+    type: input
+  - lfn: blastall_00000093_output.txt
+    type: input
+  - lfn: blastall_00000006_output.txt
+    type: input
+  - lfn: blastall_00000191_output.txt
+    type: input
+  - lfn: blastall_00000036_output.txt
+    type: input
+  - lfn: blastall_00000073_output.txt
+    type: input
+  - lfn: blastall_00000041_output.txt
+    type: input
+  - lfn: blastall_00000167_output.txt
+    type: input
+  - lfn: blastall_00000120_output.txt
+    type: input
+  - lfn: blastall_00000027_output.txt
+    type: input
+  - lfn: blastall_00000047_output.txt
+    type: input
+  - lfn: blastall_00000050_output.txt
+    type: input
+  - lfn: blastall_00000102_output.txt
+    type: input
+  - lfn: blastall_00000128_output.txt
+    type: input
+  - lfn: blastall_00000004_output.txt
+    type: input
+  - lfn: blastall_00000136_output.txt
+    type: input
+  - lfn: blastall_00000184_output.txt
+    type: input
+  - lfn: blastall_00000143_output.txt
+    type: input
+  - lfn: blastall_00000024_output.txt
+    type: input
+  - lfn: blastall_00000152_output.txt
+    type: input
+  - lfn: blastall_00000067_output.txt
+    type: input
+  - lfn: blastall_00000068_output.txt
+    type: input
+  - lfn: blastall_00000107_output.txt
+    type: input
+  - lfn: blastall_00000156_output.txt
+    type: input
+  - lfn: blastall_00000197_output.txt
+    type: input
+  - lfn: blastall_00000121_output.txt
+    type: input
+  - lfn: blastall_00000052_output.txt
+    type: input
+  - lfn: blastall_00000165_output.txt
+    type: input
+  - lfn: blastall_00000195_output.txt
+    type: input
+  - lfn: blastall_00000029_output.txt
+    type: input
+  - lfn: blastall_00000172_output.txt
+    type: input
+  - lfn: blastall_00000124_output.txt
+    type: input
+  - lfn: blastall_00000079_output.txt
+    type: input
+  - lfn: blastall_00000055_output.txt
+    type: input
+  - lfn: blastall_00000053_output.txt
+    type: input
+  - lfn: blastall_00000137_output.txt
+    type: input
+  - lfn: blastall_00000119_output.txt
+    type: input
+  - lfn: blastall_00000034_output.txt
+    type: input
+  - lfn: blastall_00000109_output.txt
+    type: input
+  - lfn: blastall_00000114_output.txt
+    type: input
+  - lfn: blastall_00000025_output.txt
+    type: input
+  - lfn: blastall_00000130_output.txt
+    type: input
+  - lfn: blastall_00000125_output.txt
+    type: input
+  - lfn: blastall_00000139_output.txt
+    type: input
+  - lfn: blastall_00000082_output.txt
+    type: input
+  - lfn: blastall_00000183_output.txt
+    type: input
+  - lfn: blastall_00000080_output.txt
+    type: input
+  - lfn: blastall_00000057_output.txt
+    type: input
+  - lfn: blastall_00000149_output.txt
+    type: input
+  - lfn: blastall_00000170_output.txt
+    type: input
+  - lfn: blastall_00000010_output.txt
+    type: input
+  - lfn: blastall_00000155_output.txt
+    type: input
+  - lfn: blastall_00000084_output.txt
+    type: input
+  - lfn: blastall_00000164_output.txt
+    type: input
+  - lfn: blastall_00000100_output.txt
+    type: input
+  - lfn: blastall_00000028_output.txt
+    type: input
+- type: job
+  name: cat
+  id: cat_00000043
+  arguments:
+  - cat
+  - cat_00000043
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=cat_00000043_output.txt
+  uses:
+  - lfn: blastall_00000054_output.txt
+    type: input
+  - lfn: blastall_00000175_output.txt
+    type: input
+  - lfn: blastall_00000133_output.txt
+    type: input
+  - lfn: blastall_00000157_output.txt
+    type: input
+  - lfn: blastall_00000129_output.txt
+    type: input
+  - lfn: blastall_00000088_output.txt
+    type: input
+  - lfn: blastall_00000145_output.txt
+    type: input
+  - lfn: blastall_00000190_output.txt
+    type: input
+  - lfn: blastall_00000126_output.txt
+    type: input
+  - lfn: blastall_00000131_output.txt
+    type: input
+  - lfn: blastall_00000098_output.txt
+    type: input
+  - lfn: blastall_00000078_output.txt
+    type: input
+  - lfn: blastall_00000092_output.txt
+    type: input
+  - lfn: blastall_00000144_output.txt
+    type: input
+  - lfn: blastall_00000003_output.txt
+    type: input
+  - lfn: blastall_00000015_output.txt
+    type: input
+  - lfn: blastall_00000046_output.txt
+    type: input
+  - lfn: blastall_00000011_output.txt
+    type: input
+  - lfn: blastall_00000032_output.txt
+    type: input
+  - lfn: blastall_00000062_output.txt
+    type: input
+  - lfn: blastall_00000086_output.txt
+    type: input
+  - lfn: blastall_00000089_output.txt
+    type: input
+  - lfn: blastall_00000187_output.txt
+    type: input
+  - lfn: blastall_00000044_output.txt
+    type: input
+  - lfn: blastall_00000105_output.txt
+    type: input
+  - lfn: blastall_00000099_output.txt
+    type: input
+  - lfn: blastall_00000077_output.txt
+    type: input
+  - lfn: blastall_00000122_output.txt
+    type: input
+  - lfn: blastall_00000173_output.txt
+    type: input
+  - lfn: blastall_00000069_output.txt
+    type: input
+  - lfn: blastall_00000002_output.txt
+    type: input
+  - lfn: blastall_00000008_output.txt
+    type: input
+  - lfn: blastall_00000074_output.txt
+    type: input
+  - lfn: blastall_00000058_output.txt
+    type: input
+  - lfn: blastall_00000138_output.txt
+    type: input
+  - lfn: blastall_00000045_output.txt
+    type: input
+  - lfn: blastall_00000060_output.txt
+    type: input
+  - lfn: blastall_00000113_output.txt
+    type: input
+  - lfn: blastall_00000153_output.txt
+    type: input
+  - lfn: blastall_00000142_output.txt
+    type: input
+  - lfn: blastall_00000031_output.txt
+    type: input
+  - lfn: blastall_00000037_output.txt
+    type: input
+  - lfn: blastall_00000147_output.txt
+    type: input
+  - lfn: blastall_00000171_output.txt
+    type: input
+  - lfn: blastall_00000178_output.txt
+    type: input
+  - lfn: blastall_00000179_output.txt
+    type: input
+  - lfn: blastall_00000023_output.txt
+    type: input
+  - lfn: blastall_00000095_output.txt
+    type: input
+  - lfn: blastall_00000076_output.txt
+    type: input
+  - lfn: blastall_00000048_output.txt
+    type: input
+  - lfn: blastall_00000188_output.txt
+    type: input
+  - lfn: blastall_00000194_output.txt
+    type: input
+  - lfn: blastall_00000162_output.txt
+    type: input
+  - lfn: blastall_00000020_output.txt
+    type: input
+  - lfn: blastall_00000115_output.txt
+    type: input
+  - lfn: blastall_00000196_output.txt
+    type: input
+  - lfn: blastall_00000176_output.txt
+    type: input
+  - lfn: blastall_00000163_output.txt
+    type: input
+  - lfn: blastall_00000040_output.txt
+    type: input
+  - lfn: blastall_00000065_output.txt
+    type: input
+  - lfn: blastall_00000014_output.txt
+    type: input
+  - lfn: blastall_00000071_output.txt
+    type: input
+  - lfn: blastall_00000021_output.txt
+    type: input
+  - lfn: blastall_00000059_output.txt
+    type: input
+  - lfn: blastall_00000112_output.txt
+    type: input
+  - lfn: blastall_00000096_output.txt
+    type: input
+  - lfn: blastall_00000051_output.txt
+    type: input
+  - lfn: blastall_00000148_output.txt
+    type: input
+  - lfn: blastall_00000038_output.txt
+    type: input
+  - lfn: blastall_00000009_output.txt
+    type: input
+  - lfn: blastall_00000104_output.txt
+    type: input
+  - lfn: blastall_00000181_output.txt
+    type: input
+  - lfn: blastall_00000101_output.txt
+    type: input
+  - lfn: blastall_00000110_output.txt
+    type: input
+  - lfn: blastall_00000180_output.txt
+    type: input
+  - lfn: blastall_00000182_output.txt
+    type: input
+  - lfn: blastall_00000140_output.txt
+    type: input
+  - lfn: blastall_00000150_output.txt
+    type: input
+  - lfn: blastall_00000116_output.txt
+    type: input
+  - lfn: blastall_00000056_output.txt
+    type: input
+  - lfn: blastall_00000154_output.txt
+    type: input
+  - lfn: blastall_00000127_output.txt
+    type: input
+  - lfn: blastall_00000064_output.txt
+    type: input
+  - lfn: blastall_00000018_output.txt
+    type: input
+  - lfn: blastall_00000049_output.txt
+    type: input
+  - lfn: blastall_00000072_output.txt
+    type: input
+  - lfn: blastall_00000012_output.txt
+    type: input
+  - lfn: blastall_00000166_output.txt
+    type: input
+  - lfn: blastall_00000103_output.txt
+    type: input
+  - lfn: blastall_00000007_output.txt
+    type: input
+  - lfn: blastall_00000108_output.txt
+    type: input
+  - lfn: blastall_00000090_output.txt
+    type: input
+  - lfn: blastall_00000141_output.txt
+    type: input
+  - lfn: blastall_00000151_output.txt
+    type: input
+  - lfn: blastall_00000159_output.txt
+    type: input
+  - lfn: blastall_00000118_output.txt
+    type: input
+  - lfn: blastall_00000192_output.txt
+    type: input
+  - lfn: blastall_00000019_output.txt
+    type: input
+  - lfn: blastall_00000061_output.txt
+    type: input
+  - lfn: blastall_00000035_output.txt
+    type: input
+  - lfn: blastall_00000033_output.txt
+    type: input
+  - lfn: blastall_00000030_output.txt
+    type: input
+  - lfn: blastall_00000039_output.txt
+    type: input
+  - lfn: blastall_00000026_output.txt
+    type: input
+  - lfn: blastall_00000075_output.txt
+    type: input
+  - lfn: blastall_00000013_output.txt
+    type: input
+  - lfn: blastall_00000091_output.txt
+    type: input
+  - lfn: blastall_00000185_output.txt
+    type: input
+  - lfn: blastall_00000132_output.txt
+    type: input
+  - lfn: blastall_00000169_output.txt
+    type: input
+  - lfn: blastall_00000160_output.txt
+    type: input
+  - lfn: blastall_00000193_output.txt
+    type: input
+  - lfn: blastall_00000016_output.txt
+    type: input
+  - lfn: blastall_00000106_output.txt
+    type: input
+  - lfn: blastall_00000017_output.txt
+    type: input
+  - lfn: blastall_00000198_output.txt
+    type: input
+  - lfn: blastall_00000022_output.txt
+    type: input
+  - lfn: blastall_00000066_output.txt
+    type: input
+  - lfn: blastall_00000134_output.txt
+    type: input
+  - lfn: blastall_00000063_output.txt
+    type: input
+  - lfn: blastall_00000097_output.txt
+    type: input
+  - lfn: blastall_00000161_output.txt
+    type: input
+  - lfn: blastall_00000083_output.txt
+    type: input
+  - lfn: blastall_00000117_output.txt
+    type: input
+  - lfn: blastall_00000087_output.txt
+    type: input
+  - lfn: blastall_00000177_output.txt
+    type: input
+  - lfn: blastall_00000158_output.txt
+    type: input
+  - lfn: blastall_00000186_output.txt
+    type: input
+  - lfn: blastall_00000168_output.txt
+    type: input
+  - lfn: blastall_00000005_output.txt
+    type: input
+  - lfn: blastall_00000070_output.txt
+    type: input
+  - lfn: blastall_00000094_output.txt
+    type: input
+  - lfn: blastall_00000135_output.txt
+    type: input
+  - lfn: blastall_00000085_output.txt
+    type: input
+  - lfn: blastall_00000146_output.txt
+    type: input
+  - lfn: blastall_00000111_output.txt
+    type: input
+  - lfn: blastall_00000174_output.txt
+    type: input
+  - lfn: blastall_00000189_output.txt
+    type: input
+  - lfn: blastall_00000123_output.txt
+    type: input
+  - lfn: blastall_00000081_output.txt
+    type: input
+  - lfn: blastall_00000093_output.txt
+    type: input
+  - lfn: blastall_00000006_output.txt
+    type: input
+  - lfn: blastall_00000191_output.txt
+    type: input
+  - lfn: blastall_00000036_output.txt
+    type: input
+  - lfn: blastall_00000073_output.txt
+    type: input
+  - lfn: blastall_00000041_output.txt
+    type: input
+  - lfn: blastall_00000167_output.txt
+    type: input
+  - lfn: blastall_00000120_output.txt
+    type: input
+  - lfn: blastall_00000027_output.txt
+    type: input
+  - lfn: blastall_00000047_output.txt
+    type: input
+  - lfn: blastall_00000050_output.txt
+    type: input
+  - lfn: blastall_00000102_output.txt
+    type: input
+  - lfn: blastall_00000128_output.txt
+    type: input
+  - lfn: blastall_00000004_output.txt
+    type: input
+  - lfn: blastall_00000136_output.txt
+    type: input
+  - lfn: blastall_00000184_output.txt
+    type: input
+  - lfn: blastall_00000143_output.txt
+    type: input
+  - lfn: blastall_00000024_output.txt
+    type: input
+  - lfn: blastall_00000152_output.txt
+    type: input
+  - lfn: blastall_00000067_output.txt
+    type: input
+  - lfn: blastall_00000068_output.txt
+    type: input
+  - lfn: blastall_00000107_output.txt
+    type: input
+  - lfn: blastall_00000156_output.txt
+    type: input
+  - lfn: blastall_00000197_output.txt
+    type: input
+  - lfn: blastall_00000121_output.txt
+    type: input
+  - lfn: blastall_00000052_output.txt
+    type: input
+  - lfn: blastall_00000165_output.txt
+    type: input
+  - lfn: blastall_00000195_output.txt
+    type: input
+  - lfn: blastall_00000029_output.txt
+    type: input
+  - lfn: blastall_00000172_output.txt
+    type: input
+  - lfn: blastall_00000124_output.txt
+    type: input
+  - lfn: blastall_00000079_output.txt
+    type: input
+  - lfn: blastall_00000055_output.txt
+    type: input
+  - lfn: blastall_00000053_output.txt
+    type: input
+  - lfn: blastall_00000137_output.txt
+    type: input
+  - lfn: blastall_00000119_output.txt
+    type: input
+  - lfn: blastall_00000034_output.txt
+    type: input
+  - lfn: blastall_00000109_output.txt
+    type: input
+  - lfn: blastall_00000114_output.txt
+    type: input
+  - lfn: blastall_00000025_output.txt
+    type: input
+  - lfn: blastall_00000130_output.txt
+    type: input
+  - lfn: blastall_00000125_output.txt
+    type: input
+  - lfn: blastall_00000139_output.txt
+    type: input
+  - lfn: blastall_00000082_output.txt
+    type: input
+  - lfn: blastall_00000183_output.txt
+    type: input
+  - lfn: blastall_00000080_output.txt
+    type: input
+  - lfn: blastall_00000057_output.txt
+    type: input
+  - lfn: blastall_00000149_output.txt
+    type: input
+  - lfn: blastall_00000170_output.txt
+    type: input
+  - lfn: blastall_00000010_output.txt
+    type: input
+  - lfn: cat_00000043_output.txt
+    type: output
+    stageOut: true
+    registerReplica: true
+  - lfn: blastall_00000155_output.txt
+    type: input
+  - lfn: blastall_00000084_output.txt
+    type: input
+  - lfn: blastall_00000164_output.txt
+    type: input
+  - lfn: blastall_00000100_output.txt
+    type: input
+  - lfn: blastall_00000028_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000003
+  arguments:
+  - blastall
+  - blastall_00000003
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000003_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000003_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000004
+  arguments:
+  - blastall
+  - blastall_00000004
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000004_output.txt
+  uses:
+  - lfn: blastall_00000004_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000005
+  arguments:
+  - blastall
+  - blastall_00000005
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000005_output.txt
+  uses:
+  - lfn: blastall_00000005_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000006
+  arguments:
+  - blastall
+  - blastall_00000006
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000006_output.txt
+  uses:
+  - lfn: blastall_00000006_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000007
+  arguments:
+  - blastall
+  - blastall_00000007
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000007_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000007_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000008
+  arguments:
+  - blastall
+  - blastall_00000008
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000008_output.txt
+  uses:
+  - lfn: blastall_00000008_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000009
+  arguments:
+  - blastall
+  - blastall_00000009
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000009_output.txt
+  uses:
+  - lfn: blastall_00000009_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000010
+  arguments:
+  - blastall
+  - blastall_00000010
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000010_output.txt
+  uses:
+  - lfn: blastall_00000010_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000011
+  arguments:
+  - blastall
+  - blastall_00000011
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000011_output.txt
+  uses:
+  - lfn: blastall_00000011_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000012
+  arguments:
+  - blastall
+  - blastall_00000012
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000012_output.txt
+  uses:
+  - lfn: blastall_00000012_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000013
+  arguments:
+  - blastall
+  - blastall_00000013
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000013_output.txt
+  uses:
+  - lfn: blastall_00000013_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000014
+  arguments:
+  - blastall
+  - blastall_00000014
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000014_output.txt
+  uses:
+  - lfn: blastall_00000014_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000015
+  arguments:
+  - blastall
+  - blastall_00000015
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000015_output.txt
+  uses:
+  - lfn: blastall_00000015_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000016
+  arguments:
+  - blastall
+  - blastall_00000016
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000016_output.txt
+  uses:
+  - lfn: blastall_00000016_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000017
+  arguments:
+  - blastall
+  - blastall_00000017
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000017_output.txt
+  uses:
+  - lfn: blastall_00000017_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000018
+  arguments:
+  - blastall
+  - blastall_00000018
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000018_output.txt
+  uses:
+  - lfn: blastall_00000018_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000019
+  arguments:
+  - blastall
+  - blastall_00000019
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000019_output.txt
+  uses:
+  - lfn: blastall_00000019_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000020
+  arguments:
+  - blastall
+  - blastall_00000020
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000020_output.txt
+  uses:
+  - lfn: blastall_00000020_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000021
+  arguments:
+  - blastall
+  - blastall_00000021
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000021_output.txt
+  uses:
+  - lfn: blastall_00000021_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000022
+  arguments:
+  - blastall
+  - blastall_00000022
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000022_output.txt
+  uses:
+  - lfn: blastall_00000022_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000023
+  arguments:
+  - blastall
+  - blastall_00000023
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000023_output.txt
+  uses:
+  - lfn: blastall_00000023_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000024
+  arguments:
+  - blastall
+  - blastall_00000024
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000024_output.txt
+  uses:
+  - lfn: blastall_00000024_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000025
+  arguments:
+  - blastall
+  - blastall_00000025
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000025_output.txt
+  uses:
+  - lfn: blastall_00000025_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000026
+  arguments:
+  - blastall
+  - blastall_00000026
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000026_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000026_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000027
+  arguments:
+  - blastall
+  - blastall_00000027
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000027_output.txt
+  uses:
+  - lfn: blastall_00000027_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000028
+  arguments:
+  - blastall
+  - blastall_00000028
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000028_output.txt
+  uses:
+  - lfn: blastall_00000028_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000029
+  arguments:
+  - blastall
+  - blastall_00000029
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000029_output.txt
+  uses:
+  - lfn: blastall_00000029_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000030
+  arguments:
+  - blastall
+  - blastall_00000030
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000030_output.txt
+  uses:
+  - lfn: blastall_00000030_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000031
+  arguments:
+  - blastall
+  - blastall_00000031
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000031_output.txt
+  uses:
+  - lfn: blastall_00000031_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000032
+  arguments:
+  - blastall
+  - blastall_00000032
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000032_output.txt
+  uses:
+  - lfn: blastall_00000032_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000033
+  arguments:
+  - blastall
+  - blastall_00000033
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000033_output.txt
+  uses:
+  - lfn: blastall_00000033_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000034
+  arguments:
+  - blastall
+  - blastall_00000034
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000034_output.txt
+  uses:
+  - lfn: blastall_00000034_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000035
+  arguments:
+  - blastall
+  - blastall_00000035
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000035_output.txt
+  uses:
+  - lfn: blastall_00000035_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000036
+  arguments:
+  - blastall
+  - blastall_00000036
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000036_output.txt
+  uses:
+  - lfn: blastall_00000036_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000037
+  arguments:
+  - blastall
+  - blastall_00000037
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000037_output.txt
+  uses:
+  - lfn: blastall_00000037_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000038
+  arguments:
+  - blastall
+  - blastall_00000038
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000038_output.txt
+  uses:
+  - lfn: blastall_00000038_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000039
+  arguments:
+  - blastall
+  - blastall_00000039
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000039_output.txt
+  uses:
+  - lfn: blastall_00000039_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000040
+  arguments:
+  - blastall
+  - blastall_00000040
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000040_output.txt
+  uses:
+  - lfn: blastall_00000040_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000041
+  arguments:
+  - blastall
+  - blastall_00000041
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000041_output.txt
+  uses:
+  - lfn: blastall_00000041_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000044
+  arguments:
+  - blastall
+  - blastall_00000044
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000044_output.txt
+  uses:
+  - lfn: blastall_00000044_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000045
+  arguments:
+  - blastall
+  - blastall_00000045
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000045_output.txt
+  uses:
+  - lfn: blastall_00000045_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000046
+  arguments:
+  - blastall
+  - blastall_00000046
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000046_output.txt
+  uses:
+  - lfn: blastall_00000046_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000047
+  arguments:
+  - blastall
+  - blastall_00000047
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000047_output.txt
+  uses:
+  - lfn: blastall_00000047_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000048
+  arguments:
+  - blastall
+  - blastall_00000048
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000048_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000048_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000049
+  arguments:
+  - blastall
+  - blastall_00000049
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000049_output.txt
+  uses:
+  - lfn: blastall_00000049_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000050
+  arguments:
+  - blastall
+  - blastall_00000050
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000050_output.txt
+  uses:
+  - lfn: blastall_00000050_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000051
+  arguments:
+  - blastall
+  - blastall_00000051
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000051_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000051_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000052
+  arguments:
+  - blastall
+  - blastall_00000052
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000052_output.txt
+  uses:
+  - lfn: blastall_00000052_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000053
+  arguments:
+  - blastall
+  - blastall_00000053
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000053_output.txt
+  uses:
+  - lfn: blastall_00000053_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000054
+  arguments:
+  - blastall
+  - blastall_00000054
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000054_output.txt
+  uses:
+  - lfn: blastall_00000054_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000055
+  arguments:
+  - blastall
+  - blastall_00000055
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000055_output.txt
+  uses:
+  - lfn: blastall_00000055_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000056
+  arguments:
+  - blastall
+  - blastall_00000056
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000056_output.txt
+  uses:
+  - lfn: blastall_00000056_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000057
+  arguments:
+  - blastall
+  - blastall_00000057
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000057_output.txt
+  uses:
+  - lfn: blastall_00000057_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000058
+  arguments:
+  - blastall
+  - blastall_00000058
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000058_output.txt
+  uses:
+  - lfn: blastall_00000058_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000059
+  arguments:
+  - blastall
+  - blastall_00000059
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000059_output.txt
+  uses:
+  - lfn: blastall_00000059_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000060
+  arguments:
+  - blastall
+  - blastall_00000060
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000060_output.txt
+  uses:
+  - lfn: blastall_00000060_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000061
+  arguments:
+  - blastall
+  - blastall_00000061
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000061_output.txt
+  uses:
+  - lfn: blastall_00000061_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000062
+  arguments:
+  - blastall
+  - blastall_00000062
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000062_output.txt
+  uses:
+  - lfn: blastall_00000062_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000063
+  arguments:
+  - blastall
+  - blastall_00000063
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000063_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000063_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000064
+  arguments:
+  - blastall
+  - blastall_00000064
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000064_output.txt
+  uses:
+  - lfn: blastall_00000064_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000065
+  arguments:
+  - blastall
+  - blastall_00000065
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000065_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000065_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000066
+  arguments:
+  - blastall
+  - blastall_00000066
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000066_output.txt
+  uses:
+  - lfn: blastall_00000066_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000067
+  arguments:
+  - blastall
+  - blastall_00000067
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000067_output.txt
+  uses:
+  - lfn: blastall_00000067_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000068
+  arguments:
+  - blastall
+  - blastall_00000068
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000068_output.txt
+  uses:
+  - lfn: blastall_00000068_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000069
+  arguments:
+  - blastall
+  - blastall_00000069
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000069_output.txt
+  uses:
+  - lfn: blastall_00000069_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000070
+  arguments:
+  - blastall
+  - blastall_00000070
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000070_output.txt
+  uses:
+  - lfn: blastall_00000070_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000071
+  arguments:
+  - blastall
+  - blastall_00000071
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000071_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000071_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000072
+  arguments:
+  - blastall
+  - blastall_00000072
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000072_output.txt
+  uses:
+  - lfn: blastall_00000072_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000073
+  arguments:
+  - blastall
+  - blastall_00000073
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000073_output.txt
+  uses:
+  - lfn: blastall_00000073_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000074
+  arguments:
+  - blastall
+  - blastall_00000074
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000074_output.txt
+  uses:
+  - lfn: blastall_00000074_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000075
+  arguments:
+  - blastall
+  - blastall_00000075
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000075_output.txt
+  uses:
+  - lfn: blastall_00000075_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000076
+  arguments:
+  - blastall
+  - blastall_00000076
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000076_output.txt
+  uses:
+  - lfn: blastall_00000076_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000077
+  arguments:
+  - blastall
+  - blastall_00000077
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000077_output.txt
+  uses:
+  - lfn: blastall_00000077_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000078
+  arguments:
+  - blastall
+  - blastall_00000078
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000078_output.txt
+  uses:
+  - lfn: blastall_00000078_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000079
+  arguments:
+  - blastall
+  - blastall_00000079
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000079_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000079_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000080
+  arguments:
+  - blastall
+  - blastall_00000080
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000080_output.txt
+  uses:
+  - lfn: blastall_00000080_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000081
+  arguments:
+  - blastall
+  - blastall_00000081
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000081_output.txt
+  uses:
+  - lfn: blastall_00000081_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000082
+  arguments:
+  - blastall
+  - blastall_00000082
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000082_output.txt
+  uses:
+  - lfn: blastall_00000082_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000083
+  arguments:
+  - blastall
+  - blastall_00000083
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000083_output.txt
+  uses:
+  - lfn: blastall_00000083_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000084
+  arguments:
+  - blastall
+  - blastall_00000084
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000084_output.txt
+  uses:
+  - lfn: blastall_00000084_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000085
+  arguments:
+  - blastall
+  - blastall_00000085
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000085_output.txt
+  uses:
+  - lfn: blastall_00000085_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000086
+  arguments:
+  - blastall
+  - blastall_00000086
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000086_output.txt
+  uses:
+  - lfn: blastall_00000086_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000087
+  arguments:
+  - blastall
+  - blastall_00000087
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000087_output.txt
+  uses:
+  - lfn: blastall_00000087_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000088
+  arguments:
+  - blastall
+  - blastall_00000088
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000088_output.txt
+  uses:
+  - lfn: blastall_00000088_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000089
+  arguments:
+  - blastall
+  - blastall_00000089
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000089_output.txt
+  uses:
+  - lfn: blastall_00000089_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000090
+  arguments:
+  - blastall
+  - blastall_00000090
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000090_output.txt
+  uses:
+  - lfn: blastall_00000090_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000091
+  arguments:
+  - blastall
+  - blastall_00000091
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000091_output.txt
+  uses:
+  - lfn: blastall_00000091_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000092
+  arguments:
+  - blastall
+  - blastall_00000092
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000092_output.txt
+  uses:
+  - lfn: blastall_00000092_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000093
+  arguments:
+  - blastall
+  - blastall_00000093
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000093_output.txt
+  uses:
+  - lfn: blastall_00000093_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000094
+  arguments:
+  - blastall
+  - blastall_00000094
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000094_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000094_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000095
+  arguments:
+  - blastall
+  - blastall_00000095
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000095_output.txt
+  uses:
+  - lfn: blastall_00000095_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000096
+  arguments:
+  - blastall
+  - blastall_00000096
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000096_output.txt
+  uses:
+  - lfn: blastall_00000096_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000097
+  arguments:
+  - blastall
+  - blastall_00000097
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000097_output.txt
+  uses:
+  - lfn: blastall_00000097_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000098
+  arguments:
+  - blastall
+  - blastall_00000098
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000098_output.txt
+  uses:
+  - lfn: blastall_00000098_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000099
+  arguments:
+  - blastall
+  - blastall_00000099
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000099_output.txt
+  uses:
+  - lfn: blastall_00000099_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000100
+  arguments:
+  - blastall
+  - blastall_00000100
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000100_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000100_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000101
+  arguments:
+  - blastall
+  - blastall_00000101
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000101_output.txt
+  uses:
+  - lfn: blastall_00000101_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000102
+  arguments:
+  - blastall
+  - blastall_00000102
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000102_output.txt
+  uses:
+  - lfn: blastall_00000102_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000103
+  arguments:
+  - blastall
+  - blastall_00000103
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000103_output.txt
+  uses:
+  - lfn: blastall_00000103_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000104
+  arguments:
+  - blastall
+  - blastall_00000104
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000104_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000104_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000105
+  arguments:
+  - blastall
+  - blastall_00000105
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000105_output.txt
+  uses:
+  - lfn: blastall_00000105_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000106
+  arguments:
+  - blastall
+  - blastall_00000106
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000106_output.txt
+  uses:
+  - lfn: blastall_00000106_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000107
+  arguments:
+  - blastall
+  - blastall_00000107
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000107_output.txt
+  uses:
+  - lfn: blastall_00000107_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000108
+  arguments:
+  - blastall
+  - blastall_00000108
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000108_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000108_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000109
+  arguments:
+  - blastall
+  - blastall_00000109
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000109_output.txt
+  uses:
+  - lfn: blastall_00000109_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000110
+  arguments:
+  - blastall
+  - blastall_00000110
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000110_output.txt
+  uses:
+  - lfn: blastall_00000110_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000111
+  arguments:
+  - blastall
+  - blastall_00000111
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000111_output.txt
+  uses:
+  - lfn: blastall_00000111_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000112
+  arguments:
+  - blastall
+  - blastall_00000112
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000112_output.txt
+  uses:
+  - lfn: blastall_00000112_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000113
+  arguments:
+  - blastall
+  - blastall_00000113
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000113_output.txt
+  uses:
+  - lfn: blastall_00000113_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000114
+  arguments:
+  - blastall
+  - blastall_00000114
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000114_output.txt
+  uses:
+  - lfn: blastall_00000114_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000115
+  arguments:
+  - blastall
+  - blastall_00000115
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000115_output.txt
+  uses:
+  - lfn: blastall_00000115_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000116
+  arguments:
+  - blastall
+  - blastall_00000116
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000116_output.txt
+  uses:
+  - lfn: blastall_00000116_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000117
+  arguments:
+  - blastall
+  - blastall_00000117
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000117_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000117_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000118
+  arguments:
+  - blastall
+  - blastall_00000118
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000118_output.txt
+  uses:
+  - lfn: blastall_00000118_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000119
+  arguments:
+  - blastall
+  - blastall_00000119
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000119_output.txt
+  uses:
+  - lfn: blastall_00000119_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000120
+  arguments:
+  - blastall
+  - blastall_00000120
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000120_output.txt
+  uses:
+  - lfn: blastall_00000120_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000121
+  arguments:
+  - blastall
+  - blastall_00000121
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000121_output.txt
+  uses:
+  - lfn: blastall_00000121_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000122
+  arguments:
+  - blastall
+  - blastall_00000122
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000122_output.txt
+  uses:
+  - lfn: blastall_00000122_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000123
+  arguments:
+  - blastall
+  - blastall_00000123
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000123_output.txt
+  uses:
+  - lfn: blastall_00000123_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000124
+  arguments:
+  - blastall
+  - blastall_00000124
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000124_output.txt
+  uses:
+  - lfn: blastall_00000124_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000125
+  arguments:
+  - blastall
+  - blastall_00000125
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000125_output.txt
+  uses:
+  - lfn: blastall_00000125_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000126
+  arguments:
+  - blastall
+  - blastall_00000126
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000126_output.txt
+  uses:
+  - lfn: blastall_00000126_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000127
+  arguments:
+  - blastall
+  - blastall_00000127
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000127_output.txt
+  uses:
+  - lfn: blastall_00000127_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000128
+  arguments:
+  - blastall
+  - blastall_00000128
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000128_output.txt
+  uses:
+  - lfn: blastall_00000128_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000129
+  arguments:
+  - blastall
+  - blastall_00000129
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000129_output.txt
+  uses:
+  - lfn: blastall_00000129_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000130
+  arguments:
+  - blastall
+  - blastall_00000130
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000130_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000130_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000131
+  arguments:
+  - blastall
+  - blastall_00000131
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000131_output.txt
+  uses:
+  - lfn: blastall_00000131_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000132
+  arguments:
+  - blastall
+  - blastall_00000132
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000132_output.txt
+  uses:
+  - lfn: blastall_00000132_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000133
+  arguments:
+  - blastall
+  - blastall_00000133
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000133_output.txt
+  uses:
+  - lfn: blastall_00000133_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000134
+  arguments:
+  - blastall
+  - blastall_00000134
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000134_output.txt
+  uses:
+  - lfn: blastall_00000134_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000135
+  arguments:
+  - blastall
+  - blastall_00000135
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000135_output.txt
+  uses:
+  - lfn: blastall_00000135_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000136
+  arguments:
+  - blastall
+  - blastall_00000136
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000136_output.txt
+  uses:
+  - lfn: blastall_00000136_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000137
+  arguments:
+  - blastall
+  - blastall_00000137
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000137_output.txt
+  uses:
+  - lfn: blastall_00000137_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000138
+  arguments:
+  - blastall
+  - blastall_00000138
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000138_output.txt
+  uses:
+  - lfn: blastall_00000138_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000139
+  arguments:
+  - blastall
+  - blastall_00000139
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000139_output.txt
+  uses:
+  - lfn: blastall_00000139_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000140
+  arguments:
+  - blastall
+  - blastall_00000140
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000140_output.txt
+  uses:
+  - lfn: blastall_00000140_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000141
+  arguments:
+  - blastall
+  - blastall_00000141
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000141_output.txt
+  uses:
+  - lfn: blastall_00000141_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000142
+  arguments:
+  - blastall
+  - blastall_00000142
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000142_output.txt
+  uses:
+  - lfn: blastall_00000142_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000143
+  arguments:
+  - blastall
+  - blastall_00000143
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000143_output.txt
+  uses:
+  - lfn: blastall_00000143_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000144
+  arguments:
+  - blastall
+  - blastall_00000144
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000144_output.txt
+  uses:
+  - lfn: blastall_00000144_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000145
+  arguments:
+  - blastall
+  - blastall_00000145
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000145_output.txt
+  uses:
+  - lfn: blastall_00000145_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000146
+  arguments:
+  - blastall
+  - blastall_00000146
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000146_output.txt
+  uses:
+  - lfn: blastall_00000146_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000147
+  arguments:
+  - blastall
+  - blastall_00000147
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000147_output.txt
+  uses:
+  - lfn: blastall_00000147_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000148
+  arguments:
+  - blastall
+  - blastall_00000148
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000148_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000148_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000149
+  arguments:
+  - blastall
+  - blastall_00000149
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000149_output.txt
+  uses:
+  - lfn: blastall_00000149_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000150
+  arguments:
+  - blastall
+  - blastall_00000150
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000150_output.txt
+  uses:
+  - lfn: blastall_00000150_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000151
+  arguments:
+  - blastall
+  - blastall_00000151
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000151_output.txt
+  uses:
+  - lfn: blastall_00000151_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000152
+  arguments:
+  - blastall
+  - blastall_00000152
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000152_output.txt
+  uses:
+  - lfn: blastall_00000152_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000153
+  arguments:
+  - blastall
+  - blastall_00000153
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000153_output.txt
+  uses:
+  - lfn: blastall_00000153_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000154
+  arguments:
+  - blastall
+  - blastall_00000154
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000154_output.txt
+  uses:
+  - lfn: blastall_00000154_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000155
+  arguments:
+  - blastall
+  - blastall_00000155
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000155_output.txt
+  uses:
+  - lfn: blastall_00000155_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000156
+  arguments:
+  - blastall
+  - blastall_00000156
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000156_output.txt
+  uses:
+  - lfn: blastall_00000156_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000157
+  arguments:
+  - blastall
+  - blastall_00000157
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000157_output.txt
+  uses:
+  - lfn: blastall_00000157_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000158
+  arguments:
+  - blastall
+  - blastall_00000158
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000158_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000158_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000159
+  arguments:
+  - blastall
+  - blastall_00000159
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000159_output.txt
+  uses:
+  - lfn: blastall_00000159_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000160
+  arguments:
+  - blastall
+  - blastall_00000160
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000160_output.txt
+  uses:
+  - lfn: blastall_00000160_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000161
+  arguments:
+  - blastall
+  - blastall_00000161
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000161_output.txt
+  uses:
+  - lfn: blastall_00000161_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000162
+  arguments:
+  - blastall
+  - blastall_00000162
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000162_output.txt
+  uses:
+  - lfn: blastall_00000162_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000163
+  arguments:
+  - blastall
+  - blastall_00000163
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000163_output.txt
+  uses:
+  - lfn: blastall_00000163_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000164
+  arguments:
+  - blastall
+  - blastall_00000164
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000164_output.txt
+  uses:
+  - lfn: blastall_00000164_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000165
+  arguments:
+  - blastall
+  - blastall_00000165
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000165_output.txt
+  uses:
+  - lfn: blastall_00000165_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000166
+  arguments:
+  - blastall
+  - blastall_00000166
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000166_output.txt
+  uses:
+  - lfn: blastall_00000166_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000167
+  arguments:
+  - blastall
+  - blastall_00000167
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000167_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000167_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000168
+  arguments:
+  - blastall
+  - blastall_00000168
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000168_output.txt
+  uses:
+  - lfn: blastall_00000168_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000169
+  arguments:
+  - blastall
+  - blastall_00000169
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000169_output.txt
+  uses:
+  - lfn: blastall_00000169_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000170
+  arguments:
+  - blastall
+  - blastall_00000170
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000170_output.txt
+  uses:
+  - lfn: blastall_00000170_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000171
+  arguments:
+  - blastall
+  - blastall_00000171
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000171_output.txt
+  uses:
+  - lfn: blastall_00000171_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000172
+  arguments:
+  - blastall
+  - blastall_00000172
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000172_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000172_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000173
+  arguments:
+  - blastall
+  - blastall_00000173
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000173_output.txt
+  uses:
+  - lfn: blastall_00000173_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000174
+  arguments:
+  - blastall
+  - blastall_00000174
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000174_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000174_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000175
+  arguments:
+  - blastall
+  - blastall_00000175
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000175_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000175_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000176
+  arguments:
+  - blastall
+  - blastall_00000176
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000176_output.txt
+  uses:
+  - lfn: blastall_00000176_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000177
+  arguments:
+  - blastall
+  - blastall_00000177
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000177_output.txt
+  uses:
+  - lfn: blastall_00000177_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000178
+  arguments:
+  - blastall
+  - blastall_00000178
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000178_output.txt
+  uses:
+  - lfn: blastall_00000178_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000179
+  arguments:
+  - blastall
+  - blastall_00000179
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000179_output.txt
+  uses:
+  - lfn: blastall_00000179_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000180
+  arguments:
+  - blastall
+  - blastall_00000180
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000180_output.txt
+  uses:
+  - lfn: blastall_00000180_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000181
+  arguments:
+  - blastall
+  - blastall_00000181
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000181_output.txt
+  uses:
+  - lfn: blastall_00000181_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000182
+  arguments:
+  - blastall
+  - blastall_00000182
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000182_output.txt
+  uses:
+  - lfn: blastall_00000182_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000183
+  arguments:
+  - blastall
+  - blastall_00000183
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000183_output.txt
+  uses:
+  - lfn: blastall_00000183_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000184
+  arguments:
+  - blastall
+  - blastall_00000184
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000184_output.txt
+  uses:
+  - lfn: blastall_00000184_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000185
+  arguments:
+  - blastall
+  - blastall_00000185
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000185_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000185_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000186
+  arguments:
+  - blastall
+  - blastall_00000186
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000186_output.txt
+  uses:
+  - lfn: blastall_00000186_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000187
+  arguments:
+  - blastall
+  - blastall_00000187
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000187_output.txt
+  uses:
+  - lfn: blastall_00000187_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000188
+  arguments:
+  - blastall
+  - blastall_00000188
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000188_output.txt
+  uses:
+  - lfn: blastall_00000188_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000189
+  arguments:
+  - blastall
+  - blastall_00000189
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000189_output.txt
+  uses:
+  - lfn: blastall_00000189_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000190
+  arguments:
+  - blastall
+  - blastall_00000190
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000190_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000190_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000191
+  arguments:
+  - blastall
+  - blastall_00000191
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000191_output.txt
+  uses:
+  - lfn: blastall_00000191_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000192
+  arguments:
+  - blastall
+  - blastall_00000192
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000192_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000192_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000193
+  arguments:
+  - blastall
+  - blastall_00000193
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000193_output.txt
+  uses:
+  - lfn: blastall_00000193_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000194
+  arguments:
+  - blastall
+  - blastall_00000194
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000194_output.txt
+  uses:
+  - lfn: blastall_00000194_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000195
+  arguments:
+  - blastall
+  - blastall_00000195
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000195_output.txt
+  uses:
+  - lfn: blastall_00000195_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000196
+  arguments:
+  - blastall
+  - blastall_00000196
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000196_output.txt
+  uses:
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+  - lfn: blastall_00000196_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+- type: job
+  name: blastall
+  id: blastall_00000197
+  arguments:
+  - blastall
+  - blastall_00000197
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000197_output.txt
+  uses:
+  - lfn: blastall_00000197_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+- type: job
+  name: blastall
+  id: blastall_00000198
+  arguments:
+  - blastall
+  - blastall_00000198
+  - --path-lock=/tmp/cores.txt.lock
+  - --path-cores=/tmp/cores.txt
+  - --percent-cpu=0.5
+  - --cpu-work=100
+  - --data
+  - --file-size=50
+  - --out=blastall_00000198_output.txt
+  uses:
+  - lfn: blastall_00000198_output.txt
+    type: output
+    stageOut: false
+    registerReplica: false
+  - lfn: split_fasta_00000001_output.txt
+    type: input
+jobDependencies:
+- id: blastall_00000002
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: split_fasta_00000001
+  children:
+  - blastall_00000047
+  - blastall_00000170
+  - blastall_00000074
+  - blastall_00000018
+  - blastall_00000163
+  - blastall_00000102
+  - blastall_00000023
+  - blastall_00000122
+  - blastall_00000168
+  - blastall_00000099
+  - blastall_00000048
+  - blastall_00000021
+  - blastall_00000181
+  - blastall_00000004
+  - blastall_00000143
+  - blastall_00000038
+  - blastall_00000031
+  - blastall_00000132
+  - blastall_00000193
+  - blastall_00000196
+  - blastall_00000066
+  - blastall_00000098
+  - blastall_00000111
+  - blastall_00000127
+  - blastall_00000007
+  - blastall_00000130
+  - blastall_00000083
+  - blastall_00000119
+  - blastall_00000186
+  - blastall_00000129
+  - blastall_00000114
+  - blastall_00000097
+  - blastall_00000080
+  - blastall_00000034
+  - blastall_00000016
+  - blastall_00000049
+  - blastall_00000166
+  - blastall_00000136
+  - blastall_00000174
+  - blastall_00000141
+  - blastall_00000026
+  - blastall_00000029
+  - blastall_00000030
+  - blastall_00000145
+  - blastall_00000156
+  - blastall_00000010
+  - blastall_00000178
+  - blastall_00000177
+  - blastall_00000195
+  - blastall_00000065
+  - blastall_00000151
+  - blastall_00000167
+  - blastall_00000011
+  - blastall_00000044
+  - blastall_00000015
+  - blastall_00000063
+  - blastall_00000110
+  - blastall_00000112
+  - blastall_00000164
+  - blastall_00000131
+  - blastall_00000072
+  - blastall_00000140
+  - blastall_00000116
+  - blastall_00000025
+  - blastall_00000055
+  - blastall_00000113
+  - blastall_00000161
+  - blastall_00000071
+  - blastall_00000059
+  - blastall_00000078
+  - blastall_00000020
+  - blastall_00000179
+  - blastall_00000192
+  - blastall_00000069
+  - blastall_00000052
+  - blastall_00000051
+  - blastall_00000135
+  - blastall_00000185
+  - blastall_00000133
+  - blastall_00000086
+  - blastall_00000138
+  - blastall_00000126
+  - blastall_00000014
+  - blastall_00000028
+  - blastall_00000009
+  - blastall_00000187
+  - blastall_00000093
+  - blastall_00000155
+  - blastall_00000024
+  - blastall_00000041
+  - blastall_00000090
+  - blastall_00000092
+  - blastall_00000109
+  - blastall_00000060
+  - blastall_00000087
+  - blastall_00000064
+  - blastall_00000117
+  - blastall_00000088
+  - blastall_00000100
+  - blastall_00000036
+  - blastall_00000012
+  - blastall_00000152
+  - blastall_00000115
+  - blastall_00000134
+  - blastall_00000128
+  - blastall_00000124
+  - blastall_00000139
+  - blastall_00000125
+  - blastall_00000006
+  - blastall_00000103
+  - blastall_00000077
+  - blastall_00000172
+  - blastall_00000182
+  - blastall_00000123
+  - blastall_00000079
+  - blastall_00000022
+  - blastall_00000076
+  - blastall_00000106
+  - blastall_00000146
+  - blastall_00000197
+  - blastall_00000121
+  - blastall_00000165
+  - blastall_00000101
+  - blastall_00000137
+  - blastall_00000180
+  - blastall_00000150
+  - blastall_00000154
+  - blastall_00000046
+  - blastall_00000091
+  - blastall_00000158
+  - blastall_00000171
+  - blastall_00000120
+  - blastall_00000019
+  - blastall_00000062
+  - blastall_00000198
+  - blastall_00000050
+  - blastall_00000003
+  - blastall_00000176
+  - blastall_00000189
+  - blastall_00000056
+  - blastall_00000096
+  - blastall_00000067
+  - blastall_00000032
+  - blastall_00000184
+  - blastall_00000005
+  - blastall_00000013
+  - blastall_00000037
+  - blastall_00000039
+  - blastall_00000142
+  - blastall_00000175
+  - blastall_00000153
+  - blastall_00000183
+  - blastall_00000035
+  - blastall_00000118
+  - blastall_00000159
+  - blastall_00000058
+  - blastall_00000160
+  - blastall_00000162
+  - blastall_00000017
+  - blastall_00000089
+  - blastall_00000094
+  - blastall_00000157
+  - blastall_00000008
+  - blastall_00000057
+  - blastall_00000054
+  - blastall_00000084
+  - blastall_00000045
+  - blastall_00000108
+  - blastall_00000144
+  - blastall_00000173
+  - blastall_00000190
+  - blastall_00000191
+  - blastall_00000068
+  - blastall_00000053
+  - blastall_00000070
+  - blastall_00000105
+  - blastall_00000040
+  - blastall_00000149
+  - blastall_00000169
+  - blastall_00000148
+  - blastall_00000075
+  - blastall_00000194
+  - blastall_00000033
+  - blastall_00000027
+  - blastall_00000085
+  - blastall_00000073
+  - blastall_00000061
+  - blastall_00000188
+  - blastall_00000002
+  - blastall_00000107
+  - blastall_00000081
+  - blastall_00000095
+  - blastall_00000147
+  - blastall_00000082
+  - blastall_00000104
+- id: blastall_00000003
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000004
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000005
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000006
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000007
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000008
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000009
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000010
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000011
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000012
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000013
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000014
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000015
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000016
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000017
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000018
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000019
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000020
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000021
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000022
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000023
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000024
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000025
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000026
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000027
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000028
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000029
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000030
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000031
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000032
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000033
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000034
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000035
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000036
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000037
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000038
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000039
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000040
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000041
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000044
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000045
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000046
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000047
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000048
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000049
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000050
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000051
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000052
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000053
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000054
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000055
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000056
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000057
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000058
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000059
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000060
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000061
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000062
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000063
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000064
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000065
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000066
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000067
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000068
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000069
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000070
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000071
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000072
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000073
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000074
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000075
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000076
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000077
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000078
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000079
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000080
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000081
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000082
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000083
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000084
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000085
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000086
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000087
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000088
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000089
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000090
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000091
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000092
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000093
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000094
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000095
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000096
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000097
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000098
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000099
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000100
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000101
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000102
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000103
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000104
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000105
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000106
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000107
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000108
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000109
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000110
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000111
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000112
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000113
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000114
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000115
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000116
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000117
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000118
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000119
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000120
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000121
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000122
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000123
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000124
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000125
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000126
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000127
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000128
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000129
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000130
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000131
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000132
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000133
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000134
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000135
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000136
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000137
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000138
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000139
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000140
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000141
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000142
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000143
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000144
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000145
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000146
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000147
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000148
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000149
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000150
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000151
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000152
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000153
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000154
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000155
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000156
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000157
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000158
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000159
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000160
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000161
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000162
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000163
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000164
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000165
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000166
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000167
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000168
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000169
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000170
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000171
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000172
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000173
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000174
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000175
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000176
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000177
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000178
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000179
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000180
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000181
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000182
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000183
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000184
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000185
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000186
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000187
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000188
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000189
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000190
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000191
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000192
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000193
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000194
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000195
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000196
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000197
+  children:
+  - cat_00000043
+  - cat_blast_00000042
+- id: blastall_00000198
+  children:
+  - cat_00000043
+  - cat_blast_00000042

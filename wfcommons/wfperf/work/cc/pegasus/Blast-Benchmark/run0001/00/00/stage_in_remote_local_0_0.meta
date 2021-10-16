@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "sys_input_0.txt",
+    "_type": "file",
+    "_attributes": {
+      "user": "cc",
+      "size": "57",
+      "ctime": "2021-10-16T00:22:24.714865",
+      "checksum.type": "sha256",
+      "checksum.value": "dbac23aadf26d541cc51dec9a04e6a4b71e25bf152c976422e073ee47d742223",
+      "checksum.timing": "0.021"
+    }
+  },
+  {
+    "_id": "split_fasta",
+    "_type": "file",
+    "_attributes": {
+      "user": "cc",
+      "size": "4288",
+      "ctime": "2021-10-15T23:04:25.188169",
+      "checksum.type": "sha256",
+      "checksum.value": "64b7f0bb88ed965cf2391c1a4bba078665e9137f88a06d3f34641d120df4883e",
+      "checksum.timing": "0.021"
+    }
+  }
+]
