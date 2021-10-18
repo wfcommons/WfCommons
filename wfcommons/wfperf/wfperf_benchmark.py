@@ -123,7 +123,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
     parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO.")
-    parser.add_argument("--file-size", help="Size of an input/output file.")
+    parser.add_argument("--file-size", type=int, help="Size of an input/output file.")
     parser.add_argument("--out", help="output file name.")
     return parser
 
@@ -138,7 +138,7 @@ def main():
     path_locked.write_text("")
     path_cores.write_text("")
 
-    print(f"Starting {args.name}")
+    print(f"[WfPerf] Starting {args.name} Benchmark\n")
 
     if args.data:
         print("[WfPerf] Starting IO Read Benchmark...")
@@ -164,8 +164,8 @@ def main():
 
     if args.data:
         print(f"[WfPerf] Writing output file '{args.out}'\n")
-        with open(this_dir.joinpath(f"{args.out}"), "wb") as fp:
-            fp.write(os.urandom(int(args.file_size)))
+        with open(args.out, "wb") as fp:
+            fp.write(os.urandom(args.file_size * 1000000))
 
     print("WfPerf Benchmark completed!")
 
