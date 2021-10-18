@@ -137,6 +137,7 @@ def main():
     path_cores = pathlib.Path(args.path_cores)
     path_locked.write_text("")
     path_cores.write_text("")
+    core = lock_core(path_locked, path_cores)
 
     print(f"[WfPerf] Starting {args.name} Benchmark\n")
 
@@ -149,7 +150,6 @@ def main():
         print("[WfPerf] Completed IO Read Benchmark!\n")
 
     print("[WfPerf] Starting CPU and Memory Benchmarks...")
-    core = lock_core(path_locked, path_cores)
     print(f"[WfPerf]  {args.name} acquired core {core}")
 
     cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu,
@@ -159,7 +159,6 @@ def main():
     for proc in cpu_procs:
         proc.wait()
     subprocess.Popen(["killall", "stress"])
-    unlock_core(path_locked, path_cores, core)
     print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
     if args.data:
@@ -167,6 +166,7 @@ def main():
         with open(args.out, "wb") as fp:
             fp.write(os.urandom(args.file_size * 1000000))
 
+    unlock_core(path_locked, path_cores, core)
     print("WfPerf Benchmark completed!")
 
 
