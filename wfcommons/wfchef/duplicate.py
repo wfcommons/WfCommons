@@ -8,14 +8,15 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import pathlib
 import json
-import pickle
 import networkx as nx
+import numpy as np
+import pathlib
+import pickle
+import random
+
 from typing import Set, List, Union, Dict
 from uuid import uuid4
-import numpy as np
-import random
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -77,15 +78,14 @@ def duplicate(path: pathlib.Path,
     :rtype: networkX DiGraph.
     """
     summary = json.loads(path.joinpath("summary.json").read_text())
-   
+
     if base:
         base_path = pathlib.Path(base)
         if not base_path.is_absolute():
             base_path = path.joinpath(base_path)
     else:
         base_path = path.joinpath(min(summary["base_graphs"].keys(), key=lambda k: summary["base_graphs"][k]["order"]))
-    
-        
+
     graph = pickle.loads(base_path.joinpath("base_graph.pickle").read_bytes())
     if num_nodes < graph.order():
         raise ValueError(

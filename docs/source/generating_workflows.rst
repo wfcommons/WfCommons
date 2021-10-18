@@ -86,48 +86,52 @@ The following example generates a *Seismology* synthetic workflow instance
 os 300 tasks, builds a synthetic workflow instance, and writes the
 synthetic instance to a JSON file. ::
 
+    import pathlib
     from wfcommons.wfchef.recipes import SeismologyRecipe
     from wfcommons import WorkflowGenerator
 
-    generator = WorkflowGenerator(SeismologyRecipe.from_num_tasks(250)) 
+    generator = WorkflowGenerator(SeismologyRecipe.from_num_tasks(250))
     workflow = generator.build_workflow()
-    workflow.write_json(f'seismology-workflow.json')
+    workflow.write_json(pathlib.Path('seismology-workflow.json'))
 
 
 The example below generates a number of 10 *Blast* synthetic
 workflow instances for every size defined in the array :code:`num_tasks`: ::
 
+    import pathlib
     from wfcommons.wfchef.recipes import BlastRecipe
     from wfcommons import WorkflowGenerator
 
     num_tasks = [100, 250, 370, 800]
-    
+
     for task in num_tasks:
-      generator = WorkflowGenerator(BlastRecipe.from_num_tasks(task))
-      workflows = generator.build_workflows(10)
-      
-      for i, workflow in enumerate(workflows):
-        workflow.write_json(f'blast-workflow-{task}-{i}.json')
+        generator = WorkflowGenerator(BlastRecipe.from_num_tasks(task))
+        workflows = generator.build_workflows(10)
+
+        for i, workflow in enumerate(workflows):
+            workflow.write_json(pathlib.Path(f'blast-workflow-{task}-{i}.json'))
+
 
 The following example generates 10 *Epigenomics* synthetic workflow instances
 based on the number of tasks entered by the user (1000), builds the synthetic
 workflow instances, and writes the synthetic instances to JSON files. ::
 
+    import pathlib
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
     from wfcommons import WorkflowGenerator
 
     generator = WorkflowGenerator(EpigenomicsRecipe.from_num_tasks(1000))
     for i, workflow in enumerate(generator.build_workflows(10)):
-        workflow.write_json(f'epigenomics-workflow-{i}.json')
+        workflow.write_json(pathlib.Path(f'epigenomics-workflow-{i}.json'))
 
 The example below generates a *Cycles* (agroecosystem) synthetic workflow instance
 based on the number of tasks entered by the user (250), builds the synthetic workflow
 instance, and writes the synthetic instance to a JSON file. ::
 
+    import pathlib
     from wfcommons.wfchef.recipes import CyclesRecipe
     from wfcommons import WorkflowGenerator
 
     generator = WorkflowGenerator(CyclesRecipe.from_num_tasks(250))
     workflow = generator.build_workflow()
-    workflow.write_json(f'cycles-workflow.json')
-
+    workflow.write_json(pathlib.Path('cycles-workflow.json'))

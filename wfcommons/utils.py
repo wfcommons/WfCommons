@@ -11,6 +11,7 @@
 import json
 import logging
 import math
+import pathlib
 import scipy.stats
 import warnings
 import numpy as np
@@ -27,7 +28,7 @@ class NoValue(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
-def read_json(instance_filename: str) -> Dict[str, Any]:
+def read_json(instance_filename: pathlib.Path) -> Dict[str, Any]:
     """
     Read the JSON from the file path.
 

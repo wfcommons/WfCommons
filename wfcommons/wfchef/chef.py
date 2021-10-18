@@ -8,13 +8,9 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import pathlib
-import argparse
-from email.mime import base
 import json
-import traceback
-from typing import Dict, Optional, Union
 import argparse
+import math
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -23,29 +19,29 @@ import pickle
 import pkg_resources
 import subprocess
 import traceback
+
 from typing import Dict, Optional, Union
 from stringcase import capitalcase
+
 from .duplicate import duplicate, NoMicrostructuresError
 from .find_microstructures import save_microstructures
 from .utils import create_graph
-from ..wfgen.abstract_recipe import WorkflowRecipe
 from ..wfinstances.instance import Instance
 from ..wfinstances.instance_analyzer import InstanceAnalyzer
-import math
 
 this_dir = pathlib.Path(__file__).resolve().parent
 skeleton_path = this_dir.joinpath("skeletons")
 
 
-def compare_rmse(synth_graph: nx.DiGraph, real_graph: nx.DiGraph):
+def compare_rmse(synth_graph: nx.DiGraph, real_graph: nx.DiGraph) -> float:
     """
-    Calculates the Root Mean Square Error of a synthetic instance created 
+    Calculate the Root Mean Square Error of a synthetic instance created
     based on the correspondent (in number of tasks) real-world sample.
 
     :param synth_graph: a synthetic instance created by WfCommons.
-    :type synth_graph: networkX DiGraph 
+    :type synth_graph: networkX.DiGraph
     :param real_graph: the correspondent (in number of tasks) real-world workflow instance.
-    :type real_graph: networkX DiGraph 
+    :type real_graph: networkX.DiGraph
 
     :return: The RMSE between the synthetic instance and the real instance.
     :rtype: float
@@ -72,10 +68,10 @@ def compare_rmse(synth_graph: nx.DiGraph, real_graph: nx.DiGraph):
     return mse / real_graph.order()
 
 
-def find_err(workflow: Union[str, pathlib.Path],
-             err_savepath: Optional[Union[str, pathlib.Path]] = None,
-             always_update: bool = False,
-             runs: int = 1) -> pd.DataFrame:
+def find_err(workflow: pathlib.Path,
+             err_savepath: Optional[pathlib.Path] = None,
+             always_update: Optional[bool] = False,
+             runs: Optional[int] = 1) -> pd.DataFrame:
     """
     Creates a dataframe with the Root Mean Square Error of the synthetic instances created 
     based on the correspondent, w.r.t. number of tasks, real-world samples available at 
@@ -84,13 +80,13 @@ def find_err(workflow: Union[str, pathlib.Path],
     repositories.
 
     :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
-    :type workflow: str or pathlib.Path 
+    :type workflow: pathlib.Path
     :param err_savepath: path to save the err (rmse) of all instances available into a csv.
-    :type real_graph: str or pathlib.Path
+    :type real_graph: Optional[pathlib.Path]
     :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
-    :type real_graph: bool 
+    :type real_graph: Optional[bool]
     :param runs: number of times to repeat the err calculation process (due to randomization).
-    :type runs: bool
+    :type runs: Optional[bool]
 
     :return: dataframe with RMSE of all available instances.
     :rtype: pd.DataFrame
@@ -100,7 +96,6 @@ def find_err(workflow: Union[str, pathlib.Path],
                            key=lambda name: summary["base_graphs"][name]["order"])
 
     if err_savepath:
-        err_savepath = pathlib.Path(err_savepath)
         err_savepath.parent.mkdir(exist_ok=True, parents=True)
 
     labels = [graph for graph in sorted_graphs]
@@ -147,17 +142,11 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     and from Makeflow WMS GitHub <https://github.com/wfcommons/makeflow-instances>`_
     repositories.
 
-    :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
-    :type workflow: str or pathlib.Path 
-    :param err_savepath: path to save the err (rmse) of all instances available into a csv.
-    :type real_graph: str or pathlib.Path
-    :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
-    :type real_graph: bool 
-    :param runs: number of times to repeat the err calculation process (due to randomization).
-    :type runs:bool
+    :param path_to_instances:
+    :type path_to_instances: pathlib.Path
 
-    :return: dataframe with RMSE of all available instances.
-    :rtype: pd.DataFrame
+    :return:
+    :rtype: Dict
     """
     analyzer = InstanceAnalyzer()
     task_types = set()
@@ -173,11 +162,13 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
 
     return stats_dict
 
+
 def get_recipe(recipe: str) -> "Module":
     for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
-        att  = entry_point.attrs[0]
+        att = entry_point.attrs[0]
         if att == recipe:
             return entry_point.load()
+
 
 def get_recipes() -> pd.DataFrame:
     rows = []
@@ -190,6 +181,7 @@ def get_recipes() -> pd.DataFrame:
             traceback.print_exc()
             print(f"Could not load {entry_point.module_name}")
     return pd.DataFrame(rows, columns=["name", "module", "import command"])
+
 
 def ls_recipe():
     """
@@ -219,7 +211,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
                   wf_name: str,
                   cutoff: int = 4000,
                   verbose: bool = False,
-                  runs: int = 1) -> "WorkflowRecipe":
+                  runs: int = 1):
     """
     Creates a recipe for a workflow application by automatically replacing custom information 
     from the recipe skeleton.
@@ -253,7 +245,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     err_savepath.parent.mkdir(exist_ok=True, parents=True)
     df = find_err(microstructures_path, runs=runs)
     err_savepath.write_text(df.to_csv())
-    
+
     # Recipe 
     with skeleton_path.joinpath("recipe.py").open() as fp:
         skeleton_str = fp.read()

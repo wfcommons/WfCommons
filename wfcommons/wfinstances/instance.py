@@ -37,7 +37,7 @@ class Instance:
         Instance(input_instance = 'instance.json')
 
     :param input_instance: The JSON instance.
-    :type input_instance: str
+    :type input_instance: pathlib.Path
     :param schema_file: The path to the JSON schema that defines the instance.
                         If no schema file is provided, it will look for a local
                         copy of the WfFormat, and if not available it will fetch
@@ -49,7 +49,9 @@ class Instance:
     :type logger: Optional[Logger]
     """
 
-    def __init__(self, input_instance: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+    def __init__(self, input_instance: pathlib.Path,
+                 schema_file: Optional[str] = None,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow execution instance."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 

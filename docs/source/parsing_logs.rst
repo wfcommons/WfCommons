@@ -32,17 +32,21 @@ executions. The following example shows the analysis of Makeflow execution logs,
 stored in a local folder (:code:`execution_dir`), for a workflow execution using the
 :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class: ::
 
+    import pathlib
     from wfcommons.wfinstances import MakeflowLogsParser
 
     # creating the parser for the Makeflow workflow
-    parser = MakeflowLogsParser(execution_dir='/path/to/makeflow/execution/dir/blast/chameleon-small-001/',
-                                resource_monitor_logs_dir='/path/to/makeflow/resource/monitor/logs/dir')
+    execution_dir = pathlib.Path('/path/to/makeflow/execution/dir/blast/chameleon-small-001/')
+    resource_monitor_logs_dir = pathlib.Path('/path/to/makeflow/resource/monitor/logs/dir')
+    parser = MakeflowLogsParser(execution_dir=execution_dir,
+                                resource_monitor_logs_dir=resource_monitor_logs_dir)
 
     # generating the workflow instance object
     workflow = parser.build_workflow('makeflow-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow.write_json('makeflow-workflow.json')
+    workflow_path = pathlib.Path('./makeflow-workflow.json')
+    workflow.write_json(workflow_path)
 
 .. note::
     The :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class requires
@@ -63,16 +67,19 @@ based on the dataflow programming model. The following example shows the analysi
 Nextflow execution logs, stored in a local folder (:code:`execution_dir`), for a workflow
 execution using the :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class: ::
 
+    import pathlib
     from wfcommons.wfinstances import NextflowLogsParser
 
     # creating the parser for the Nextflow workflow
-    parser = NextflowLogsParser(execution_dir='/path/to/nextflow/execution/dir/')
+    execution_dir = pathlib.Path('/path/to/nextflow/execution/dir/')
+    parser = NextflowLogsParser(execution_dir=execution_dir)
 
     # generating the workflow instance object
     workflow = parser.build_workflow('nextflow-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow.write_json('nextflow-workflow.json')
+    workflow_path = pathlib.Path('./nextflow-workflow.json')
+    workflow.write_json(workflow_path)
 
 .. note::
     The :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class assumes
@@ -95,16 +102,19 @@ the analysis of Pegasus execution logs, stored in a local folder (:code:`submit_
 workflow execution using the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
 class: ::
 
+    import pathlib
     from wfcommons.wfinstances import PegasusLogsParser
 
     # creating the parser for the Pegasus workflow
-    parser = PegasusLogsParser(submit_dir='/path/to/pegasus/submit/dir/seismology/chameleon-100p-001/')
+    submit_dir = pathlib.Path('/path/to/pegasus/submit/dir/seismology/chameleon-100p-001/')
+    parser = PegasusLogsParser(submit_dir=submit_dir)
 
     # generating the workflow instance object
     workflow = parser.build_workflow('pegasus-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow.write_json('pegasus-workflow.json')
+    workflow_path = pathlib.Path('./pegasus-workflow.json')
+    workflow.write_json(workflow_path)
 
 .. warning::
     By default, the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
