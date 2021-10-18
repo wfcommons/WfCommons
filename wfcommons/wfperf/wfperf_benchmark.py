@@ -142,7 +142,7 @@ def main():
     if args.data:
         print("[IO Benchmark] Starting...")
         for file in other:
-            with open(file, "r") as fp:
+            with open(file, "rb") as fp:
                 print(f"[IO Benchmark] Reading '{file}'")
                 fp.readlines()
         print("[IO Benchmark] Completed\n")
