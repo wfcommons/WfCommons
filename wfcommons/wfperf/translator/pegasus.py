@@ -62,7 +62,7 @@ class PegasusTranslator(Translator):
 
         # cpu-benchmark
         self.script += "t_cpu_benchmark = Transformation('cpu-benchmark', site='local',\n" \
-                       "pfn='./cpu-benchmark', is_stageable=True)"
+                       "pfn='./cpu-benchmark', is_stageable=True)\n\n"
 
         # tasks' programs
         for task in self.tasks.values():
