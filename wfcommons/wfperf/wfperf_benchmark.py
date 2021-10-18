@@ -140,10 +140,12 @@ def main():
     print(f"Starting {args.name}")
 
     if args.data:
-        print("Starting IO benchmark...")
+        print("[IO Benchmark] Starting...")
         for file in other:
-            with open(file, "w+") as fp:
+            with open(file, "r") as fp:
+                print(f"[IO Benchmark] Reading '{file}'")
                 fp.readlines()
+        print("[IO Benchmark] Completed\n")
 
     # print("Starting CPU and Memory benchmark...")
     # core = lock_core(path_locked, path_cores)
@@ -159,8 +161,11 @@ def main():
     # unlock_core(path_locked, path_cores, core)
 
     if args.data:
+        print(f"[IO Benchmark] Writing output file '{args.name}_output.txt'\n")
         with open(this_dir.joinpath(f"{args.name}_output.txt"), "wb") as fp:
             fp.write(os.urandom(int(args.file_size)))
+
+    print("WfPerf Benchmark completed!")
 
 
 if __name__ == "__main__":

@@ -59,9 +59,9 @@ class WorkflowBenchmark:
         :type save_dir: pathlib.Path
         :param percent_cpu:
         :type percent_cpu: float
-        :param cpu_work:
+        :param cpu_work: CPU work per workflow task
         :type cpu_work: int
-        :param data_footprint: Size of input/output data files per workflow task (in MB).
+        :param data_footprint: Total size of input/output data files of the workflow (in MB).
         :type data_footprint: Optional[int]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
