@@ -135,8 +135,6 @@ def main():
 
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
-    path_locked.write_text("")
-    path_cores.write_text("")
     core = lock_core(path_locked, path_cores)
 
     print(f"[WfPerf] Starting {args.name} Benchmark\n")
