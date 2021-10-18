@@ -9,19 +9,29 @@
 # (at your option) any later version.
 
 import argparse
-import glob
 import pathlib
 import os
 import subprocess
 import time
 
 from filelock import FileLock
+from typing import List, Optional
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
 
-def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
-    """Lock cores in use.
+def lock_core(path_locked: pathlib.Path,
+              path_cores: pathlib.Path) -> int:
+    """
+    Lock cores in use.
+
+    :param path_locked:
+    :type path_locked: pathlib.Path
+    :param path_cores:
+    :type path_cores: pathlib.Path
+
+    :return:
+    :rtype: int
     """
     all_cores = set(range(os.cpu_count()))
     while True:
@@ -42,8 +52,18 @@ def lock_core(path_locked: pathlib.Path, path_cores: pathlib.Path) -> int:
         time.sleep(1)
 
 
-def unlock_core(path_locked: pathlib.Path, path_cores: pathlib.Path, core: int):
-    """Unlock cores after execution is done.
+def unlock_core(path_locked: pathlib.Path,
+                path_cores: pathlib.Path,
+                core: int) -> None:
+    """
+    Unlock cores after execution is done.
+
+    :param path_locked:
+    :type path_locked: pathlib.Path
+    :param path_cores:
+    :type path_cores: pathlib.Path
+    :param core:
+    :type core: int
     """
     with FileLock(path_locked) as lock:
         lock.acquire()
@@ -56,11 +76,28 @@ def unlock_core(path_locked: pathlib.Path, path_cores: pathlib.Path, core: int):
         finally:
             lock.release()
 
-def cpu_mem_benchmark(percent_cpu:float = 0.5, percent_mem:float = 0.5, cpu_work:int = 100, core:int = 7):
-    """ Runs cpu and memory benchmark.
+
+def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
+                      percent_mem: Optional[float] = 0.5,
+                      cpu_work: Optional[int] = 100,
+                      core: Optional[int] = 7) -> List[subprocess]:
     """
-    cpu_threads = int(percent_cpu*10)
-    mem_threads = int(percent_mem*10)
+    Run cpu and memory benchmark.
+
+    :param percent_cpu:
+    :type percent_cpu: Optional[float]
+    :param percent_mem:
+    :type percent_mem: Optional[float]
+    :param cpu_work:
+    :type cpu_work: Optional[int]
+    :param core:
+    :type core: Optional[int]
+
+    :return:
+    :rtype: List[subprocess]
+    """
+    cpu_threads = int(percent_cpu * 10)
+    mem_threads = int(percent_mem * 10)
 
     cpu_procs = []
     cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", str(cpu_work)]
@@ -70,13 +107,14 @@ def cpu_mem_benchmark(percent_cpu:float = 0.5, percent_mem:float = 0.5, cpu_work
         cpu_proc = subprocess.Popen(cpu_prog)
         os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
-    
+
     for _ in range(mem_threads):
         mem_proc = subprocess.Popen(mem_prog)
         os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
-    
+
+
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
@@ -90,6 +128,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def main():
+    """Main program."""
     parser = get_parser()
     args, other = parser.parse_known_args()
 
@@ -105,11 +144,11 @@ def main():
         for file in other:
             with open(file, "w+") as fp:
                 fp.readlines()
-                
+
     # print("Starting CPU and Memory benchmark...")
     # core = lock_core(path_locked, path_cores)
     # print(f"{args.name} acquired core {core}")
-    
+
     # cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu, 
     #                               percent_mem=(1-args.percent_cpu),
     #                               cpu_work=args.cpu_work,  
@@ -122,7 +161,6 @@ def main():
     if args.data:
         with open(this_dir.joinpath(f"{args.name}_output.txt"), "wb") as fp:
             fp.write(os.urandom(int(args.file_size)))
-        
 
 
 if __name__ == "__main__":

@@ -19,8 +19,6 @@ import uuid
 from logging import Logger
 from typing import Dict, Optional, List, Type
 
-from numpy import copyto
-
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
 
@@ -38,20 +36,23 @@ class WorkflowBenchmark:
     :type logger: Optional[Logger]
     """
 
-    def __init__(self, recipe: Type[WfChefWorkflowRecipe], num_tasks: int, logger: Optional[Logger] = None) -> None:
+    def __init__(self,
+                 recipe: Type[WfChefWorkflowRecipe],
+                 num_tasks: int,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
 
     def create_benchmark(self,
-               save_dir: pathlib.Path,
-               percent_cpu: float = 0.6,
-               cpu_work: Optional[int] = 100,
-               data_footprint: Optional[int] = None,
-               lock_files_folder: Optional[pathlib.Path] = None,
-               create: Optional[bool] = True,
-               path: Optional[pathlib.Path] = None) -> pathlib.Path:
+                         save_dir: pathlib.Path,
+                         percent_cpu: float = 0.6,
+                         cpu_work: Optional[int] = 100,
+                         data_footprint: Optional[int] = None,
+                         lock_files_folder: Optional[pathlib.Path] = None,
+                         create: Optional[bool] = True,
+                         path: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -75,17 +76,17 @@ class WorkflowBenchmark:
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
-        if create:
-            self.logger.debug("Generating workflow")
-            generator = WorkflowGenerator(self.recipe.from_num_tasks(self.num_tasks))
-            workflow = generator.build_workflow()
-            name = f"{workflow.name.split('-')[0]}-Benchmark"
-            workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
-            workflow.write_json(str(workflow_savepath))
-            wf = json.loads(workflow_savepath.read_text())
-        else:
-            # TODO: should we keep this, or is it only for testing?
-            wf = json.loads(path.read_text())
+        # if create:
+        self.logger.debug("Generating workflow")
+        generator = WorkflowGenerator(self.recipe.from_num_tasks(self.num_tasks))
+        workflow = generator.build_workflow()
+        name = f"{workflow.name.split('-')[0]}-Benchmark"
+        workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
+        workflow.write_json(workflow_savepath)
+        wf = json.loads(workflow_savepath.read_text())
+        # else:
+        #     # TODO: should we keep this, or is it only for testing?
+        #     wf = json.loads(path.read_text())
 
         # Creating the lock files
         create_lock_files = True
@@ -93,9 +94,13 @@ class WorkflowBenchmark:
             if lock_files_folder.exists():
                 self.logger.debug(f"Creating lock files at: {lock_files_folder.resolve()}")
             else:
-                self.logger.warning(f"Could not find folder to create lock files: {lock_files_folder.resolve()}\n"
-                                    f"You will need to create them manually: 'cores.txt.lock' and 'cores.txt'")
-                create_lock_files = False
+                try:
+                    lock_files_folder.mkdir(exist_ok=True, parents=True)
+                    self.logger.debug(f"Creating lock files at: {lock_files_folder.resolve()}")
+                except (FileNotFoundError, OSError) as e:
+                    self.logger.warning(f"Could not find folder to create lock files: {lock_files_folder.resolve()}\n"
+                                        f"You will need to create them manually: 'cores.txt.lock' and 'cores.txt'")
+                    create_lock_files = False
         else:
             self.logger.warning("No lock files folder provided. Benchmark workflow will be generated using '/tmp' "
                                 "as the folder for creating lock files.")
@@ -149,9 +154,14 @@ class WorkflowBenchmark:
 
         return json_path
 
+    def run(self, json_path: pathlib.Path, save_dir: pathlib.Path) -> None:
+        """
+        Run the benchmark workflow locally (for test purposes only).
 
-    def run(self, json_path: pathlib.Path, save_dir: pathlib.Path):
-        """Run the benchmark workflow locally (for test purposes only).
+        :param json_path:
+        :type json_path: pathlib.Path
+        :param: save_dir:
+        :type save_dir: pathlib.Path
         """
         self.logger.debug("Running")
         try:
@@ -163,25 +173,27 @@ class WorkflowBenchmark:
                     arguments = job["command"]["arguments"]
                     if "--data" in arguments:
                         files = assigning_correct_files(job)
-                        program = ["time","python", executable, *arguments, *files]
+                        program = ["time", "python", executable, *arguments, *files]
                     else:
-                        program = ["time","python", executable, *arguments]
+                        program = ["time", "python", executable, *arguments]
                     folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
                     folder.mkdir(exist_ok=True, parents=True)
                     os.chdir(str(folder))
                     procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
                     os.chdir("../..")
                 for proc in procs:
-                    proc.wait()  
+                    proc.wait()
             cleanup_sys_files()
+
         except Exception as e:
             subprocess.Popen(["killall", "stress"])
             cleanup_sys_files()
             import traceback
             traceback.print_exc()
             raise FileNotFoundError("Not able to find the executable.")
-        
-def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Path):
+
+
+def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Path) -> None:
     """Generate workflow's input data
 
     :param num_files:
@@ -195,8 +207,9 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
     for i in range(num_files):
         file = f"{save_dir.joinpath(f'sys_input_{i}.txt')}"
         with open(file, 'wb') as fp:
-            fp.write(os.urandom(file_total_size)) 
+            fp.write(os.urandom(file_total_size))
         print(f"Created file: {file}")
+
 
 def assigning_correct_files(job: Dict[str, str]) -> List[str]:
     files = []
@@ -206,17 +219,23 @@ def assigning_correct_files(job: Dict[str, str]) -> List[str]:
     return files
 
 
-def cleanup_sys_files():
-    """Remove files already used
-    """
+def cleanup_sys_files() -> None:
+    """Remove files already used"""
     input_files = glob.glob("*input*.txt")
     output_files = glob.glob("*output.txt")
     all_files = input_files + output_files
     for t in all_files:
         os.remove(t)
 
+
 def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
-    """Add input and output files to JSON
+    """
+    Add input and output files to JSON
+
+    :param wf:
+    :type wf: Dict[str, Dict]
+    :param file_size:
+    :type file_size: int
     """
     i = 0
     all_jobs = {
@@ -259,7 +278,12 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
 
 
 def input_files(wf: Dict[str, Dict]):
-    """Calculate total number of files needed
+    """
+    Calculate total number of files needed.
+
+    :param wf:
+    type wf: Dict[str, Dict]
+
     """
     tasks_need_input = 0
     tasks_dont_need_input = 0
