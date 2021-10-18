@@ -24,7 +24,7 @@ class Translator(ABC):
     :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
     :type workflow_json_file_path: pathlib.Path
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: loggin.Logger
+    :type logger: logging.Logger
     """
 
     def __init__(self,
@@ -47,22 +47,22 @@ class Translator(ABC):
                 self.parent_task_names.append(node['name'])
 
     @abstractmethod
-    def translate(self, output_file_name: str) -> None:
+    def translate(self, output_file_name: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into an actual workflow application.
 
         :param output_file_name: The name of the output file.
-        :type output_file_name: str
+        :type output_file_name: pathlib.Path
         """
 
-    def _write_output_file(self, contents: str, output_file_name: str) -> None:
+    def _write_output_file(self, contents: str, output_file_name: pathlib.Path) -> None:
         """
         Write the translated content to a file.
 
         :param contents: Contents to be written to the output file.
         :type contents: str
         :param output_file_name: The name of the output file.
-        :type output_file_name: str
+        :type output_file_name: pathlib.Path
         """
         # file will be written to the same folder as for the original JSON instance.
         out_file = self.workflow_json_file_path.parent.joinpath(output_file_name)

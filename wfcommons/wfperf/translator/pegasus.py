@@ -44,12 +44,12 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file_name: str) -> None:
+    def translate(self, output_file_name: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
         :param output_file_name: The name of the output file (e.g., workflow.py).
-        :type output_file_name: str
+        :type output_file_name: pathlib.Path
         """
         # overall workflow
         self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
@@ -59,6 +59,12 @@ class PegasusTranslator(Translator):
 
         # transformation catalog
         transformations = []
+
+        # cpu-benchmark
+        self.script += "t_cpu_benchmark = Transformation('cpu-benchmark', site='local',\n" \
+                       "pfn='./cpu-benchmark', is_stageable=True)"
+
+        # tasks' programs
         for task in self.tasks.values():
             if task.category not in transformations:
                 transformations.append(task.category)
@@ -70,6 +76,7 @@ class PegasusTranslator(Translator):
                                "                                is_stageable=True)\n" \
                                "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
                                "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
+                               "transforamtion.add_requirement(t_cpu_benchmark)" \
                                "tc.add_transformations(transformation)\n\n"
 
         # adding tasks
