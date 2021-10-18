@@ -122,9 +122,9 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
-    parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO")
+    parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO.")
     parser.add_argument("--file-size", help="Size of an input/output file.")
-    parser.add_argument("--out", help="output file name")
+    parser.add_argument("--out", help="output file name.")
     return parser
 
 
@@ -141,29 +141,30 @@ def main():
     print(f"Starting {args.name}")
 
     if args.data:
-        print("[IO Benchmark] Starting...")
+        print("[WfPerf] Starting IO Read Benchmark...")
         for file in other:
             with open(file, "rb") as fp:
-                print(f"[IO Benchmark] Reading '{file}'")
+                print(f"[WfPerf]   Reading '{file}'")
                 fp.readlines()
-        print("[IO Benchmark] Completed\n")
+        print("[WfPerf] Completed IO Read Benchmark!\n")
 
-    # print("Starting CPU and Memory benchmark...")
-    # core = lock_core(path_locked, path_cores)
-    # print(f"{args.name} acquired core {core}")
+    print("[WfPerf] Starting CPU and Memory Benchmarks...")
+    core = lock_core(path_locked, path_cores)
+    print(f"[WfPerf]  {args.name} acquired core {core}")
 
-    # cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu, 
-    #                               percent_mem=(1-args.percent_cpu),
-    #                               cpu_work=args.cpu_work,  
-    #                               core=core)
-    # for proc in cpu_procs:
-    #     proc.wait()
-    # subprocess.Popen(["killall", "stress"])
-    # unlock_core(path_locked, path_cores, core)
+    cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu,
+                                  percent_mem=(1 - args.percent_cpu),
+                                  cpu_work=args.cpu_work,
+                                  core=core)
+    for proc in cpu_procs:
+        proc.wait()
+    subprocess.Popen(["killall", "stress"])
+    unlock_core(path_locked, path_cores, core)
+    print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
     if args.data:
-        print(f"[IO Benchmark] Writing output file '{args.name}_output.txt'\n")
-        with open(this_dir.joinpath(f"{args.name}_output.txt"), "wb") as fp:
+        print(f"[WfPerf] Writing output file '{args.out}'\n")
+        with open(this_dir.joinpath(f"{args.out}"), "wb") as fp:
             fp.write(os.urandom(int(args.file_size)))
 
     print("WfPerf Benchmark completed!")
