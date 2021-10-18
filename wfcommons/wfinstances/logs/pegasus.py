@@ -8,15 +8,14 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import fnmatch
 import json
-import os
+import pathlib
 import yaml
 import xml.etree.ElementTree
 
 from datetime import datetime
 from logging import Logger
-from typing import Optional
+from typing import List, Optional
 
 from .abstract_logs_parser import LogsParser
 from ...common.file import File, FileLink
@@ -30,19 +29,19 @@ class PegasusLogsParser(LogsParser):
     Parse Pegasus submit directory to generate workflow instance.
 
     :param submit_dir: Pegasus submit directory.
-    :type submit_dir: str
-    :param legacy: Whether the submit directory is from a Pegasus 4.x version.
-    :type legacy: bool
+    :type submit_dir: pathlib.Path
     :param description: Workflow instance description.
-    :type description: str
+    :type description: Optional[str]
     :param ignore_auxiliary: Ignore auxiliary jobs.
-    :type ignore_auxiliary: bool
+    :type ignore_auxiliary: Optional[bool]
+    :param legacy: Whether the submit directory is from a Pegasus 4.x version.
+    :type legacy: Optional[bool]
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
-                 submit_dir: str,
+                 submit_dir: pathlib.Path,
                  description: Optional[str] = None,
                  ignore_auxiliary: Optional[bool] = True,
                  legacy: Optional[bool] = False,
@@ -51,15 +50,15 @@ class PegasusLogsParser(LogsParser):
         super().__init__('Pegasus', 'https://pegasus.isi.edu', description, logger)
 
         # Sanity check
-        if not os.path.isdir(submit_dir):
-            raise OSError('The provided path does not exist or is not a directory: {}'.format(submit_dir))
+        if not submit_dir.is_dir():
+            raise OSError(f'The provided path does not exist or is not a directory: {submit_dir}')
 
         if ignore_auxiliary:
             self.logger.warning('Ignoring Pegasus auxiliary jobs.')
 
-        self.submit_dir = submit_dir
-        self.legacy = legacy
-        self.ignore_auxiliary = ignore_auxiliary
+        self.submit_dir: pathlib.Path = submit_dir
+        self.legacy: Optional[bool] = legacy
+        self.ignore_auxiliary: Optional[bool] = ignore_auxiliary
         self.files_map = {}
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -67,7 +66,7 @@ class PegasusLogsParser(LogsParser):
         Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
-        :type workflow_name: str
+        :type workflow_name: Optional[str]
 
         :return: A workflow instance object.
         :rtype: Workflow
@@ -91,10 +90,10 @@ class PegasusLogsParser(LogsParser):
 
     def _parse_braindump(self):
         """Parse the Pegasus braindump.txt file"""
-        braindump_file = '{}/braindump.txt'.format(self.submit_dir)
+        braindump_file = self.submit_dir.joinpath('/braindump.txt')
 
-        if not os.path.exists(braindump_file):
-            raise OSError('Unable to find braindump file: {}'.format(braindump_file))
+        if not braindump_file.exists():
+            raise OSError(f'Unable to find braindump file: {braindump_file}')
 
         with open(braindump_file) as f:
             for line in f:
@@ -132,7 +131,7 @@ class PegasusLogsParser(LogsParser):
 
         with open(workflow_file) as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
-            self.logger.info('Processing Pegasus workflow file: {}'.format(os.path.basename(workflow_file)))
+            self.logger.info(f'Processing Pegasus workflow file: {workflow_file.name}')
 
             # create base workflow instance object
             self.workflow = Workflow(name=self.workflow_name,
@@ -143,7 +142,7 @@ class PegasusLogsParser(LogsParser):
                                      executed_at=data['x-pegasus']['createdOn'])
 
             for j in data['jobs']:
-                task_name = '{}_{}'.format(j['name'], j['id'])
+                task_name = f"{j['name']}_{j['id']}"
 
                 list_files = [File(
                     name=f['lfn'],
@@ -176,7 +175,7 @@ class PegasusLogsParser(LogsParser):
                 raise OSError('The directory contains no ".dax" or ".xml" file')
 
         dax_file = dax_list[0]
-        self.logger.info('Processing Pegasus DAX file: {}'.format(os.path.basename(dax_file)))
+        self.logger.info(f'Processing Pegasus DAX file: {dax_file.name}')
 
         line_num = 0
         temp_file = None
@@ -191,7 +190,7 @@ class PegasusLogsParser(LogsParser):
 
                 if line.startswith('</adag>'):
                     temp_file.write(line)
-                    dax_file = temp_file.name
+                    dax_file = pathlib.Path(temp_file.name)
                     temp_file.close()
                     break
 
@@ -230,28 +229,23 @@ class PegasusLogsParser(LogsParser):
 
         # removing temporary file
         if temp_file:
-            os.remove(dax_file)
+            dax_file.unlink()
 
-    def _fetch_all_files(self, extension: str, file_name: str = ""):
+    def _fetch_all_files(self, extension: str, file_name: Optional[str] = "*") -> List[pathlib.Path]:
         """
         Fetch all files from the directory and its hierarchy
 
         :param extension: file extension to be searched for
         :type extension: str
         :param file_name: file_name to be searched
-        :type file_name: str
+        :type file_name: Optional[str]
 
         :return: List of file names that match
-        :rtype: List[str]
+        :rtype: List[pathlib.Path]
         """
-        files = []
-        for root, dirnames, filenames in os.walk(self.submit_dir):
-            if len(file_name) == 0:
-                for filename in fnmatch.filter(filenames, '*.{}'.format(extension)):
-                    files.append(os.path.join(root, filename))
-            else:
-                for filename in fnmatch.filter(filenames, '{}.{}'.format(file_name, extension)):
-                    files.append(os.path.join(root, filename))
+        files: List[pathlib.Path] = []
+        for path_object in self.submit_dir.glob(f'**/{file_name}.{extension}'):
+            files.append(path_object)
         return files
 
     def _parse_dag(self):
@@ -261,7 +255,7 @@ class PegasusLogsParser(LogsParser):
             raise OSError('The directory contains no ".dag" file')
 
         dag_file = dags_list[0]
-        self.logger.info('Processing Pegasus DAG file: {}'.format(os.path.basename(dag_file)))
+        self.logger.info(f'Processing Pegasus DAG file: {dag_file.name}')
 
         num_tasks = 0
         tasks_set = set()
@@ -329,7 +323,7 @@ class PegasusLogsParser(LogsParser):
                 e = datetime.strptime(' '.join(lines[-1].split()[0:2]), '%m/%d/%y %H:%M:%S')
             self.workflow.makespan = (e - s).total_seconds()
 
-        self.logger.debug('Found {} jobs.'.format(num_tasks))
+        self.logger.debug(f'Found {num_tasks} jobs.')
 
     def _parse_meta_file(self, task_name):
         """
@@ -340,7 +334,7 @@ class PegasusLogsParser(LogsParser):
         """
         meta_list = self._fetch_all_files("meta", task_name)
         if not meta_list:
-            self.logger.warning('Job {} has no meta record (skipping meta analysis).'.format(task_name))
+            self.logger.warning(f'Job {task_name} has no meta record (skipping meta analysis).')
             return
 
         with open(meta_list[0]) as metadata:
@@ -364,7 +358,7 @@ class PegasusLogsParser(LogsParser):
             return
 
         if len(output_list) > 1:
-            self.logger.debug('Job "{}" has multiple runs. Parsing last attempt.'.format(task.name))
+            self.logger.debug(f'Job "{task.name}" has multiple runs. Parsing last attempt.')
         output_file = output_list[-1]
 
         # setting task type if transfer
@@ -372,7 +366,7 @@ class PegasusLogsParser(LogsParser):
             task.type = TaskType.TRANSFER
 
         # parsing job output file
-        self.logger.debug('Parsing Job output file: {}'.format(output_file))
+        self.logger.debug(f'Parsing Job output file: {output_file}')
         if self.legacy:
             self._parse_job_output_legacy(task, output_file)
         else:
@@ -384,25 +378,25 @@ class PegasusLogsParser(LogsParser):
         # parsing .sub file to get job priorities
         sub_list = self._fetch_all_files("sub", task.name)
         if not sub_list:
-            self.logger.warning('Job {} has no .sub record. Skipping it.'.format(task.name))
+            self.logger.warning(f'Job {task.name} has no .sub record. Skipping it.')
         else:
             with open(sub_list[0]) as f:
                 for line in f:
                     if line.startswith('priority'):
                         task.priority = int(line.split()[2])
 
-    def _parse_job_output_latest(self, task, output_file):
+    def _parse_job_output_latest(self, task: Task, output_file_path: pathlib.Path) -> None:
         """
         Parse the kickstart job output file in YAML format (e.g., .out.000).
 
         :param task: Task object.
         :type task: Task
-        :param output_file: Output file name.
-        :type output_file: str
+        :param output_file_path: Output file name.
+        :type output_file_path: pathlib.Path
         """
-        tmp_file = '.pegasus-parser-tmp'
+        tmp_file = pathlib.Path('.pegasus-parser-tmp')
         with open(tmp_file, 'w') as t:
-            with open(output_file) as f:
+            with open(output_file_path) as f:
                 for line in f:
                     if not line.startswith('---------------'):
                         t.write(line)
@@ -449,16 +443,16 @@ class PegasusLogsParser(LogsParser):
                 release=data['machine']['uname_release']
             )
 
-        os.remove(tmp_file)
+        tmp_file.unlink()
 
-    def _parse_job_output_legacy(self, task, output_file):
+    def _parse_job_output_legacy(self, task: Task, output_file_path: pathlib.Path) -> None:
         """
         Parse the kickstart job output file in XML format (e.g., .out.000).
 
         :param task: Task object.
         :type task: Task
-        :param output_file: Output file name.
-        :type output_file: str
+        :param output_file_path: Output file name.
+        :type output_file_path: pathlib.Path
         """
         runtime = 0
         total_time = 0
@@ -471,7 +465,7 @@ class PegasusLogsParser(LogsParser):
         line_num = 0
         temp_file = None
 
-        with open(output_file) as f:
+        with open(output_file_path) as f:
             for line in f:
                 line_num += 1
                 if line.startswith('<?xml'):
@@ -482,7 +476,7 @@ class PegasusLogsParser(LogsParser):
 
                 if line.startswith('</invocation>'):
                     temp_file.write(line)
-                    output_file = temp_file.name
+                    output_file_path = pathlib.Path(temp_file.name)
                     temp_file.close()
                     break
 
@@ -490,7 +484,7 @@ class PegasusLogsParser(LogsParser):
                     temp_file.write(line)
 
         try:
-            e = xml.etree.ElementTree.parse(output_file).getroot()
+            e = xml.etree.ElementTree.parse(output_file_path).getroot()
             # main job information
             task.program = e.get('transformation')
             if e.get('transformation').startswith('pegasus:') or task.name.lower().startswith('chmod_'):
@@ -560,19 +554,19 @@ class PegasusLogsParser(LogsParser):
             # parse create_dir output file
             if task.name.lower().startswith(('stage_', 'create_dir')):
                 task.type = TaskType.AUXILIARY
-                with open(output_file) as f:
+                with open(output_file_path) as f:
                     s = None
                     e = None
                     for line in f:
                         values = line.split()
                         if not s:
-                            s = datetime.strptime('{} {}'.format(values[0], values[1]), '%Y-%m-%d %H:%M:%S,%f')
-                        e = datetime.strptime('{} {}'.format(values[0], values[1]), '%Y-%m-%d %H:%M:%S,%f')
+                            s = datetime.strptime(f'{values[0]} {values[1]}', '%Y-%m-%d %H:%M:%S,%f')
+                        e = datetime.strptime(f'{values[0]} {values[1]}', '%Y-%m-%d %H:%M:%S,%f')
                     task.runtime = (e - s).total_seconds()
 
             else:
-                self.logger.warning('{}: {}'.format(task.name, str(ex)))
+                self.logger.warning(f'{task.name}: {str(ex)}')
 
         # cleaning temporary file
         if temp_file:
-            os.remove(output_file)
+            output_file_path.unlink()

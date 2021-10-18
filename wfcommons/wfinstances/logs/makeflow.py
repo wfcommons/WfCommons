@@ -8,11 +8,10 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import glob
 import json
 import itertools
 import math
-import os
+import pathlib
 
 from datetime import datetime
 from logging import Logger
@@ -30,44 +29,43 @@ class MakeflowLogsParser(LogsParser):
     Parse Makeflow submit directory to generate workflow instance.
 
     :param execution_dir: Makeflow workflow execution directory (contains .mf and .makeflowlog files).
-    :type execution_dir: str
+    :type execution_dir: pathlib.Path
     :param resource_monitor_logs_dir: Resource Monitor log files directory.
-    :type resource_monitor_logs_dir: str
+    :type resource_monitor_logs_dir: pathlib.Path
     :param description: Workflow instance description.
-    :type description: str
+    :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
-                 execution_dir: str,
-                 resource_monitor_logs_dir: str,
+                 execution_dir: pathlib.Path,
+                 resource_monitor_logs_dir: pathlib.Path,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the makeflow log parser."""
         super().__init__('Makeflow', 'http://ccl.cse.nd.edu/software/makeflow/', description, logger)
 
         # Sanity check
-        if not os.path.isdir(execution_dir):
-            raise OSError('The provided path does not exist or is not a folder: {}'.format(execution_dir))
+        if not execution_dir.is_dir():
+            raise OSError(f'The provided path does not exist or is not a folder: {execution_dir}')
 
-        files = glob.glob('{}/*.mf'.format(execution_dir))
+        files: List[pathlib.Path] = list(execution_dir.glob('*.mf'))
         if len(files) == 0:
-            raise OSError('Unable to find .mf file in: {}'.format(execution_dir))
-        self.mf_file = files[0]
+            raise OSError(f'Unable to find .mf file in: {execution_dir}')
+        self.mf_file: pathlib.Path = files[0]
 
-        files = glob.glob('{}/*.makeflowlog'.format(execution_dir))
+        files = list(execution_dir.glob('*.makeflowlog'))
         if len(files) == 0:
-            raise OSError('Unable to find .makeflowlog file in: {}'.format(execution_dir))
-        self.mf_log_file = files[0]
+            raise OSError(f'Unable to find .makeflowlog file in: {execution_dir}')
+        self.mf_log_file: pathlib.Path = files[0]
 
-        if not os.path.isdir(resource_monitor_logs_dir):
-            raise OSError('The provided path does not exist or is not a folder: {}'.format(resource_monitor_logs_dir))
+        if not resource_monitor_logs_dir.is_dir():
+            raise OSError(f'The provided path does not exist or is not a folder: {resource_monitor_logs_dir}')
 
-        self.execution_dir = execution_dir
+        self.execution_dir: pathlib.Path = execution_dir
 
-        # self.mf_log_file = mf_log_file
-        self.resource_monitor_logs_dir = resource_monitor_logs_dir
+        self.resource_monitor_logs_dir: pathlib.Path = resource_monitor_logs_dir
         self.files_map = {}
         self.args_map = {}
 
@@ -76,7 +74,7 @@ class MakeflowLogsParser(LogsParser):
         Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
-        :type workflow_name: str
+        :type workflow_name: Optional[str]
 
         :return: A workflow instance object.
         :rtype: Workflow
@@ -100,7 +98,7 @@ class MakeflowLogsParser(LogsParser):
 
         return self.workflow
 
-    def _parse_workflow_file(self):
+    def _parse_workflow_file(self) -> None:
         """Parse the makeflow workflow file and build the workflow structure."""
         task_id_counter = 1
 
@@ -148,8 +146,9 @@ class MakeflowLogsParser(LogsParser):
                 if self.files_map[file]['task_name']:
                     self.workflow.add_edge(self.files_map[file]['task_name'], child)
 
-    def _create_files(self, files_list: List[str], link: FileLink, task_name: str):
-        """ Create a list of files objects.
+    def _create_files(self, files_list: List[str], link: FileLink, task_name: str) -> List[File]:
+        """
+        Create a list of files objects.
 
         :param files_list: list of file names.
         :rtype files_list: List[str]
@@ -168,10 +167,11 @@ class MakeflowLogsParser(LogsParser):
                     self.files_map[file]['file'][0] if link == FileLink.INPUT else self.files_map[file]['file'][1])
             else:
                 size = 0
-                if os.path.isdir('{}/{}'.format(self.execution_dir, file)):
-                    size = sum(os.path.getsize(f) for f in os.listdir('.') if os.path.isfile(f))
-                elif os.path.isfile('{}/{}'.format(self.execution_dir, file)):
-                    size = int(math.ceil(os.stat('{}/{}'.format(self.execution_dir, file)).st_size / 1000))  # B to KB
+                file_path = self.execution_dir.joinpath(file)
+                if file_path.is_dir():
+                    size = sum(math.ceil(f.stat().st_size / 1000) for f in file_path.glob("*") if f.is_file())
+                elif file_path.is_file():
+                    size = int(math.ceil(file_path.stat().st_size / 1000))  # B to KB
 
                 file_obj_in = File(name=file,
                                    size=size,
@@ -206,7 +206,7 @@ class MakeflowLogsParser(LogsParser):
                 elif 'COMPLETED' in line:
                     self.workflow.makespan = float('%.2f' % ((int(line.split()[2]) - start_time) / 1000000))
 
-                elif line.startswith('# FILE') and not 'condorlog' in line:
+                elif line.startswith('# FILE') and 'condorlog' not in line:
                     file_name = line.split()[3]
                     if file_name in self.files_map:
                         size = int(math.ceil(int(line.split()[5]) / 1000))  # B to KB
@@ -215,7 +215,7 @@ class MakeflowLogsParser(LogsParser):
 
     def _parse_resource_monitor_logs(self):
         """Parse the log files produced by resource monitor"""
-        for file in glob.glob('{}/*.summary'.format(self.resource_monitor_logs_dir)):
+        for file in pathlib.Path.glob(f'{self.resource_monitor_logs_dir}/*.summary'):
             with open(file) as f:
                 data = json.load(f)
 

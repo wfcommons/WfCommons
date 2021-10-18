@@ -25,7 +25,7 @@ class WorkflowGenerator:
     :param workflow_recipe: The workflow recipe to be used for this generator.
     :type workflow_recipe: WorkflowRecipe
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self, workflow_recipe: WorkflowRecipe, logger: Optional[Logger] = None) -> None:
@@ -44,15 +44,14 @@ class WorkflowGenerator:
         the generator.
 
         :param workflow_name: The workflow name.
-        :type workflow_name: str
+        :type workflow_name: Optional[str]
 
         :return: A synthetic workflow instance object.
         :rtype: Workflow
         """
         workflow: Workflow = self.workflow_recipe.build_workflow(workflow_name)
         self.workflows.append(workflow)
-        self.logger.info(
-            "Generated a synthetic workflow with {} tasks".format(len(workflow.nodes)))
+        self.logger.info(f"Generated a synthetic workflow with {len(workflow.nodes)} tasks")
         return workflow
 
     def build_workflows(self, num_workflows: int) -> List[Workflow]:
