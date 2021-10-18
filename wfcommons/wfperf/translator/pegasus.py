@@ -76,7 +76,7 @@ class PegasusTranslator(Translator):
                                "                                is_stageable=True)\n" \
                                "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
                                "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
-                               "transforamtion.add_requirement(t_cpu_benchmark)\n" \
+                               "transformation.add_requirement(t_cpu_benchmark)\n" \
                                "tc.add_transformations(transformation)\n\n"
 
         # adding tasks
