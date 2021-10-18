@@ -33,7 +33,7 @@ class Translator(ABC):
         """Create an object of the translator."""
         self.logger = logging.getLogger(__name__) if logger is None else logger
         self.workflow_json_file_path = workflow_json_file_path
-        self.instance = Instance(str(workflow_json_file_path), logger=logger)
+        self.instance = Instance(workflow_json_file_path, logger=logger)
 
         # find all tasks
         self.tasks = {}

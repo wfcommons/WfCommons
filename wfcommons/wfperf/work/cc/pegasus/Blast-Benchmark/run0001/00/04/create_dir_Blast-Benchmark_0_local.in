@@ -1,6 +1,0 @@
-[
-  {
-    "id": 1,
-    "type": "mkdir",
-    "target": { "site_label": "local", "url": "file:////home/cc/test/wfcommons/wfcommons/wfperf/wf-scratch/LOCAL/cc/pegasus/Blast-Benchmark/run0001" } }
-]

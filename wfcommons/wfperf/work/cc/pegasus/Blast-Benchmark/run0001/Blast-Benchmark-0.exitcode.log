@@ -1,9 +1,0 @@
-{"name": ".//00/04/create_dir_Blast-Benchmark_0_local.out", "timestamp": "2021-10-16T00:23:12.467031", "exitcode": 0, "app_exitcode": 0, "retry": 0, "std_out": "", "std_err": ""}
-{"name": ".//00/04/stage_in_remote_local_2_0.out", "timestamp": "2021-10-16T00:23:27.841138", "exitcode": 0, "app_exitcode": 0, "retry": 0, "std_out": "", "std_err": ""}
-{"name": ".//00/00/stage_in_remote_local_0_0.out", "timestamp": "2021-10-16T00:23:33.060860", "exitcode": 0, "app_exitcode": 0, "retry": 0, "std_out": "", "std_err": ""}
-{"name": ".//00/04/stage_in_local_local_2_0.out", "timestamp": "2021-10-16T00:30:42.780448", "exitcode": 1, "app_exitcode": 256, "retry": 0, "std_out": "", "std_err": "task exited with raw status 256\n"}
-{"name": ".//00/04/stage_in_local_local_1_0.out", "timestamp": "2021-10-16T00:30:47.985565", "exitcode": 1, "app_exitcode": 256, "retry": 0, "std_out": "", "std_err": "task exited with raw status 256\n"}
-{"name": ".//00/04/stage_in_local_local_1_0.out", "timestamp": "2021-10-16T00:38:13.764043", "exitcode": 1, "app_exitcode": 256, "retry": 1, "std_out": "", "std_err": "task exited with raw status 256\n"}
-{"name": ".//00/04/stage_in_local_local_2_0.out", "timestamp": "2021-10-16T00:38:18.966747", "exitcode": 1, "app_exitcode": 256, "retry": 1, "std_out": "", "std_err": "task exited with raw status 256\n"}
-{"name": ".//00/00/split_fasta_split_fasta_00000001.out", "timestamp": "2021-10-16T00:55:00.204965", "exitcode": 0, "app_exitcode": 0, "retry": 0, "std_out": "", "std_err": ""}
-{"name": ".//00/04/clean_up_local_level_3_0.out", "timestamp": "2021-10-16T00:55:15.494485", "exitcode": 0, "app_exitcode": 0, "retry": 0, "std_out": "", "std_err": ""}

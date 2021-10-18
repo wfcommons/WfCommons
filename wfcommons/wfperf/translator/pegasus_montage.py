@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import pathlib
 import uuid
 
 from logging import Logger
@@ -26,7 +27,7 @@ class PegasusTranslator(Translator):
     """
 
     def __init__(self,
-                 workflow_json_file: str,
+                 workflow_json_file: pathlib.Path,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow_json_file, logger)
