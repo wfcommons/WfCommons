@@ -124,6 +124,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
     parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO")
     parser.add_argument("--file-size", help="Size of an input/output file.")
+    parser.add_argument("--out", help="output file name")
     return parser
 
 
