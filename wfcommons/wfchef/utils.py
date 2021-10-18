@@ -8,14 +8,16 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import networkx as nx
-import pathlib
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import matplotlib.patches as mpatches
-from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 import json
+import pathlib
+
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import networkx as nx
+
 from hashlib import sha256
+from matplotlib import cm
+from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -32,12 +34,12 @@ def combine_hashes(*hashes: str) -> str:
     return string_hash(sorted(hashes))
 
 
-def create_graph(path: Union[str, pathlib.Path]) -> nx.DiGraph:
+def create_graph(path: pathlib.Path) -> nx.DiGraph:
     """
     Creates a networkX DiGraph from a JSON file in the WfFormat.
 
     :param path: name (for samples available in WfCommons) or the path to graphs JSON.
-    :type path: str or pathlib.Path.
+    :type path: pathlib.Path
     
     :return: graph.
     :rtype: networkX DiGraph.

@@ -37,33 +37,33 @@ class Task:
     :param cores: Number of cores required by the task.
     :type cores: float
     :param task_id: Job unique ID (e.g., ID0000001).
-    :type task_id: str
+    :type task_id: Optional[str]
     :param category: Job category (can be used, for example, to define jobs that use the same program).
-    :type category: str
+    :type category: Optional[str]
     :param machine: Machine on which is the task has been executed.
-    :type machine: Machine
+    :type machine: Optional[Machine]
     :param program: Program name.
-    :type program: str
+    :type program: Optional[str]
     :param args: List of task arguments.
-    :type args: List[str]
+    :type args: Optional[List[str]]
     :param avg_cpu: Average CPU utilization in %.
-    :type avg_cpu: float
+    :type avg_cpu: Optional[float]
     :param bytes_read: Total bytes read in KB.
-    :type bytes_read: int
+    :type bytes_read: Optional[int]
     :param bytes_written: Total bytes written in KB.
-    :type bytes_written: int
+    :type bytes_written: Optional[int]
     :param memory: Memory (resident set) size of the process in KB.
-    :type memory: int
+    :type memory: Optional[int]
     :param energy: Total energy consumption in kWh.
-    :type energy: int
+    :type energy: Optional[int]
     :param avg_power: Average power consumption in W.
-    :type avg_power: float
+    :type avg_power: Optional[float]
     :param priority: Task priority.
-    :type priority: int
+    :type priority: Optional[int]
     :param files: List of input/output files used by the task.
-    :type files: List[File]
+    :type files: Optional[List[File]]
     :param logger: The logger where to log information/warning or errors.
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
@@ -75,7 +75,7 @@ class Task:
                  category: Optional[str] = None,
                  machine: Optional[Machine] = None,
                  program: Optional[str] = None,
-                 args: List[str] = [],
+                 args: Optional[List[str]] = None,
                  avg_cpu: Optional[float] = None,
                  bytes_read: Optional[int] = None,
                  bytes_written: Optional[int] = None,
@@ -83,7 +83,7 @@ class Task:
                  energy: Optional[int] = None,
                  avg_power: Optional[float] = None,
                  priority: Optional[int] = None,
-                 files: List[File] = [],
+                 files: Optional[List[File]] = None,
                  logger: Optional[Logger] = None
                  ) -> None:
         """A task in a workflow."""
@@ -95,20 +95,18 @@ class Task:
         self.task_id: Optional[str] = task_id
         self.category: Optional[str] = category
         self.program: Optional[str] = program
-        self.args: List[str] = args
+        self.args: List[str] = args if args else []
         self.avg_cpu: Optional[float] = avg_cpu
         self.bytes_read: Optional[int] = bytes_read
         self.bytes_written: Optional[int] = bytes_written
         self.memory: Optional[int] = memory
         self.energy: Optional[int] = energy
         self.avg_power: Optional[float] = avg_power
-        self.files: List[File] = files
+        self.files: List[File] = files if files else []
         self.machine: Machine = machine
-        self.priority = priority
+        self.priority: Optional[int] = priority
 
-        self.logger.debug("created {0} task {1}: runtime => {2} seconds.".format(
-            self.type, self.name, self.runtime)
-        )
+        self.logger.debug(f"created {self.type} task {self.name}: runtime => {self.runtime} seconds.")
 
     def as_dict(self) -> Dict:
         """A JSON representation of the task.

@@ -32,8 +32,10 @@ provides an *instance loader* tool for importing workflow execution instances
 for analysis. For instance, the code snippet below shows how an instance can
 be loaded using the :class:`~wfcommons.wfinstances.instance.Instance` class: ::
 
+    import pathlib
     from wfcommons import Instance
-    instance = Instance(input_instance='/path/to/instance/file.json')
+    input_instance = pathlib.Path('/path/to/instance/file.json')
+    instance = Instance(input_instance=input_instance)
 
 The :class:`~wfcommons.wfinstances.instance.Instance` class provides a number of
 methods for interacting with the workflow instance, including:
@@ -115,20 +117,19 @@ distribution fitting for task *prefixes* of the Seismology workflow
 plots (runtime, and input and output files) into the :code:`fits` folder using
 :code:`seismology` as a prefix for each generated plot: ::
 
+    import pathlib
     from wfcommons import Instance, InstanceAnalyzer
-    from os import listdir
-    from os.path import isfile, join
 
     # obtaining list of instance files in the folder
-    INSTANCES_PATH = "/path/to/some/instance/folder/"
-    instance_files = [f for f in listdir(INSTANCES_PATH) if isfile(join(INSTANCES_PATH, f))]
+    INSTANCES_PATH = pathlib.Path('/path/to/some/instance/folder/')
+    instance_files = [f for f in INSTANCES_PATH.glob('*') if INSTANCES_PATH.joinpath(f).is_file()]
 
     # creating the instance analyzer object
     analyzer = InstanceAnalyzer()
 
     # appending instance files to the instance analyzer
     for instance_file in instance_files:
-        instance = Instance(input_instance=INSTANCES_PATH + instance_file)
+        instance = Instance(input_instance=INSTANCES_PATH.joinpath(instance_file))
         analyzer.append_instance(instance)
 
     # list of workflow task name prefixes to be analyzed in each instance

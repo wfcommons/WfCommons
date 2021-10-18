@@ -10,14 +10,12 @@
 
 import glob
 import json
-import os
+import pathlib
 
 from logging import Logger
-from typing import Optional
+from typing import Dict, Optional
 
 from .abstract_logs_parser import LogsParser
-from ...common.file import File, FileLink
-from ...common.machine import Machine, MachineSystem
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
 
@@ -27,23 +25,23 @@ class NextflowLogsParser(LogsParser):
     Parse Nextflow submit directory to generate workflow trace.
 
     :param execution_dir: Nextflow's execution directory.
-    :type execution_dir: str
+    :type execution_dir: pathlib.Path
     :param description: Workflow instance description.
-    :type description: str
+    :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
-                 execution_dir: str,
+                 execution_dir: pathlib.Path,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the nextflow log parser."""
         super().__init__('Nextflow', 'https://www.nextflow.io', description, logger)
 
         # Sanity check
-        if not os.path.isdir(execution_dir):
-            raise OSError('The provided path does not exist or is not a directory: {}'.format(execution_dir))
+        if not execution_dir.is_dir():
+            raise OSError(f'The provided path does not exist or is not a directory: {execution_dir}')
 
         self.execution_dir = execution_dir
         self.files_map = {}
@@ -55,7 +53,7 @@ class NextflowLogsParser(LogsParser):
         Create workflow trace based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
-        :type workflow_name: str
+        :type workflow_name: Optional[str]
 
         :return: A workflow trace object.
         :rtype: Workflow
@@ -73,7 +71,7 @@ class NextflowLogsParser(LogsParser):
 
         return self.workflow
 
-    def _parse_execution_report_file(self):
+    def _parse_execution_report_file(self) -> None:
         """Parse the Nextflow execution report file and gather the tasks information."""
         trace_data = self._read_data('execution_report_*.html')
 
@@ -99,7 +97,7 @@ class NextflowLogsParser(LogsParser):
                         logger=self.logger)
             self.workflow.add_node(task_name, task=task)
 
-    def _parse_execution_timeline_file(self):
+    def _parse_execution_timeline_file(self) -> None:
         """Parse the Nextflow execution timeline file and build the workflow structure."""
         timeline_data = self._read_data('execution_timeline_*.html')
         tasks_map = {}
@@ -122,7 +120,7 @@ class NextflowLogsParser(LogsParser):
         self.workflow.makespan = round(
             (int(timeline_data['endingMillis']) - int(timeline_data['beginningMillis'])) / 1024)
 
-    def _read_data(self, file_format: str):
+    def _read_data(self, file_format: str) -> Dict:
         """
         Read data into a JSON from a file that matches the format.
 
@@ -132,16 +130,15 @@ class NextflowLogsParser(LogsParser):
         :return: Data in JSON format
         :rtype: Dict
         """
-        files = glob.glob('{}/{}'.format(self.execution_dir, file_format))
+        files = glob.glob(f'{self.execution_dir}/{file_format}')
         if len(files) == 0:
-            raise OSError('Unable to find {} file in: {}'.format(self.execution_dir, file_format))
+            raise OSError(f'Unable to find {self.execution_dir} file in: {file_format}')
 
         data = None
-        version = None
 
         # parsing execution report file
         with open(files[0]) as f:
-            self.logger.debug('Reading data from: {}'.format(files[0]))
+            self.logger.debug(f'Reading data from: {files[0]}')
             read_trace_data = False
             read_nextflow_version = False
 

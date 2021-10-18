@@ -31,10 +31,11 @@ class InstanceElement(NoValue):
 
 
 class InstanceAnalyzer:
-    """Set of tools for analyzing collections of instances.
+    """
+    Set of tools for analyzing collections of instances.
 
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self, logger: Optional[Logger] = None) -> None:
@@ -45,7 +46,8 @@ class InstanceAnalyzer:
         self.instances_summary: Dict[str, Dict[str, Any]] = {}
 
     def append_instance(self, instance: Instance) -> None:
-        """Append a workflow instance object to the instance analyzer.
+        """
+        Append a workflow instance object to the instance analyzer.
 
         .. code-block:: python
 
@@ -58,11 +60,13 @@ class InstanceAnalyzer:
         """
         if instance not in self.instances:
             self.instances.append(instance)
-            self.logger.debug('Appended instance: {} ({} tasks)'.format(instance.name, len(instance.workflow.nodes)))
+            self.logger.debug(f'Appended instance: {instance.name} ({len(instance.workflow.nodes)} tasks)')
 
-    def build_summary(self, tasks_list: List[str], include_raw_data: Optional[bool] = True) -> Dict[
-        str, Dict[str, Any]]:
-        """Analyzes appended instances and produce a summary of the analysis per task prefix.
+    def build_summary(self,
+                      tasks_list: List[str],
+                      include_raw_data: Optional[bool] = True) -> Dict[str, Dict[str, Any]]:
+        """
+        Analyzes appended instances and produce a summary of the analysis per task prefix.
 
         .. code-block:: python
 
@@ -72,17 +76,17 @@ class InstanceAnalyzer:
         :param tasks_list: List of workflow tasks prefix (e.g., mProject, sol2sanger, add_replace)
         :type tasks_list: List[str]
         :param include_raw_data: Whether to include the raw data in the instance summary.
-        :type include_raw_data: bool
+        :type include_raw_data: Optional[bool]
 
         :return: A summary of the analysis of instances in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Dict[str, Any]]
         """
-        self.logger.debug('Building summary for {} instances'.format(len(self.instances)))
+        self.logger.debug(f'Building summary for {len(self.instances)} instances')
 
         tasks_list = sorted(list(tasks_list), key=len, reverse=True)  # had to sorted so it would get all cases
         # build tasks summary
         for instance in self.instances:
-            self.logger.debug('Parsing instance: {} ({} tasks)'.format(instance.name, len(instance.workflow.nodes)))
+            self.logger.debug(f'Parsing instance: {instance.name} ({len(instance.workflow.nodes)} tasks)')
 
             for node in instance.workflow.nodes.data():
                 task: Task = node[1]['task']
@@ -136,23 +140,23 @@ class InstanceAnalyzer:
         :param instance_element: Workflow element for which the fit plots will be generated.
         :type instance_element: InstanceElement
         :param outfile_prefix: Prefix to be attached to each generated plot file name (optional).
-        :type outfile_prefix: str
+        :type outfile_prefix: Optional[str]
         """
-        self.logger.info('Generating fit plots ({}).'.format(instance_element.value[0]))
+        self.logger.info(f'Generating fit plots ({instance_element.value[0]}).')
         outfile_prefix = outfile_prefix + '_' if outfile_prefix else ''
 
         for task_summary in self.instances_summary:
-            outfile = outfile_prefix + task_summary.lower() + '-' + instance_element.value[0]
+            outfile = f"{outfile_prefix}{task_summary.lower()}-{instance_element.value[0]}"
             el = self.instances_summary[task_summary][instance_element.value[0]]
 
             if instance_element == InstanceElement.RUNTIME:
-                _generate_fit_plots(el, task_summary + ' (' + instance_element.value[0] + ')',
-                                    xlabel=instance_element.value[1], outfile=outfile + '.png', logger=self.logger)
+                _generate_fit_plots(el, f"{task_summary} ({instance_element.value[0]})",
+                                    xlabel=instance_element.value[1], outfile=f"{outfile}.png", logger=self.logger)
             else:
                 for k in el:
                     ext = k if '.' not in k else k[1:]
-                    _generate_fit_plots(el[k], task_summary + ' (' + instance_element.value[0] + '): ' + ext,
-                                        xlabel=instance_element.value[1], outfile=outfile + '-' + ext + '.png',
+                    _generate_fit_plots(el[k], f"{task_summary} ({instance_element.value[0]}): {ext}",
+                                        xlabel=instance_element.value[1], outfile=f"{outfile}-{ext}.png",
                                         logger=self.logger)
 
     def generate_all_fit_plots(self, outfile_prefix: Optional[str] = None) -> None:
@@ -161,14 +165,15 @@ class InstanceAnalyzer:
         distribution (i.e., constant value), no plot will be generated.
 
         :param outfile_prefix: Prefix to be attached to each generated plot file name (optional).
-        :type outfile_prefix: str
+        :type outfile_prefix: Optional[str]
         """
         for instance_element in InstanceElement:
             self.generate_fit_plots(instance_element, outfile_prefix)
 
 
 def _append_file_to_dict(extension: str, dict_obj: Dict[str, Any], file_size: int) -> None:
-    """Add a file size to a file type extension dictionary.
+    """
+    Add a file size to a file type extension dictionary.
 
     :param extension: File type extension.
     :type extension: str
@@ -183,7 +188,8 @@ def _append_file_to_dict(extension: str, dict_obj: Dict[str, Any], file_size: in
 
 
 def _best_fit_distribution_for_file(dict_obj, include_raw_data) -> None:
-    """Find the best fit distribution for a file.
+    """
+    Find the best fit distribution for a file.
 
     :param dict_obj: Dictionary of file type extensions.
     :type dict_obj: Dict[str, Any]
@@ -201,7 +207,8 @@ def _best_fit_distribution_for_file(dict_obj, include_raw_data) -> None:
 
 
 def _json_format_distribution_fit(dist_tuple: Tuple) -> Dict[str, Any]:
-    """Format the best fit distribution data into a dictionary
+    """
+    Format the best fit distribution data into a dictionary
 
     :param dist_tuple: Tuple containing best fit distribution name and parameters.
     :type dist_tuple: Tuple
@@ -217,7 +224,8 @@ def _json_format_distribution_fit(dist_tuple: Tuple) -> Dict[str, Any]:
 
 def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_size: Optional[int] = None,
                         logger: Optional[Logger] = None) -> None:
-    """Produce a fit plot as an image for an entry of an instance element generated by the summary analysis.
+    """
+    Produce a fit plot as an image for an entry of an instance element generated by the summary analysis.
 
     :param el: Entry of an instance element generated by the summary analysis.
     :type el: Dict
@@ -261,7 +269,8 @@ def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_si
     pyplot.legend(loc='best')
     pyplot.savefig(outfile)
     pyplot.clf()
-    logger.info('Generated fit plot: {}'.format(outfile))
+    if logger:
+        logger.info(f'Generated fit plot: {outfile}')
 
     if font_size:
         pyplot.rcParams["font.size"] = old_font_size

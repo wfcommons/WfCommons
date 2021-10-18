@@ -12,6 +12,7 @@ import datetime
 import dateutil.parser
 import importlib.util
 import logging
+import pathlib
 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -28,26 +29,29 @@ from ..utils import read_json
 
 
 class Instance:
-    """Representation of one execution of one workflow on a set of machines
+    """
+    Representation of one execution of one workflow on a set of machines
 
     .. code-block:: python
 
         Instance(input_instance = 'instance.json')
 
     :param input_instance: The JSON instance.
-    :type input_instance: str
+    :type input_instance: pathlib.Path
     :param schema_file: The path to the JSON schema that defines the instance.
                         If no schema file is provided, it will look for a local
-                        copy of the WfCommons schema, and if not available
-                        it will fetch the latest schema from the
-                        `WfCommons schema GitHub <https://github.com/wfcommons/workflow-schema>`_
+                        copy of the WfFormat, and if not available it will fetch
+                        the latest schema from the
+                        `WfFormat schema GitHub <https://github.com/wfcommons/wfformat>`_
                         repository.
-    :type schema_file: str
+    :type schema_file: Optional[str]
     :param logger: The logger where to log information/warning or errors.
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
-    def __init__(self, input_instance: str, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+    def __init__(self, input_instance: pathlib.Path,
+                 schema_file: Optional[str] = None,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow execution instance."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
 
@@ -56,7 +60,7 @@ class Instance:
         self._order = None
 
         self.instance: Dict[str, Any] = read_json(input_instance)
-        self.logger.info("Read a JSON instance: " + input_instance)
+        self.logger.info(f"Read a JSON instance: {input_instance}")
 
         # validate instance
         schema_validator = SchemaValidator(schema_file)
@@ -150,7 +154,7 @@ class Instance:
                 self.workflow.add_edge(parent, task['name'], weight=0)
 
         # TODO: instead of attaching files to tasks, attach them to edges based on the link direction.
-        self.logger.info('Parsed an instance with {} tasks'.format(len(self.workflow.nodes)))
+        self.logger.info(f'Parsed an instance with {len(self.workflow.nodes)} tasks')
 
     def __iter__(self):
         """Produce an iterator based on a topological sort (e.g., scheduling order)"""
@@ -159,7 +163,8 @@ class Instance:
         return self
 
     def __next__(self) -> str:
-        """Return the next task from a topological sort.
+        """
+        Return the next task from a topological sort.
 
         :return: task ID
         :rtype: str
@@ -172,7 +177,8 @@ class Instance:
         raise StopIteration
 
     def roots(self) -> List[str]:
-        """Get the roots of the workflow (i.e., the tasks without any predecessors).
+        """
+        Get the roots of the workflow (i.e., the tasks without any predecessors).
 
         :return: List of roots
         :rtype: List[str]
@@ -180,39 +186,41 @@ class Instance:
         return [n for n, d in self.workflow.in_degree() if d == 0]
 
     def leaves(self) -> List[str]:
-        """Get the leaves of the workflow (i.e., the tasks without any successors).
+        """
+        Get the leaves of the workflow (i.e., the tasks without any successors).
 
         :return: List of leaves
         :rtype: List[str]
         """
         return [n for n, d in self.workflow.out_degree() if d == 0]
 
-    def write_dot(self, output: Optional[str] = None) -> None:
-        """Write a dot file of the instance.
-
-        :param output: The output ``dot`` file name (optional).
-        :type output: str
+    def write_dot(self, output_path: Optional[pathlib.Path] = None) -> None:
         """
-        self.workflow.write_dot(output)
+        Write a dot file of the instance.
+
+        :param output_path: The output ``dot`` file name (optional).
+        :type output_path: Optional[pathlib.Path]
+        """
+        self.workflow.write_dot(output_path)
 
     # # TODO: improve drawing for large instances
-    def draw(self, output: Optional[str] = None, extension: str = "pdf") -> None:
-        """Produce an image or a pdf file representing the instance.
+    def draw(self, output_path: Optional[pathlib.Path] = None, extension: Optional[str] = "pdf") -> None:
+        """
+        Produce an image or a pdf file representing the instance.
 
-        :param output: Name of the output file.
-        :type output: str
+        :param output_path: Name of the output file.
+        :type output_path: Optional[pathlib.Path]
         :param extension: Type of the file extension (``pdf``, ``png``, or ``svg``).
-        :type output: str
+        :type extension: Optional[str]
         """
         graphviz_found = importlib.util.find_spec('pygraphviz')
         if graphviz_found is None:
-            self.logger.error(
-                "\'pygraphviz\' package not found: call to {0}.draw() ignored.".format(type(self).__name__))
+            self.logger.error(f"\'pygraphviz\' package not found: call to {type(self).__name__}.draw() ignored.")
             return
 
         pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
         nx.draw(self.workflow, pos=pos, with_labels=False)
-        if not output:
-            output = "{0}.{1}".format(self.name.lower(), extension)
+        if not output_path:
+            output_path = pathlib.Path(f"{self.name.lower()}.{extension}")
 
-        plt.savefig(output)
+        plt.savefig(output_path)
