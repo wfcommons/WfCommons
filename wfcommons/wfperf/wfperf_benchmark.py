@@ -80,7 +80,7 @@ def unlock_core(path_locked: pathlib.Path,
 def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
                       percent_mem: Optional[float] = 0.5,
                       cpu_work: Optional[int] = 100,
-                      core: Optional[int] = 7) -> List[subprocess]:
+                      core: Optional[int] = 7) -> List:
     """
     Run cpu and memory benchmark.
 
@@ -94,7 +94,7 @@ def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
     :type core: Optional[int]
 
     :return:
-    :rtype: List[subprocess]
+    :rtype: List
     """
     cpu_threads = int(percent_cpu * 10)
     mem_threads = int(percent_mem * 10)
