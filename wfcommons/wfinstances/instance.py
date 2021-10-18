@@ -63,7 +63,7 @@ class Instance:
         self.logger.info(f"Read a JSON instance: {input_instance}")
 
         # validate instance
-        schema_validator = SchemaValidator(schema_file)
+        schema_validator = SchemaValidator(schema_file, logger=logger)
         schema_validator.validate_instance(self.instance)
 
         # Basic global properties
@@ -88,18 +88,19 @@ class Instance:
         self.makespan: int = self.instance['workflow']['makespan']
 
         # Machines
-        self.machines: Dict[str, Machine] = {
-            machine['nodeName']: Machine(
-                name=machine['nodeName'],
-                cpu={k: v for k, v in machine['cpu'].items()},
-                system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
-                architecture=machine.get('architecture', None),
-                memory=machine.get('memory', None),
-                release=machine.get('release', None),
-                hashcode=machine.get('machine_code', None),
-                logger=self.logger
-            ) for machine in self.instance['workflow']['machines']
-        }
+        if 'machines' in self.instance['workflow'].keys():
+            self.machines: Dict[str, Machine] = {
+                machine['nodeName']: Machine(
+                    name=machine['nodeName'],
+                    cpu={k: v for k, v in machine['cpu'].items()},
+                    system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
+                    architecture=machine.get('architecture', None),
+                    memory=machine.get('memory', None),
+                    release=machine.get('release', None),
+                    hashcode=machine.get('machine_code', None),
+                    logger=self.logger
+                ) for machine in self.instance['workflow']['machines']
+            }
 
         # Tasks
         self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
@@ -131,7 +132,7 @@ class Instance:
                     task_id=task.get('id', None),
                     category=task.get('category', None),
                     task_type=TaskType(task['type']),
-                    runtime=task['runtime'],
+                    runtime=task['runtime'] if 'runtime' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
                     args=command.get('arguments', None) if command else None,
