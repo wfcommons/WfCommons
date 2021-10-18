@@ -116,7 +116,6 @@ class PegasusTranslator(Translator):
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
             self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
-            task.args.insert(0, task_name.split("_")[0])
 
             # find children
             children = None
