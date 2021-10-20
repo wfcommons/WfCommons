@@ -133,7 +133,7 @@ class WorkflowBenchmark:
             num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data_footprint / num_total_files) * 1000000  # MB
+            file_size = round(data_footprint * 1000000 / num_total_files)  # MB to B
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
             for job in wf["workflow"]["jobs"]:
@@ -202,7 +202,6 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
     :param save_dir: Folder to generate the workflow benchmark's input data files.
     :type save_dir: pathlib.Path
     """
-    file_total_size = num_files * file_total_size
     for i in range(num_files):
         file = f"{save_dir.joinpath(f'sys_input_{i}.txt')}"
         with open(file, 'wb') as fp:
