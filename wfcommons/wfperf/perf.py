@@ -128,10 +128,9 @@ class WorkflowBenchmark:
             if "runtime" in job:
                 del job["runtime"]
 
-        num_sys_files, num_total_files = input_files(wf)
-
         # whether to generate IO
         if data_footprint:
+            num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
             file_size = round(data_footprint / num_total_files) * 1000000  # MB
