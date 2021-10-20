@@ -162,7 +162,7 @@ def main():
     if args.data:
         print(f"[WfPerf] Writing output file '{args.out}'\n")
         with open(args.out, "wb") as fp:
-            fp.write(os.urandom(args.file_size * 1000000))
+            fp.write(os.urandom(args.file_size))
 
     unlock_core(path_locked, path_cores, core)
     print("WfPerf Benchmark completed!")

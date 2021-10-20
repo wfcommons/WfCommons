@@ -134,7 +134,7 @@ class WorkflowBenchmark:
         if data_footprint:
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data_footprint / num_total_files)
+            file_size = round(data_footprint / num_total_files) * 1000000  # MB
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
             for job in wf["workflow"]["jobs"]:
