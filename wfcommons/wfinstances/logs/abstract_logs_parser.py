@@ -23,11 +23,11 @@ class LogsParser(ABC):
     :param wms_name: Name of the workflow system.
     :type wms_name: str
     :param wms_url: URL for the workflow system.
-    :type wms_url: str
+    :type wms_url: Optional[str]
     :param description: Workflow instance description.
-    :type description: str
+    :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
@@ -36,10 +36,10 @@ class LogsParser(ABC):
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the logs parser."""
-        self.logger = logging.getLogger(__name__) if logger is None else logger
-        self.description = description
-        self.wms_name = wms_name
-        self.wms_url = wms_url
+        self.logger: Optional[Logger] = logger if logger else logging.getLogger(__name__)
+        self.description: Optional[str] = description
+        self.wms_name: str = wms_name
+        self.wms_url: Optional[str] = wms_url
         self.workflow = None
         self.workflow_name = None
         self.schema_version = None
@@ -52,7 +52,7 @@ class LogsParser(ABC):
         Create workflow instance based on the workflow execution logs.
 
         :param workflow_name: The workflow name.
-        :type workflow_name: str
+        :type workflow_name: Optional[str]
 
         :return: A workflow instance object.
         :rtype: Workflow

@@ -11,7 +11,7 @@
 import json
 import jsonschema
 import logging
-import os
+import pathlib
 import requests
 
 from logging import Logger
@@ -20,25 +20,26 @@ from typing import Any, Dict, Optional
 
 class SchemaValidator:
     """
-    Validate JSON files against WfCommons schema. If schema file path is not
-    provided, it will look for a local copy of the WfCommons schema, and if
+    Validate JSON files against WfCommons schema (WfFormat). If schema file path
+    is not provided, it will look for a local copy of the WfFormat schema, and if
     not available it will fetch the latest schema from the
-    `WfCommons schema GitHub <https://github.com/wfcommons/workflow-schema>`_
+    `WfFormat schema GitHub <https://github.com/wfcommons/wfformat>`_
     repository.
 
-    :param schema_file: JSON schema file path.
-    :type schema_file: str
+    :param schema_file_path: JSON schema file path.
+    :type schema_file_path: Optional[pathlib.Path]
     :param logger: The logger where to log information/warning or errors.
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
-    def __init__(self, schema_file: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+    def __init__(self, schema_file_path: Optional[pathlib.Path] = None, logger: Optional[Logger] = None) -> None:
         """Create an object of the schema validator class."""
         self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
-        self.schema = self._load_schema(schema_file)
+        self.schema = self._load_schema(schema_file_path)
 
-    def validate_instance(self, data: Dict[str, Any]):
-        """Perform syntax validation against the schema, and semantic validation.
+    def validate_instance(self, data: Dict[str, Any]) -> None:
+        """
+        Perform syntax validation against the schema, and semantic validation.
 
         :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
@@ -46,27 +47,26 @@ class SchemaValidator:
         self._syntax_validation(data)
         self._semantic_validation(data)
 
-    def _load_schema(self, schema_file: Optional[str] = None):
+    def _load_schema(self, schema_file_path: Optional[pathlib.Path] = None) -> json:
         """
         Load the schema file. If schema file path is not provided, it will look for
-        a local copy of the WfCommons schema, and if not available it will fetch
+        a local copy of the WfFormat schema, and if not available it will fetch
         the latest schema from the GitHub repository.
 
-        :param schema_file: JSON schema file path.
-        :type schema_file: str
+        :param schema_file_path: JSON schema file path.
+        :type schema_file_path: Optional[pathlib.Path]
 
         :return: The JSON schema.
         :rtype: json
         """
-        if schema_file:
-            # schema file provided
-            self.logger.info('Using schema file: {}'.format(schema_file))
-            return json.loads(open(schema_file).read())
+        if schema_file_path:
+            self.logger.info(f'Using schema file: {schema_file_path}')
+            return json.loads(open(schema_file_path).read())
 
         # looking for local copy of schema file
-        schema_path = os.getcwd() + '/wfcommons-schema.json'
-        if os.path.exists(schema_path):
-            self.logger.info('Using schema file: {}'.format(schema_path))
+        schema_path = pathlib.Path(f"{pathlib.Path.cwd()}/wfcommons-schema.json")
+        if schema_path.exists():
+            self.logger.info(f'Using schema file: {schema_path}')
             return json.loads(open(schema_path).read())
 
         # fetching latest schema file from GitHub repository
@@ -75,12 +75,12 @@ class SchemaValidator:
         schema = json.loads(response.content)
         with open(schema_path, 'w') as outfile:
             json.dump(schema, outfile)
-        self.logger.info(
-            'Using latest schema file from GitHub repository (saved local copy into {}).'.format(schema_path))
+        self.logger.info(f"Using latest schema file from GitHub repository (saved local copy into {schema_path}).")
         return schema
 
     def _syntax_validation(self, data: Dict[str, Any]):
-        """Validate the JSON workflow execution instance against the schema.
+        """
+        Validate the JSON workflow execution instance against the schema.
 
         :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
@@ -97,7 +97,8 @@ class SchemaValidator:
             raise RuntimeError('The workflow instance has syntax errors.')
 
     def _semantic_validation(self, data: Dict[str, Any]):
-        """Validate the semantics of the JSON workflow execution instance.
+        """
+        Validate the semantics of the JSON workflow execution instance.
 
         :param data: Workflow instance in JSON format.
         :type data: Dict[str, Any]
@@ -115,19 +116,18 @@ class SchemaValidator:
         for j in data['workflow']['jobs']:
             tasks_ids.append(j['name'])
             if 'machine' in j and j['machine'] not in machine_ids:
-                self.logger.error('Machine "{}" is not declared in the list of machines.'.format(j['machine']))
+                self.logger.error(f"Machine \"{j['machine']}\" is not declared in the list of machines.")
                 has_error = True
 
         # since tasks may be declared out of order, their dependencies are only verified here
         for j in data['workflow']['jobs']:
             for p in j['parents']:
                 if p not in tasks_ids:
-                    self.logger.error(
-                        'Parent task "{}}" is not declared in the list of workflow tasks.'.format(p['parentId']))
+                    self.logger.error(f"Parent task \"{p['parentId']}\" is not declared in the list of workflow tasks.")
                     has_error = True
 
-        self.logger.debug('The workflow has {} tasks.'.format(len(tasks_ids)))
-        self.logger.debug('The workflow has {} machines.'.format(len(machine_ids)))
+        self.logger.debug(f'The workflow has {len(tasks_ids)} tasks.')
+        self.logger.debug(f'The workflow has {len(machine_ids)} machines.')
 
         if has_error:
             raise RuntimeError('The workflow instance has semantic errors.')

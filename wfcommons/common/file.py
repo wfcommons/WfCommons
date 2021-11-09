@@ -11,7 +11,7 @@
 import logging
 
 from logging import Logger
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from ..utils import NoValue
 
@@ -32,22 +32,22 @@ class File:
     :param link: Type of file link.
     :type link: FileLink
     :param logger: The logger where to log information/warning or errors.
-    :type logger: Logger
+    :type logger: Optional[Logger]
     """
 
     def __init__(self, name: str, size: int, link: FileLink, logger: Optional[Logger] = None) -> None:
         """A file used by tasks."""
-        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
+        self.logger: Logger = logger if logger else logging.getLogger(__name__)
 
         self.name: str = name
         self.size: int = size
         self.link: FileLink = link
 
-    def as_dict(self) -> Dict:
+    def as_dict(self) -> Dict[str, Union[str, int, FileLink]]:
         """A JSON representation of the file.
 
         :return: A JSON object representation of the file.
-        :rtype: Dict
+        :rtype: Dict[str, Union[str, int, FileLink]]
         """
         return {
             'link': self.link.value,

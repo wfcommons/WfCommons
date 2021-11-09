@@ -1,3 +1,0 @@
-Memory: 2.97662
-1.19user 2.04system 0:03.24elapsed 99%CPU (0avgtext+0avgdata 2347208maxresident)k
-0inputs+8outputs (0major+1172000minor)pagefaults 0swaps

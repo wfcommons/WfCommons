@@ -11,6 +11,7 @@
 import json
 import logging
 import math
+import pathlib
 import scipy.stats
 import warnings
 import numpy as np
@@ -27,8 +28,9 @@ class NoValue(Enum):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
 
 
-def read_json(instance_filename: str) -> Dict[str, Any]:
-    """Read the JSON from the file path.
+def read_json(instance_filename: pathlib.Path) -> Dict[str, Any]:
+    """
+    Read the JSON from the file path.
 
     :param instance_filename: The absolute path of the instance file.
     :type instance_filename: str
@@ -41,7 +43,8 @@ def read_json(instance_filename: str) -> Dict[str, Any]:
 
 
 def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) -> Tuple:
-    """Fit a list of values to a distribution.
+    """
+    Fit a list of values to a distribution.
 
     :param data: List of values to be fitted to a distribution.
     :type data: List[float]
@@ -97,12 +100,13 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
             except Exception as e:
                 print(f"WARNING: distribution \"{dist_name}\" failed ({e})")
 
-    logger.debug('Best distribution fit: {}'.format(best_distribution))
+    logger.debug(f'Best distribution fit: {best_distribution}')
     return best_distribution, best_params
 
 
 def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> float:
-    """Generate a random variable from a distribution.
+    """
+    Generate a random variable from a distribution.
 
     :param distribution: Distribution dictionary (name and parameters).
     :type distribution: Dict
@@ -124,7 +128,8 @@ def generate_rvs(distribution: Dict, min_value: float, max_value: float) -> floa
 
 
 def ncr(n: int, r: int) -> int:
-    """Calculate the number of combinations.
+    """
+    Calculate the number of combinations.
 
     :param n: The number of items.
     :type n: int

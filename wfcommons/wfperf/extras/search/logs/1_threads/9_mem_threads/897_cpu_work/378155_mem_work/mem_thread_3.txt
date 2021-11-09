@@ -1,3 +1,0 @@
-Memory: 55.849
-52.48user 3.58system 0:56.06elapsed 99%CPU (0avgtext+0avgdata 2347276maxresident)k
-0inputs+8outputs (0major+1172002minor)pagefaults 0swaps

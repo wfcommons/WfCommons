@@ -1,3 +1,0 @@
-Memory: 30.8394
-17.30user 6.04system 0:31.21elapsed 74%CPU (0avgtext+0avgdata 2737292maxresident)k
-21792inputs+8outputs (1380major+2076415minor)pagefaults 0swaps

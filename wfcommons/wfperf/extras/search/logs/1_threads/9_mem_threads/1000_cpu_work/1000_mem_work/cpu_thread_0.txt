@@ -1,9 +1,0 @@
-CPU: 49.1653
-49.00user 0.03system 0:54.01elapsed 90%CPU (0avgtext+0avgdata 2592maxresident)k
-3256inputs+8outputs (51major+168minor)pagefaults 0swaps
-CPU: 53.1698
-47.74user 0.00system 0:53.18elapsed 89%CPU (0avgtext+0avgdata 3492maxresident)k
-8inputs+8outputs (0major+126minor)pagefaults 0swaps
-CPU: 50.2237
-48.41user 0.03system 0:54.44elapsed 88%CPU (0avgtext+0avgdata 2644maxresident)k
-4240inputs+8outputs (53major+172minor)pagefaults 0swaps

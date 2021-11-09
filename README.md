@@ -76,11 +76,15 @@ When citing WfCommons, please use the following paper. You should also actually 
 that paper, as it provides a recent and general overview on the framework.
 
 ```
-@article{coleman2021wfcommons,
-  title={WfCommons: A Framework for Enabling Scientific Workflow Research and Development},
-  author={Coleman, Tain{\~a} and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
-  journal={arXiv preprint arXiv:2105.14352},
-  year={2021}
+@article{coleman2021fgcs,
+    title = {{WfCommons: A Framework for Enabling Scientific Workflow Research and Development}},
+    author = {Coleman, Tain\~a and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
+    journal = {Future Generation Computer Systems},
+    volume = {128},
+    number = {},
+    pages = {16--27},
+    doi = {10.1016/j.future.2021.09.043},
+    year = {2022},
 }
 ```
 

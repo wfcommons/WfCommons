@@ -11,6 +11,7 @@ from typing import List, Tuple
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
+
 program_real = {
                 "individuals": ["/home/tgcoleman/1000genome-sequential/bin/individuals.py",
                                 "/home/tgcoleman/1000genome-sequential/data/20130502/ALL.chr1.250000.vcf",
@@ -23,7 +24,7 @@ def cpu_call(work: float, output: pathlib.Path) -> float:
     with output.open("a+") as fp:
         start = time.time()
         proc = subprocess.Popen(prog, stdout=fp, stderr=fp)
-        os.sched_setaffinity(proc.pid, {15})
+        os.sched_setaffinity(proc.pid, {os.cpu_count() - 1})
         proc.wait()
         return time.time() - start
 
@@ -34,7 +35,7 @@ def mem_call(work: float, output: pathlib.Path) -> float:
     with output.open("a+") as fp:
         start = time.time()
         proc = subprocess.Popen(prog, stdout=fp, stderr=fp)
-        os.sched_setaffinity(proc.pid, {15})
+        os.sched_setaffinity(proc.pid, {os.cpu_count() - 1})
         proc.wait()
         return time.time() - start
 
@@ -91,6 +92,7 @@ def benchmark_call(cpu_work: float,
 
     return cpu_time, mem_time, duration
 
+
 def stress_test(cpu_work: float,
                 mem_work: float,
                 cpu_threads: int):
@@ -106,8 +108,8 @@ def stress_test(cpu_work: float,
         float: Average execution time per Memory Thread
         float: Total execution time to execute all threads
     """
-    for core in range(os.cpu_count()//2):
-        print("Starting stress...")
+    # print("Starting stress...")
+    for core in range(os.cpu_count() // 2):
         prog = ["stress", "-m", "1"]
         proc_mem = subprocess.Popen(prog)
         os.sched_setaffinity(proc_mem.pid, {core})
@@ -115,24 +117,30 @@ def stress_test(cpu_work: float,
     mem_threads = 10 - cpu_threads
     cpu_time, mem_time, duration = benchmark_call(cpu_work, mem_work, cpu_threads, mem_threads)
 
-    subprocess.Popen(["killall","stress"])
-     
+    subprocess.Popen(["killall", "stress"])
+
     return cpu_time, mem_time, duration
+
 
 def real_stress_test():
     print("--------------------- Starting Real Stress ----------------------------")
-    for core in range(os.cpu_count()//2):
+    for core in range(os.cpu_count() // 2):
         prog = ["stress", "-m", "1"]
         proc_mem = subprocess.Popen(prog)
         os.sched_setaffinity(proc_mem.pid, {core})
     start = time.time()
-    prog = program_real["individuals"]
+    prog = ["/home/cc/Montage/bin/mViewer", "-ct", "1", "-gray",
+            "/home/cc/montage-workflow-for-tina/data/1-mosaic.fits",
+            "-1s", "max", "gaussian", "-png",
+            "/home/cc/montage-workflow-for-tina/data/1-mosaic.png"]
     proc_real = subprocess.Popen(prog)
+    os.sched_setaffinity(proc_real.pid, {os.cpu_count() - 1})
     proc_real.wait()
     duration = time.time() - start
-    subprocess.Popen(["killall","stress"])
+    subprocess.Popen(["killall", "stress"])
 
     print(duration)
+
 
 def find_balanced_work(real_time: float,
                        cpu_threads: int,
@@ -159,12 +167,15 @@ def find_balanced_work(real_time: float,
 
     while True:
         counter += 1
-        print(f"[{counter}] CPU: {cpu_work} - MEM: {mem_work}")
+        # print(f"[{counter}] CPU: {cpu_work} - MEM: {mem_work}")
         cpu_time, mem_time, duration = benchmark_call(cpu_work, mem_work, cpu_threads, mem_threads)
+        if real_time == 0:
+            return cpu_time, mem_time, duration, cpu_work, mem_work
+
         max_ratio = max(abs(1 - real_time / mem_time), abs(1 - real_time / cpu_time))
-        print(f"  CPU Time: {cpu_time:.2f}")
-        print(f"  MEM Time: {mem_time:.2f}")
-        print(f"  Max Ratio: {max_ratio:.2f}")
+        # print(f"  CPU Time: {cpu_time:.2f}")
+        # print(f"  MEM Time: {mem_time:.2f}")
+        # print(f"  Max Ratio: {max_ratio:.2f}")
 
         # times difference within threshold
         if threshold >= max_ratio:
@@ -179,13 +190,14 @@ def find_balanced_work(real_time: float,
 
         if counter == 100:
             return cpu_time, mem_time, duration, cpu_work, mem_work
-        print("")
+        print(".", end=" ")
+        # print("")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--real-time", type=float, default=49.0)    
-    parser.add_argument("--real",action="store_true")
+    parser.add_argument("--real-time", type=float, default=49.0)
+    parser.add_argument("--real", action="store_true")
     parser.add_argument("--cpu-threads", type=int, default=1)
     parser.add_argument("--cpu-work", type=int, default=1000)
     parser.add_argument("--mem-work", type=int, default=100000)
@@ -194,7 +206,6 @@ def main():
 
     args, other = parser.parse_known_args()
 
-    
     if args.real:
         real_stress_test()
     else:
@@ -204,23 +215,22 @@ def main():
             cpu_time, mem_time, duration = stress_test(cpu_work, mem_work, args.cpu_threads)
         else:
             cpu_time, mem_time, duration, cpu_work, mem_work = find_balanced_work(real_time=args.real_time,
-                                                                                cpu_threads=args.cpu_threads,
-                                                                                mem_threads=10 - args.cpu_threads,
-                                                                                cpu_work=args.cpu_work,
-                                                                                mem_work=args.mem_work,
-                                                                                threshold=args.threshold)         
-        print("")
-        pprint(dict(
-            cpu_time=cpu_time,
-            mem_time=mem_time,
-            duration=duration,
-            cpu_work=cpu_work,
-            mem_work=mem_work
-        ))
-
-    
+                                                                                  cpu_threads=args.cpu_threads,
+                                                                                  mem_threads=10 - args.cpu_threads,
+                                                                                  cpu_work=args.cpu_work,
+                                                                                  mem_work=args.mem_work,
+                                                                                  threshold=args.threshold)
+        # print("")
+        # pprint(dict(
+        #     cpu_time=cpu_time,
+        #     mem_time=mem_time,
+        #     duration=duration,
+        #     cpu_work=cpu_work,
+        #     mem_work=mem_work
+        # ))
+        # print(f"{args.cpu_threads}-{10 - args.cpu_threads},{duration},{cpu_work},{mem_work}")
+        print(f"--cpu-threads {args.cpu_threads} --cpu-work {cpu_work} --mem-work {mem_work} # {duration}")
 
 
 if __name__ == "__main__":
     main()
-
