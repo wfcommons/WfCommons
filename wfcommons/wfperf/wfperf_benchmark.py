@@ -106,18 +106,18 @@ def main():
             with open(file, "w+") as fp:
                 fp.readlines()
                 
-    # print("Starting CPU and Memory benchmark...")
-    # core = lock_core(path_locked, path_cores)
-    # print(f"{args.name} acquired core {core}")
+    print("Starting CPU and Memory benchmark...")
+    core = lock_core(path_locked, path_cores)
+    print(f"{args.name} acquired core {core}")
     
-    # cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu, 
-    #                               percent_mem=(1-args.percent_cpu),
-    #                               cpu_work=args.cpu_work,  
-    #                               core=core)
-    # for proc in cpu_procs:
-    #     proc.wait()
-    # subprocess.Popen(["killall", "stress"])
-    # unlock_core(path_locked, path_cores, core)
+    cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu, 
+                                  percent_mem=(1-args.percent_cpu),
+                                  cpu_work=args.cpu_work,  
+                                  core=core)
+    for proc in cpu_procs:
+        proc.wait()
+    subprocess.Popen(["killall", "stress"])
+    unlock_core(path_locked, path_cores, core)
 
     if args.data:
         with open(this_dir.joinpath(f"{args.name}_output.txt"), "wb") as fp:

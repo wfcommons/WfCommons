@@ -11,7 +11,7 @@
 import pathlib
 
 from logging import Logger
-from typing import Optional
+from typing import Optional, Union
 
 from .abstract_translator import Translator
 from ...common.file import FileLink
@@ -43,7 +43,7 @@ class PegasusTranslator(Translator):
         self.parsed_tasks = []
         self.tasks_map = {}
         self.task_counter = 1
-
+ 
     def translate(self, output_file_name: str) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.

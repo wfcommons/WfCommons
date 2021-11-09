@@ -3,12 +3,12 @@ from wfcommons.wfchef.recipes import BlastRecipe
 import pathlib
 import argparse
 import logging
+from wfcommons.wfperf.translator import PegasusTranslator
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 this_dir = pathlib.Path(__file__).resolve().parent
-
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -30,16 +30,20 @@ def main():
     print("Running")
 
     bench = WorkflowBenchmark(BlastRecipe, num_tasks, logger=logger)
+    
 
     if args.create:
         if args.verbose:
             print("Creating Recipe...")
-        json_path = bench.create(save_dir, percent_cpu=0.5, max_time=10, data_footprint=10000)
+        json_path = bench.create_benchmark(save_dir, percent_cpu=0.5, data_footprint=10000)
 
     else:
-        json_path = bench.create(save_dir, create=False, path=pathlib.Path(args.path))
+        json_path = bench.create_benchmark(save_dir, create=False, path=pathlib.Path(args.path))
 
-    bench.run(json_path, save_dir)
+    # bench.run(json_path, save_dir)    pegasus = PegasusTranslator(json_path)
+    pegasus.translate(this_dir.joinpath("test.py"))
+
+
 
 
 if __name__ == "__main__":
