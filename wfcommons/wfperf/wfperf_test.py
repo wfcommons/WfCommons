@@ -40,8 +40,7 @@ def main():
     else:
         json_path = bench.create_benchmark(save_dir, create=False, path=pathlib.Path(args.path))
 
-    # bench.run(json_path, save_dir)    pegasus = PegasusTranslator(json_path)
-    pegasus.translate(this_dir.joinpath("test.py"))
+
 
 
 
