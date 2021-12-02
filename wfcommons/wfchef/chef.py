@@ -19,6 +19,7 @@ import pickle
 import pkg_resources
 import subprocess
 import traceback
+import sys
 
 from typing import Dict, Optional, Union
 from stringcase import capitalcase
@@ -342,6 +343,11 @@ def get_parser() -> argparse.ArgumentParser:
 def main():
     parser = get_parser()
     args = parser.parse_args()
+
+    if not hasattr(args, "action"):
+        sys.argv.append("--help")
+        parser.parse_args()
+        return
 
     if args.action == ls_recipe:
         ls_recipe()
