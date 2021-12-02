@@ -1,0 +1,13 @@
+
+tasks:
+  - name: Install
+    init: |
+      sudo apt-get update
+      sudo apt-get install -y graphviz libgraphviz-dev 
+      pip install --upgrade pip
+      pip install -e .
+
+
+vscode:
+  extensions:
+    - ms-python.python
