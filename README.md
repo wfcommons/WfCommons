@@ -14,6 +14,8 @@ This Python package provides a collection of tools for:
 - Producing recipes structures for creating workflow recipes for workflow generation; and
 - Generating synthetic realistic workflow instances.
 
+[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/feature/wfperf)
+
 ## Installation
 
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
