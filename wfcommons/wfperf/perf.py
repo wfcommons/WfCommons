@@ -17,7 +17,9 @@ import subprocess
 import uuid
 
 from logging import Logger
-from typing import Dict, Optional, List, Type
+from typing import Dict, Optional, List, Type, Union
+
+from wfcommons.common.task import Task
 
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
@@ -45,14 +47,41 @@ class WorkflowBenchmark:
         self.recipe = recipe
         self.num_tasks = num_tasks
 
+    def generate_input_file(self, path: pathlib.Path) -> None:
+        generator = WorkflowGenerator(self.recipe.from_num_tasks(self.num_tasks))
+        workflow = generator.build_workflow()
+
+        defaults = {
+            "percent_cpu": 0.6,
+            "cpu_work": 1000
+        }
+        inputs = {
+            "percent_cpu": {},
+            "cpu_work": {}
+        }
+        for node in workflow.nodes:
+            task: Task = workflow.nodes[node]['task']
+            task_type = task.name.split("_0")[0]
+
+            for key in inputs.keys():
+                inputs[key].setdefault(task_type, defaults[key])
+        
+        path.parent.mkdir(exist_ok=True, parents=True)
+        path.write_text(json.dumps(inputs, indent=2))
+
+    def create_benchmark_from_input_file(self, 
+                                         save_dir: pathlib.Path,
+                                         input_file: pathlib.Path,
+                                         lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+        params = json.loads(input_file.read_text())
+        return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, **params)
+
     def create_benchmark(self,
                          save_dir: pathlib.Path,
-                         percent_cpu: float = 0.6,
-                         cpu_work: Optional[int] = 100,
-                         data_footprint: Optional[int] = None,
-                         lock_files_folder: Optional[pathlib.Path] = None,
-                         create: Optional[bool] = True,
-                         path: Optional[pathlib.Path] = None) -> pathlib.Path:
+                         percent_cpu: Union[float, Dict[str, float]] = 0.6,
+                         cpu_work: Union[int, Dict[str, int]] = 1000,
+                         data_footprint: Union[float, Dict[str, float]] = None,
+                         lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -76,7 +105,7 @@ class WorkflowBenchmark:
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
-        # if create:
+    
         self.logger.debug("Generating workflow")
         generator = WorkflowGenerator(self.recipe.from_num_tasks(self.num_tasks))
         workflow = generator.build_workflow()
@@ -84,11 +113,8 @@ class WorkflowBenchmark:
         workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         workflow.write_json(workflow_savepath)
         wf = json.loads(workflow_savepath.read_text())
-        # else:
-        #     # TODO: should we keep this, or is it only for testing?
-        #     wf = json.loads(path.read_text())
-
-        # Creating the lock files
+ 
+       # Creating the lock files
         create_lock_files = True
         if lock_files_folder:
             if lock_files_folder.exists():
@@ -113,13 +139,26 @@ class WorkflowBenchmark:
                 pass
 
         # Setting the parameters for the arguments section of the JSON
-        params = [f"--path-lock={lock}",
-                  f"--path-cores={cores}",
-                  f"--percent-cpu={percent_cpu}",
-                  f"--cpu-work={cpu_work}"]
 
         wf["name"] = name
         for job in wf["workflow"]["jobs"]:
+            task_type = job["name"].split("_0")[0]
+            if isinstance(percent_cpu, dict):
+                _percent_cpu = percent_cpu[task_type]
+            else:
+                _percent_cpu = percent_cpu
+                
+            if isinstance(cpu_work, dict):
+                _cpu_work = cpu_work[task_type]
+            else:
+                _cpu_work = cpu_work
+
+            
+            params = [f"--path-lock={lock}",
+                      f"--path-cores={cores}",
+                      f"--percent-cpu={_percent_cpu}",
+                      f"--cpu-work={_cpu_work}"]
+
             job["files"] = []
             job.setdefault("command", {})
             job["command"]["program"] = f"{this_dir.joinpath('wfperf_benchmark.py')}"
