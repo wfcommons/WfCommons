@@ -11,7 +11,7 @@
 import pathlib
 
 from logging import Logger
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from .abstract_translator import Translator
 from ...common.file import FileLink
@@ -44,12 +44,14 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file_name: pathlib.Path) -> None:
+    def translate(self, output_file_name: pathlib.Path, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
         :param output_file_name: The name of the output file (e.g., workflow.py).
         :type output_file_name: pathlib.Path
+        :param tasks_priorities: Priorities to be assigned to tasks.
+        :type tasks_priorities: Optional[Dict[str, int]]
         """
         # overall workflow
         self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
@@ -82,7 +84,7 @@ class PegasusTranslator(Translator):
 
         # adding tasks
         for task_name in self.parent_task_names:
-            self._add_task(task_name)
+            self._add_task(task_name, tasks_priorities=tasks_priorities)
             # input file
             task = self.tasks[task_name]
             for file in task.files:
@@ -103,7 +105,7 @@ class PegasusTranslator(Translator):
         # write script to file
         self._write_output_file(self.script, output_file_name)
 
-    def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
+    def _add_task(self, task_name: str, parent_task: Optional[str] = None, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
         """
         Add a task and its dependencies to the workflow.
 
@@ -111,11 +113,17 @@ class PegasusTranslator(Translator):
         :type task_name: str
         :param parent_task: name of the parent task
         :type parent_task: Optional[str]
+        :param tasks_priorities: Priorities to be assigned to tasks.
+        :type tasks_priorities: Optional[Dict[str, int]]
         """
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
             self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
+            
+            # task priority
+            if tasks_priorities and task.category in tasks_priorities:
+                self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.category]}')\n"
 
             # find children
             children = None
@@ -144,7 +152,7 @@ class PegasusTranslator(Translator):
             self.tasks_map[task_name] = job_name
 
             for child_task_name in children:
-                self._add_task(child_task_name, job_name)
+                self._add_task(child_task_name, job_name, tasks_priorities)
 
         if parent_task:
             self.script += f"if '{parent_task}' in task_output_files:\n"
