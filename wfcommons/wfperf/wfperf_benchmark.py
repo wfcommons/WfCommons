@@ -153,7 +153,7 @@ def main():
 
     cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu,
                                   percent_mem=(1 - args.percent_cpu),
-                                  cpu_work=args.cpu_work,
+                                  cpu_work=int(args.cpu_work),
                                   core=core)
     for proc in cpu_procs:
         proc.wait()
