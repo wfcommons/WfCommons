@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,19 +98,20 @@ def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
     """
     cpu_threads = int(percent_cpu * 10)
     mem_threads = int(percent_mem * 10)
+    total_mem_bytes = int(100 / os.cpu_count())
+    cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
-    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", str(cpu_work)]
-    mem_prog = ["stress", "--vm", "1"]
+    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+    mem_prog = ["stress-ng", "--vm", f"{mem_threads}", "--vm-bytes", f"{total_mem_bytes}", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
         os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    for _ in range(mem_threads):
-        mem_proc = subprocess.Popen(mem_prog)
-        os.sched_setaffinity(mem_proc.pid, {core})
+    mem_proc = subprocess.Popen(mem_prog)
+    os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
