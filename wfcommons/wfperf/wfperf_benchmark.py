@@ -98,12 +98,12 @@ def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
     """
     cpu_threads = int(percent_cpu * 10)
     mem_threads = int(percent_mem * 10)
-    total_mem_bytes = int(100 / os.cpu_count())
+    total_mem_bytes = 100.0 / os.cpu_count()
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
     cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
-    mem_prog = ["stress-ng", "--vm", f"{mem_threads}", "--vm-bytes", f"{total_mem_bytes}", "--vm-keep"]
+    mem_prog = ["stress-ng", "--vm", f"{mem_threads}", "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
