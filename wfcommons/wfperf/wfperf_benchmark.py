@@ -77,17 +77,17 @@ def unlock_core(path_locked: pathlib.Path,
             lock.release()
 
 
-def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
-                      percent_mem: Optional[float] = 0.5,
+def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
+                      mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
                       core: Optional[int] = 7) -> List:
     """
     Run cpu and memory benchmark.
 
-    :param percent_cpu:
-    :type percent_cpu: Optional[float]
-    :param percent_mem:
-    :type percent_mem: Optional[float]
+    :param cpu_threads:
+    :type cpu_threads: Optional[int]
+    :param mem_threads:
+    :type mem_threads: Optional[int]
     :param cpu_work:
     :type cpu_work: Optional[int]
     :param core:
@@ -96,8 +96,6 @@ def cpu_mem_benchmark(percent_cpu: Optional[float] = 0.5,
     :return:
     :rtype: List
     """
-    cpu_threads = int(percent_cpu * 10)
-    mem_threads = int(percent_mem * 10)
     total_mem_bytes = 100.0 / os.cpu_count()
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
@@ -151,13 +149,13 @@ def main():
     print("[WfPerf] Starting CPU and Memory Benchmarks...")
     print(f"[WfPerf]  {args.name} acquired core {core}")
 
-    cpu_procs = cpu_mem_benchmark(percent_cpu=args.percent_cpu,
-                                  percent_mem=(1 - args.percent_cpu),
+    cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
+                                  mem_threads=int(10 - 10 * args.percent_cpu),
                                   cpu_work=int(args.cpu_work),
                                   core=core)
     for proc in cpu_procs:
         proc.wait()
-    subprocess.Popen(["killall", "stress"])
+    subprocess.Popen(["killall", "stress-ng"])
     print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
     if args.data:
