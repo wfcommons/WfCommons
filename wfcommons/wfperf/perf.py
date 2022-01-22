@@ -53,11 +53,14 @@ class WorkflowBenchmark:
 
         defaults = {
             "percent_cpu": 0.6,
-            "cpu_work": 1000
+            "cpu_work": 1000,
+            "input_data":10
         }
         inputs = {
             "percent_cpu": {},
-            "cpu_work": {}
+            "cpu_work": {},
+            "input_data": {}
+
         }
         for node in workflow.nodes:
             task: Task = workflow.nodes[node]['task']
@@ -80,7 +83,9 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
-                         data_footprint: Union[float, Dict[str, float]] = None,
+                         input_data: Union[float, Dict[str, float]] = 10,
+                         data: bool = True,
+                        #  data_footprint: Union[float, Dict[str, float]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -90,8 +95,8 @@ class WorkflowBenchmark:
         :type percent_cpu: float
         :param cpu_work: CPU work per workflow task
         :type cpu_work: int
-        :param data_footprint: Total size of input/output data files of the workflow (in MB).
-        :type data_footprint: Optional[int]
+        :param data: Total size of input/output data files of the workflow (in MB).
+        :type data: Optional[int]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
         :param create:
@@ -153,6 +158,13 @@ class WorkflowBenchmark:
             else:
                 _cpu_work = cpu_work
 
+            if data:
+                if isinstance(input_data, dict):
+                    _data = input_data[task_type]
+                    # helper function that ensures that the output files and input files are the correct size 
+                    # check all output files and compare to input_data value (use it as upperbound). 
+                else:
+                    _data = input_data[task_type]
             
             params = [f"--path-lock={lock}",
                       f"--path-cores={cores}",
@@ -168,23 +180,24 @@ class WorkflowBenchmark:
                 del job["runtime"]
 
         # whether to generate IO
-        if data_footprint:
-            num_sys_files, num_total_files = input_files(wf)
-            self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
-            self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data_footprint * 1000000 / num_total_files)  # MB to B
-            self.logger.debug(f"Every input/output file is of size: {file_size}")
+        # if data_footprint:
 
-            for job in wf["workflow"]["jobs"]:
-                job["command"]["arguments"].extend([
-                    "--data",
-                    f"--file-size={file_size}"
-                ])
+        #     num_sys_files, num_total_files = input_files(wf)
+        #     self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
+        #     self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
+        #     file_size = round(data * 1000000 / num_total_files)  # MB to B
+        #     self.logger.debug(f"Every input/output file is of size: {file_size}")
 
-            add_io_to_json(wf, file_size)
+        #     for job in wf["workflow"]["jobs"]:
+        #         job["command"]["arguments"].extend([
+        #             "--data",
+        #             f"--file-size={file_size}"
+        #         ])
 
-            self.logger.debug("Generating system files.")
-            generate_sys_data(num_sys_files, file_size, save_dir)
+        #     add_io_to_json(wf, file_size)
+
+        #     self.logger.debug("Generating system files.")
+        #     generate_sys_data(num_sys_files, file_size, save_dir)
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
