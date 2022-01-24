@@ -83,9 +83,8 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
-                         input_data: Union[float, Dict[str, float]] = 10,
-                         data: bool = True,
-                        #  data_footprint: Union[float, Dict[str, float]] = None,
+                         input_data: Optional[Union[float, Dict[str, float]]] = 10,
+                         data_footprint: Union[float, Dict[str, float]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -158,7 +157,7 @@ class WorkflowBenchmark:
             else:
                 _cpu_work = cpu_work
 
-            if data:
+            if not data_footprint:
                 if isinstance(input_data, dict):
                     _data = input_data[task_type]
                     # helper function that ensures that the output files and input files are the correct size 
@@ -169,7 +168,8 @@ class WorkflowBenchmark:
             params = [f"--path-lock={lock}",
                       f"--path-cores={cores}",
                       f"--percent-cpu={_percent_cpu}",
-                      f"--cpu-work={_cpu_work}"]
+                      f"--cpu-work={_cpu_work}",
+                      f"--input-data={_data}"]
 
             job["files"] = []
             job.setdefault("command", {})
@@ -179,25 +179,25 @@ class WorkflowBenchmark:
             if "runtime" in job:
                 del job["runtime"]
 
-        # whether to generate IO
-        # if data_footprint:
+        # if data_footprint is offered instead of individual data_input size
+        if data_footprint:
 
-        #     num_sys_files, num_total_files = input_files(wf)
-        #     self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
-        #     self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-        #     file_size = round(data * 1000000 / num_total_files)  # MB to B
-        #     self.logger.debug(f"Every input/output file is of size: {file_size}")
+            num_sys_files, num_total_files = input_files(wf)
+            self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
+            self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
+            file_size = round(data * 1000000 / num_total_files)  # MB to B
+            self.logger.debug(f"Every input/output file is of size: {file_size}")
 
-        #     for job in wf["workflow"]["jobs"]:
-        #         job["command"]["arguments"].extend([
-        #             "--data",
-        #             f"--file-size={file_size}"
-        #         ])
+            for job in wf["workflow"]["jobs"]:
+                job["command"]["arguments"].extend([
+                    "--data",
+                    f"--file-size={file_size}"
+                ])
 
-        #     add_io_to_json(wf, file_size)
+            add_io_to_json(wf, file_size)
 
-        #     self.logger.debug("Generating system files.")
-        #     generate_sys_data(num_sys_files, file_size, save_dir)
+            self.logger.debug("Generating system files.")
+            generate_sys_data(num_sys_files, file_size, save_dir)
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
@@ -348,3 +348,11 @@ def input_files(wf: Dict[str, Dict]):
     total_num_files = tasks_need_input * 2 + tasks_dont_need_input
 
     return tasks_need_input, total_num_files
+
+def output_files(wf: Dict[str, Dict]):
+    
+    for job in wf["workflow"]["jobs"]:
+        children = [child for child in job["children"]]
+        
+        # for each child check the input_data size and take the greatest one to be the output file size
+        # Correct input_data size of the sibling to mach the larger value 
