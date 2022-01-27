@@ -160,13 +160,23 @@ class WorkflowBenchmark:
             if not data_footprint:
                 if isinstance(input_data, dict):
                     _data = input_data[task_type]
-                    params = [f"--path-lock={lock}",
-                            f"--path-cores={cores}",
-                            f"--percent-cpu={_percent_cpu}",
-                            f"--cpu-work={_cpu_work}",
-                            f"--input-data={_data}"]
-                    # helper function that ensures that the output files and input files are the correct size 
-                    # check all output files and compare to input_data value (use it as upperbound). 
+                    output_files = output_files(wf)
+
+                    outputs = []
+                    for k, v in output_files.values:
+                        if k == job["name"]:
+                            outputs.append(v[1])
+                else:
+                    input_data = input_data[task_type]
+        
+                    
+                params = [f"--path-lock={lock}",
+                        f"--path-cores={cores}",
+                        f"--percent-cpu={_percent_cpu}",
+                        f"--cpu-work={_cpu_work}",
+                        f"--input-data={_data}",
+                        f"--outputs={outputs}"]
+ 
             else:
                 params = [f"--path-lock={lock}",
                     f"--path-cores={cores}",
@@ -328,6 +338,53 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
                     ]
                 )
 
+def add_io_to_json_different_outputs(wf: Dict[str, Dict], ouput_files: Dict[str, List[str]], file_size: int) -> None:
+    """
+    Add input and output files to JSON when input data was offered by the user
+
+    :param wf:
+    :type wf: Dict[str, Dict]
+    :param file_size:
+    :type file_size: int
+    """
+    i = 0
+    all_jobs = {
+        job["name"]: job
+        for job in wf["workflow"]["jobs"]
+    }
+
+    for job in wf["workflow"]["jobs"]:
+        job.setdefault("files", [])
+        job["files"].append(
+            {
+                "link": "output",
+                "name": f"{job['name']}_output.txt",
+                "size": file_size
+            }
+        )
+
+        parents = [parent for parent in job["parents"]]
+        if not parents:
+            job["files"].append(
+                {
+                    "link": "input",
+                    "name": f"sys_input_{i}.txt",
+                    "size": file_size
+                }
+            )
+            i += 1
+        else:
+            for parent in parents:
+                job["files"].extend(
+                    [
+                        {
+                            "link": "input",
+                            "name": item["name"],
+                            "size": item["size"]
+                        }
+                        for item in all_jobs[parent]["files"] if item["link"] == "output"
+                    ]
+                )
 
 def input_files(wf: Dict[str, Dict]):
     """
@@ -351,15 +408,13 @@ def input_files(wf: Dict[str, Dict]):
 
     return tasks_need_input, total_num_files
 
-def output_files(wf: Dict[str, Dict]):
-    
+def output_files(wf: Dict[str, Dict])-> Dict[str, List[str]]:
+    output_files = {}
     for job in wf["workflow"]["jobs"]:
         children = [child for child in job["children"]]
-        
-        output_files = {}
+      
         for child in children:
-            output_files[child["name"]] = child["command"]["arguments"]["input_data"]
-        
+            output_files[job["name"]] = [child["name"], child["command"]["arguments"]["input_data"]]
+    
+    return output_files
 
-        # for each child check the input_data size and take the greatest one to be the output file size
-        # Correct input_data size of the sibling to mach the larger value 
