@@ -94,8 +94,8 @@ class WorkflowBenchmark:
         :type percent_cpu: float
         :param cpu_work: CPU work per workflow task
         :type cpu_work: int
-        :param data: Total size of input/output data files of the workflow (in MB).
-        :type data: Optional[int]
+        :param data_footprint: Total size of input/output data files of the workflow (in MB).
+        :type data_footprint: Optional[int]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
         :param create:
@@ -160,16 +160,18 @@ class WorkflowBenchmark:
             if not data_footprint:
                 if isinstance(input_data, dict):
                     _data = input_data[task_type]
+                    params = [f"--path-lock={lock}",
+                            f"--path-cores={cores}",
+                            f"--percent-cpu={_percent_cpu}",
+                            f"--cpu-work={_cpu_work}",
+                            f"--input-data={_data}"]
                     # helper function that ensures that the output files and input files are the correct size 
                     # check all output files and compare to input_data value (use it as upperbound). 
-                else:
-                    _data = input_data[task_type]
-            
-            params = [f"--path-lock={lock}",
-                      f"--path-cores={cores}",
-                      f"--percent-cpu={_percent_cpu}",
-                      f"--cpu-work={_cpu_work}",
-                      f"--input-data={_data}"]
+            else:
+                params = [f"--path-lock={lock}",
+                    f"--path-cores={cores}",
+                    f"--percent-cpu={_percent_cpu}",
+                    f"--cpu-work={_cpu_work}"]
 
             job["files"] = []
             job.setdefault("command", {})
@@ -185,7 +187,7 @@ class WorkflowBenchmark:
             num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data * 1000000 / num_total_files)  # MB to B
+            file_size = round(data_footprint * 1000000 / num_total_files)  # MB to B
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
             for job in wf["workflow"]["jobs"]:
@@ -354,5 +356,10 @@ def output_files(wf: Dict[str, Dict]):
     for job in wf["workflow"]["jobs"]:
         children = [child for child in job["children"]]
         
+        output_files = {}
+        for child in children:
+            output_files[child["name"]] = child["command"]["arguments"]["input_data"]
+        
+
         # for each child check the input_data size and take the greatest one to be the output file size
         # Correct input_data size of the sibling to mach the larger value 

@@ -6,7 +6,7 @@ this_dir = pathlib.Path(__file__).parent.resolve()
 
 def main():
     bench = WorkflowBenchmark(BlastRecipe, 300)
-    bench.create_benchmark(this_dir, 0.5)
+    bench.create_benchmark(this_dir, 0.5, data_footprint=1000)
     # bench.generate_input_file(pathlib.Path("test.txt"))
     # bench.create_benchmark_from_input_file("test.txt")
 
