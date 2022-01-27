@@ -55,3 +55,9 @@ On macOS you can use the :code:`brew` package manager:
 .. code-block:: bash
 
     $ brew install graphviz
+
+Then you can install pygraphviz by running:
+
+.. code-block:: bash
+
+    $ python3 -m pip install pygraphviz
