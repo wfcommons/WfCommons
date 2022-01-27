@@ -84,7 +84,7 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
                          input_data: Optional[Union[float, Dict[str, float]]] = 10,
-                         data_footprint: Union[float, Dict[str, float]] = None,
+                         data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -157,25 +157,20 @@ class WorkflowBenchmark:
             else:
                 _cpu_work = cpu_work
 
-            if not data_footprint:
+            if input_data:
                 if isinstance(input_data, dict):
                     _data = input_data[task_type]
-                    output_files = output_files(wf)
-
-                    outputs = []
-                    for k, v in output_files.values:
-                        if k == job["name"]:
-                            outputs.append(v[1])
+                    of: dict = output_files(wf)
+                    outputs_file_size = [of[job["name"]][child] for child in output_files.values()]
                 else:
                     input_data = input_data[task_type]
-        
-                    
+
                 params = [f"--path-lock={lock}",
                         f"--path-cores={cores}",
                         f"--percent-cpu={_percent_cpu}",
                         f"--cpu-work={_cpu_work}",
                         f"--input-data={_data}",
-                        f"--outputs={outputs}"]
+                        f"--outputs_file_size={outputs_file_size}"]
  
             else:
                 params = [f"--path-lock={lock}",
@@ -190,6 +185,14 @@ class WorkflowBenchmark:
             job["command"]["arguments"].extend(params)
             if "runtime" in job:
                 del job["runtime"]
+
+        
+        if input_data:
+            for job in wf["workflow"]["jobs"]:
+                job["command"]["arguments"].extend("--data")
+            
+            add_io_to_json_different_outputs(wf,of)
+      
 
         # if data_footprint is offered instead of individual data_input size
         if data_footprint:
@@ -412,13 +415,6 @@ def output_files(wf: Dict[str, Dict])-> Dict[str, List[str]]:
             output_files.setdefault(job["name"], {})
             output_files[job["name"]][child["name"]] = child["command"]["arguments"]["input_data"]
             
-
-        {
-            "job_a": {
-                "child_1": 292,
-                "child_2": 90
-            }
-        }
-            
+           
     return output_files
 
