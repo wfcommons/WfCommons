@@ -19,25 +19,6 @@ This Python package provides a collection of tools for:
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
 WfCommons requires Python3.6+ and has been tested on Linux and macOS.
 
-### Requirements
-
-#### Graphviz
-WfCommons uses _pygraphviz_ and thus needs the graphviz package installed (version 2.16 or later).
-You can install graphviz easily on Linux with your favorite package manager,
-for example for Debian-based distributions:
-```
-sudo apt-get install graphviz libgraphviz-dev
-```
-and for RedHat-based distributions:
-```
-sudo yum install python-devel graphviz-devel
-```
-
-On macOS you can use `brew` package manager:
-```
-brew install graphviz
-```
-
 ### Installation using pip
 
 While `pip` can be used to install WfCommons, we suggest the following
@@ -60,6 +41,32 @@ repository:
 $ git clone https://github.com/wfcommons/wfcommons
 $ cd wfcommons
 $ pip install .
+```
+
+### Optional Requirements
+
+#### Graphviz
+WfCommons uses _pygraphviz_ for generating visualizations for the workflow task graph. 
+If you want to enable this feature, you will have to install the 
+[graphviz](https://www.graphviz.org/) package (version 2.16 or later).
+You can install graphviz easily on Linux with your favorite package manager,
+for example for Debian-based distributions:
+```
+sudo apt-get install graphviz libgraphviz-dev
+```
+and for RedHat-based distributions:
+```
+sudo yum install python-devel graphviz-devel
+```
+
+On macOS you can use `brew` package manager:
+```
+brew install graphviz
+```
+
+Then you can install pygraphviz by running:
+```
+python3 -m pip install pygraphviz
 ```
 
 ## Get in Touch
