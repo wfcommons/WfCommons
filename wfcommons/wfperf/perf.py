@@ -338,12 +338,14 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
                     ]
                 )
 
-def add_io_to_json_different_outputs(wf: Dict[str, Dict], ouput_files: Dict[str, List[str]], file_size: int) -> None:
+def add_io_to_json_different_outputs(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str]]) -> None:
     """
     Add input and output files to JSON when input data was offered by the user
 
     :param wf:
     :type wf: Dict[str, Dict]
+    :param output_files:
+    :type wf: Dict[str, Dict[str, str]]
     :param file_size:
     :type file_size: int
     """
@@ -353,38 +355,31 @@ def add_io_to_json_different_outputs(wf: Dict[str, Dict], ouput_files: Dict[str,
         for job in wf["workflow"]["jobs"]
     }
 
+
     for job in wf["workflow"]["jobs"]:
         job.setdefault("files", [])
-        job["files"].append(
-            {
-                "link": "output",
-                "name": f"{job['name']}_output.txt",
-                "size": file_size
-            }
-        )
 
-        parents = [parent for parent in job["parents"]]
-        if not parents:
+        for child, file_size in output_files[job["name"]].items():            
             job["files"].append(
                 {
-                    "link": "input",
-                    "name": f"sys_input_{i}.txt",
+                    "link": "output",
+                    "name": f"{job['name']}_{child}_output.txt",
                     "size": file_size
                 }
             )
-            i += 1
-        else:
-            for parent in parents:
-                job["files"].extend(
-                    [
-                        {
-                            "link": "input",
-                            "name": item["name"],
-                            "size": item["size"]
-                        }
-                        for item in all_jobs[parent]["files"] if item["link"] == "output"
-                    ]
-                )
+
+        parents = [parent for parent in job["parents"]]  
+        for parent in parents:
+            job["files"].extend(
+                [
+                    {
+                        "link": "input",
+                        "name": item["name"],
+                        "size": item["command"]["arguments"]["input_data"]
+                    }
+                    for item in all_jobs[parent]["files"] if item["link"] == "output"
+                ]
+            )
 
 def input_files(wf: Dict[str, Dict]):
     """
@@ -414,7 +409,16 @@ def output_files(wf: Dict[str, Dict])-> Dict[str, List[str]]:
         children = [child for child in job["children"]]
       
         for child in children:
-            output_files[job["name"]] = [child["name"], child["command"]["arguments"]["input_data"]]
-    
+            output_files.setdefault(job["name"], {})
+            output_files[job["name"]][child["name"]] = child["command"]["arguments"]["input_data"]
+            
+
+        {
+            "job_a": {
+                "child_1": 292,
+                "child_2": 90
+            }
+        }
+            
     return output_files
 
