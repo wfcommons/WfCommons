@@ -143,8 +143,11 @@ class WorkflowBenchmark:
                 pass
 
         # Setting the parameters for the arguments section of the JSON
-
+        
         wf["name"] = name
+        
+
+        
         for job in wf["workflow"]["jobs"]:
             task_type = job["name"].split("_0")[0]
             if isinstance(percent_cpu, dict):
@@ -197,8 +200,8 @@ class WorkflowBenchmark:
                     "--data",
                     f"--outputs_file_size={outputs_file_size}"])
                 
-            add_output_to_json(wf,outputs)
-            # add_input_to_json(wf)
+            add_output_to_json(wf, outputs)
+            add_input_to_json(wf, outputs)
       
         #if data_footprint is offered instead of individual data_input size
         if data_footprint:
@@ -371,35 +374,38 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
             )
 
 
-def add_input_to_json(wf: Dict[str, Dict]) -> None:
-    all_jobs = {
-        job["name"]: job
-        for job in wf["workflow"]["jobs"]
+def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str]]) -> None:
+    {
+        "parent_a": {
+            "child_1": "output_1",
+            "child_2": "output_2",
+        }
     }
+
+    input_files = {}
+    for parent, children in output_files.items():
+        for child, file_size in children.items():
+            input_files.setdefault(child, {})
+            input_files[child][parent] = file_size
 
     for job in wf["workflow"]["jobs"]:
         job.setdefault("files", [])
-        parents = [parent for parent in job["parents"]]   
-        
-        if not parents:
+        if not job["parents"]:
             job["files"].append(
                 {
                     "link": "input",
                     "name": f'{job["name"]}_input.txt',
                     "size":  [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
                 }
-            )     
+            )  
         else:
-            for parent in parents:
-                job["files"].extend(
-                    [
-                        {
-                            "link": "input",
-                            "name": f'{parent["name"]}_{job["name"]}_input.txt',
-                            "size": [arg for arg in item["command"]["arguments"] if "input" in arg and job["name"] in item["name"]][0].split("=")[1]
-                        }
-                        for item in all_jobs[parent]["files"] if item["link"] == "output" 
-                    ]
+            for parent, file_size in input_files[job["name"]].items():            
+                job["files"].append(
+                    {
+                        "link": "input",
+                        "name": f"{parent}_{job['name']}_output.txt",
+                        "size": (file_size.split("=")[1])
+                    }
                 )
 
 def input_files(wf: Dict[str, Dict]):
