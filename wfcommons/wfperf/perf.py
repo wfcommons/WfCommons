@@ -197,11 +197,13 @@ class WorkflowBenchmark:
                     
                               
                 job["command"]["arguments"].extend([
-                    "--data",
                     f"--outputs_file_size={outputs_file_size}"])
                 
             add_output_to_json(wf, outputs)
             add_input_to_json(wf, outputs)
+            self.logger.debug("Generating system files.")
+            generate_data_for_root_nodes(wf, save_dir)
+
       
         #if data_footprint is offered instead of individual data_input size
         if data_footprint:
@@ -285,6 +287,24 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
         print(f"Created file: {file}")
 
 
+def generate_data_for_root_nodes(wf:Dict[str, Dict], save_dir:pathlib.Path) -> None:
+    """
+    Generate workflow's input data for root nodes based on user's input.
+    
+    :param wf:
+    :type wf: Dict[str, Dict]
+    :param save_dir:
+    :type save_dir: pathlib.Path
+    """
+    for job in wf["workflow"]["jobs"]:
+        if not job["parents"]:
+            file_size = [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
+            file = str(save_dir.joinpath(f"{job['name']}_input.txt"))
+            with open(file, 'wb') as fp:
+                fp.write(os.urandom(file_size))
+            print(f"Created file: {file}")
+
+
 def assigning_correct_files(job: Dict[str, str]) -> List[str]:
     files = []
     for file in job["files"]:
@@ -352,7 +372,7 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
 
 def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str]]) -> None:
     """
-    Add input and output files to JSON when input data was offered by the user
+    Add output files to JSON when input data was offered by the user.
 
     :param wf:
     :type wf: Dict[str, Dict]
@@ -375,13 +395,16 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
 
 
 def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str]]) -> None:
-    {
-        "parent_a": {
-            "child_1": "output_1",
-            "child_2": "output_2",
-        }
-    }
+    """
+    Add input files to JSON when input data was offered by the user.
 
+    :param wf:
+    :type wf: Dict[str, Dict]
+    :param output_files:
+    :type wf: Dict[str, Dict[str, str]]
+    :param file_size:
+    :type file_size: int
+    """
     input_files = {}
     for parent, children in output_files.items():
         for child, file_size in children.items():
@@ -411,6 +434,7 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
 def input_files(wf: Dict[str, Dict]):
     """
     Calculate total number of files needed.
+    This mehtod is used if the user provides total datafootprint.
 
     :param wf:
     type wf: Dict[str, Dict]
@@ -433,6 +457,14 @@ def input_files(wf: Dict[str, Dict]):
 
 
 def output_files(wf: Dict[str, Dict])-> Dict[str, Dict[str, str]]:
+    """
+    Calculate, for each task, total number of output files needed.
+    This method is used when the user is specifying the input file sizes.
+
+    :param wf:
+    type wf: Dict[str, Dict]
+
+    """
     output_files = {}
     jobs = {
         job["name"]: job for job in wf["workflow"]["jobs"]
