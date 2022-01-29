@@ -15,7 +15,7 @@ import subprocess
 import time
 
 from filelock import FileLock
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -122,7 +122,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
     parser.add_argument("--input-data", action='store_true', default=False, help="User input data size from JSON file.")
     parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO.")
-    parser.add_argument("--outputs_file_size", help="Size of output files that need to be created.")
+    parser.add_argument("--outputs_file_size", type= Dict[str, str], help="Size of output files that need to be created.")
     parser.add_argument("--out", help="output file name.")
     return parser
 
@@ -148,8 +148,12 @@ def io_write_benchmark_datafootprint(output_file, file_size):
     with open(output_file, "wb") as fp:
         fp.write(os.urandom(file_size)) 
 
-def io_write_benchmark_user_input_data_size(output_file):
+def io_write_benchmark_user_input_data_size(output_file, outputs_file_size):
     print(f"[WfPerf] Writing output file '{output_file}'\n")
+
+    for job_name, file_size in outputs_file_size.values:
+        with open(f"{output_file}_{job_name}", "wb") as fp:
+            fp.write(os.urandom(int(file_size))) 
     
 
 def main():
@@ -165,6 +169,8 @@ def main():
 
     if args.data:
         io_read_benchmark_datafootprint(other)
+    elif args.input_data:
+        io_read_benchmark_user_input_data_size(other)
 
     print("[WfPerf] Starting CPU and Memory Benchmarks...")
     print(f"[WfPerf]  {args.name} acquired core {core}")
@@ -180,7 +186,9 @@ def main():
 
     if args.data:
         io_write_benchmark_datafootprint(args.out, args.file_size)
-
+    elif args.input_data:
+        io_write_benchmark_user_input_data_size(args.out, args.outputs_file_size)
+    
     unlock_core(path_locked, path_cores, core)
     print("WfPerf Benchmark completed!")
 

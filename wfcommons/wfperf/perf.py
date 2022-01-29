@@ -83,7 +83,7 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
-                         input_data: Optional[Union[float, Dict[str, float]]] = 10,
+                         input_data: Optional[Union[str, Dict[str, str]]] = 10,
                          data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
@@ -117,7 +117,7 @@ class WorkflowBenchmark:
         workflow_savepath = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         workflow.write_json(workflow_savepath)
         wf = json.loads(workflow_savepath.read_text())
- 
+
        # Creating the lock files
         create_lock_files = True
         if lock_files_folder:
@@ -192,7 +192,7 @@ class WorkflowBenchmark:
                 outputs_file_size = {}
                 for child, data in outputs[job["name"]].items():
                     outputs_file_size.setdefault(child, )
-                    data = int(data.split("=")[1])
+                    data = data.split("=")[1]
                     outputs_file_size[child] = data
                     
                               
@@ -251,6 +251,9 @@ class WorkflowBenchmark:
                     if "--data" in arguments:
                         files = assigning_correct_files(job)
                         program = ["time", "python", executable, *arguments, *files]
+                    elif "--input-data" in arguments:
+                        files = assigning_correct_files(job)
+                        program = ["time", "python", executable, *arguments, *files]
                     else:
                         program = ["time", "python", executable, *arguments]
                     folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
@@ -301,7 +304,7 @@ def generate_data_for_root_nodes(wf:Dict[str, Dict], save_dir:pathlib.Path) -> N
             file_size = [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
             file = str(save_dir.joinpath(f"{job['name']}_input.txt"))
             with open(file, 'wb') as fp:
-                fp.write(os.urandom(file_size))
+                fp.write(os.urandom(int(file_size)))
             print(f"Created file: {file}")
 
 
