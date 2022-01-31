@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ class Instance:
 
         # Tasks
         self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
-        for task in self.instance['workflow']['jobs']:
+        for task in self.instance["workflow"]["tasks"]:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
             # By default the value is set to None if we do not find the value
@@ -147,9 +147,8 @@ class Instance:
                     logger=self.logger
                 )
             )
-
         # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
-        for task in self.instance['workflow']['jobs']:
+        for task in self.instance["workflow"]["tasks"]:
             for parent in task['parents']:
                 self.workflow.add_edge(parent, task['name'], weight=0)
 

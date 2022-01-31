@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,9 +36,9 @@ class Task:
     :type runtime: float
     :param cores: Number of cores required by the task.
     :type cores: float
-    :param task_id: Job unique ID (e.g., ID0000001).
+    :param task_id: Task unique ID (e.g., ID0000001).
     :type task_id: Optional[str]
-    :param category: Job category (can be used, for example, to define jobs that use the same program).
+    :param category: Task category (can be used, for example, to define tasks that use the same program).
     :type category: Optional[str]
     :param machine: Machine on which is the task has been executed.
     :type machine: Optional[Machine]

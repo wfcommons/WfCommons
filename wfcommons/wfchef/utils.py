@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,23 +56,22 @@ def create_graph(path: pathlib.Path) -> nx.DiGraph:
 
         id_count = 0
 
-        for job in content['workflow']['jobs']:
+        for task in content["workflow"]["tasks"]:
 
             # specific for epigenomics -- have to think about how to do it in general
-            if "genome-dax" in content['name']:
-                _type, *_ = job['name'].split('_')
-                graph.add_node(job['name'], label=_type, type=_type, id=str(id_count))
+            if "genome-dax" in content["name"]:
+                _type, *_ = task["name"].split("_")
+                graph.add_node(task["name"], label=_type, type=_type, id=str(id_count))
                 id_count += 1
             else:
                 try:
-                    _type, _id = job['name'].split('_ID')
+                    _type, _id = task["name"].split("_ID")
                 except ValueError:
-                    _type, _id = job['name'].split('_0')
-                graph.add_node(job['name'], label=_type, type=_type, id=_id)
+                    _type, _id = task["name"].split("_0")
+                graph.add_node(task["name"], label=_type, type=_type, id=_id)
 
-            # for job in content['workflow']['jobs']:
-            for parent in job['parents']:
-                graph.add_edge(parent, job['name'])
+            for parent in task["parents"]:
+                graph.add_edge(parent, task["name"])
 
         for node in graph.nodes:
 

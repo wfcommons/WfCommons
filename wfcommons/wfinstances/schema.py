@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,14 +113,14 @@ class SchemaValidator:
             self.logger.debug('Skipping machines processing.')
 
         tasks_ids = []
-        for j in data['workflow']['jobs']:
+        for j in data["workflow"]["tasks"]:
             tasks_ids.append(j['name'])
             if 'machine' in j and j['machine'] not in machine_ids:
                 self.logger.error(f"Machine \"{j['machine']}\" is not declared in the list of machines.")
                 has_error = True
 
         # since tasks may be declared out of order, their dependencies are only verified here
-        for j in data['workflow']['jobs']:
+        for j in data["workflow"]["tasks"]:
             for p in j['parents']:
                 if p not in tasks_ids:
                     self.logger.error(f"Parent task \"{p['parentId']}\" is not declared in the list of workflow tasks.")
