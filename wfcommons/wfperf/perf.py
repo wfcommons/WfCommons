@@ -83,7 +83,7 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
-                         input_data: Optional[Union[float, Dict[str, float]]] = 10,
+                         input_data: Optional[Union[float, Dict[str, float]]] = None,
                          data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
@@ -159,6 +159,7 @@ class WorkflowBenchmark:
                 _cpu_work = cpu_work[task_type]
             else:
                 _cpu_work = cpu_work 
+            
             if input_data:
                 if isinstance(input_data, dict):
                     _data = input_data[task_type]
@@ -205,7 +206,6 @@ class WorkflowBenchmark:
       
         #if data_footprint is offered instead of individual data_input size
         if data_footprint:
-
             num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
