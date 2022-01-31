@@ -126,10 +126,7 @@ class PegasusTranslator(Translator):
                 self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.category]}')\n"
 
             # find children
-            children = None
-            for node in self.instance.instance['workflow']['jobs']:
-                if node['name'] == task_name:
-                    children = node['children']
+            children = self._find_children(task_name)
 
             # output file
             for file in task.files:

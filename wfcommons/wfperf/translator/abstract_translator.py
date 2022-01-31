@@ -12,8 +12,9 @@ import logging
 import pathlib
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 
+from ...common.task import Task
 from ...wfinstances.instance import Instance
 
 
@@ -65,8 +66,43 @@ class Translator(ABC):
         :type output_file_name: pathlib.Path
         """
         # file will be written to the same folder as for the original JSON instance.
-        out_file = self.workflow_json_file_path.parent.joinpath(output_file_name)
+        out_file = self.workflow_json_file_path.parent.joinpath(
+            output_file_name)
 
         with open(out_file, "w") as out:
             out.write(contents)
         self.logger.info(f"Translated content written to '{out_file}'")
+
+    def _find_children(self, task_name: str) -> List[Task]:
+        """
+        Find the children for a specific task.
+
+        :param task_name: The task name.
+        :type task_name: str
+
+        :return: List of task's children.
+        :rtype: List[Task]
+        """
+        children = None
+        for node in self.instance.instance["workflow"]["tasks"]:
+            if node["name"] == task_name:
+                children = node["children"]
+
+        return children
+
+    def _find_parents(self, task_name: str) -> List[Task]:
+        """
+        Find the parents for a specific task.
+
+        :param task_name: The task name.
+        :type task_name: str
+
+        :return: List of task's parents.
+        :rtype: List[Task]
+        """
+        parents = None
+        for node in self.instance.instance["workflow"]["tasks"]:
+            if node["name"] == task_name:
+                parents = node["parents"]
+
+        return parents
