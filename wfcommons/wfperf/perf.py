@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ class WorkflowBenchmark:
         
 
         
-        for job in wf["workflow"]["jobs"]:
+        for job in wf["workflow"]["tasks"]:
             task_type = job["name"].split("_0")[0]
             if isinstance(percent_cpu, dict):
                 _percent_cpu = percent_cpu[task_type]
@@ -187,7 +187,7 @@ class WorkflowBenchmark:
                 del job["runtime"]
 
         if input_data:    
-            for job in wf["workflow"]["jobs"]:
+            for job in wf["workflow"]["tasks"]:
                 outputs = output_files(wf)
                 outputs_file_size = {}
                 for child, data in outputs[job["name"]].items():
@@ -212,7 +212,7 @@ class WorkflowBenchmark:
             file_size = round(data_footprint * 1000000 / num_total_files)  # MB to B
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
-            for job in wf["workflow"]["jobs"]:
+            for job in wf["workflow"]["tasks"]:
                 job["command"]["arguments"].extend([
                     "--data",
                     f"--file-size={file_size}"
@@ -243,7 +243,7 @@ class WorkflowBenchmark:
             wf = json.loads(json_path.read_text())
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
                 procs: List[subprocess.Popen] = []
-                for job in wf["workflow"]["jobs"]:
+                for job in wf["workflow"]["tasks"]:
                     executable = job["command"]["program"]
                     arguments = job["command"]["arguments"]
                     if "--data" in arguments:
@@ -314,10 +314,10 @@ def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
     i = 0
     all_jobs = {
         job["name"]: job
-        for job in wf["workflow"]["jobs"]
+        for job in wf["workflow"]["tasks"]
     }
 
-    for job in wf["workflow"]["jobs"]:
+    for job in wf["workflow"]["tasks"]:
         job.setdefault("files", [])
         job["files"].append(
             {
@@ -362,7 +362,7 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
     :type file_size: int
     """
  
-    for job in wf["workflow"]["jobs"]:
+    for job in wf["workflow"]["tasks"]:
         job.setdefault("files", [])
         for child, file_size in output_files[job["name"]].items():            
             job["files"].append(
@@ -388,7 +388,7 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
             input_files.setdefault(child, {})
             input_files[child][parent] = file_size
 
-    for job in wf["workflow"]["jobs"]:
+    for job in wf["workflow"]["tasks"]:
         job.setdefault("files", [])
         if not job["parents"]:
             job["files"].append(
@@ -419,7 +419,7 @@ def input_files(wf: Dict[str, Dict]):
     tasks_need_input = 0
     tasks_dont_need_input = 0
 
-    for job in wf["workflow"]["jobs"]:
+    for job in wf["workflow"]["tasks"]:
         parents = [parent for parent in job["parents"]]
         if not parents:
             tasks_need_input += 1
@@ -435,9 +435,9 @@ def input_files(wf: Dict[str, Dict]):
 def output_files(wf: Dict[str, Dict])-> Dict[str, Dict[str, str]]:
     output_files = {}
     jobs = {
-        job["name"]: job for job in wf["workflow"]["jobs"]
+        job["name"]: job for job in wf["workflow"]["tasks"]
     }
-    for job in wf["workflow"]["jobs"]:
+    for job in wf["workflow"]["tasks"]:
         output_files.setdefault(job["name"], {})
         if not job["children"]:
             output_files[job["name"]][job["name"]] = [args for args in job["command"]["arguments"] if "input" in args][0]

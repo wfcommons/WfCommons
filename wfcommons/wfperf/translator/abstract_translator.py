@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,13 +38,13 @@ class Translator(ABC):
         # find all tasks
         self.tasks = {}
         for node in self.instance.workflow.nodes.data():
-            self.tasks[node[0]] = node[1]['task']
+            self.tasks[node[0]] = node[1]["task"]
 
         # find parent tasks
         self.parent_task_names = []
-        for node in self.instance.instance['workflow']['jobs']:
-            if len(node['parents']) == 0 and node['name'] not in self.parent_task_names:
-                self.parent_task_names.append(node['name'])
+        for node in self.instance.instance["workflow"]["tasks"]:
+            if len(node["parents"]) == 0 and node["name"] not in self.parent_task_names:
+                self.parent_task_names.append(node["name"])
 
     @abstractmethod
     def translate(self, output_file_name: pathlib.Path) -> None:
@@ -67,6 +67,6 @@ class Translator(ABC):
         # file will be written to the same folder as for the original JSON instance.
         out_file = self.workflow_json_file_path.parent.joinpath(output_file_name)
 
-        with open(out_file, 'w') as out:
+        with open(out_file, "w") as out:
             out.write(contents)
         self.logger.info(f"Translated content written to '{out_file}'")

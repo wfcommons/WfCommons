@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ class PegasusTranslator(Translator):
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
             self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
-            
+
             # task priority
             if tasks_priorities and task.category in tasks_priorities:
                 self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.category]}')\n"
