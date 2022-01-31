@@ -33,7 +33,6 @@ setup(
         'matplotlib',
         'networkx',
         'numpy',
-        'pygraphviz',
         'python-dateutil',
         'requests',
         'scipy',

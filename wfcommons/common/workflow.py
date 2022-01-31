@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,9 +54,9 @@ class Workflow(nx.DiGraph):
                  ) -> None:
         """Create an object of a workflow representation."""
         self.description: Optional[
-            str] = description if description else 'Instance generated with WfCommons - https://wfcommons.org'
+            str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
         self.created_at: str = str(datetime.utcnow().isoformat())
-        self.schema_version: str = "1.2"
+        self.schema_version: str = "1.3"
         self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
         self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
         self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
@@ -76,23 +76,23 @@ class Workflow(nx.DiGraph):
         workflow_tasks = []
 
         workflow_json = {
-            'name': self.name,
-            'description': self.description,
-            'createdAt': self.created_at,
-            'schemaVersion': self.schema_version,
-            'author': {
-                'name': str(getpass.getuser()),
-                'email': 'support@wfcommons.org'
+            "name": self.name,
+            "description": self.description,
+            "createdAt": self.created_at,
+            "schemaVersion": self.schema_version,
+            "author": {
+                "name": str(getpass.getuser()),
+                "email": "support@wfcommons.org"
             },
-            'wms': {
-                'name': self.wms_name,
-                'version': self.wms_version,
-                'url': self.wms_url
+            "wms": {
+                "name": self.wms_name,
+                "version": self.wms_version,
+                "url": self.wms_url
             },
-            'workflow': {
-                'executedAt': self.executed_at,
-                'makespan': self.makespan,
-                'jobs': workflow_tasks
+            "workflow": {
+                "executedAt": self.executed_at,
+                "makespan": self.makespan,
+                "tasks": workflow_tasks
             }
         }
 
@@ -101,18 +101,18 @@ class Workflow(nx.DiGraph):
         for edge in self.edges:
             for task_name in edge:
                 if task_name not in tasks_dependencies:
-                    tasks_dependencies[task_name] = {'parents': [], 'children': []}
-            tasks_dependencies[edge[0]]['children'].append(edge[1])
-            tasks_dependencies[edge[1]]['parents'].append(edge[0])
+                    tasks_dependencies[task_name] = {"parents": [], "children": []}
+            tasks_dependencies[edge[0]]["children"].append(edge[1])
+            tasks_dependencies[edge[1]]["parents"].append(edge[0])
 
         # add tasks to the workflow json object
         for node in self.nodes:
-            task: Task = self.nodes[node]['task']
+            task: Task = self.nodes[node]["task"]
             task_obj = task.as_dict()
 
             # manage task dependencies
-            task_obj['parents'] = tasks_dependencies[task.name]['parents']
-            task_obj['children'] = tasks_dependencies[task.name]['children']
+            task_obj["parents"] = tasks_dependencies[task.name]["parents"]
+            task_obj["children"] = tasks_dependencies[task.name]["children"]
 
             workflow_tasks.append(task_obj)
 
@@ -122,12 +122,12 @@ class Workflow(nx.DiGraph):
                 workflow_machines.append(task.machine.as_dict())
 
         if workflow_machines:
-            workflow_json['workflow']['machines'] = workflow_machines
+            workflow_json["workflow"]["machines"] = workflow_machines
 
         # write to file
         if not json_file_path:
-            json_file_path = pathlib.Path(f'{self.name.lower()}.json')
-        with open(json_file_path, 'w') as outfile:
+            json_file_path = pathlib.Path(f"{self.name.lower()}.json")
+        with open(json_file_path, "w") as outfile:
             outfile.write(json.dumps(workflow_json, indent=4))
 
     def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:

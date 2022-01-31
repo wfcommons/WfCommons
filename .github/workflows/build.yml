@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ "3.7", "3.8", "3.9", "3.10" ]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -19,7 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install -y graphviz-dev python3-sphinx sphinx-rtd-theme-common
+          sudo apt-get install -y python3-sphinx sphinx-rtd-theme-common
           pip install sphinx_rtd_theme recommonmark
       - name: Check package install
         run: |
