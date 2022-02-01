@@ -38,7 +38,12 @@ class SwiftTTranslator(Translator):
         """Create an object of the translator."""
         super().__init__(workflow_json_file_path, logger)
 
-        self.script = "import io;\n\n"
+        self.work_dir = work_dir
+        self.parsed_tasks = []
+        self.out_counter = 1
+        self.files_map = {}
+        self.tasks_map = {}
+        self.script = "import files;\nimport io;\nimport unix;\n\n"
 
         # find applications
         self.apps = {}
@@ -51,26 +56,17 @@ class SwiftTTranslator(Translator):
                 else:
                     outputs_count += 1
 
+            self.tasks_map[task.name] = f"{task.category}_{inputs_count}_{outputs_count}"
+
             if task.category not in self.apps:
                 self.apps[task.category] = {}
 
             if f"{inputs_count}_{outputs_count}" not in self.apps[task.category]:
                 self.apps[task.category][f"{inputs_count}_{outputs_count}"] = {
                     "name": task.category,
-                    "tasks": [task],
                     "inputs": inputs_count,
-                    "outputs": outputs_count,
-                    "count": 1
+                    "outputs": outputs_count
                 }
-            else:
-                self.apps[task.category][f"{inputs_count}_{outputs_count}"]["tasks"].append(
-                    task)
-                self.apps[task.category][f"{inputs_count}_{outputs_count}"]["count"] += 1
-
-        self.work_dir = work_dir
-        self.parsed_tasks = []
-        self.out_counter = 1
-        self.files_map = {}
 
     def translate(self, output_file_name: pathlib.Path) -> None:
         """
@@ -84,24 +80,23 @@ class SwiftTTranslator(Translator):
             for io in self.apps[a]:
                 app = self.apps[a][io]
                 outputs = ", ".join(
-                    [f"out_{i + 1}" for i in range(0, app["outputs"])])
-                inputs = ", ".join(
-                    [f"in_{i + 1}" for i in range(0, app["inputs"])])
-                inputs_o = inputs.replace(",", "")
+                    [f"file out_{i + 1}" for i in range(0, app["outputs"])])
+                outputs_o = outputs.replace("file ", "").replace(",", "")
+                inputs = ", file inputs[]" if app["inputs"] > 0 else ""
+                inputs_o = "\\\n  inputs\n" if app["inputs"] > 0 else "\n"
 
-                self.script += f"app ({outputs}) {app['name']} (string path_lock, string path_cores, float percent_cpu, int cpu_work, int file_size, {inputs}) "
+                self.script += f"app ({outputs}) {app['name']}_{io} (string path_lock, string path_cores, float percent_cpu, int cpu_work, int file_size{inputs}) "
                 self.script += "{\n" \
                     "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
                     f"  \"{self.work_dir}/wfperf_benchmark.py\" \\\n" \
-                    f"  \"{app['name']}\" \\\n" \
-                    "  \"--path-lock=<<path_lock>>\" \\\n" \
-                    "  \"--path-cores=<<path_cores>>\" \\\n" \
-                    "  \"--percent-cpu=<<percent_cpu>>\" \\\n" \
-                    "  \"--cpu-work=<<cpu_work>>\" \\\n" \
+                    f"  \"{app['name']}_{io}\" \\\n" \
+                    "  \"--path-lock=\" path_lock \\\n" \
+                    "  \"--path-cores=\" path_cores \\\n" \
+                    "  \"--percent-cpu=\" percent_cpu \\\n" \
+                    "  \"--cpu-work=\" cpu_work \\\n" \
                     "  \"--data\" \\\n" \
-                    "  \"--file-size=<<file_size>>\" \\\n" \
-                    f"  \"--out\" {outputs} \\\n" \
-                    f"  {inputs_o} \n" \
+                    "  \"--file-size=\" file_size \\\n" \
+                    f"  \"--out\" {outputs_o} {inputs_o}" \
                     "}\n\n"
 
         # defining input files
@@ -110,17 +105,14 @@ class SwiftTTranslator(Translator):
             task = self.tasks[task_name]
             for file in task.files:
                 if file.link == FileLink.INPUT:
-                    self.script += f"file in_{in_count} = input(\"{self.work_dir}/sys_input_{in_count}.txt\");\n"
-                    self.files_map[file.name] = f"in_{in_count}"
+                    self.files_map[file.name] = f"ins[{in_count}]"
                     in_count += 1
+        self.script += f"file ins[] = glob(\"{self.work_dir}/sys_input_*.txt\");\n"
         self.script += "\n"
 
         # adding tasks
         for task_name in self.parent_task_names:
             self._add_task(task_name)
-
-        # print(self.script)
-        # exit(0)
 
         # write script to file
         self._write_output_file(self.script, output_file_name)
@@ -160,7 +152,7 @@ class SwiftTTranslator(Translator):
             if len(input_files) > 0:
                 args += f', {", ".join([f for f in input_files])}'
 
-            self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {task.category}({args});\n"
+            self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
             self.files_map[out_file] = f"out_{self.out_counter}"
             self.out_counter += 1
             
