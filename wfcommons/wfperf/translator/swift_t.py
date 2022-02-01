@@ -150,7 +150,8 @@ class SwiftTTranslator(Translator):
             args += f', {", ".join([a.split("=")[1] for a in task.args[3:5]])}'
             args += f", {task.args[6].split('=')[1]}"
             if len(input_files) > 0:
-                args += f', {", ".join([f for f in input_files])}'
+                self.script += f'file in_{self.out_counter}[] = [{", ".join([f for f in input_files])}]\n'
+                args += f", in_{self.out_counter}"
 
             self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
             self.files_map[out_file] = f"out_{self.out_counter}"
