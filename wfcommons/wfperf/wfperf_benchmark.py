@@ -13,6 +13,7 @@ import pathlib
 import os
 import subprocess
 import time
+import json 
 
 from filelock import FileLock
 from typing import List, Optional, Dict
@@ -120,9 +121,9 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-lock", help="Path to lock file.")
     parser.add_argument("--path-cores", help="Path to cores file.")
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
-    parser.add_argument("--input-data", action='store_true', default=False, help="User input data size from JSON file.")
+    parser.add_argument("--input-data", default=None, help="User input data size from JSON file.")
     parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO.")
-    parser.add_argument("--outputs_file_size", type= Dict[str, str], help="Size of output files that need to be created.")
+    parser.add_argument("--outputs-file-size", help="Size of output files that need to be created.")
     parser.add_argument("--out", help="output file name.")
     return parser
 
@@ -187,7 +188,8 @@ def main():
     if args.data:
         io_write_benchmark_datafootprint(args.out, args.file_size)
     elif args.input_data:
-        io_write_benchmark_user_input_data_size(args.out, args.outputs_file_size)
+        outputs_file_size = json.loads(args.outputs_file_size)
+        io_write_benchmark_user_input_data_size(args.out, outputs_file_size)
     
     unlock_core(path_locked, path_cores, core)
     print("WfPerf Benchmark completed!")

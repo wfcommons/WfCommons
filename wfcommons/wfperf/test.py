@@ -1,6 +1,4 @@
-from asyncio.log import logger
 from wfcommons.wfchef.recipes import BlastRecipe
-from wfcommons.wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from wfcommons.wfperf.perf import WorkflowBenchmark
 import pathlib
 

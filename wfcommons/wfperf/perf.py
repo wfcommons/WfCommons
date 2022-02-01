@@ -15,6 +15,7 @@ import os
 import pathlib
 import subprocess
 import uuid
+import sys 
 
 from logging import Logger
 from typing import Dict, Optional, List, Type, Union
@@ -26,6 +27,7 @@ from ..wfgen import WorkflowGenerator
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 class WorkflowBenchmark:
     """Generate a workflow benchmark instance based on a workflow recipe (WfChefWorkflowRecipe)
@@ -83,7 +85,7 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
-                         input_data: Optional[Union[str, Dict[str, str]]] = 10,
+                         input_data: Optional[Union[str, Dict[str, str]]] =None,
                          data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
@@ -197,7 +199,7 @@ class WorkflowBenchmark:
                     
                               
                 job["command"]["arguments"].extend([
-                    f"--outputs_file_size={outputs_file_size}"])
+                    f"--outputs-file-size={outputs_file_size}"])
                 
             add_output_to_json(wf, outputs)
             add_input_to_json(wf, outputs)
