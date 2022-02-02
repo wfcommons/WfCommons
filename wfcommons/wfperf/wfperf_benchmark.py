@@ -35,6 +35,9 @@ def lock_core(path_locked: pathlib.Path,
     :rtype: int
     """
     all_cores = set(range(os.cpu_count()))
+    path_locked.touch(exist_ok=True)
+    path_cores.touch(exist_ok=True)
+
     while True:
         with FileLock(path_locked) as lock:
             try:
