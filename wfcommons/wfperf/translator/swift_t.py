@@ -95,7 +95,7 @@ class SwiftTTranslator(Translator):
                     "  \"--percent-cpu\" percent_cpu \\\n" \
                     "  \"--cpu-work\" cpu_work \\\n" \
                     "  \"--data\" \\\n" \
-                    "  \"--file-size\" file_size \\\n" \
+                    "  \"--outputs-file-size\" file_size \\\n" \
                     f"  \"--out\" {outputs_o} {inputs_o}" \
                     "}\n\n"
 

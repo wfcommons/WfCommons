@@ -126,7 +126,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
     parser.add_argument("--input-data", default=None, help="User input data size from JSON file.")
     parser.add_argument("--data", action='store_true', default=False, help="Whether to process IO.")
-    parser.add_argument("--outputs-file-size", help="Size of output files that need to be created.")
+    parser.add_argument("--outputs-file-size", type=int, help="Size of output files that need to be created.")
     parser.add_argument("--out", help="output file name.")
     return parser
 
@@ -189,7 +189,7 @@ def main():
     print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
     if args.data:
-        io_write_benchmark_datafootprint(args.out, args.file_size)
+        io_write_benchmark_datafootprint(args.out, args.outputs_file_size)
     elif args.input_data:
         outputs_file_size = json.loads(args.outputs_file_size)
         io_write_benchmark_user_input_data_size(args.out, outputs_file_size)
