@@ -90,12 +90,12 @@ class SwiftTTranslator(Translator):
                     "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
                     f"  \"{self.work_dir}/wfperf_benchmark.py\" \\\n" \
                     f"  \"{app['name']}_{io}\" \\\n" \
-                    "  \"--path-lock=\" path_lock \\\n" \
-                    "  \"--path-cores=\" path_cores \\\n" \
-                    "  \"--percent-cpu=\" percent_cpu \\\n" \
-                    "  \"--cpu-work=\" cpu_work \\\n" \
+                    "  \"--path-lock\" path_lock \\\n" \
+                    "  \"--path-cores\" path_cores \\\n" \
+                    "  \"--percent-cpu\" percent_cpu \\\n" \
+                    "  \"--cpu-work\" cpu_work \\\n" \
                     "  \"--data\" \\\n" \
-                    "  \"--file-size=\" file_size \\\n" \
+                    "  \"--file-size\" file_size \\\n" \
                     f"  \"--out\" {outputs_o} {inputs_o}" \
                     "}\n\n"
 
@@ -150,7 +150,12 @@ class SwiftTTranslator(Translator):
             args += f', {", ".join([a.split("=")[1] for a in task.args[3:5]])}'
             args += f", {task.args[6].split('=')[1]}"
             if len(input_files) > 0:
-                self.script += f'file in_{self.out_counter}[] = [{", ".join([f for f in input_files])}];\n'
+                self.script += f"file in_{self.out_counter}[];"
+                f_i = 0
+                for f in input_files:
+                    self.script += f" in_{self.out_counter}[{f_i}] = {f};"
+                    f_i += 1
+                self.script += "\n"
                 args += f", in_{self.out_counter}"
 
             self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
