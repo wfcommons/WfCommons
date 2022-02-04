@@ -110,7 +110,7 @@ class WorkflowBenchmark:
         """
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
-
+        
     
         self.logger.debug("Generating workflow")
         generator = WorkflowGenerator(self.recipe.from_num_tasks(self.num_tasks))
@@ -147,9 +147,7 @@ class WorkflowBenchmark:
         # Setting the parameters for the arguments section of the JSON
         
         wf["name"] = name
-        
-
-        
+                      
         for job in wf["workflow"]["jobs"]:
             task_type = job["name"].split("_0")[0]
             if isinstance(percent_cpu, dict):
@@ -163,10 +161,9 @@ class WorkflowBenchmark:
                 _cpu_work = cpu_work 
             
             if isinstance(input_data, dict):
-                _data = input_data[task_type]
-                
+                _data = input_data[task_type]     
             else:
-                _data = input_data[task_type]
+                _data = input_data
 
             params = [f"--path-lock={lock}",
                     f"--path-cores={cores}",
@@ -188,9 +185,9 @@ class WorkflowBenchmark:
             if "runtime" in job:
                 del job["runtime"]
 
-        if isinstance(input_data, dict):    
+        outputs = output_files(wf)  
+        if isinstance(input_data, dict):  
             for job in wf["workflow"]["jobs"]:
-                outputs = output_files(wf)
                 outputs_file_size = {}
                 for child, data in outputs[job["name"]].items():
                     outputs_file_size.setdefault(child, )
@@ -209,26 +206,26 @@ class WorkflowBenchmark:
 
       
         #if data_footprint is offered instead of individual data_input size
-        if isinstance(input_data, float):
-
+        if isinstance(input_data, int):
             num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
             file_size = round(input_data * 1000000 / num_total_files)  # MB to B
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
+            _outputs = {}
             for job in wf["workflow"]["jobs"]:
-                outputs = {}
-                for child in job["children"]:
-                    outputs[child] = file_size
-
-                job["command"]["arguments"].extend([
-                    "--data",
-                    f"--out={outputs}"
-                ])
+                if  job["children"]:
+                    for child in job["children"]:
+                        _outputs[child] = file_size
+                    
+                    job["command"]["arguments"].extend([
+                        f"--out={_outputs}"
+                    ])
 
             # add_io_to_json(wf, file_size)
             add_output_to_json(wf, outputs)
+            add_input_to_json(wf, outputs)
 
             self.logger.debug("Generating system files.")
             generate_sys_data(num_sys_files, file_size, save_dir)
@@ -395,6 +392,7 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
  
     for job in wf["workflow"]["jobs"]:
         job.setdefault("files", [])
+        print(job["name"], job["name"] in output_files, output_files)
         for child, file_size in output_files[job["name"]].items():            
             job["files"].append(
                 {
