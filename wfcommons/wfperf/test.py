@@ -9,7 +9,7 @@ def main():
     # bench.create_benchmark(this_dir, 0.5, data_footprint=1000)
     # bench.generate_input_file(this_dir.joinpath("test.json"))
     bench.create_benchmark_from_input_file(this_dir, this_dir.joinpath("test.json"), lock_files_folder=this_dir.joinpath("tmp"))
-    bench.run(pathlib.Path("/workspace/wfcommons/wfcommons/wfperf/Blast-Benchmark-100.json"),this_dir)
+    # bench.run(pathlib.Path("/workspace/wfcommons/wfcommons/wfperf/Blast-Benchmark-100.json"),this_dir)
 
 if __name__ == "__main__":
     main()  

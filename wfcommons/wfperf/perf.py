@@ -86,7 +86,7 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
                          input_data: Optional[Union[str, Dict[str, str]]] =None,
-                         data_footprint: Optional[Union[float, Dict[str, float]]] = None,
+                        # data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -161,24 +161,24 @@ class WorkflowBenchmark:
                 _cpu_work = cpu_work[task_type]
             else:
                 _cpu_work = cpu_work 
-            if input_data:
-                if isinstance(input_data, dict):
-                    _data = input_data[task_type]
-                    
-                else:
-                    input_data = input_data[task_type]
-
-                params = [f"--path-lock={lock}",
-                        f"--path-cores={cores}",
-                        f"--percent-cpu={_percent_cpu}",
-                        f"--cpu-work={_cpu_work}",
-                        f"--input-data={_data}"]
- 
+            
+            if isinstance(input_data, dict):
+                _data = input_data[task_type]
+                
             else:
-                params = [f"--path-lock={lock}",
+                _data = input_data[task_type]
+
+            params = [f"--path-lock={lock}",
                     f"--path-cores={cores}",
                     f"--percent-cpu={_percent_cpu}",
-                    f"--cpu-work={_cpu_work}"]
+                    f"--cpu-work={_cpu_work}",
+                    f"--input-data-size={_data}"]
+ 
+            # else:
+            #     params = [f"--path-lock={lock}",
+            #         f"--path-cores={cores}",
+            #         f"--percent-cpu={_percent_cpu}",
+            #         f"--cpu-work={_cpu_work}"]
 
             job["files"] = []
             job.setdefault("command", {})
@@ -188,7 +188,7 @@ class WorkflowBenchmark:
             if "runtime" in job:
                 del job["runtime"]
 
-        if input_data:    
+        if isinstance(input_data, dict):    
             for job in wf["workflow"]["jobs"]:
                 outputs = output_files(wf)
                 outputs_file_size = {}
@@ -199,7 +199,8 @@ class WorkflowBenchmark:
                     
                               
                 job["command"]["arguments"].extend([
-                    f"--outputs-file-size={outputs_file_size}"])
+                    f"--out={outputs_file_size}"
+                ])
                 
             add_output_to_json(wf, outputs)
             add_input_to_json(wf, outputs)
@@ -208,21 +209,26 @@ class WorkflowBenchmark:
 
       
         #if data_footprint is offered instead of individual data_input size
-        if data_footprint:
+        if isinstance(input_data, float):
 
             num_sys_files, num_total_files = input_files(wf)
             self.logger.debug(f"Number of input files to be created by the system: {num_sys_files}")
             self.logger.debug(f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data_footprint * 1000000 / num_total_files)  # MB to B
+            file_size = round(input_data * 1000000 / num_total_files)  # MB to B
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
             for job in wf["workflow"]["jobs"]:
+                outputs = {}
+                for child in job["children"]:
+                    outputs[child] = file_size
+
                 job["command"]["arguments"].extend([
                     "--data",
-                    f"--file-size={file_size}"
+                    f"--out={outputs}"
                 ])
 
-            add_io_to_json(wf, file_size)
+            # add_io_to_json(wf, file_size)
+            add_output_to_json(wf, outputs)
 
             self.logger.debug("Generating system files.")
             generate_sys_data(num_sys_files, file_size, save_dir)
@@ -250,12 +256,12 @@ class WorkflowBenchmark:
                 for job in wf["workflow"]["jobs"]:
                     executable = job["command"]["program"]
                     arguments = job["command"]["arguments"]
-                    if "--data" in arguments:
+                    if "--out" in arguments:
                         files = assigning_correct_files(job)
                         program = ["time", "python", executable, *arguments, *files]
-                    elif "--input-data" in arguments:
-                        files = assigning_correct_files(job)
-                        program = ["time", "python", executable, *arguments, *files]
+                    # elif "--input-data" in arguments:
+                    #     files = assigning_correct_files(job)
+                    #     program = ["time", "python", executable, *arguments, *files]
                     else:
                         program = ["time", "python", executable, *arguments]
                     folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
@@ -416,6 +422,7 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
             input_files.setdefault(child, {})
             input_files[child][parent] = file_size
 
+    inputs = []
     for job in wf["workflow"]["jobs"]:
         job.setdefault("files", [])
         if not job["parents"]:
@@ -435,6 +442,11 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
                         "size": (file_size.split("=")[1])
                     }
                 )
+                inputs.append(f"{parent}_{job['name']}_output.txt")
+        
+            job["command"]["arguments"].extend([
+                    f"--input-files={inputs}"
+                ])
 
 def input_files(wf: Dict[str, Dict]):
     """
