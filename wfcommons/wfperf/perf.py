@@ -14,11 +14,12 @@ import logging
 import os
 import pathlib
 import subprocess
+import time 
 import uuid
 import sys 
 
 from logging import Logger
-from typing import Dict, Optional, List, Type, Union
+from typing import Dict, Optional, List, Set, Type, Union
 
 from wfcommons.common.task import Task
 
@@ -245,20 +246,35 @@ class WorkflowBenchmark:
         try:
             wf = json.loads(json_path.read_text())
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
+                has_executed: Set[str] = set()
                 procs: List[subprocess.Popen] = []
-                for job in wf["workflow"]["jobs"]:
-                    executable = job["command"]["program"]
-                    arguments = job["command"]["arguments"]
-                    if "--out" in arguments:
-                        files = assigning_correct_files(job)
-                        program = ["time", "python", executable, *arguments, *files]
-                    else:
-                        program = ["time", "python", executable, *arguments]
-                    folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
-                    folder.mkdir(exist_ok=True, parents=True)
-                    os.chdir(str(folder))
-                    procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
-                    os.chdir("../..")
+                while len(has_executed) < len(wf["workflow"]["jobs"]):
+                    for job in wf["workflow"]["jobs"]:
+                        if job["name"] in has_executed:
+                            continue
+                        ready_to_execute = all([
+                            this_dir.joinpath(input_file["name"]).exists()
+                            for input_file in job["files"]
+                            if input_file["link"] == "input"
+                        ])
+                        if not ready_to_execute:
+                            continue
+                        has_executed.add(job["name"])
+
+                        executable = job["command"]["program"]
+                        arguments = job["command"]["arguments"]
+                        if "--out" in arguments:
+                            files = assigning_correct_files(job)
+                            program = ["time", "python", executable, *arguments, *files]
+                        else:
+                            program = ["time", "python", executable, *arguments]
+                        folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
+                        folder.mkdir(exist_ok=True, parents=True)
+                        os.chdir(str(folder))
+                        procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))
+                        os.chdir("../..")
+                    
+                    time.sleep(1)
                 for proc in procs:
                     proc.wait()
             cleanup_sys_files()
