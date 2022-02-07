@@ -27,7 +27,7 @@ from ..wfgen import WorkflowGenerator
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 class WorkflowBenchmark:
     """Generate a workflow benchmark instance based on a workflow recipe (WfChefWorkflowRecipe)
@@ -86,7 +86,6 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
                          data: Optional[Union[str, Dict[str, str]]] =None,
-                        # data_footprint: Optional[Union[float, Dict[str, float]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -145,7 +144,6 @@ class WorkflowBenchmark:
                 pass
 
         # Setting the parameters for the arguments section of the JSON
-        
         wf["name"] = name
                       
         for job in wf["workflow"]["jobs"]:
@@ -216,15 +214,17 @@ class WorkflowBenchmark:
                     job["command"]["arguments"].extend([
                         f"--out={_outputs}"
                     ])
-                    if "input-data-size" in job["command"]["arguments"]:
-                        del job["command"]["arguments"]["--input-data-size"]
-
-            # add_io_to_json(wf, file_size)
+                
+                # if "input-data-size" in job["command"]["arguments"]:
+                #     del job["command"]["arguments"]["--input-data-size"]
+                
+            
             add_output_to_json(wf, outputs)
             add_input_to_json(wf, outputs)
-
             self.logger.debug("Generating system files.")
-            generate_sys_data(num_sys_files, file_size, save_dir)
+            generate_data_for_root_nodes(wf, save_dir)
+
+            
 
         json_path = save_dir.joinpath(f"{name}-{self.num_tasks}").with_suffix(".json")
         self.logger.info(f"Saving benchmark workflow: {json_path}")
@@ -271,7 +271,7 @@ class WorkflowBenchmark:
             raise FileNotFoundError("Not able to find the executable.")
 
 
-def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Path) -> None:
+def generate_sys_data(num_files: int, file_total_size: int, job_name:List[str], save_dir: pathlib.Path) -> None:
     """Generate workflow's input data
 
     :param num_files:
@@ -281,11 +281,12 @@ def generate_sys_data(num_files: int, file_total_size: int, save_dir: pathlib.Pa
     :param save_dir: Folder to generate the workflow benchmark's input data files.
     :type save_dir: pathlib.Path
     """
-    for i in range(num_files):
-        file = f"{save_dir.joinpath(f'sys_input_{i}.txt')}"
-        with open(file, 'wb') as fp:
-            fp.write(os.urandom(file_total_size))
-        print(f"Created file: {file}")
+    for _ in range(num_files):
+        for name in job_name:
+            file = f"{save_dir.joinpath(f'{name}_input.txt')}"
+            with open(file, 'wb') as fp:
+                fp.write(os.urandom(file_total_size))
+            print(f"Created file: {file}")
 
 
 def generate_data_for_root_nodes(wf:Dict[str, Dict], save_dir:pathlib.Path) -> None:
@@ -323,54 +324,6 @@ def cleanup_sys_files() -> None:
         os.remove(t)
 
 
-def add_io_to_json(wf: Dict[str, Dict], file_size: int) -> None:
-    """
-    Add input and output files to JSON
-
-    :param wf:
-    :type wf: Dict[str, Dict]
-    :param file_size:
-    :type file_size: int
-    """
-    i = 0
-    all_jobs = {
-        job["name"]: job
-        for job in wf["workflow"]["jobs"]
-    }
-
-    for job in wf["workflow"]["jobs"]:
-        job.setdefault("files", [])
-        job["files"].append(
-            {
-                "link": "output",
-                "name": f"{job['name']}_output.txt",
-                "size": file_size
-            }
-        )
-
-        parents = [parent for parent in job["parents"]]
-        if not parents:
-            job["files"].append(
-                {
-                    "link": "input",
-                    "name": f"sys_input_{i}.txt",
-                    "size": file_size
-                }
-            )
-            i += 1
-        else:
-            for parent in parents:
-                job["files"].extend(
-                    [
-                        {
-                            "link": "input",
-                            "name": item["name"],
-                            "size": item["size"]
-                        }
-                        for item in all_jobs[parent]["files"] if item["link"] == "output"
-                    ]
-                )
-
 def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str]]) -> None:
     """
     Add output files to JSON when input data was offered by the user.
@@ -385,7 +338,6 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
  
     for job in wf["workflow"]["jobs"]:
         job.setdefault("files", [])
-        # print(job["name"], job["name"] in output_files, output_files)
         for child, file_size in output_files[job["name"]].items():            
             job["files"].append(
                 {
@@ -407,11 +359,7 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
     :param file_size:
     :type file_size: int
     """
-    {
-        "parent": {
-            "child_1": "file_size"
-        }
-    }
+
     input_files = {}
     for parent, children in output_files.items():
         for child, file_size in children.items():
@@ -456,7 +404,6 @@ def calculate_input_files(wf: Dict[str, Dict]):
     """
     tasks_need_input = 0
     tasks_dont_need_input = 0
-
     for job in wf["workflow"]["jobs"]:
         parents = [parent for parent in job["parents"]]
         if not parents:

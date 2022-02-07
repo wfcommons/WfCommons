@@ -152,7 +152,7 @@ def main():
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
     core = lock_core(path_locked, path_cores)
-    
+
     if args.out:
         out = args.out
 
