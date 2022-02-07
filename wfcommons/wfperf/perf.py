@@ -56,7 +56,7 @@ class WorkflowBenchmark:
         defaults = {
             "percent_cpu": 0.6,
             "cpu_work": 1000,
-            "input_data":10
+            "data":10
         }
         inputs = {
             "percent_cpu": {},
@@ -425,7 +425,7 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
             job["files"].append(
                 {
                     "link": "input",
-                    "name": f'{job["name"]}_input.txt',
+                    "name": f"{job['name']}_input.txt",
                     "size":  [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
                 }
             )

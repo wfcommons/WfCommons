@@ -136,12 +136,11 @@ def io_read_benchmark_user_input_data_size(other):
             fp.readlines()
     print("[WfPerf] Completed IO Read Benchmark!\n")
     
-
-def io_write_benchmark_user_input_data_size(output_file, outputs_file_size):
-    print(f"[WfPerf] Writing output file '{output_file}'\n")
-
-    for job_name, file_size in outputs_file_size.values:
-        with open(f"{output_file}_{job_name}", "wb") as fp:
+# args.out, 
+def io_write_benchmark_user_input_data_size(outputs):
+    for job_name, file_size in outputs.items():
+        print(f"[WfPerf] Writing output file '{job_name}'\n")
+        with open(this_dir.joinpath(job_name), "wb") as fp:
             fp.write(os.urandom(int(file_size))) 
     
 
@@ -153,11 +152,13 @@ def main():
     path_locked = pathlib.Path(args.path_lock)
     path_cores = pathlib.Path(args.path_cores)
     core = lock_core(path_locked, path_cores)
-
+    
+    if args.out:
+        out = args.out
 
     print(f"[WfPerf] Starting {args.name} Benchmark\n")
 
-    if args.out:
+    if out:
         io_read_benchmark_user_input_data_size(other)
 
     print("[WfPerf] Starting CPU and Memory Benchmarks...")
@@ -172,9 +173,10 @@ def main():
     subprocess.Popen(["killall", "stress-ng"])
     print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
-    if args.out:
-        outputs_file_size = json.loads(args.outputs_file_size)
-        io_write_benchmark_user_input_data_size(args.out, outputs_file_size)
+    if out:
+        out = out.replace("'", '"')
+        outputs = json.loads(out)
+        io_write_benchmark_user_input_data_size(outputs)
     
     unlock_core(path_locked, path_cores, core)
     print("WfPerf Benchmark completed!")
