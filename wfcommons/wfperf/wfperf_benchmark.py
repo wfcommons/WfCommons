@@ -170,7 +170,8 @@ def main():
                                   core=core)
     for proc in cpu_procs:
         proc.wait()
-    subprocess.Popen(["killall", "stress-ng"])
+    mem_kill = subprocess.Popen(["killall", "stress-ng"])
+    mem_kill.wait()
     print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
 
     if out:
