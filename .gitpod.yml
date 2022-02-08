@@ -3,6 +3,8 @@ tasks:
   - name: Install
     init: |
       sudo apt-get update
+      sudo apt-get install -y python3-dev
+      sudo apt install -y stress-ng
       sudo apt-get install -y graphviz libgraphviz-dev 
       pip install --upgrade pip
       pip install -e .
