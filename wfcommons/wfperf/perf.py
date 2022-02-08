@@ -147,8 +147,8 @@ class WorkflowBenchmark:
         # Setting the parameters for the arguments section of the JSON
         wf["name"] = name
                       
-        for job in wf["workflow"]["jobs"]:
-            task_type = job["name"].split("_0")[0]
+        for task in wf["workflow"]["tasks"]:
+            task_type = task["name"].split("_0")[0]
             if isinstance(percent_cpu, dict):
                 _percent_cpu = percent_cpu[task_type]
             else:
@@ -171,24 +171,24 @@ class WorkflowBenchmark:
                     f"--input-data-size={_data}"]
  
          
-            job["files"] = []
-            job.setdefault("command", {})
-            job["command"]["program"] = f"{this_dir.joinpath('wfperf_benchmark.py')}"
-            job["command"]["arguments"] = [job["name"]]
-            job["command"]["arguments"].extend(params)
-            if "runtime" in job:
-                del job["runtime"]
+            task["files"] = []
+            task.setdefault("command", {})
+            task["command"]["program"] = f"{this_dir.joinpath('wfperf_benchmark.py')}"
+            task["command"]["arguments"] = [task["name"]]
+            task["command"]["arguments"].extend(params)
+            if "runtime" in task:
+                del task["runtime"]
 
         outputs = output_files(wf)  
         if isinstance(data, dict):  
-            for job in wf["workflow"]["jobs"]:
+            for task in wf["workflow"]["tasks"]:
                 outputs_file_size = {}
-                for child, data in outputs[job["name"]].items():
+                for child, data in outputs[task["name"]].items():
                     data = data.split("=")[1]
-                    outputs_file_size[f"{job['name']}_{child}_output.txt"] = data
+                    outputs_file_size[f"{task['name']}_{child}_output.txt"] = data
                     
                               
-                job["command"]["arguments"].extend([
+                task["command"]["arguments"].extend([
                     f"--out={outputs_file_size}"
                 ])
                 
@@ -207,17 +207,14 @@ class WorkflowBenchmark:
             self.logger.debug(f"Every input/output file is of size: {file_size}")
 
             _outputs = {}
-            for job in wf["workflow"]["jobs"]:
-                if  job["children"]:
-                    for child in job["children"]:
-                        _outputs[f"{job['name']}_{child}_output.txt"] = file_size
+            for task in wf["workflow"]["tasks"]:
+                if  task["children"]:
+                    for child in task["children"]:
+                        _outputs[f"{task['name']}_{child}_output.txt"] = file_size
                     
-                    job["command"]["arguments"].extend([
+                    task["command"]["arguments"].extend([
                         f"--out={_outputs}"
                     ])
-                
-                # if "input-data-size" in job["command"]["arguments"]:
-                #     del job["command"]["arguments"]["--input-data-size"]
                 
             
             add_output_to_json(wf, outputs)
@@ -248,23 +245,23 @@ class WorkflowBenchmark:
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
                 has_executed: Set[str] = set()
                 procs: List[subprocess.Popen] = []
-                while len(has_executed) < len(wf["workflow"]["jobs"]):
-                    for job in wf["workflow"]["jobs"]:
-                        if job["name"] in has_executed:
+                while len(has_executed) < len(wf["workflow"]["tasks"]):
+                    for task in wf["workflow"]["tasks"]:
+                        if task["name"] in has_executed:
                             continue
                         ready_to_execute = all([
                             this_dir.joinpath(input_file["name"]).exists()
-                            for input_file in job["files"]
+                            for input_file in task["files"]
                             if input_file["link"] == "input"
                         ])
                         if not ready_to_execute:
                             continue
-                        has_executed.add(job["name"])
+                        has_executed.add(task["name"])
 
-                        executable = job["command"]["program"]
-                        arguments = job["command"]["arguments"]
+                        executable = task["command"]["program"]
+                        arguments = task["command"]["arguments"]
                         if "--out" in arguments:
-                            files = assigning_correct_files(job)
+                            files = assigning_correct_files(task)
                             program = ["time", "python", executable, *arguments, *files]
                         else:
                             program = ["time", "python", executable, *arguments]
@@ -287,7 +284,7 @@ class WorkflowBenchmark:
             raise FileNotFoundError("Not able to find the executable.")
 
 
-def generate_sys_data(num_files: int, file_total_size: int, job_name:List[str], save_dir: pathlib.Path) -> None:
+def generate_sys_data(num_files: int, file_total_size: int, task_name:List[str], save_dir: pathlib.Path) -> None:
     """Generate workflow's input data
 
     :param num_files:
@@ -298,7 +295,7 @@ def generate_sys_data(num_files: int, file_total_size: int, job_name:List[str], 
     :type save_dir: pathlib.Path
     """
     for _ in range(num_files):
-        for name in job_name:
+        for name in task_name:
             file = f"{save_dir.joinpath(f'{name}_input.txt')}"
             with open(file, 'wb') as fp:
                 fp.write(os.urandom(file_total_size))
@@ -314,18 +311,18 @@ def generate_data_for_root_nodes(wf:Dict[str, Dict], save_dir:pathlib.Path) -> N
     :param save_dir:
     :type save_dir: pathlib.Path
     """
-    for job in wf["workflow"]["jobs"]:
-        if not job["parents"]:
-            file_size = [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
-            file = str(save_dir.joinpath(f"{job['name']}_input.txt"))
+    for task in wf["workflow"]["tasks"]:
+        if not task["parents"]:
+            file_size = [arg for arg in task["command"]["arguments"] if "input" in arg][0].split("=")[1]
+            file = str(save_dir.joinpath(f"{task['name']}_input.txt"))
             with open(file, 'wb') as fp:
                 fp.write(os.urandom(int(file_size)))
             print(f"Created file: {file}")
 
 
-def assigning_correct_files(job: Dict[str, str]) -> List[str]:
+def assigning_correct_files(task: Dict[str, str]) -> List[str]:
     files = []
-    for file in job["files"]:
+    for file in task["files"]:
         if file["link"] == "input":
             files.append(file["name"])
     return files
@@ -352,13 +349,13 @@ def add_output_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, st
     :type file_size: int
     """
  
-    for job in wf["workflow"]["tasks"]:
-        job.setdefault("files", [])
-        for child, file_size in output_files[job["name"]].items():            
-            job["files"].append(
+    for task in wf["workflow"]["tasks"]:
+        task.setdefault("files", [])
+        for child, file_size in output_files[task["name"]].items():            
+            task["files"].append(
                 {
                     "link": "output",
-                    "name": f"{job['name']}_{child}_output.txt",
+                    "name": f"{task['name']}_{child}_output.txt",
                     "size": (file_size.split("=")[1])
                 }
             )
@@ -382,30 +379,30 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
             input_files.setdefault(child, {})
             input_files[child][parent] = file_size
 
-    for job in wf["workflow"]["jobs"]:
+    for task in wf["workflow"]["tasks"]:
         inputs = []
-        job.setdefault("files", [])
-        if not job["parents"]:
-            job["files"].append(
+        task.setdefault("files", [])
+        if not task["parents"]:
+            task["files"].append(
                 {
                     "link": "input",
-                    "name": f"{job['name']}_input.txt",
-                    "size":  [arg for arg in job["command"]["arguments"] if "input" in arg][0].split("=")[1]
+                    "name": f"{task['name']}_input.txt",
+                    "size":  [arg for arg in task["command"]["arguments"] if "input" in arg][0].split("=")[1]
                 }
             )
-            inputs.append(f'{job["name"]}_input.txt') 
+            inputs.append(f'{task["name"]}_input.txt') 
         else:
-            for parent, file_size in input_files[job["name"]].items():            
-                job["files"].append(
+            for parent, file_size in input_files[task["name"]].items():            
+                task["files"].append(
                     {
                         "link": "input",
-                        "name": f"{parent}_{job['name']}_output.txt",
+                        "name": f"{parent}_{task['name']}_output.txt",
                         "size": (file_size.split("=")[1])
                     }
                 )
-                inputs.append(f"{parent}_{job['name']}_output.txt")
+                inputs.append(f"{parent}_{task['name']}_output.txt")
         
-        job["command"]["arguments"].extend([
+        task["command"]["arguments"].extend([
             f"--input-files={inputs}"
         ])
 
@@ -420,8 +417,8 @@ def calculate_input_files(wf: Dict[str, Dict]):
     """
     tasks_need_input = 0
     tasks_dont_need_input = 0
-    for job in wf["workflow"]["jobs"]:
-        parents = [parent for parent in job["parents"]]
+    for task in wf["workflow"]["tasks"]:
+        parents = [parent for parent in task["parents"]]
         if not parents:
             tasks_need_input += 1
         else:
@@ -443,18 +440,18 @@ def output_files(wf: Dict[str, Dict])-> Dict[str, Dict[str, str]]:
 
     """
     output_files = {}
-    jobs = {
-        job["name"]: job for job in wf["workflow"]["tasks"]
+    tasks = {
+        task["name"]: task for task in wf["workflow"]["tasks"]
     }
-    for job in wf["workflow"]["tasks"]:
-        output_files.setdefault(job["name"], {})
-        if not job["children"]:
-            output_files[job["name"]][job["name"]] = [args for args in job["command"]["arguments"] if "input" in args][0]
+    for task in wf["workflow"]["tasks"]:
+        output_files.setdefault(task["name"], {})
+        if not task["children"]:
+            output_files[task["name"]][task["name"]] = [args for args in task["command"]["arguments"] if "input" in args][0]
         else:
-            for child_name in job["children"]:
-                child = jobs[child_name]
-                output_files.setdefault(job["name"], {})
-                output_files[job["name"]][child["name"]] = [args for args in child["command"]["arguments"] if "input" in args][0]
+            for child_name in task["children"]:
+                child = tasks[child_name]
+                output_files.setdefault(task["name"], {})
+                output_files[task["name"]][child["name"]] = [args for args in child["command"]["arguments"] if "input" in args][0]
 
     return output_files
 

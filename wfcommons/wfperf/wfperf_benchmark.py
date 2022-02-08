@@ -141,9 +141,9 @@ def io_read_benchmark_user_input_data_size(other):
     
 # args.out, 
 def io_write_benchmark_user_input_data_size(outputs):
-    for job_name, file_size in outputs.items():
-        print(f"[WfPerf] Writing output file '{job_name}'\n")
-        with open(this_dir.joinpath(job_name), "wb") as fp:
+    for task_name, file_size in outputs.items():
+        print(f"[WfPerf] Writing output file '{task_name}'\n")
+        with open(this_dir.joinpath(task_name), "wb") as fp:
             fp.write(os.urandom(int(file_size))) 
     
 
