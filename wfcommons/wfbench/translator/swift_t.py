@@ -79,24 +79,17 @@ class SwiftTTranslator(Translator):
         for a in self.apps:
             for io in self.apps[a]:
                 app = self.apps[a][io]
-                outputs = ", ".join(
-                    [f"file out_{i + 1}" for i in range(0, app["outputs"])])
-                outputs_o = outputs.replace("file ", "").replace(",", "")
                 inputs = ", file inputs[]" if app["inputs"] > 0 else ""
                 inputs_o = "\\\n  inputs\n" if app["inputs"] > 0 else "\n"
 
-                self.script += f"app ({outputs}) {app['name']}_{io} (string path_lock, string path_cores, float percent_cpu, int cpu_work, int file_size{inputs}) "
+                self.script += f"app (output) {app['name']}_{io} (float percent_cpu, int cpu_work, string output_name{inputs}) "
                 self.script += "{\n" \
                     "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
-                    f"  \"{self.work_dir}/wfperf_benchmark.py\" \\\n" \
+                    f"  \"{self.work_dir}/wfbench.py\" \\\n" \
                     f"  \"{app['name']}_{io}\" \\\n" \
-                    "  \"--path-lock\" path_lock \\\n" \
-                    "  \"--path-cores\" path_cores \\\n" \
                     "  \"--percent-cpu\" percent_cpu \\\n" \
                     "  \"--cpu-work\" cpu_work \\\n" \
-                    "  \"--data\" \\\n" \
-                    "  \"--outputs-file-size\" file_size \\\n" \
-                    f"  \"--out\" {outputs_o} {inputs_o}" \
+                    f"  \"--out\" output_name {inputs_o}" \
                     "}\n\n"
 
         # defining input files
@@ -107,7 +100,7 @@ class SwiftTTranslator(Translator):
                 if file.link == FileLink.INPUT:
                     self.files_map[file.name] = f"ins[{in_count}]"
                     in_count += 1
-        self.script += f"file ins[] = glob(\"{self.work_dir}/sys_input_*.txt\");\n"
+        self.script += f"file ins[] = glob(\"{self.work_dir}/*_input.txt\");\n"
         self.script += "\n"
 
         # adding tasks
@@ -146,9 +139,9 @@ class SwiftTTranslator(Translator):
                     input_files.append(self.files_map[file.name])
 
             # arguments
-            args = ", ".join([f"\"{a.split('=')[1]}\"" for a in task.args[1:3]])
-            args += f', {", ".join([a.split("=")[1] for a in task.args[3:5]])}'
-            args += f", {task.args[6].split('=')[1]}"
+            args = ", ".join([a.split()[1] for a in task.args[1:3]])
+            output_name = task.args[3].replace("--out ", "")
+            args += f", \"{output_name}\""
             if len(input_files) > 0:
                 self.script += f"file in_{self.out_counter}[];"
                 f_i = 0
