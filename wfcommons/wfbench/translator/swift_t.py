@@ -142,7 +142,7 @@ class SwiftTTranslator(Translator):
             # arguments
             args = ", ".join([a.split()[1] for a in task.args[1:3]])
             output_name = task.args[3].replace("--out ", "")
-            args += f", \"{output_name}\""
+            args += f", \"\\\"{output_name}\\\"\""
             if len(input_files) > 0:
                 self.script += f"file in_{self.out_counter}[];"
                 f_i = 0

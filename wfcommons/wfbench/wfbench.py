@@ -19,7 +19,7 @@ import re
 from filelock import FileLock
 from typing import List, Optional, Dict
 
-this_dir = pathlib.Path(__file__).resolve().parent
+this_dir = pathlib.Path.cwd()
 
 
 def lock_core(path_locked: pathlib.Path,
@@ -108,8 +108,8 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
     cpu_procs = []
     cpu_prog = [
         f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
-    mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
+    # mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
+    #             "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
@@ -117,9 +117,9 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    mem_proc = subprocess.Popen(mem_prog)
-    if core:
-        os.sched_setaffinity(mem_proc.pid, {core})
+    # mem_proc = subprocess.Popen(mem_prog)
+    # if core:
+    #     os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
@@ -140,14 +140,10 @@ def get_parser() -> argparse.ArgumentParser:
 def io_read_benchmark_user_input_data_size(other):
     print("[WfBench] Starting IO Read Benchmark...")
     for file in other:
-        file_name = re.search(r"(?<=\[').*(?=\'])", file)
-        file_name = str(file_name.group(0))
-        with open(this_dir.joinpath(file_name), "rb") as fp:
-            print(f"[WfBench]   Reading '{file_name}'")
+        with open(this_dir.joinpath(file), "rb") as fp:
+            print(f"[WfBench]   Reading '{file}'")
             fp.readlines()
     print("[WfBench] Completed IO Read Benchmark!\n")
-
-# args.out,
 
 
 def io_write_benchmark_user_input_data_size(outputs):
@@ -168,12 +164,9 @@ def main():
         path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    if args.out:
-        out = args.out
-
     print(f"[WfBench] Starting {args.name} Benchmark\n")
 
-    if out:
+    if args.out:
         io_read_benchmark_user_input_data_size(other)
 
     print("[WfBench] Starting CPU and Memory Benchmarks...")
@@ -190,9 +183,8 @@ def main():
     mem_kill.wait()
     print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
-    if out:
-        out = out.replace("'", '"')
-        outputs = json.loads(out)
+    if args.out:
+        outputs = json.loads(args.out.replace("'", '"'))
         io_write_benchmark_user_input_data_size(outputs)
 
     if core:
