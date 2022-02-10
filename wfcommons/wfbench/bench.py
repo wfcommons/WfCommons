@@ -173,7 +173,7 @@ class WorkflowBenchmark:
          
             task["files"] = []
             task.setdefault("command", {})
-            task["command"]["program"] = f"{this_dir.joinpath('wfperf_benchmark.py')}"
+            task["command"]["program"] = f"{this_dir.joinpath('wfbench.py')}"
             task["command"]["arguments"] = [task["name"]]
             task["command"]["arguments"].extend(params)
             if "runtime" in task:
@@ -265,7 +265,7 @@ class WorkflowBenchmark:
                             program = ["time", "python", executable, *arguments, *files]
                         else:
                             program = ["time", "python", executable, *arguments]
-                        folder = pathlib.Path(this_dir.joinpath(f"wfperf_execution/{uuid.uuid4()}"))
+                        folder = pathlib.Path(this_dir.joinpath(f"wfbench_execution/{uuid.uuid4()}"))
                         folder.mkdir(exist_ok=True, parents=True)
                         os.chdir(str(folder))
                         procs.append(subprocess.Popen(program, stdout=fp, stderr=fp))

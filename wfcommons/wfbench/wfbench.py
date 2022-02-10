@@ -130,19 +130,19 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 def io_read_benchmark_user_input_data_size(other):
-    print("[WfPerf] Starting IO Read Benchmark...")
+    print("[WfBench] Starting IO Read Benchmark...")
     for file in other:
         file_name = re.search(r"(?<=\[').*(?=\'])", file)
         file_name = str(file_name.group(0))
         with open(this_dir.joinpath(file_name), "rb") as fp:
-            print(f"[WfPerf]   Reading '{file_name}'")
+            print(f"[WfBench]   Reading '{file_name}'")
             fp.readlines()
-    print("[WfPerf] Completed IO Read Benchmark!\n")
+    print("[WfBench] Completed IO Read Benchmark!\n")
     
 # args.out, 
 def io_write_benchmark_user_input_data_size(outputs):
     for task_name, file_size in outputs.items():
-        print(f"[WfPerf] Writing output file '{task_name}'\n")
+        print(f"[WfBench] Writing output file '{task_name}'\n")
         with open(this_dir.joinpath(task_name), "wb") as fp:
             fp.write(os.urandom(int(file_size))) 
     
@@ -159,13 +159,13 @@ def main():
     if args.out:
         out = args.out
 
-    print(f"[WfPerf] Starting {args.name} Benchmark\n")
+    print(f"[WfBench] Starting {args.name} Benchmark\n")
 
     if out:
         io_read_benchmark_user_input_data_size(other)
 
-    print("[WfPerf] Starting CPU and Memory Benchmarks...")
-    print(f"[WfPerf]  {args.name} acquired core {core}")
+    print("[WfBench] Starting CPU and Memory Benchmarks...")
+    print(f"[WfBench]  {args.name} acquired core {core}")
 
     cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
                                   mem_threads=int(10 - 10 * args.percent_cpu),
@@ -175,7 +175,7 @@ def main():
         proc.wait()
     mem_kill = subprocess.Popen(["killall", "stress-ng"])
     mem_kill.wait()
-    print("[WfPerf] Completed CPU and Memory Benchmarks!\n")
+    print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
     if out:
         out = out.replace("'", '"')
@@ -183,7 +183,7 @@ def main():
         io_write_benchmark_user_input_data_size(outputs)
     
     unlock_core(path_locked, path_cores, core)
-    print("WfPerf Benchmark completed!")
+    print("WfBench Benchmark completed!")
 
 
 if __name__ == "__main__":
