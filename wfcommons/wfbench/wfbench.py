@@ -108,8 +108,8 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
     cpu_procs = []
     cpu_prog = [
         f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
-    # mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-    #             "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
+    mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
+                "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
@@ -117,9 +117,9 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    # mem_proc = subprocess.Popen(mem_prog)
-    # if core:
-    #     os.sched_setaffinity(mem_proc.pid, {core})
+    mem_proc = subprocess.Popen(mem_prog)
+    if core:
+        os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
