@@ -43,7 +43,7 @@ class SwiftTTranslator(Translator):
         self.out_counter = 1
         self.files_map = {}
         self.tasks_map = {}
-        self.script = "import files;\nimport io;\nimport unix;\n\n"
+        self.script = "import files;\nimport io;\nimport json;\nimport unix;\n\n"
 
         # find applications
         self.apps = {}
@@ -83,14 +83,14 @@ class SwiftTTranslator(Translator):
                 inputs_o = "\\\n  inputs\n" if app["inputs"] > 0 else "\n"
 
                 self.script += "@suppress=unused_output\n"
-                self.script += f"app (file output) {app['name']}_{io} (float percent_cpu, int cpu_work, string output_name{inputs}) "
+                self.script += f"app (file output) {app['name']}_{io} (float percent_cpu, int cpu_work, string out_name{inputs}) "
                 self.script += "{\n" \
                     "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
                     f"  \"{self.work_dir}/wfbench.py\" \\\n" \
                     f"  \"{app['name']}_{io}\" \\\n" \
                     "  \"--percent-cpu\" percent_cpu \\\n" \
                     "  \"--cpu-work\" cpu_work \\\n" \
-                    f"  \"--out\" output_name {inputs_o}" \
+                    f"  \"--out\" out_name {inputs_o}" \
                     "}\n\n"
 
         # defining input files
@@ -141,8 +141,8 @@ class SwiftTTranslator(Translator):
 
             # arguments
             args = ", ".join([a.split()[1] for a in task.args[1:3]])
-            output_name = task.args[3].replace("--out ", "")
-            args += f", \"\\\"{output_name}\\\"\""
+            output_name = task.args[3].replace("--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
+            args += f", {output_name}"
             if len(input_files) > 0:
                 self.script += f"file in_{self.out_counter}[];"
                 f_i = 0
