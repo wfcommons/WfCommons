@@ -82,7 +82,8 @@ class SwiftTTranslator(Translator):
                 inputs = ", file inputs[]" if app["inputs"] > 0 else ""
                 inputs_o = "\\\n  inputs\n" if app["inputs"] > 0 else "\n"
 
-                self.script += f"app (output) {app['name']}_{io} (float percent_cpu, int cpu_work, string output_name{inputs}) "
+                self.script += "@suppress=unused_output\n"
+                self.script += f"app (file output) {app['name']}_{io} (float percent_cpu, int cpu_work, string output_name{inputs}) "
                 self.script += "{\n" \
                     "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
                     f"  \"{self.work_dir}/wfbench.py\" \\\n" \

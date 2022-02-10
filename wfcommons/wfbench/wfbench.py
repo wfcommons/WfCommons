@@ -13,7 +13,7 @@ import pathlib
 import os
 import subprocess
 import time
-import json 
+import json
 import re
 
 from filelock import FileLock
@@ -43,7 +43,8 @@ def lock_core(path_locked: pathlib.Path,
         with FileLock(path_locked) as lock:
             try:
                 lock.acquire()
-                taken_cores = {int(line) for line in path_cores.read_text().splitlines() if line.strip()}
+                taken_cores = {
+                    int(line) for line in path_cores.read_text().splitlines() if line.strip()}
                 available = all_cores - taken_cores
                 if available:
                     core = available.pop()
@@ -85,7 +86,7 @@ def unlock_core(path_locked: pathlib.Path,
 def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
                       mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
-                      core: Optional[int] = 7) -> List:
+                      core: Optional[int] = None) -> List:
     """
     Run cpu and memory benchmark.
 
@@ -105,29 +106,36 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
-    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
-    mem_prog = ["stress-ng", "--vm", f"{mem_threads}", "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
+    cpu_prog = [
+        f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+    mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
+                "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
-        os.sched_setaffinity(cpu_proc.pid, {core})
+        if core:
+            os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
     mem_proc = subprocess.Popen(mem_prog)
-    os.sched_setaffinity(mem_proc.pid, {core})
+    if core:
+        os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
+
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
-    parser.add_argument("--percent-cpu", type=float, help="percentage related to the number of cpu threads.")
-    parser.add_argument("--path-lock", help="Path to lock file.")
-    parser.add_argument("--path-cores", help="Path to cores file.")
+    parser.add_argument("--percent-cpu", default=0.5, type=float,
+                        help="percentage related to the number of cpu threads.")
+    parser.add_argument("--path-lock", default=None, help="Path to lock file.")
+    parser.add_argument("--path-cores", default=None,
+                        help="Path to cores file.")
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
-    parser.add_argument("--input-data-size", default=None, help="User input data size from JSON file.")
     parser.add_argument("--out", help="output files name.")
     return parser
+
 
 def io_read_benchmark_user_input_data_size(other):
     print("[WfBench] Starting IO Read Benchmark...")
@@ -138,23 +146,27 @@ def io_read_benchmark_user_input_data_size(other):
             print(f"[WfBench]   Reading '{file_name}'")
             fp.readlines()
     print("[WfBench] Completed IO Read Benchmark!\n")
-    
-# args.out, 
+
+# args.out,
+
+
 def io_write_benchmark_user_input_data_size(outputs):
     for task_name, file_size in outputs.items():
         print(f"[WfBench] Writing output file '{task_name}'\n")
         with open(this_dir.joinpath(task_name), "wb") as fp:
-            fp.write(os.urandom(int(file_size))) 
-    
+            fp.write(os.urandom(int(file_size)))
+
 
 def main():
     """Main program."""
     parser = get_parser()
     args, other = parser.parse_known_args()
 
-    path_locked = pathlib.Path(args.path_lock)
-    path_cores = pathlib.Path(args.path_cores)
-    core = lock_core(path_locked, path_cores)
+    core = None
+    if args.path_lock and args.path_cores:
+        path_locked = pathlib.Path(args.path_lock)
+        path_cores = pathlib.Path(args.path_cores)
+        core = lock_core(path_locked, path_cores)
 
     if args.out:
         out = args.out
@@ -165,7 +177,8 @@ def main():
         io_read_benchmark_user_input_data_size(other)
 
     print("[WfBench] Starting CPU and Memory Benchmarks...")
-    print(f"[WfBench]  {args.name} acquired core {core}")
+    if core:
+        print(f"[WfBench]  {args.name} acquired core {core}")
 
     cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
                                   mem_threads=int(10 - 10 * args.percent_cpu),
@@ -181,8 +194,10 @@ def main():
         out = out.replace("'", '"')
         outputs = json.loads(out)
         io_write_benchmark_user_input_data_size(outputs)
-    
-    unlock_core(path_locked, path_cores, core)
+
+    if core:
+        unlock_core(path_locked, path_cores, core)
+
     print("WfBench Benchmark completed!")
 
 
