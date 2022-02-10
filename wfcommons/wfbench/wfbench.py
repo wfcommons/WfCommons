@@ -19,7 +19,7 @@ import re
 from filelock import FileLock
 from typing import List, Optional, Dict
 
-this_dir = pathlib.Path.cwd()
+this_dir = pathlib.Path(__file__).resolve().parent
 
 
 def lock_core(path_locked: pathlib.Path,
