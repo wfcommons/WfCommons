@@ -46,27 +46,12 @@ class SwiftTTranslator(Translator):
         self.script = "import files;\nimport io;\nimport json;\nimport unix;\n\n"
 
         # find applications
-        self.apps = {}
+        self.apps = []
         for task in self.tasks.values():
-            inputs_count = 0
-            outputs_count = 0
-            for file in task.files:
-                if file.link == FileLink.INPUT:
-                    inputs_count += 1
-                else:
-                    outputs_count += 1
-
-            self.tasks_map[task.name] = f"{task.category}_{inputs_count}_{outputs_count}"
+            self.tasks_map[task.name] = task.category
 
             if task.category not in self.apps:
-                self.apps[task.category] = {}
-
-            if f"{inputs_count}_{outputs_count}" not in self.apps[task.category]:
-                self.apps[task.category][f"{inputs_count}_{outputs_count}"] = {
-                    "name": task.category,
-                    "inputs": inputs_count,
-                    "outputs": outputs_count
-                }
+                self.apps.append(task.category)
 
     def translate(self, output_file_name: pathlib.Path) -> None:
         """
@@ -76,22 +61,18 @@ class SwiftTTranslator(Translator):
         :type output_file_name: pathlib.Path
         """
         # creating apps
-        for a in self.apps:
-            for io in self.apps[a]:
-                app = self.apps[a][io]
-                inputs = ", file inputs[]" if app["inputs"] > 0 else ""
-                inputs_o = "\\\n  inputs\n" if app["inputs"] > 0 else "\n"
-
-                self.script += "@suppress=unused_output\n"
-                self.script += f"app (file output) {app['name']}_{io} (float percent_cpu, int cpu_work, string out_name{inputs}) "
-                self.script += "{\n" \
-                    "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
-                    f"  \"{self.work_dir}/wfbench.py\" \\\n" \
-                    f"  \"{app['name']}_{io}\" \\\n" \
-                    "  \"--percent-cpu\" percent_cpu \\\n" \
-                    "  \"--cpu-work\" cpu_work \\\n" \
-                    f"  \"--out\" out_name {inputs_o}" \
-                    "}\n\n"
+        for app in self.apps:
+            self.script += "@suppress=unused_output\n"
+            self.script += f"app (file output) {app} (float percent_cpu, int cpu_work, string out_name, file inputs[]) "
+            self.script += "{\n" \
+                "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
+                f"  \"{self.work_dir}/wfbench.py\" \\\n" \
+                f"  \"{app}\" \\\n" \
+                "  \"--percent-cpu\" percent_cpu \\\n" \
+                "  \"--cpu-work\" cpu_work \\\n" \
+                f"  \"--out\" out_name \\\n" \
+                f"  inputs \n" \
+                "}\n\n"
 
         # defining input files
         in_count = 0
@@ -127,7 +108,7 @@ class SwiftTTranslator(Translator):
 
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
-            
+
             # find children
             children = self._find_children(task_name)
 
@@ -141,7 +122,8 @@ class SwiftTTranslator(Translator):
 
             # arguments
             args = ", ".join([a.split()[1] for a in task.args[1:3]])
-            output_name = task.args[3].replace("--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
+            output_name = task.args[3].replace(
+                "--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
             args += f", {output_name}"
             if len(input_files) > 0:
                 self.script += f"file in_{self.out_counter}[];"
@@ -155,7 +137,7 @@ class SwiftTTranslator(Translator):
             self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
             self.files_map[out_file] = f"out_{self.out_counter}"
             self.out_counter += 1
-            
+
             self.parsed_tasks.append(task_name)
 
             for child_task_name in children:
