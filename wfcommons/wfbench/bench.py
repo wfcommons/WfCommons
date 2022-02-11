@@ -190,7 +190,7 @@ class WorkflowBenchmark:
             add_output_to_json(wf, file_size)
             add_input_to_json(wf, outputs, file_size)
             self.logger.debug("Generating system files.")
-            # self.generate_data_for_root_nodes(wf, save_dir, data)
+            self.generate_data_for_root_nodes(wf, save_dir, file_size)
 
         json_path = save_dir.joinpath(
             f"{name.lower()}-{self.num_tasks}").with_suffix(".json")
