@@ -78,10 +78,19 @@ class SwiftTTranslator(Translator):
         in_count = 0
         for task_name in self.parent_task_names:
             task = self.tasks[task_name]
+            out_count = 0
             for file in task.files:
                 if file.link == FileLink.INPUT:
                     self.files_map[file.name] = f"ins[{in_count}]"
                     in_count += 1
+                
+                elif file.link == FileLink.OUTPUT:
+                    out_count += 1
+                
+                if out_count > 1:
+                    self.logger.error("Swift/T does not allow an application to have multiple outputs.")
+                    exit(1)
+
         self.script += f"file ins[] = glob(\"{self.work_dir}/*_input.txt\");\n"
         self.script += "\n"
 

@@ -119,7 +119,8 @@ class PegasusTranslator(Translator):
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
-            self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n"
+            self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n" \
+                f"task_output_files.setdefault('{job_name}', [])\n"
 
             # task priority
             if tasks_priorities and task.category in tasks_priorities:
@@ -134,13 +135,16 @@ class PegasusTranslator(Translator):
                     out_file = file.name
                     task.args.append(f"--out={out_file}")
                     stage_out = "True" if len(children) == 0 else "False"
-                    self.script += f"out_file_{self.task_counter} = File('{out_file}')\n"
-                    self.script += f"task_output_files['{job_name}'] = out_file_{self.task_counter}\n"
-                    self.script += f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
-                                   f"stage_out={stage_out}, register_replica={stage_out})\n"
+                    self.script += f"out_file_{self.task_counter} = File('{out_file}')\n" \
+                        f"task_output_files['{job_name}'].append(out_file_{self.task_counter})\n" \
+                        f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
+                        f"stage_out={stage_out}, register_replica={stage_out})\n"
 
             # arguments
-            args = ", ".join(f"'{a}'" for a in task.args)
+            args = []
+            for a in task.args:
+                args.append(a.replace("'", "\""))
+            args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
 
             self.script += f"wf.add_jobs({job_name})\n\n"
