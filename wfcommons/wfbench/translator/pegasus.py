@@ -83,7 +83,7 @@ class PegasusTranslator(Translator):
                                "tc.add_transformations(transformation)\n\n"
 
         # adding tasks
-        for task_name in self.parent_task_names:
+        for task_name in self.root_task_names:
             self._add_task(task_name, tasks_priorities=tasks_priorities)
             # input file
             task = self.tasks[task_name]

@@ -64,9 +64,14 @@ class SwiftTTranslator(Translator):
         """
         # creating apps
         for app in self.apps:
-            self.script += "@suppress=unused_output\n"
-            self.script += f"app (file output) {app} (float percent_cpu, int cpu_work, string out_name, file inputs[]) "
-            self.script += "{\n" \
+            input = "inputs[]"
+            for root_task in self.root_task_names:
+                if root_task.startswith(app):
+                    input = "inputs"
+                    break
+            self.script += "@suppress=unused_output\n" \
+                f"app (file output) {app} (float percent_cpu, int cpu_work, string out_name, file {input}) " \
+                "{\n" \
                 "  \"/sw/summit/python/3.8/anaconda3/2020.07-rhel8/bin/python3\" \\\n" \
                 f"  \"{self.work_dir}/wfbench.py\" \\\n" \
                 f"  \"{app}\" \\\n" \
@@ -78,7 +83,7 @@ class SwiftTTranslator(Translator):
 
         # defining input files
         in_count = 0
-        for task_name in self.parent_task_names:
+        for task_name in self.root_task_names:
             task = self.tasks[task_name]
             out_count = 0
             for file in task.files:
@@ -97,7 +102,7 @@ class SwiftTTranslator(Translator):
         self.script += f"file ins[] = glob(\"{self.work_dir}/*_input.txt\");\n\n"
 
         # adding tasks
-        for task_name in self.parent_task_names:
+        for task_name in self.root_task_names:
             self._find_categories_list(task_name)
             # self._add_task(task_name)
 
@@ -140,17 +145,19 @@ class SwiftTTranslator(Translator):
         :type category: str
         """
         num_tasks = 0
+        defined = False
         self.script += f"file {category}_out[];\n"
-        
+
         for task_name in self.tasks:
             task = self.tasks[task_name]
-            
+
             if task.category == category:
 
                 # in/output files
                 input_files = []
                 in_prefix = True
                 prefix = ""
+
                 for file in task.files:
                     if file.link == FileLink.OUTPUT:
                         out_file = file.name
@@ -158,7 +165,7 @@ class SwiftTTranslator(Translator):
                     elif file.link == FileLink.INPUT:
                         input_files.append(self.files_map[file.name])
                         if not prefix:
-                           prefix = self.files_map[file.name].split("_out")[0] 
+                           prefix = self.files_map[file.name].split("_out")[0]
                         if self.files_map[file.name].split("_out")[0] != prefix:
                            in_prefix = False
 
@@ -171,10 +178,13 @@ class SwiftTTranslator(Translator):
                     elif in_prefix and prefix.startswith("ins["):
                         args += ", ins[i]"
                     else:
-                        self.script += f"file {category}[][]_in;"
+                        if not defined:
+                            self.script += f"file {category}_in[][];\n"
+                            defined = True
+
                         f_i = 0
                         for f in input_files:
-                            self.script += f" {category}_in[{num_tasks}][{f_i}] = {f};"
+                            self.script += f"{category}_in[{num_tasks}][{f_i}] = {f}; "
                             f_i += 1
                         self.script += "\n"
                         args += f", {category}_in[i]"
