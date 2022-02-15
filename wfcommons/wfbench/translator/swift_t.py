@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import json
+from nis import cat
 import pathlib
 
 from logging import Logger
@@ -39,6 +40,7 @@ class SwiftTTranslator(Translator):
         super().__init__(workflow_json_file_path, logger)
 
         self.work_dir = work_dir
+        self.categories_list = []
         self.parsed_tasks = []
         self.out_counter = 1
         self.files_map = {}
@@ -83,27 +85,31 @@ class SwiftTTranslator(Translator):
                 if file.link == FileLink.INPUT:
                     self.files_map[file.name] = f"ins[{in_count}]"
                     in_count += 1
-                
+
                 elif file.link == FileLink.OUTPUT:
                     out_count += 1
-                
+
                 if out_count > 1:
-                    self.logger.error("Swift/T does not allow an application to have multiple outputs.")
+                    self.logger.error(
+                        "Swift/T does not allow an application to have multiple outputs.")
                     exit(1)
 
-        self.script += f"file ins[] = glob(\"{self.work_dir}/*_input.txt\");\n"
-        self.script += "\n"
+        self.script += f"file ins[] = glob(\"{self.work_dir}/*_input.txt\");\n\n"
 
         # adding tasks
         for task_name in self.parent_task_names:
-            self._add_task(task_name)
+            self._find_categories_list(task_name)
+            # self._add_task(task_name)
+
+        for category in self.categories_list:
+            self._add_tasks(category)
 
         # write script to file
         self._write_output_file(self.script, output_file_name)
 
-    def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
-        """
-        Add a task and its dependencies to the workflow.
+    def _find_categories_list(self, task_name: str, parent_task: Optional[str] = None) -> None:
+        """"
+        Find list of task categories ordered by task dependencies.
 
         :param task_name: name of the task
         :type task_name: str
@@ -115,39 +121,119 @@ class SwiftTTranslator(Translator):
             if parent not in self.parsed_tasks:
                 return
 
-        if task_name not in self.parsed_tasks:
+        self.parsed_tasks.append(task_name)
+        category = self.tasks_map[task_name]
+        if category not in self.categories_list:
+            self.categories_list.append(category)
+
+        # find children
+        children = self._find_children(task_name)
+
+        for child_task_name in children:
+            self._find_categories_list(child_task_name)
+
+    def _add_tasks(self, category: str) -> None:
+        """
+        Add all tasks for a specific category.
+
+        :param category: category name
+        :type category: str
+        """
+        num_tasks = 0
+        self.script += f"file {category}_out[];\n"
+        
+        for task_name in self.tasks:
             task = self.tasks[task_name]
+            
+            if task.category == category:
 
-            # find children
-            children = self._find_children(task_name)
+                # in/output files
+                input_files = []
+                in_prefix = True
+                prefix = ""
+                for file in task.files:
+                    if file.link == FileLink.OUTPUT:
+                        out_file = file.name
+                        file_size = file.size
+                    elif file.link == FileLink.INPUT:
+                        input_files.append(self.files_map[file.name])
+                        if not prefix:
+                           prefix = self.files_map[file.name].split("_out")[0] 
+                        if self.files_map[file.name].split("_out")[0] != prefix:
+                           in_prefix = False
 
-            # in/output files
-            input_files = []
-            for file in task.files:
-                if file.link == FileLink.OUTPUT:
-                    out_file = file.name
-                elif file.link == FileLink.INPUT:
-                    input_files.append(self.files_map[file.name])
+                # arguments
+                args = ", ".join([a.split()[1] for a in task.args[1:3]])
+                args += f", json_objectify(sprintf(\"'{category}_%i_output.txt': {file_size}\", i))"
+                if len(input_files) > 0:
+                    if in_prefix and len(input_files) > 1:
+                        args += f", {prefix}_out"
+                    elif in_prefix and prefix.startswith("ins["):
+                        args += ", ins[i]"
+                    else:
+                        self.script += f"file {category}[][]_in;"
+                        f_i = 0
+                        for f in input_files:
+                            self.script += f" {category}_in[{num_tasks}][{f_i}] = {f};"
+                            f_i += 1
+                        self.script += "\n"
+                        args += f", {category}_in[i]"
 
-            # arguments
-            args = ", ".join([a.split()[1] for a in task.args[1:3]])
-            output_name = task.args[3].replace(
-                "--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
-            args += f", {output_name}"
-            if len(input_files) > 0:
-                self.script += f"file in_{self.out_counter}[];"
-                f_i = 0
-                for f in input_files:
-                    self.script += f" in_{self.out_counter}[{f_i}] = {f};"
-                    f_i += 1
-                self.script += "\n"
-                args += f", in_{self.out_counter}"
+                self.files_map[out_file] = f"{category}_out[{num_tasks}]"
 
-            self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
-            self.files_map[out_file] = f"out_{self.out_counter}"
-            self.out_counter += 1
+                num_tasks += 1
 
-            self.parsed_tasks.append(task_name)
+        self.script += f"foreach i in [0:{num_tasks}] {{\n" \
+            f"  {category}_out[i] = {category}({args});\n" \
+            "}\n\n"
 
-            for child_task_name in children:
-                self._add_task(child_task_name)
+    # def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
+    #     """
+    #     Add a task and its dependencies to the workflow.
+
+    #     :param task_name: name of the task
+    #     :type task_name: str
+    #     :param parent_task: name of the parent task
+    #     :type parent_task: Optional[str]
+    #     """
+    #     # check dependencies
+    #     for parent in self._find_parents(task_name):
+    #         if parent not in self.parsed_tasks:
+    #             return
+
+    #     if task_name not in self.parsed_tasks:
+    #         task = self.tasks[task_name]
+
+    #         # in/output files
+    #         input_files = []
+    #         for file in task.files:
+    #             if file.link == FileLink.OUTPUT:
+    #                 out_file = file.name
+    #             elif file.link == FileLink.INPUT:
+    #                 input_files.append(self.files_map[file.name])
+
+    #         # arguments
+    #         args = ", ".join([a.split()[1] for a in task.args[1:3]])
+    #         output_name = task.args[3].replace(
+    #             "--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
+    #         args += f", {output_name}"
+    #         if len(input_files) > 0:
+    #             self.script += f"file in_{self.out_counter}[];"
+    #             f_i = 0
+    #             for f in input_files:
+    #                 self.script += f" in_{self.out_counter}[{f_i}] = {f};"
+    #                 f_i += 1
+    #             self.script += "\n"
+    #             args += f", in_{self.out_counter}"
+
+    #         self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
+    #         self.files_map[out_file] = f"out_{self.out_counter}"
+    #         self.out_counter += 1
+
+    #         self.parsed_tasks.append(task_name)
+
+    #         # find children
+    #         children = self._find_children(task_name)
+
+    #         for child_task_name in children:
+    #             self._add_task(child_task_name)
