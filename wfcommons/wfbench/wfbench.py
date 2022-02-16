@@ -14,10 +14,9 @@ import os
 import subprocess
 import time
 import json
-import re
 
 from filelock import FileLock
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
