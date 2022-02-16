@@ -171,7 +171,7 @@ class SwiftTTranslator(Translator):
                 # arguments
                 args = ", ".join([a.split()[1] for a in task.args[1:3]])
                 # args += f", json_objectify(printf(\"'{category}_%i_output.txt': {file_size}\", i))"
-                args += f", json_encode_object([\"'{category}_%i_output.txt': {file_size}\"], i)"
+                args += f", printf(\"{{'{category}_%i_output.txt': {file_size}}}\", i)"
                 if len(input_files) > 0:
                     if prefix.startswith("ins["):
                         args += ", ins[i]"
