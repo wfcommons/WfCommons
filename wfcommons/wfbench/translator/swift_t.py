@@ -8,13 +8,10 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import json
-from nis import cat
 import pathlib
 
 from logging import Logger
 from typing import Optional
-from unicodedata import category
 
 from .abstract_translator import Translator
 from ...common.file import FileLink
@@ -42,7 +39,6 @@ class SwiftTTranslator(Translator):
         self.work_dir = work_dir
         self.categories_list = []
         self.parsed_tasks = []
-        self.out_counter = 1
         self.files_map = {}
         self.tasks_map = {}
         self.script = "import files;\nimport io;\nimport json;\nimport string;\nimport unix;\n\n"
@@ -170,7 +166,6 @@ class SwiftTTranslator(Translator):
 
                 # arguments
                 args = ", ".join([a.split()[1] for a in task.args[1:3]])
-                # args += f", json_objectify(printf(\"'{category}_%i_output.txt': {file_size}\", i))"
                 args += f", of"
                 if len(input_files) > 0:
                     if prefix.startswith("ins["):
@@ -199,56 +194,6 @@ class SwiftTTranslator(Translator):
                 f"  {category}_out[i] = {category}({args});\n" \
                 "}\n\n"
         else:
-            args = args.replace("of,", f"\"{{'{category}_0_output.txt': {file_size}}}\",").replace("[i]", "[0]")
+            args = args.replace(
+                "of,", f"\"{{'{category}_0_output.txt': {file_size}}}\",").replace("[i]", "[0]")
             self.script += f"{category}_out[0] = {category}({args});\n\n"
-
-    # def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
-    #     """
-    #     Add a task and its dependencies to the workflow.
-
-    #     :param task_name: name of the task
-    #     :type task_name: str
-    #     :param parent_task: name of the parent task
-    #     :type parent_task: Optional[str]
-    #     """
-    #     # check dependencies
-    #     for parent in self._find_parents(task_name):
-    #         if parent not in self.parsed_tasks:
-    #             return
-
-    #     if task_name not in self.parsed_tasks:
-    #         task = self.tasks[task_name]
-
-    #         # in/output files
-    #         input_files = []
-    #         for file in task.files:
-    #             if file.link == FileLink.OUTPUT:
-    #                 out_file = file.name
-    #             elif file.link == FileLink.INPUT:
-    #                 input_files.append(self.files_map[file.name])
-
-    #         # arguments
-    #         args = ", ".join([a.split()[1] for a in task.args[1:3]])
-    #         output_name = task.args[3].replace(
-    #             "--out ", "").replace("{", "json_objectify(\"").replace("}", "\")")
-    #         args += f", {output_name}"
-    #         if len(input_files) > 0:
-    #             self.script += f"file in_{self.out_counter}[];"
-    #             f_i = 0
-    #             for f in input_files:
-    #                 self.script += f" in_{self.out_counter}[{f_i}] = {f};"
-    #                 f_i += 1
-    #             self.script += "\n"
-    #             args += f", in_{self.out_counter}"
-
-    #         self.script += f"file out_{self.out_counter} <\"{self.work_dir}/{out_file}\"> = {self.tasks_map[task_name]}({args});\n"
-    #         self.files_map[out_file] = f"out_{self.out_counter}"
-    #         self.out_counter += 1
-
-    #         self.parsed_tasks.append(task_name)
-
-    #         # find children
-    #         children = self._find_children(task_name)
-
-    #         for child_task_name in children:
-    #             self._add_task(child_task_name)
