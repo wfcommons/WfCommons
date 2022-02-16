@@ -171,7 +171,7 @@ class SwiftTTranslator(Translator):
                 # arguments
                 args = ", ".join([a.split()[1] for a in task.args[1:3]])
                 # args += f", json_objectify(printf(\"'{category}_%i_output.txt': {file_size}\", i))"
-                args += f", of_{self.out_counter}"
+                args += f", of"
                 if len(input_files) > 0:
                     if prefix.startswith("ins["):
                         args += ", ins[i]"
@@ -195,14 +195,12 @@ class SwiftTTranslator(Translator):
 
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
-                f"  string of_{self.out_counter} = sprintf(\"{{'{category}_%i_output.txt': {file_size}}}\", i);\n" \
+                f"  string of = sprintf(\"{{'{category}_%i_output.txt': {file_size}}}\", i);\n" \
                 f"  {category}_out[i] = {category}({args});\n" \
                 "}\n\n"
         else:
-            self.script += f"string of_{self.out_counter} = sprintf(\"{{'{category}_0_output.txt': {file_size}}}\", i);\n" \
-                f"{category}_out[0] = {category}({args});\n\n"
-
-        self.out_counter += 1
+            args = args.replace("of,", f"\"{{'{category}_0_output.txt': {file_size}}}\",").replace("[i]", "[0]")
+            self.script += f"{category}_out[0] = {category}({args});\n\n"
 
     # def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
     #     """
