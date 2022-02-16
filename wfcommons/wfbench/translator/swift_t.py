@@ -171,7 +171,7 @@ class SwiftTTranslator(Translator):
                 # arguments
                 args = ", ".join([a.split()[1] for a in task.args[1:3]])
                 # args += f", json_objectify(printf(\"'{category}_%i_output.txt': {file_size}\", i))"
-                args += f", printf(\"{{'{category}_%i_output.txt': {file_size}}}\", i)"
+                args += f", json_objectify(of)"
                 if len(input_files) > 0:
                     if prefix.startswith("ins["):
                         args += ", ins[i]"
@@ -194,6 +194,7 @@ class SwiftTTranslator(Translator):
                 num_tasks += 1
 
         self.script += f"foreach i in [0:{num_tasks}] {{\n" \
+            f"  string of = sprintf(\"{category}_%i_output.txt\", i)\n" \
             f"  {category}_out[i] = {category}({args});\n" \
             "}\n\n"
 
