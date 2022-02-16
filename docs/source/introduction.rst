@@ -62,6 +62,6 @@ simulation frameworks that support WfFormat can then use both types of instances
 interchangeably. WfFormat uses a JSON specification available in the
 `WfFormat Schema GitHub <https://github.com/wfcommons/workflow-schema>`_
 repository. The current version of the WfCommons Python package uses the schema
-version :code:`1.1`. The schema GitHub repository provides detailed explanation
+version :code:`1.3`. The schema GitHub repository provides detailed explanation
 of WfFormat (including required fields), and also a validator script for verifying
 the compatibility of instances.

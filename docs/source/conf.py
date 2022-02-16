@@ -24,7 +24,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'WfCommons'
-copyright = '2020-2021, WfCommons Team'
+copyright = '2020-2022, WfCommons Team'
 author = 'WfCommons Team'
 
 # The short X.Y version
