@@ -155,7 +155,6 @@ class SwiftTTranslator(Translator):
 
                 # in/output files
                 input_files = []
-                in_prefix = True
                 prefix = ""
 
                 for file in task.files:
@@ -166,17 +165,17 @@ class SwiftTTranslator(Translator):
                         input_files.append(self.files_map[file.name])
                         if not prefix:
                            prefix = self.files_map[file.name].split("_out")[0]
-                        if self.files_map[file.name].split("_out")[0] != prefix:
-                           in_prefix = False
+                        elif self.files_map[file.name].split("_out")[0] != prefix:
+                           prefix = "Diff"
 
                 # arguments
                 args = ", ".join([a.split()[1] for a in task.args[1:3]])
                 args += f", json_objectify(sprintf(\"'{category}_%i_output.txt': {file_size}\", i))"
                 if len(input_files) > 0:
-                    if in_prefix and len(input_files) > 1:
-                        args += f", {prefix}_out"
-                    elif in_prefix and prefix.startswith("ins["):
+                    if prefix.startswith("ins["):
                         args += ", ins[i]"
+                    elif len(self._find_parents(task.name)) == 1:
+                        args += f", {prefix}_out"
                     else:
                         if not defined:
                             self.script += f"file {category}_in[][];\n"
