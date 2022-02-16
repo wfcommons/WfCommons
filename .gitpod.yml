@@ -3,7 +3,9 @@
 # and commit this file to your remote git repository to share the goodness with others.
 
 tasks:
-  - init: pip install -r requirements.txt
+  - init: |
+      pip install -r requirements.txt
+      pip install -e .
 vscode:
   extensions:
     - ms-python.python

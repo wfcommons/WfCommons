@@ -11,6 +11,7 @@
 import json
 import argparse
 import math
+import sys
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -343,6 +344,10 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
+    if not hasattr(args, "action"):
+        sys.argv.append("--help")
+        parser.parse_args()
+        
     if args.action == ls_recipe:
         ls_recipe()
     elif args.action == uninstall_recipe:
