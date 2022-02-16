@@ -3,7 +3,7 @@
 
 |pypi-badge| |build-badge| |license-badge|
 
-`WfCommons <https://wfcommons.org>`__ is a community framework for
+`WfCommons <https://wfcommons.org>`__ is an open-source framework for
 enabling scientific workflow research and development. This Python package
 provides methods for analyzing instances, deriving recipes, and generating
 representative synthetic workflow instances.
