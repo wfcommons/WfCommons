@@ -193,10 +193,14 @@ class SwiftTTranslator(Translator):
 
                 num_tasks += 1
 
-        self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
-            f"  string of = sprintf(\"{{'{category}_%i_output.txt': {file_size}}}\", i);\n" \
-            f"  {category}_out[i] = {category}({args});\n" \
-            "}\n\n"
+        if num_tasks > 1:
+            self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
+                f"  string of = sprintf(\"{{'{category}_%i_output.txt': {file_size}}}\", i);\n" \
+                f"  {category}_out[i] = {category}({args});\n" \
+                "}\n\n"
+        else:
+            self.script += f"string of = sprintf(\"{{'{category}_0_output.txt': {file_size}}}\", i);\n" \
+                f"{category}_out[0] = {category}({args});\n\n"
 
     # def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
     #     """
