@@ -65,28 +65,41 @@ class SwiftTTranslator(Translator):
         """
         self.script += "string command = \n" \
                 "\"\"\"\n" \
-                "import pathlib\n" \
-                "import os\n" \
-                "import subprocess\n" \
                 "import json\n" \
+                "import os\n" \
+                "import pathlib\n" \
                 "import socket\n" \
+                "import subprocess\n" \
                 "\n" \
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
                 "print(f\"[WfBench] Starting Benchmark on {socket.gethostname()}\")\n" \
                 "\n" \
                 "print(\"[WfBench] Starting IO Read Benchmark...\")\n" \
-                "for file in [%s]:\n" \
-                "    with open(this_dir.joinpath(file), \"rb\") as fp:\n" \
-                "        print(f\"[WfBench]   Reading '{file}'\")\n" \
+                "files_list = \"%s\"\n" \
+                "if \"__\" not in files_list:\n" \
+                "    with open(this_dir.joinpath(files_list), \"rb\") as fp:\n" \
+                "        print(f\"[WfBench]   Reading '{files_list}'\")\n" \
                 "        fp.readlines()\n" \
+                "else:\n" \
+                "    files = files_list.split(\", \")\n" \
+                "    for file in files:\n" \
+                "        counter = 0\n" \
+                "        fd = file.split(\"__\")\n" \
+                "        for f in this_dir.glob(f\"{fd[0]}_*_output.txt\"):\n" \
+                "            if counter >= int(fd[1]):\n" \
+                "                break\n" \
+                "            with open(f, \"rb\") as fp:\n" \
+                "                print(f\"[WfBench]   Reading '{f}'\")\n" \
+                "                fp.readlines()\n" \
+                "            counter += 1\n" \
                 "print(\"[WfBench] Completed IO Read Benchmark\")\n" \
                 "\n" \
                 "print(\"[WfBench] Starting CPU and Memory Benchmarks...\")\n" \
                 "cpu_threads=int(10 * %f)\n" \
                 "mem_threads=10 - cpu_threads\n" \
                 "cpu_work=int(%i)\n" \
-                "total_mem_bytes = 50.0 / os.cpu_count()\n" \
+                "total_mem_bytes = 0.05\n" \
                 "cpu_work_per_thread = int(cpu_work / cpu_threads)\n" \
                 "\n" \
                 "cpu_procs = []\n" \
@@ -112,6 +125,7 @@ class SwiftTTranslator(Translator):
                 "    fp.write(os.urandom(int(%i)))\n" \
                 "\n" \
                 "print(\"[WfBench] Benchmark completed!\")\n" \
+                "dep = \"%s\"\n" \
                 "\"\"\";\n\n"
 
         # defining input files
@@ -123,7 +137,7 @@ class SwiftTTranslator(Translator):
             out_count = 0
             for file in task.files:
                 if file.link == FileLink.INPUT:
-                    self.script += f"root_in_files[{in_count}] = \"'{file.name}'\";\n"
+                    self.script += f"root_in_files[{in_count}] = \"{file.name}\";\n"
                     self.files_map[file.name] = f"ins[{in_count}]"
                     in_count += 1
 
@@ -180,7 +194,9 @@ class SwiftTTranslator(Translator):
         :type category: str
         """
         num_tasks = 0
-        defined = False
+        input_files_cat = {}
+        parsed_input_files = []
+        # defined = False
         self.script += f"string {category}_out[];\n"
 
         for task_name in self.tasks:
@@ -196,52 +212,76 @@ class SwiftTTranslator(Translator):
                         out_file = file.name
                         file_size = file.size
                     elif file.link == FileLink.INPUT:
+                        cat_prefix = self.files_map[file.name].split("_out")[0]
+                        if file.name not in parsed_input_files:
+                            input_files_cat.setdefault(cat_prefix, 0)
+                            input_files_cat[cat_prefix] += 1
+                            parsed_input_files.append(file.name)
                         input_files.append(self.files_map[file.name])
                         if not prefix:
-                           prefix = self.files_map[file.name].split("_out")[0]
+                           prefix = cat_prefix
 
                 # arguments
                 args = ""
                 if len(input_files) > 0:
+                    # print(f"{task.name}: {len(self._find_parents(task.name))}")
                     if prefix.startswith("ins["):
                         args += "root_in_files[i], "
-                    elif len(self._find_parents(task.name)) == 1:
-                        args += f"{prefix}_out[0], "
+                    # elif len(self._find_parents(task.name)) == 1:
+                    #     args += f"{prefix}_out[0], "
                     else:
-                        if not defined:
-                            self.script += f"string {category}_in[];\n"
-                            defined = True
+                        args += f"{category}_in, "
+                    #     if not defined:
+                    #         self.script += f"string {category}_in;\n"
+                    #         defined = True
                         
-                        # break input files into several strings
-                        start = 0
-                        end = 50 if len(input_files) > 50 else len(input_files)
-                        count = 0
-                        counter = 0
-                        while count < len(input_files):
-                            in_format = ", ".join("%s" for f in input_files[start:end])
-                            in_args = ", ".join(f for f in input_files[start:end])
-                            self.script += f"string {category}_inf_{counter} = sprintf(\"{in_format}\", {in_args});\n"
+                    #     # break input files into several strings
+                    #     concat_limit = 50
+                    #     start = 0
+                    #     end = concat_limit if len(input_files) > concat_limit else len(input_files)
+                    #     count = 0
+                    #     counter = 0
+                    #     while count < len(input_files):
+                    #         in_format = ", ".join("%s" for f in input_files[start:end])
+                    #         in_args = ", ".join(f for f in input_files[start:end])
+                    #         self.script += f"string {category}_inf_{counter} = sprintf(\"{in_format}\", {in_args});\n"
+
+                    #         # in_args = " + \", \" + ".join(f for f in input_files[start:end])
+                    #         # self.script += f"string {category}_inf_{counter} = {in_args};\n"
                             
-                            count = end
-                            end = end + (50 if len(input_files) > end + 50 else len(input_files))
-                            start = count
-                            counter += 1
+                    #         count = end
+                    #         end = end + (concat_limit if len(input_files) > end + concat_limit else len(input_files))
+                    #         start = count
+                    #         counter += 1
                         
-                        args += f"{category}_in[i], "
-                        in_args = " + \", \" + ".join(f"{category}_inf_{c}" for c in range(0, counter))
-                        self.script += f"{category}_inf = {in_args};\n"
-                        self.script += f"{category}_in[{num_tasks}] = {category}_inf;\n"
+                    #     # in_args = " + \", \" + ".join(f for f in input_files)
+                    #     # self.script += f"string {category}_inf = {in_args};\n"
+                        
+                    #     args += f"{category}_in, "
+                    #     in_args = " + \", \" + ".join(f"{category}_inf_{c}" for c in range(0, counter))
+                    #     self.script += f"{category}_inf = {in_args};\n"
+                    #     self.script += f"{category}_in[{num_tasks}] = {category}_inf;\n"
 
                 args += ", ".join([a.split()[1] for a in task.args[1:3]])
-                args += f", of"
+                args += f", of, {file_size}"
 
                 self.files_map[out_file] = f"{category}_out[{num_tasks}]"
                 num_tasks += 1
 
+        cats = " + \", \" + ".join(f"{cat}_out" for cat in input_files_cat)
+        cats = f"repr({cats})"
+        in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
+        if "ins[" in cats:
+            cats = "\"\""
+            in_str = ""
+        self.script += f"string dep_{self.cmd_counter} = {cats};\n"
+        args += f", dep_{self.cmd_counter}"
+        self.script += f"string {category}_in = \"{in_str}\";\n"
+
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, {args}, {file_size});\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"'{category}_%i_output.txt%s'\", i, co_{self.cmd_counter});\n" \
                 f"  {category}_out[i] = of_{self.cmd_counter};\n" \
@@ -249,7 +289,7 @@ class SwiftTTranslator(Translator):
         else:
             args = args.replace(
                 ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, {args}, {file_size});\n" \
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, {args});\n" \
                 f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"'{category}_0_output.txt%s'\", co_{self.cmd_counter});\n" \
                 f"{category}_out[0] = of_{self.cmd_counter};\n\n"
