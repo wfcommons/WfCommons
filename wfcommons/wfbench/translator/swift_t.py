@@ -211,11 +211,26 @@ class SwiftTTranslator(Translator):
                         if not defined:
                             self.script += f"string {category}_in[];\n"
                             defined = True
-                        in_format = ", ".join("%s" for f in input_files)
-                        in_args = ", ".join(f for f in input_files)
-                        self.script += f"string {category}_inf_{num_tasks} = sprintf(\"{in_format}\", {in_args}); "
-                        self.script += f"{category}_in[{num_tasks}] = {category}_inf_{num_tasks};\n"
+                        
+                        # break input files into several strings
+                        start = 0
+                        end = 50 if len(input_files) > 50 else len(input_files)
+                        count = 0
+                        counter = 0
+                        while count < len(input_files):
+                            in_format = ", ".join("%s" for f in input_files[start:end])
+                            in_args = ", ".join(f for f in input_files[start:end])
+                            self.script += f"string {category}_inf_{counter} = sprintf(\"{in_format}\", {in_args});\n"
+                            
+                            count = end
+                            end = end + (50 if len(input_files) > end + 50 else len(input_files))
+                            start = count
+                            counter += 1
+                        
                         args += f"{category}_in[i], "
+                        in_args = " + \", \" + ".join(f"{category}_inf_{c}" for c in range(0, counter))
+                        self.script += f"{category}_inf = {in_args};\n"
+                        self.script += f"{category}_in[{num_tasks}] = {category}_inf;\n"
 
                 args += ", ".join([a.split()[1] for a in task.args[1:3]])
                 args += f", of"
