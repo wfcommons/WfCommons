@@ -127,7 +127,7 @@ class PegasusTranslator(Translator):
                 self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.category]}')\n"
 
             # find children
-            children = self._find_children(task_name)
+            children = self.task_children[task_name]
 
             # output file
             for file in task.files:
