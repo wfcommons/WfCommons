@@ -1,4 +1,3 @@
-
 tasks:
   - name: Install
     init: |
@@ -8,7 +7,6 @@ tasks:
       sudo apt-get install -y graphviz libgraphviz-dev 
       pip install --upgrade pip
       pip install -e .
-
 
 vscode:
   extensions:
