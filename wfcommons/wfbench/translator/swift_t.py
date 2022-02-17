@@ -174,10 +174,17 @@ class SwiftTTranslator(Translator):
         :param parent_task: name of the parent task
         :type parent_task: Optional[str]
         """
+        task = self.tasks[task_name]
+        if task.category in self.categories_list:
+            return
+
         # check dependencies
         for parent in self.task_parents[task_name]:
-            if parent not in self.parsed_tasks:
+            parent_task = self.tasks[parent]
+            if parent_task.category not in self.categories_list:
                 return
+            # if parent not in self.parsed_tasks:
+            #     return
 
         self.parsed_tasks.append(task_name)
         category = self.tasks_map[task_name]
