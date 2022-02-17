@@ -63,6 +63,7 @@ class SwiftTTranslator(Translator):
         :param output_file_name: The name of the output file (e.g., workflow.swift).
         :type output_file_name: pathlib.Path
         """
+        self.logger.info("Translating workflow into Swift/T")
         self.script += "string command = \n" \
                 "\"\"\"\n" \
                 "import json\n" \
@@ -129,6 +130,7 @@ class SwiftTTranslator(Translator):
                 "\"\"\";\n\n"
 
         # defining input files
+        self.logger.debug("Defining input files")
         in_count = 0
         self.script += f"string root_in_files[];\n"
 
@@ -152,9 +154,11 @@ class SwiftTTranslator(Translator):
         self.script += "\n"
 
         # adding tasks
+        self.logger.debug("Finding categories list")
         for task_name in self.root_task_names:
             self._find_categories_list(task_name)
 
+        self.logger.debug("Adding tasks")
         for category in self.categories_list:
             self._add_tasks(category)
 
@@ -171,7 +175,7 @@ class SwiftTTranslator(Translator):
         :type parent_task: Optional[str]
         """
         # check dependencies
-        for parent in self._find_parents(task_name):
+        for parent in self.task_parents[task_name]:
             if parent not in self.parsed_tasks:
                 return
 
@@ -181,7 +185,7 @@ class SwiftTTranslator(Translator):
             self.categories_list.append(category)
 
         # find children
-        children = self._find_children(task_name)
+        children = self.task_children[task_name]
 
         for child_task_name in children:
             self._find_categories_list(child_task_name)
@@ -224,7 +228,6 @@ class SwiftTTranslator(Translator):
                 # arguments
                 args = ""
                 if len(input_files) > 0:
-                    # print(f"{task.name}: {len(self._find_parents(task.name))}")
                     if prefix.startswith("ins["):
                         args += "root_in_files[i], "
                     # elif len(self._find_parents(task.name)) == 1:

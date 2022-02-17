@@ -41,11 +41,26 @@ class Translator(ABC):
         for node in self.instance.workflow.nodes.data():
             self.tasks[node[0]] = node[1]["task"]
 
-        # find parent tasks
+        # find root, parents, and children tasks
         self.root_task_names = []
+        self.task_parents = {}
+        self.task_children = {}
         for node in self.instance.instance["workflow"]["tasks"]:
-            if len(node["parents"]) == 0 and node["name"] not in self.root_task_names:
-                self.root_task_names.append(node["name"])
+            if len(node["parents"]) == 0:
+                if node["name"] not in self.root_task_names:
+                    self.root_task_names.append(node["name"])
+                    self.task_parents.setdefault(node['name'], [])
+            else:
+                for parent in node["parents"]:
+                    self.task_parents.setdefault(node['name'], [])
+                    self.task_parents[node['name']].append(parent)
+            
+            if len(node["children"]) == 0:
+                self.task_children.setdefault(node['name'], [])
+            else:
+                for child in node["children"]:
+                    self.task_children.setdefault(node['name'], [])
+                    self.task_children[node['name']].append(child)
 
     @abstractmethod
     def translate(self, output_file_name: pathlib.Path) -> None:
@@ -100,6 +115,7 @@ class Translator(ABC):
         :return: List of task's parents.
         :rtype: List[Task]
         """
+        self.logger.debug(f"Finding parents for task '{task_name}'")
         parents = None
         for node in self.instance.instance["workflow"]["tasks"]:
             if node["name"] == task_name:
