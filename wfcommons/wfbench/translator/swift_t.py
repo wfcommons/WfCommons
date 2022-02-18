@@ -71,6 +71,7 @@ class SwiftTTranslator(Translator):
                 "import pathlib\n" \
                 "import socket\n" \
                 "import subprocess\n" \
+                "import time\n" \
                 "\n" \
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
@@ -80,20 +81,28 @@ class SwiftTTranslator(Translator):
                 "files_list = \"%s\"\n" \
                 "if \"__\" not in files_list:\n" \
                 "    with open(this_dir.joinpath(files_list), \"rb\") as fp:\n" \
+                "        start = time.perf_counter()\n" \
                 "        print(f\"[WfBench]   Reading '{files_list}'\")\n" \
                 "        fp.readlines()\n" \
+                "        end = time.perf_counter()\n" \
+                "        print(f\"[WfBench] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(files_list).stat().st_size}\")\n" \
                 "else:\n" \
                 "    files = files_list.split(\", \")\n" \
                 "    for file in files:\n" \
                 "        counter = 0\n" \
                 "        fd = file.split(\"__\")\n" \
+                "        start = time.perf_counter()\n" \
+                "        file_size = 0\n" \
                 "        for f in this_dir.glob(f\"{fd[0]}_*_output.txt\"):\n" \
                 "            if counter >= int(fd[1]):\n" \
                 "                break\n" \
+                "            file_size += os.stat(f).st_size\n" \
                 "            with open(f, \"rb\") as fp:\n" \
                 "                print(f\"[WfBench]   Reading '{f}'\")\n" \
                 "                fp.readlines()\n" \
                 "            counter += 1\n" \
+                "        end = time.perf_counter()\n" \
+                "        print(f\"[WfBench] Metrics (read) [time,size]: {end - start},{file_size}\")\n" \
                 "print(\"[WfBench] Completed IO Read Benchmark\")\n" \
                 "\n" \
                 "print(\"[WfBench] Starting CPU and Memory Benchmarks...\")\n" \
@@ -109,6 +118,7 @@ class SwiftTTranslator(Translator):
                 f"mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
                 "            \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
                 "\n" \
+                "start = time.perf_counter()\n" \
                 "for i in range(cpu_threads):\n" \
                 "    cpu_proc = subprocess.Popen(cpu_prog)\n" \
                 "    cpu_procs.append(cpu_proc)\n" \
@@ -119,11 +129,17 @@ class SwiftTTranslator(Translator):
                 "    proc.wait()\n" \
                 "mem_kill = subprocess.Popen([\"killall\", \"stress-ng\"])\n" \
                 "mem_kill.wait()\n" \
+                "end = time.perf_counter()\n" \
+                "print(f\"[WfBench] Metrics (compute) [time,work]: {end - start},{cpu_work}\")\n" \
                 "print(\"[WfBench] Completed CPU and Memory Benchmarks\")\n" \
                 "\n" \
                 "print(f\"[WfBench] Writing output file\")\n" \
+                "start = time.perf_counter()\n" \
                 "with open(this_dir.joinpath(\"%s\"), \"wb\") as fp:\n" \
-                "    fp.write(os.urandom(int(%i)))\n" \
+                "    file_size = int(%i)\n" \
+                "    fp.write(os.urandom(file_size))\n" \
+                "end = time.perf_counter()\n" \
+                "print(f\"[WfBench] Metrics (write) [time,size]: {end - start},{file_size}\")\n" \
                 "\n" \
                 "print(\"[WfBench] Benchmark completed!\")\n" \
                 "dep = \"%s\"\n" \
