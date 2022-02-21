@@ -142,7 +142,7 @@ class SwiftTTranslator(Translator):
                 "end = time.perf_counter()\n" \
                 "print(f\"[WfBench] [{task_name}] Metrics (write) [time,size]: {end - start},{file_size}\")\n" \
                 "\n" \
-                "print(f\"[WfBench] [{task_name}] Benchmark completed!\")\n\n" \
+                "print(f\"[WfBench] [{task_name}] Benchmark completed!\\n\")\n" \
                 "dep = \"%s\"\n" \
                 "\"\"\";\n\n"
 
