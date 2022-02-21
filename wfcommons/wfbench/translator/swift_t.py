@@ -123,7 +123,7 @@ class SwiftTTranslator(Translator):
                 "    cpu_proc = subprocess.Popen(cpu_prog)\n" \
                 "    cpu_procs.append(cpu_proc)\n" \
                 "\n" \
-                "mem_proc = subprocess.Popen(mem_prog)\n" \
+                "mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
                 "\n" \
                 "for proc in cpu_procs:\n" \
                 "    proc.wait()\n" \
@@ -199,8 +199,6 @@ class SwiftTTranslator(Translator):
             parent_task = self.tasks[parent]
             if parent_task.category not in self.categories_list:
                 return
-            # if parent not in self.parsed_tasks:
-            #     return
 
         self.parsed_tasks.append(task_name)
         category = self.tasks_map[task_name]
@@ -223,7 +221,6 @@ class SwiftTTranslator(Translator):
         num_tasks = 0
         input_files_cat = {}
         parsed_input_files = []
-        # defined = False
         self.script += f"string {category}_out[];\n"
 
         for task_name in self.tasks:
@@ -254,40 +251,8 @@ class SwiftTTranslator(Translator):
                     if len(input_files) > 0:
                         if prefix.startswith("ins["):
                             args += "root_in_files[i], "
-                        # elif len(self._find_parents(task.name)) == 1:
-                        #     args += f"{prefix}_out[0], "
                         else:
                             args += f"{category}_in, "
-                        #     if not defined:
-                        #         self.script += f"string {category}_in;\n"
-                        #         defined = True
-                            
-                        #     # break input files into several strings
-                        #     concat_limit = 50
-                        #     start = 0
-                        #     end = concat_limit if len(input_files) > concat_limit else len(input_files)
-                        #     count = 0
-                        #     counter = 0
-                        #     while count < len(input_files):
-                        #         in_format = ", ".join("%s" for f in input_files[start:end])
-                        #         in_args = ", ".join(f for f in input_files[start:end])
-                        #         self.script += f"string {category}_inf_{counter} = sprintf(\"{in_format}\", {in_args});\n"
-
-                        #         # in_args = " + \", \" + ".join(f for f in input_files[start:end])
-                        #         # self.script += f"string {category}_inf_{counter} = {in_args};\n"
-                                
-                        #         count = end
-                        #         end = end + (concat_limit if len(input_files) > end + concat_limit else len(input_files))
-                        #         start = count
-                        #         counter += 1
-                            
-                        #     # in_args = " + \", \" + ".join(f for f in input_files)
-                        #     # self.script += f"string {category}_inf = {in_args};\n"
-                            
-                        #     args += f"{category}_in, "
-                        #     in_args = " + \", \" + ".join(f"{category}_inf_{c}" for c in range(0, counter))
-                        #     self.script += f"{category}_inf = {in_args};\n"
-                        #     self.script += f"{category}_in[{num_tasks}] = {category}_inf;\n"
 
                     args += ", ".join([a.split()[1] for a in task.args[1:3]])
                     args += f", of, {file_size}"
