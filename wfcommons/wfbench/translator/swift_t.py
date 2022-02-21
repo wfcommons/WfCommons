@@ -261,8 +261,7 @@ class SwiftTTranslator(Translator):
                 self.files_map[out_file] = f"{category}_out[{num_tasks}]"
                 num_tasks += 1
 
-        cats = " + \", \" + ".join(f"{cat}_out" for cat in input_files_cat)
-        cats = f"repr({cats})"
+        cats = " + \", \" + ".join(f"repr({cat}_out)" for cat in input_files_cat)
         in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "\"\""
