@@ -75,9 +75,10 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
-                "print(f\"[WfBench] Starting Benchmark on {socket.gethostname()}\")\n" \
+                "task_name = \"%s\"\n" \
+                "print(f\"[WfBench] [{task_name}] Starting Benchmark on {socket.gethostname()}\")\n" \
                 "\n" \
-                "print(\"[WfBench] Starting IO Read Benchmark...\")\n" \
+                "print(f\"[WfBench] [{task_name}] Starting IO Read Benchmark...\")\n" \
                 "files_list = \"%s\"\n" \
                 "if \"__\" not in files_list:\n" \
                 "    with open(this_dir.joinpath(files_list), \"rb\") as fp:\n" \
@@ -85,7 +86,7 @@ class SwiftTTranslator(Translator):
                 "        print(f\"[WfBench]   Reading '{files_list}'\")\n" \
                 "        fp.readlines()\n" \
                 "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(files_list).stat().st_size}\")\n" \
+                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(files_list).stat().st_size}\")\n" \
                 "else:\n" \
                 "    files = files_list.split(\", \")\n" \
                 "    for file in files:\n" \
@@ -102,10 +103,10 @@ class SwiftTTranslator(Translator):
                 "                fp.readlines()\n" \
                 "            counter += 1\n" \
                 "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] Metrics (read) [time,size]: {end - start},{file_size}\")\n" \
-                "print(\"[WfBench] Completed IO Read Benchmark\")\n" \
+                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{file_size}\")\n" \
+                "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\")\n" \
                 "\n" \
-                "print(\"[WfBench] Starting CPU and Memory Benchmarks...\")\n" \
+                "print(f\"[WfBench] [{task_name}] Starting CPU and Memory Benchmarks...\")\n" \
                 "cpu_threads=int(10 * %f)\n" \
                 "mem_threads=10 - cpu_threads\n" \
                 "cpu_work=int(%i)\n" \
@@ -130,18 +131,18 @@ class SwiftTTranslator(Translator):
                 "mem_kill = subprocess.Popen([\"killall\", \"stress-ng\"])\n" \
                 "mem_kill.wait()\n" \
                 "end = time.perf_counter()\n" \
-                "print(f\"[WfBench] Metrics (compute) [time,work]: {end - start},{cpu_work}\")\n" \
-                "print(\"[WfBench] Completed CPU and Memory Benchmarks\")\n" \
+                "print(f\"[WfBench] [{task_name}] Metrics (compute) [time,work]: {end - start},{cpu_work}\")\n" \
+                "print(f\"[WfBench] [{task_name}] Completed CPU and Memory Benchmarks\")\n" \
                 "\n" \
-                "print(f\"[WfBench] Writing output file\")\n" \
+                "print(f\"[WfBench] [{task_name}] Writing output file\")\n" \
                 "start = time.perf_counter()\n" \
                 "with open(this_dir.joinpath(\"%s\"), \"wb\") as fp:\n" \
                 "    file_size = int(%i)\n" \
                 "    fp.write(os.urandom(file_size))\n" \
                 "end = time.perf_counter()\n" \
-                "print(f\"[WfBench] Metrics (write) [time,size]: {end - start},{file_size}\")\n" \
+                "print(f\"[WfBench] [{task_name}] Metrics (write) [time,size]: {end - start},{file_size}\")\n" \
                 "\n" \
-                "print(\"[WfBench] Benchmark completed!\")\n" \
+                "print(f\"[WfBench] [{task_name}] Benchmark completed!\")\n\n" \
                 "dep = \"%s\"\n" \
                 "\"\"\";\n\n"
 
@@ -273,7 +274,7 @@ class SwiftTTranslator(Translator):
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, {args});\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"'{category}_%i_output.txt%s'\", i, co_{self.cmd_counter});\n" \
                 f"  {category}_out[i] = of_{self.cmd_counter};\n" \
@@ -281,7 +282,7 @@ class SwiftTTranslator(Translator):
         else:
             args = args.replace(
                 ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, {args});\n" \
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"'{category}_0_output.txt%s'\", co_{self.cmd_counter});\n" \
                 f"{category}_out[0] = of_{self.cmd_counter};\n\n"
