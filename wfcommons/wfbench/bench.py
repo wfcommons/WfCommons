@@ -30,7 +30,7 @@ from ..wfgen import WorkflowGenerator
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 class WorkflowBenchmark:
@@ -53,6 +53,7 @@ class WorkflowBenchmark:
             __name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
+        self.workflow = None
 
     def create_benchmark_from_input_file(self,
                                          save_dir: pathlib.Path,
@@ -78,19 +79,22 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
                          data: Optional[Union[int, Dict[str, str]]] = None,
-                         lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+                         lock_files_folder: Optional[pathlib.Path] = None,
+                         regenerate: Optional[bool] = True) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
         :type save_dir: pathlib.Path
         :param percent_cpu: The percentage of CPU threads.
-        :type percent_cpu: float
+        :type percent_cpu: Union[float, Dict[str, float]]
         :param cpu_work: CPU work per workflow task.
-        :type cpu_work: int
+        :type cpu_work: Union[int, Dict[str, int]]
         :param data: Dictionary of input size files per workflow task type or total workflow data footprint (in MB).
         :type data: Optional[Union[int, Dict[str, str]]]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
+        :param regenerate: Whether to regenerate the workflow tasks
+        :type regenerate: Optional[bool]
 
         :return: The path to the workflow benchmark JSON instance.
         :rtype: pathlib.Path
@@ -98,14 +102,16 @@ class WorkflowBenchmark:
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
 
-        self.logger.debug("Generating workflow")
-        generator = WorkflowGenerator(
-            self.recipe.from_num_tasks(self.num_tasks))
-        workflow = generator.build_workflow()
-        name = f"{workflow.name.split('-')[0]}-Benchmark"
+        if not self.workflow or regenerate:
+            self.logger.debug("Generating workflow")
+            generator = WorkflowGenerator(
+                self.recipe.from_num_tasks(self.num_tasks))
+            self.workflow = generator.build_workflow()
+        
+        name = f"{self.workflow.name.split('-')[0]}-Benchmark"
         workflow_savepath = save_dir.joinpath(
             f"{name.lower()}-{self.num_tasks}").with_suffix(".json")
-        workflow.write_json(workflow_savepath)
+        self.workflow.write_json(workflow_savepath)
         wf = json.loads(workflow_savepath.read_text())
 
         # Creating the lock files
@@ -175,7 +181,7 @@ class WorkflowBenchmark:
             file_size = round(data * 1000000 / num_total_files)  # MB to B
             self.logger.debug(
                 f"Every input/output file is of size: {file_size}")
-            
+
             for task in wf["workflow"]["tasks"]:
                 output = {f"{task['name']}_output.txt": file_size}
                 task["command"]["arguments"].extend([
@@ -212,12 +218,13 @@ class WorkflowBenchmark:
         """
         for task in wf["workflow"]["tasks"]:
             if not task["parents"]:
-                file_size = data[task["category"]] if isinstance(data, Dict) else data
+                file_size = data[task["category"]] if isinstance(
+                    data, Dict) else data
                 file = str(save_dir.joinpath(f"{task['name']}_input.txt"))
                 with open(file, 'wb') as fp:
                     fp.write(os.urandom(int(file_size)))
                 self.logger.debug(f"Created file: {file}")
-    
+
     def generate_input_file(self, path: pathlib.Path) -> None:
         """
         """
@@ -413,12 +420,12 @@ def add_input_to_json(wf: Dict[str, Dict], output_files: Dict[str, Dict[str, str
             elif isinstance(data, int):
                 for parent in task["parents"]:
                     task["files"].append(
-                            {
-                                "link": "input",
-                                "name": f"{parent}_output.txt",
-                                "size": data
-                            }
-                        )
+                        {
+                            "link": "input",
+                            "name": f"{parent}_output.txt",
+                            "size": data
+                        }
+                    )
                     inputs.append(f"{parent}_output.txt")
 
         task["command"]["arguments"].extend(inputs)
@@ -447,8 +454,7 @@ def calculate_input_files(wf: Dict[str, Dict]):
     return tasks_need_input, total_num_files
 
 
-
-def output_files(wf: Dict[str, Dict], data: Dict[str, str])-> Dict[str, Dict[str, int]]:
+def output_files(wf: Dict[str, Dict], data: Dict[str, str]) -> Dict[str, Dict[str, int]]:
     """
     Calculate, for each task, total number of output files needed.
     This method is used when the user is specifying the input file sizes.
@@ -468,11 +474,13 @@ def output_files(wf: Dict[str, Dict], data: Dict[str, str])-> Dict[str, Dict[str
     for task in wf["workflow"]["tasks"]:
         output_files.setdefault(task["name"], {})
         if not task["children"]:
-            output_files[task["name"]][task["name"]] = int(data[task["category"]])
+            output_files[task["name"]][task["name"]] = int(
+                data[task["category"]])
         else:
             for child_name in task["children"]:
                 child = tasks[child_name]
                 # output_files.setdefault(task["name"], {})
-                output_files[task["name"]][child["name"]] = int(data[child["category"]])
+                output_files[task["name"]][child["name"]] = int(
+                    data[child["category"]])
 
     return output_files
