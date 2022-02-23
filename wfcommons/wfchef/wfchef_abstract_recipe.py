@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,9 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
-        return json.loads(self.this_dir.joinpath("task_type_stats.json").read_text())
+        if not self.workflow_recipe:
+            self.workflow_recipe = json.loads(self.this_dir.joinpath("task_type_stats.json").read_text())
+        return self.workflow_recipe
 
     @classmethod
     def from_num_tasks(cls,

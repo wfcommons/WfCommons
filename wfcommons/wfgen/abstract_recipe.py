@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,6 +65,7 @@ class WorkflowRecipe(ABC):
         self.runtime_factor: Optional[float] = runtime_factor
         self.input_file_size_factor: Optional[float] = input_file_size_factor
         self.output_file_size_factor: Optional[float] = output_file_size_factor
+        self.workflow_recipe = None
         self.tasks_files: Dict[str, List[File]] = {}
         self.tasks_files_names: Dict[str, List[str]] = {}
         self.task_id_counter: int = 1
