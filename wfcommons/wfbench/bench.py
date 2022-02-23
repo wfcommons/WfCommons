@@ -30,7 +30,7 @@ from ..wfgen import WorkflowGenerator
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class WorkflowBenchmark:
