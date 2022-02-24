@@ -90,7 +90,7 @@ class PegasusLogsParser(LogsParser):
 
     def _parse_braindump(self):
         """Parse the Pegasus braindump.txt file"""
-        braindump_file = self.submit_dir.joinpath('/braindump.txt')
+        braindump_file = self.submit_dir / 'braindump.txt'
 
         if not braindump_file.exists():
             raise OSError(f'Unable to find braindump file: {braindump_file}')
@@ -168,9 +168,9 @@ class PegasusLogsParser(LogsParser):
 
     def _parse_dax(self):
         """Parse the DAX file."""
-        dax_list = self._fetch_all_files("dax", "")
+        dax_list = self._fetch_all_files("dax", "*")
         if len(dax_list) < 1:
-            dax_list = self._fetch_all_files("xml", "")
+            dax_list = self._fetch_all_files("xml", "*")
             if len(dax_list) < 1:
                 raise OSError('The directory contains no ".dax" or ".xml" file')
 
@@ -243,6 +243,8 @@ class PegasusLogsParser(LogsParser):
         :return: List of file names that match
         :rtype: List[pathlib.Path]
         """
+        if file_name == "":
+            self.logger.warning(f'Be careful _fetch_all_files will only match file with that exact name \'.{extension}\'')
         files: List[pathlib.Path] = []
         for path_object in self.submit_dir.glob(f'**/{file_name}.{extension}'):
             files.append(path_object)
@@ -250,7 +252,7 @@ class PegasusLogsParser(LogsParser):
 
     def _parse_dag(self):
         """Parse the DAG file."""
-        dags_list = self._fetch_all_files("dag", "")
+        dags_list = self._fetch_all_files("dag", "*")
         if len(dags_list) < 1:
             raise OSError('The directory contains no ".dag" file')
 
@@ -311,7 +313,8 @@ class PegasusLogsParser(LogsParser):
                     f.size = int(self.files_map[f.name])
 
         # parse workflow makespan
-        dagman_file = dag_file + '.dagman.out'
+        #TODO: can be replaced with .append_suffix('.dagman.out') in python 3.10
+        dagman_file = pathlib.Path(str(dag_file) + '.dagman.out')
         self.logger.debug('Processing Pegasus DAGMan output file.')
         with open(dagman_file) as f:
             lines = f.readlines()
