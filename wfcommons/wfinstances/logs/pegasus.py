@@ -11,6 +11,7 @@
 import json
 import pathlib
 import yaml
+import re
 import xml.etree.ElementTree
 
 from datetime import datetime
@@ -34,8 +35,6 @@ class PegasusLogsParser(LogsParser):
     :type description: Optional[str]
     :param ignore_auxiliary: Ignore auxiliary jobs.
     :type ignore_auxiliary: Optional[bool]
-    :param legacy: Whether the submit directory is from a Pegasus 4.x version.
-    :type legacy: Optional[bool]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Optional[Logger]
     """
@@ -44,7 +43,6 @@ class PegasusLogsParser(LogsParser):
                  submit_dir: pathlib.Path,
                  description: Optional[str] = None,
                  ignore_auxiliary: Optional[bool] = True,
-                 legacy: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the pegasus log parser."""
         super().__init__('Pegasus', 'https://pegasus.isi.edu', description, logger)
@@ -57,7 +55,6 @@ class PegasusLogsParser(LogsParser):
             self.logger.warning('Ignoring Pegasus auxiliary jobs.')
 
         self.submit_dir: pathlib.Path = submit_dir
-        self.legacy: Optional[bool] = legacy
         self.ignore_auxiliary: Optional[bool] = ignore_auxiliary
         self.files_map = {}
 
@@ -72,13 +69,12 @@ class PegasusLogsParser(LogsParser):
         :rtype: Workflow
         """
         self.workflow_name = workflow_name
+        # parse braindump file
+        self._parse_braindump()
 
         if self.legacy:
-            # parse braindump file
-            self._parse_braindump()
             # parse DAX file
             self._parse_dax()
-
         else:
             # parse workflow YAML
             self._parse_workflow()
@@ -91,22 +87,41 @@ class PegasusLogsParser(LogsParser):
     def _parse_braindump(self):
         """Parse the Pegasus braindump.txt file"""
         braindump_file = self.submit_dir / 'braindump.txt'
+        braindump_file_yml = self.submit_dir / 'braindump.yml'
 
-        if not braindump_file.exists():
-            raise OSError(f'Unable to find braindump file: {braindump_file}')
-
-        with open(braindump_file) as f:
-            for line in f:
-                if line.startswith('planner_version'):
-                    wms_version = line.split()[1]
-                elif line.startswith('pegasus_wf_name'):
-                    self.instance_name = line.split()[1]
-                elif line.startswith('timestamp'):
-                    executed_at = line.split()[1]
+        if braindump_file.exists():
+            with open(braindump_file) as f:
+                for line in f:
+                    if line.startswith('planner_version'):
+                        wms_version = line.split()[1]
+                    elif line.startswith('pegasus_wf_name'):
+                        self.instance_name = line.split()[1]
+                    elif line.startswith('timestamp'):
+                        executed_at = line.split()[1]
+        elif braindump_file_yml.exists():
+            with open(braindump_file_yml, "r") as f:
+                data = yaml.safe_load(f)
+                wms_version = data['planner_version']
+                self.instance_name = data['pegasus_wf_name']
+                executed_at = data['timestamp']
+        else:
+            raise OSError(f'Unable to find braindump files: {braindump_file} or {braindump_file_yml}')
 
         # sanity checks
         if not wms_version:
-            self.logger.warning('Unable to determine pegasus version.')
+            # if 'braindump.yml' exists it should be Pegasus 5.x 
+            self.legacy = braindump_file_yml.exists()
+            self.logger.warning('Unable to determine Pegasus version. Going with legacy={self.legacy}')
+        else:
+            # Remove anything that's not a number
+            try:
+                wms_version_number = int(re.sub("[^0-9]", "", wms_version))
+            except ValueError as e:
+                self.logger.warning(f'Unable to assess Pegasus version as a number. Going with legacy={self.legacy}')
+            else:
+                #if version is smaller than 5.0.0 we use the legacy version 
+                self.legacy = wms_version_number < 500
+
         if not self.instance_name:
             self.logger.warning('Unable to determine instance name from "pegasus_wf_name".')
         if not executed_at:
