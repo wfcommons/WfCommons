@@ -116,8 +116,3 @@ class: ::
     workflow_path = pathlib.Path('./pegasus-workflow.json')
     workflow.write_json(workflow_path)
 
-.. warning::
-    By default, the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
-    class assumes that the submit dir is from a Pegasus execution with **version 5.0**
-    or later. To enable parsing of Pegasus execution logs from version 4.9 or earlier,
-    the option :code:`legacy=True` should be used.
