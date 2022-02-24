@@ -11,10 +11,10 @@
 import pathlib
 
 from logging import Logger
-from typing import Optional
+from typing import Optional, Union
 
 from .abstract_translator import Translator
-from ...common.file import FileLink
+from ...common import FileLink, Workflow
 
 
 class SwiftTTranslator(Translator):
@@ -32,12 +32,12 @@ class SwiftTTranslator(Translator):
     """
 
     def __init__(self,
-                 workflow_json_file_path: pathlib.Path,
+                 workflow: Union[Workflow, pathlib.Path],
                  work_dir: pathlib.Path,
                  stress_path: pathlib.Path = pathlib.Path("stress-ng"),
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
-        super().__init__(workflow_json_file_path, logger)
+        super().__init__(workflow, logger)
 
         self.work_dir = work_dir
         self.stress_path = stress_path
@@ -56,12 +56,12 @@ class SwiftTTranslator(Translator):
             if task.category not in self.apps:
                 self.apps.append(task.category)
 
-    def translate(self, output_file_name: pathlib.Path) -> None:
+    def translate(self, output_file_path: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Swift/T workflow application.
 
-        :param output_file_name: The name of the output file (e.g., workflow.swift).
-        :type output_file_name: pathlib.Path
+        :param output_file_path: The path of the output file (e.g., workflow.swift).
+        :type output_file_path: pathlib.Path
         """
         self.logger.info("Translating workflow into Swift/T")
         self.script += "string command = \n" \
@@ -180,7 +180,7 @@ class SwiftTTranslator(Translator):
             self._add_tasks(category)
 
         # write script to file
-        self._write_output_file(self.script, output_file_name)
+        self._write_output_file(self.script, output_file_path)
 
     def _find_categories_list(self, task_name: str, parent_task: Optional[str] = None) -> None:
         """"

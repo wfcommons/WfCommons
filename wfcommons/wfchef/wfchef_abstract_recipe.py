@@ -184,7 +184,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
             node_type = graph.nodes[node]["type"]
             task_name = self._generate_task_name(node_type)
             task = self._generate_task(node_type, task_name)
-            workflow.add_node(task_name, task=task)
+            workflow.add_task(task)
 
             task_names[node] = task_name
 
@@ -192,7 +192,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         for (src, dst) in graph.edges:
             if src in ["SRC", "DST"] or dst in ["SRC", "DST"]:
                 continue
-            workflow.add_edge(task_names[src], task_names[dst])
+            workflow.add_dependency(task_names[src], task_names[dst])
 
             if task_names[src] not in self.tasks_children:
                 self.tasks_children[task_names[src]] = []

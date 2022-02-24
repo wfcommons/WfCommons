@@ -12,9 +12,9 @@ import logging
 import pathlib
 
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Dict, List, Optional, Union
 
-from ...common.task import Task
+from ...common import Task, Workflow
 from ...wfinstances.instance import Instance
 
 
@@ -22,71 +22,72 @@ class Translator(ABC):
     """
     An abstract class of WfFormat parser for creating workflow benchmark applications.
 
-    :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
-    :type workflow_json_file_path: pathlib.Path
+    :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
+    :type workflow: Union[Workflow, pathlib.Path]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: logging.Logger
     """
 
     def __init__(self,
-                 workflow_json_file_path: pathlib.Path,
+                 workflow: Union[Workflow, pathlib.Path],
                  logger: Optional[logging.Logger] = None) -> None:
         """Create an object of the translator."""
         self.logger = logging.getLogger(__name__) if logger is None else logger
-        self.workflow_json_file_path = workflow_json_file_path
-        self.instance = Instance(workflow_json_file_path, logger=logger)
+        
+        if isinstance(workflow, Workflow):
+            self.workflow = workflow
+        else:
+            instance = Instance(workflow, logger=logger)
+            self.workflow = instance.workflow
 
         # find all tasks
         self.tasks = {}
-        for node in self.instance.workflow.nodes.data():
-            self.tasks[node[0]] = node[1]["task"]
+        for task in self.workflow.nodes.data():
+            self.tasks[task[0]] = task[1]["task"]
 
         # find root, parents, and children tasks
         self.root_task_names = []
         self.task_parents = {}
         self.task_children = {}
-        for node in self.instance.instance["workflow"]["tasks"]:
-            if len(node["parents"]) == 0:
-                if node["name"] not in self.root_task_names:
-                    self.root_task_names.append(node["name"])
-                    self.task_parents.setdefault(node['name'], [])
+        for task in self.workflow.workflow_json["workflow"]["tasks"]:
+            if len(task["parents"]) == 0:
+                if task["name"] not in self.root_task_names:
+                    self.root_task_names.append(task["name"])
+                    self.task_parents.setdefault(task['name'], [])
             else:
-                for parent in node["parents"]:
-                    self.task_parents.setdefault(node['name'], [])
-                    self.task_parents[node['name']].append(parent)
+                for parent in task["parents"]:
+                    self.task_parents.setdefault(task['name'], [])
+                    self.task_parents[task['name']].append(parent)
             
-            if len(node["children"]) == 0:
-                self.task_children.setdefault(node['name'], [])
+            if len(task["children"]) == 0:
+                self.task_children.setdefault(task['name'], [])
             else:
-                for child in node["children"]:
-                    self.task_children.setdefault(node['name'], [])
-                    self.task_children[node['name']].append(child)
+                for child in task["children"]:
+                    self.task_children.setdefault(task['name'], [])
+                    self.task_children[task['name']].append(child)
 
     @abstractmethod
-    def translate(self, output_file_name: pathlib.Path) -> None:
+    def translate(self, output_file_path: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into an actual workflow application.
 
-        :param output_file_name: The name of the output file.
-        :type output_file_name: pathlib.Path
+        :param output_file_path: The path of the output file.
+        :type output_file_path: pathlib.Path
         """
 
-    def _write_output_file(self, contents: str, output_file_name: pathlib.Path) -> None:
+    def _write_output_file(self, contents: str, output_file_path: pathlib.Path) -> None:
         """
         Write the translated content to a file.
 
         :param contents: Contents to be written to the output file.
         :type contents: str
-        :param output_file_name: The name of the output file.
-        :type output_file_name: pathlib.Path
+        :param output_file_path: The path of the output file.
+        :type output_file_path: pathlib.Path
         """
         # file will be written to the same folder as for the original JSON instance.
-        out_file = self.workflow_json_file_path.parent.joinpath(
-            output_file_name)
-
-        with open(out_file, "w") as out:
+        with open(output_file_path, "w") as out:
             out.write(contents)
-        self.logger.info(f"Translated content written to '{out_file}'")
+        self.logger.info(f"Translated content written to '{output_file_path}'")
 
     def _find_children(self, task_name: str) -> List[Task]:
         """

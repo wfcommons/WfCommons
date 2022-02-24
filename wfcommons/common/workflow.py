@@ -63,10 +63,39 @@ class Workflow(nx.DiGraph):
         self.executed_at: Optional[str] = datetime.now().astimezone().strftime(
             "%Y%m%dT%H%M%S%z") if not executed_at else executed_at
         self.makespan: Optional[int] = makespan
+        self.tasks = {}
+        self.tasks_parents = {}
+        self.tasks_children = {}
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
+    def add_task(self, task: Task) -> None:
+        """
+        Add a Task to the workflow.
+
+        :param task: A Task object.
+        :type task: Task
+        """
+        self.tasks[task.name] = task
+        self.tasks_parents.setdefault(task.name, set())
+        self.tasks_children.setdefault(task.name, set())
+        self.add_node(task.name, task=task)
+
+    def add_dependency(self, parent: str, child: str) -> None:
+        """
+        Add a dependency between tasks.
+
+        :param parent: Parent task name.
+        :type parent: str
+        :param child: Child task name.
+        :type child: str
+        """
+        self.tasks_parents[child].add(parent)
+        self.tasks_children[parent].add(child)
+        self.add_edge(parent, child, weight=0)
+
     def write_json(self, json_file_path: Optional[pathlib.Path] = None) -> None:
-        """Write a JSON file of the workflow instance.
+        """
+        Write a JSON file of the workflow instance.
 
         :param json_file_path: JSON output file name.
         :type json_file_path: Optional[pathlib.Path]
@@ -129,9 +158,12 @@ class Workflow(nx.DiGraph):
             json_file_path = pathlib.Path(f"{self.name.lower()}.json")
         with open(json_file_path, "w") as outfile:
             outfile.write(json.dumps(workflow_json, indent=4))
+        
+        self.workflow_json = workflow_json
 
     def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:
-        """Write a dot file of the workflow instance.
+        """
+        Write a dot file of the workflow instance.
 
         :param dot_file_path: DOT output file name.
         :type dot_file_path: Optional[pathlib.Path]
