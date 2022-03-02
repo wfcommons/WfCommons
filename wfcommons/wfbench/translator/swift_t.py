@@ -56,6 +56,17 @@ class SwiftTTranslator(Translator):
 
             if task.category not in self.apps:
                 self.apps.append(task.category)
+            
+            out_count = 0
+            for file in task.files:
+                if file.link == FileLink.OUTPUT:
+                    self.files_map[file.name] = f"{task.category}__out"
+                    out_count += 1
+
+            if out_count > 1:
+                self.logger.error(
+                    "Swift/T does not allow an application to have multiple outputs.")
+                exit(1)
 
     def translate(self, output_file_path: pathlib.Path) -> None:
         """
@@ -154,7 +165,6 @@ class SwiftTTranslator(Translator):
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
-            out_count = 0
             for file in task.files:
                 if file.link == FileLink.INPUT:
                     if task.category not in self.categories_input.keys():
@@ -162,14 +172,6 @@ class SwiftTTranslator(Translator):
                         self.script += f"root_in_files[{in_count}] = \"{file.name}\";\n"
                         in_count += 1
                     self.files_map[file.name] = f"ins[{in_count}]"
-
-                elif file.link == FileLink.OUTPUT:
-                    out_count += 1
-
-                if out_count > 1:
-                    self.logger.error(
-                        "Swift/T does not allow an application to have multiple outputs.")
-                    exit(1)
         
         self.script += "\n"
 
@@ -261,7 +263,6 @@ class SwiftTTranslator(Translator):
                     args += ", ".join([a.split()[1] for a in task.args[1:3]])
                     args += f", of, {file_size}"
 
-                self.files_map[out_file] = f"{category}__out[{num_tasks}]"
                 num_tasks += 1
 
         cats = " + \", \" + ".join(f"repr({cat}__out)" for cat in input_files_cat)
