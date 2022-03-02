@@ -222,7 +222,7 @@ class SwiftTTranslator(Translator):
         num_tasks = 0
         input_files_cat = {}
         parsed_input_files = []
-        self.script += f"string {category}__out[];\n"
+        self.script += f"int {category}__out[];\n"
 
         for task_name in self.tasks:
             task = self.tasks[task_name]
@@ -275,15 +275,15 @@ class SwiftTTranslator(Translator):
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
-                f"  string of_{self.cmd_counter} = sprintf(\"'{category}_%i_output.txt%s'\", i, co_{self.cmd_counter});\n" \
-                f"  {category}__out[i] = of_{self.cmd_counter};\n" \
+                f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
+                f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
         else:
             args = args.replace(
                 ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
-                f"string of_{self.cmd_counter} = sprintf(\"'{category}_0_output.txt%s'\", co_{self.cmd_counter});\n" \
-                f"{category}__out[0] = of_{self.cmd_counter};\n\n"
+                f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
+                f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
         
         self.cmd_counter += 1
