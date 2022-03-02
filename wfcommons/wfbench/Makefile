@@ -1,11 +1,11 @@
 #Makefile 
 #define variables
-objects= pi-cuda.o kernels.o 
+objects= gpu-benchmark.o kernels.o 
 NVCC= nvcc               #cuda c compiler
 CPPFLAGS= -std=c++11
 opt= -O2                 #optimization flag
 LIBS=  
-execname= pi-cuda
+execname= gpu-benchmark
 
 .PHONY: clean
 
@@ -15,8 +15,8 @@ $(execname): $(objects)
 
 kernels.o: kernels.cu
 	$(NVCC) $(CPPFLAGS) $(opt)  -c kernels.cu
-pi-cuda.o: pi-cuda.cu
-	$(NVCC) $(CPPFLAGS) $(opt)  -c pi-cuda.cu
+gpu-benchmark.o: gpu-benchmark.cu
+	$(NVCC) $(CPPFLAGS) $(opt)  -c gpu-benchmark.cu
 
 
 #clean Makefile

@@ -14,6 +14,8 @@ import os
 import subprocess
 import time
 import json
+from io import StringIO
+import pandas as pd
 
 from filelock import FileLock
 from typing import List, Optional
@@ -122,6 +124,16 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
     return cpu_procs
 
+def get_available_gpus():
+    proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, _ = proc.communicate()
+    df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
+    return df[df["utilization.gpu"] <= 5].index.to_list()
+
+def gpu_benchmark(work, device):
+    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('pi-cuda')} {work}"]
+    print(gpu_prog)
+    subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -132,6 +144,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-cores", default=None,
                         help="Path to cores file.")
     parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
+    parser.add_argument("--gpu-work", default=100, help="Amount of GPU work.")
     parser.add_argument("--out", help="output files name.")
     return parser
 
@@ -167,7 +180,17 @@ def main():
 
     if args.out:
         io_read_benchmark_user_input_data_size(other)
+    
+    print("[WfBench] Starting GPU Benchmark...")
+    available_gpus = get_available_gpus() #checking for available GPUs
 
+    if not available_gpus:
+        print("No GPU available")
+    else:
+        device = available_gpus[0]
+        print(f"Running on GPU {device}")
+        gpu_benchmark(this_dir, args.gpu_work, device)
+    
     print("[WfBench] Starting CPU and Memory Benchmarks...")
     if core:
         print(f"[WfBench]  {args.name} acquired core {core}")
