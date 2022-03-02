@@ -42,6 +42,7 @@ class SwiftTTranslator(Translator):
         self.work_dir = work_dir
         self.stress_path = stress_path
         self.categories_list = []
+        self.categories_input = {}
         self.parsed_tasks = []
         self.files_map = {}
         self.tasks_map = {}
@@ -156,9 +157,11 @@ class SwiftTTranslator(Translator):
             out_count = 0
             for file in task.files:
                 if file.link == FileLink.INPUT:
-                    self.script += f"root_in_files[{in_count}] = \"{file.name}\";\n"
+                    if task.category not in self.categories_input.keys():
+                        self.categories_input[task.category] = in_count
+                        self.script += f"root_in_files[{in_count}] = \"{file.name}\";\n"
+                        in_count += 1
                     self.files_map[file.name] = f"ins[{in_count}]"
-                    in_count += 1
 
                 elif file.link == FileLink.OUTPUT:
                     out_count += 1
@@ -251,7 +254,7 @@ class SwiftTTranslator(Translator):
                     args = ""
                     if len(input_files) > 0:
                         if prefix.startswith("ins["):
-                            args += "root_in_files[i], "
+                            args += f"root_in_files[{self.categories_input[task.category]}], "
                         else:
                             args += f"{category}_in, "
 
