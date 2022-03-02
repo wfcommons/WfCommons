@@ -275,13 +275,25 @@ class SwiftTTranslator(Translator):
         self.script += f"string {category}_in = \"{in_str}\";\n"
 
         if num_tasks > 1:
-            self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
-                f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
-                f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
-                f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
-                f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
-                "}\n\n"
+            counter = 0
+            limit = 1000
+            index = 0
+            while num_tasks - counter > limit or counter < num_tasks:
+                self.script += f"int {category}__out_{index}[];\n" \
+                    f"foreach i in [{counter}:{min(counter + limit, num_tasks) - 1}] {{\n" \
+                    f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
+                    f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
+                    f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
+                    f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
+                    f"  {category}__out_{index}[i] = string2int(of_{self.cmd_counter});\n" \
+                    "}\n\n"
+                counter += limit
+                index += 1
+            
+            for i in range(0, index):
+                self.script += f"{category}__out[{i}] = {category}__out_{i + 1}[0];\n"
+            self.script += "\n"
+
         else:
             args = args.replace(
                 ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
