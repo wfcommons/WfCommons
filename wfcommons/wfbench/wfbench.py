@@ -131,8 +131,7 @@ def get_available_gpus():
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
 def gpu_benchmark(work, device):
-    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('pi-cuda')} {work}"]
-    print(gpu_prog)
+    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
     subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
@@ -189,7 +188,7 @@ def main():
     else:
         device = available_gpus[0]
         print(f"Running on GPU {device}")
-        gpu_benchmark(this_dir, args.gpu_work, device)
+        gpu_benchmark(args.gpu_work, device)
     
     print("[WfBench] Starting CPU and Memory Benchmarks...")
     if core:

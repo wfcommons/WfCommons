@@ -10,3 +10,4 @@ pyyaml>=5.3.1
 pandas>=1.2.4
 stringcase>=1.2.0
 stress-ng>=0.11.07
+filelock>=3.6.0

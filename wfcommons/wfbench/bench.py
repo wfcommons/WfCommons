@@ -78,6 +78,7 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = 1000,
+                         gpu_work: Union[int, Dict[str, int]] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
                          regenerate: Optional[bool] = True) -> pathlib.Path:
@@ -139,6 +140,13 @@ class WorkflowBenchmark:
             if lock_files_folder:
                 params.extend([f"--path-lock {lock}",
                                f"--path-cores {cores}"])
+
+            # Setting gpu arguments if gpu benchmark requested
+            if gpu_work:
+                _gpu_work = gpu_work[task.category] if isinstance(
+                gpu_work, dict) else gpu_work
+
+                params.extend([f"--gpu-work {_gpu_work}"])
 
             task.runtime = 0
             task.files = []
