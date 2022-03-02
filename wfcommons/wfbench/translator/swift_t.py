@@ -291,7 +291,7 @@ class SwiftTTranslator(Translator):
                 index += 1
             
             for i in range(0, index):
-                self.script += f"{category}__out[{i}] = {category}__out_{i + 1}[0];\n"
+                self.script += f"{category}__out[{i}] = {category}__out_{i}[0];\n"
             self.script += "\n"
 
         else:
