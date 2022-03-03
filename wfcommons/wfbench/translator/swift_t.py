@@ -155,7 +155,7 @@ class SwiftTTranslator(Translator):
                 "print(f\"[WfBench] [{task_name}] Metrics (write) [time,size]: {end - start},{file_size}\")\n" \
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Benchmark completed!\")\n" \
-                "dep = \"%s\"\n" \
+                "dep = %i\n" \
                 "\"\"\";\n\n"
 
         # defining input files
@@ -265,12 +265,12 @@ class SwiftTTranslator(Translator):
 
                 num_tasks += 1
 
-        cats = " + \", \" + ".join(f"int2string({cat}__out)" for cat in input_files_cat)
+        cats = " + \", \" + ".join(f"{cat}__out" for cat in input_files_cat)
         in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
         if "ins[" in cats:
-            cats = "\"\""
+            cats = "0"
             in_str = ""
-        self.script += f"string dep_{self.cmd_counter} = {cats};\n"
+        self.script += f"int dep_{self.cmd_counter} = {cats};\n"
         args += f", dep_{self.cmd_counter}"
         self.script += f"string {category}_in = \"{in_str}\";\n"
 
