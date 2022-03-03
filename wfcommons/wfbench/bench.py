@@ -313,9 +313,10 @@ class WorkflowBenchmark:
                 file_size = data[task.category] if isinstance(
                     data, Dict) else data
                 file = str(save_dir.joinpath(f"{task.name}_input.txt"))
-                with open(file, 'wb') as fp:
-                    fp.write(os.urandom(int(file_size)))
-                self.logger.debug(f"Created file: {file}")
+                if not file.is_file():
+                    with open(file, 'wb') as fp:
+                        fp.write(os.urandom(int(file_size)))
+                    self.logger.debug(f"Created file: {file}")
 
     def generate_input_file(self, path: pathlib.Path) -> None:
         """
