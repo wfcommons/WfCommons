@@ -275,7 +275,8 @@ class SwiftTTranslator(Translator):
         self.script += f"string {category}_in = \"{in_str}\";\n"
 
         if num_tasks > 1:
-            self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
+            self.script += f"{category}__out = 0;\n" \
+                f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
