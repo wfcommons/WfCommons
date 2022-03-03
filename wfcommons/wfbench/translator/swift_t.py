@@ -276,11 +276,11 @@ class SwiftTTranslator(Translator):
 
         if num_tasks > 1:
             counter = 0
-            limit = 1000
+            limit = 2000
             index = 0
             while num_tasks - counter > limit or counter < num_tasks:
                 self.script += f"int {category}__out_{index}[];\n" \
-                    f"foreach i in [{counter}:{min(counter + limit, num_tasks) - 1}] {{\n" \
+                    f"foreach i in [0:{min(limit, num_tasks - counter) - 1}] {{\n" \
                     f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
                     f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                     f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
