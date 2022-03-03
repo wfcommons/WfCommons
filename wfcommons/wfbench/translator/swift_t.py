@@ -227,7 +227,7 @@ class SwiftTTranslator(Translator):
         num_tasks = 0
         input_files_cat = {}
         parsed_input_files = []
-        self.script += f"int {category}__out;\n"
+        self.script += f"int {category}__out[];\n"
 
         for task_name in self.tasks:
             task = self.tasks[task_name]
@@ -265,7 +265,7 @@ class SwiftTTranslator(Translator):
 
                 num_tasks += 1
 
-        cats = " + ".join(f"{cat}__out" for cat in input_files_cat)
+        cats = " + ".join(f"{cat}__out[0]" for cat in input_files_cat)
         in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "0"
@@ -275,13 +275,12 @@ class SwiftTTranslator(Translator):
         self.script += f"string {category}_in = \"{in_str}\";\n"
 
         if num_tasks > 1:
-            self.script += f"{category}__out = 0;\n" \
-                f"foreach i in [0:{num_tasks - 1}] {{\n" \
+            self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
-                f"  {category}__out = {category}__out + string2int(of_{self.cmd_counter});\n" \
+                f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
             
         else:
@@ -290,6 +289,6 @@ class SwiftTTranslator(Translator):
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
-                f"{category}__out = string2int(of_{self.cmd_counter});\n\n"
+                f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
         
         self.cmd_counter += 1
