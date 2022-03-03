@@ -280,7 +280,7 @@ class WorkflowBenchmark:
             if not self.workflow.tasks_parents[task.name]:
                 task.files.append(
                     File(f"{task.name}_input.txt",
-                         data[task["category"]] if isinstance(
+                         data[task.category] if isinstance(
                              data, Dict) else data,
                          FileLink.INPUT))
                 inputs.append(f'{task.name}_input.txt')
@@ -320,6 +320,10 @@ class WorkflowBenchmark:
 
     def generate_input_file(self, path: pathlib.Path) -> None:
         """
+        Generates input file where customization of cpu percentage, cpu work, gpu work, data size
+        
+        :param path:
+        :type path: pathlib.Path
         """
         generator = WorkflowGenerator(
             self.recipe.from_num_tasks(self.num_tasks))
@@ -328,11 +332,13 @@ class WorkflowBenchmark:
         defaults = {
             "percent_cpu": 0.6,
             "cpu_work": 1000,
+            "gpu_work":100,
             "data": 10
         }
         inputs = {
             "percent_cpu": {},
             "cpu_work": {},
+            "gpu_work":{},
             "data": {}
 
         }
@@ -345,6 +351,7 @@ class WorkflowBenchmark:
 
         path.parent.mkdir(exist_ok=True, parents=True)
         path.write_text(json.dumps(inputs, indent=2))
+        input("Please fill up the input file and press ENTER to continue...")
 
     def run(self, json_path: pathlib.Path, save_dir: pathlib.Path) -> None:
         """
