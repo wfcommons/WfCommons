@@ -265,7 +265,7 @@ class SwiftTTranslator(Translator):
 
                 num_tasks += 1
 
-        cats = " + \", \" + ".join(f"{cat}__out" for cat in input_files_cat)
+        cats = " + ".join(f"{cat}__out" for cat in input_files_cat)
         in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "0"
