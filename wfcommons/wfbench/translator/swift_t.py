@@ -281,7 +281,7 @@ class SwiftTTranslator(Translator):
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
-                f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
+                f"  {category}__out_l[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n" \
                 f"{category}__out[0] = {category}__out_l[{num_tasks - 1}];\n\n"
             
