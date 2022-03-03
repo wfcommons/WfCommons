@@ -276,7 +276,7 @@ class SwiftTTranslator(Translator):
 
         if num_tasks > 1:
             counter = 0
-            limit = 20
+            limit = 2000
             index = 0
             while num_tasks - counter > limit or counter < num_tasks:
                 self.script += f"int {category}__out_{index}[];\n" \
