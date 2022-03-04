@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
     // for (unsigned int i = 0; i < num_threads; i++) {
     //    auto t = std::thread([work]() {
     compute_terrible_pi(1000000*work);
+    std::cout<<"Pi computed!"<<std::endl;
     //compute_good_pi(1000000*work);
         //   });
     //    workers.push_back(std::move(t));

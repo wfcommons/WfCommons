@@ -18,6 +18,7 @@ int main(int argc, char** argv)
 
 	unsigned int n = 256*256;
 	unsigned int m;
+	unsigned int work_per_thread;
 	unsigned int work;
 	int *h_count;
 	int *d_count;
@@ -34,6 +35,7 @@ int main(int argc, char** argv)
 
 	//making into M samples
 	m = 1000000*work;
+	work_per_thread = m/(16*16);
 	// allocate memory
 	h_count = (int*)malloc(n*sizeof(int));
 	cudaMalloc((void**)&d_count, n*sizeof(int));
@@ -55,8 +57,8 @@ int main(int argc, char** argv)
 	setup_kernel<<< gridSize, blockSize>>>(d_state);
 
 
-	// monti carlo kernel
-	monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
+	// monte carlo kernel
+	monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, work_per_thread);
 
 
 	// // copy results back to the host
