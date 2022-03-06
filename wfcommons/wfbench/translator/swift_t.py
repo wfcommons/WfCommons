@@ -78,7 +78,6 @@ class SwiftTTranslator(Translator):
         self.logger.info("Translating workflow into Swift/T")
         self.script += "string command = \n" \
                 "\"\"\"\n" \
-                "import json\n" \
                 "import os\n" \
                 "import pathlib\n" \
                 "import socket\n" \

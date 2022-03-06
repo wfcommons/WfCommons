@@ -111,7 +111,6 @@ class WorkflowBenchmark:
             self.workflow.name = f"{self.workflow.name.split('-')[0]}-Benchmark"
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
-            # self.workflow.write_json(json_path)
 
         # Creating the lock files
         if lock_files_folder:
