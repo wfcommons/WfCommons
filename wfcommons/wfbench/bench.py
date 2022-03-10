@@ -77,7 +77,7 @@ class WorkflowBenchmark:
     def create_benchmark(self,
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
-                         cpu_work: Union[int, Dict[str, int]] = 1000,
+                         cpu_work: Union[int, Dict[str, int]] = None,
                          gpu_work: Union[int, Dict[str, int]] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
@@ -128,22 +128,25 @@ class WorkflowBenchmark:
 
         # Setting the parameters for the arguments section of the JSON
         for task in self.workflow.tasks.values():
-            _percent_cpu = percent_cpu[task.category] if isinstance(
-                percent_cpu, dict) else percent_cpu
-            _cpu_work = cpu_work[task.category] if isinstance(
-                cpu_work, dict) else cpu_work
+            params = []
 
-            params = [f"--percent-cpu {_percent_cpu}",
-                      f"--cpu-work {_cpu_work}"]
+            if cpu_work:
+                _percent_cpu = percent_cpu[task.category] if isinstance(
+                    percent_cpu, dict) else percent_cpu
+                _cpu_work = cpu_work[task.category] if isinstance(
+                    cpu_work, dict) else cpu_work
 
-            if lock_files_folder:
-                params.extend([f"--path-lock {lock}",
-                               f"--path-cores {cores}"])
+                params.extend([f"--percent-cpu {_percent_cpu}",
+                               f"--cpu-work {_cpu_work}"])
+
+                if lock_files_folder:
+                    params.extend([f"--path-lock {lock}",
+                                   f"--path-cores {cores}"])
 
             # Setting gpu arguments if gpu benchmark requested
             if gpu_work:
                 _gpu_work = gpu_work[task.category] if isinstance(
-                gpu_work, dict) else gpu_work
+                    gpu_work, dict) else gpu_work
 
                 params.extend([f"--gpu-work {_gpu_work}"])
 
@@ -331,13 +334,13 @@ class WorkflowBenchmark:
         defaults = {
             "percent_cpu": 0.6,
             "cpu_work": 1000,
-            "gpu_work":100,
+            "gpu_work": 100,
             "data": 10
         }
         inputs = {
             "percent_cpu": {},
             "cpu_work": {},
-            "gpu_work":{},
+            "gpu_work": {},
             "data": {}
 
         }
