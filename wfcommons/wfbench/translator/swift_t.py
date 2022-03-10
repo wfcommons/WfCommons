@@ -127,12 +127,16 @@ class SwiftTTranslator(Translator):
                 "    df = pd.read_csv(StringIO(stdout.decode(\"utf-8\")), sep=\" \")\n" \
                 "    available_gpus = df[df[\"utilization.gpu\"] <= 5].index.to_list()\n" \
                 "    if not available_gpus:\n" \
-                "        print(\"No GPU available\")\n" \
+                "        print(f\"[WfBench] [{task_name}] No GPU available\")\n" \
                 "    else:\n" \
                 "        device = available_gpus[0]\n" \
-                "        print(f\"Running on GPU {device}\")\n" \
+                "        print(f\"[WfBench] [{task_name}] Running on GPU {device}\")\n" \
                 "        gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
-                "        subprocess.Popen(gpu_prog, shell=True)\n" \
+                "        start = time.perf_counter()\n" \
+                "        gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
+                "        gpu_proc.wait()\n" \
+                "        end = time.perf_counter()\n" \
+                "        print(f\"[WfBench] [{task_name}] Metrics (compute-gpu) [time,work]: {end - start},{gpu_work}\")\n" \
                 "\n" \
                 "cpu_work=int(%i)\n" \
                 "if cpu_work > 0:\n" \
@@ -145,7 +149,7 @@ class SwiftTTranslator(Translator):
                 "    cpu_procs = []\n" \
                 "    cpu_prog = [\n" \
                 "        f\"{this_dir.joinpath('cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
-                f"   mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
+                f"    mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
                 "                \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
                 "\n" \
                 "    start = time.perf_counter()\n" \
@@ -306,7 +310,7 @@ class SwiftTTranslator(Translator):
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
-                f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
+                f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
@@ -315,7 +319,7 @@ class SwiftTTranslator(Translator):
             args = args.replace(
                 ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
-                f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
+                f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
         
