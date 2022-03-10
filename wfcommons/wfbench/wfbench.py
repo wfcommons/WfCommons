@@ -142,8 +142,8 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
     parser.add_argument("--path-cores", default=None,
                         help="Path to cores file.")
-    parser.add_argument("--cpu-work", default=100, help="Amount of CPU work.")
-    parser.add_argument("--gpu-work", default=100, help="Amount of GPU work.")
+    parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
+    parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
     parser.add_argument("--out", help="output files name.")
     return parser
 
@@ -180,29 +180,31 @@ def main():
     if args.out:
         io_read_benchmark_user_input_data_size(other)
     
-    print("[WfBench] Starting GPU Benchmark...")
-    available_gpus = get_available_gpus() #checking for available GPUs
+    if args.gpu_work:
+        print("[WfBench] Starting GPU Benchmark...")
+        available_gpus = get_available_gpus() #checking for available GPUs
 
-    if not available_gpus:
-        print("No GPU available")
-    else:
-        device = available_gpus[0]
-        print(f"Running on GPU {device}")
-        gpu_benchmark(args.gpu_work, device)
+        if not available_gpus:
+            print("No GPU available")
+        else:
+            device = available_gpus[0]
+            print(f"Running on GPU {device}")
+            gpu_benchmark(args.gpu_work, device)
     
-    print("[WfBench] Starting CPU and Memory Benchmarks...")
-    if core:
-        print(f"[WfBench]  {args.name} acquired core {core}")
+    if args.cpu_work:
+        print("[WfBench] Starting CPU and Memory Benchmarks...")
+        if core:
+            print(f"[WfBench]  {args.name} acquired core {core}")
 
-    cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
-                                  mem_threads=int(10 - 10 * args.percent_cpu),
-                                  cpu_work=int(args.cpu_work),
-                                  core=core)
-    for proc in cpu_procs:
-        proc.wait()
-    mem_kill = subprocess.Popen(["killall", "stress-ng"])
-    mem_kill.wait()
-    print("[WfBench] Completed CPU and Memory Benchmarks!\n")
+        cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
+                                    mem_threads=int(10 - 10 * args.percent_cpu),
+                                    cpu_work=int(args.cpu_work),
+                                    core=core)
+        for proc in cpu_procs:
+            proc.wait()
+        mem_kill = subprocess.Popen(["killall", "stress-ng"])
+        mem_kill.wait()
+        print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
     if args.out:
         outputs = json.loads(args.out.replace("'", '"'))

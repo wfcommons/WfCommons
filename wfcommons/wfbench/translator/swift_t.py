@@ -83,6 +83,8 @@ class SwiftTTranslator(Translator):
                 "import socket\n" \
                 "import subprocess\n" \
                 "import time\n" \
+                "import pandas as pd\n" \
+                "from io import StringIO\n" \
                 "\n" \
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
@@ -117,33 +119,49 @@ class SwiftTTranslator(Translator):
                 "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{file_size}\")\n" \
                 "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\")\n" \
                 "\n" \
-                "print(f\"[WfBench] [{task_name}] Starting CPU and Memory Benchmarks...\")\n" \
-                "cpu_threads=int(10 * %f)\n" \
-                "mem_threads=10 - cpu_threads\n" \
+                "gpu_work=int(%i)\n" \
+                "if gpu_work > 0:\n" \
+                "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\")\n" \
+                "    proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
+                "    stdout, _ = proc.communicate()\n" \
+                "    df = pd.read_csv(StringIO(stdout.decode(\"utf-8\")), sep=\" \")\n" \
+                "    available_gpus = df[df[\"utilization.gpu\"] <= 5].index.to_list()\n" \
+                "    if not available_gpus:\n" \
+                "        print(\"No GPU available\")\n" \
+                "    else:\n" \
+                "        device = available_gpus[0]\n" \
+                "        print(f\"Running on GPU {device}\")\n" \
+                "        gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
+                "        subprocess.Popen(gpu_prog, shell=True)\n" \
+                "\n" \
                 "cpu_work=int(%i)\n" \
-                "total_mem_bytes = 0.05\n" \
-                "cpu_work_per_thread = int(cpu_work / cpu_threads)\n" \
+                "if cpu_work > 0:\n" \
+                "    print(f\"[WfBench] [{task_name}] Starting CPU and Memory Benchmarks...\")\n" \
+                "    cpu_threads=int(10 * %f)\n" \
+                "    mem_threads=10 - cpu_threads\n" \
+                "    total_mem_bytes = 0.05\n" \
+                "    cpu_work_per_thread = int(cpu_work / cpu_threads)\n" \
                 "\n" \
-                "cpu_procs = []\n" \
-                "cpu_prog = [\n" \
-                "    f\"{this_dir.joinpath('cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
-                f"mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
-                "            \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
+                "    cpu_procs = []\n" \
+                "    cpu_prog = [\n" \
+                "        f\"{this_dir.joinpath('cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
+                f"   mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
+                "                \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
                 "\n" \
-                "start = time.perf_counter()\n" \
-                "for i in range(cpu_threads):\n" \
-                "    cpu_proc = subprocess.Popen(cpu_prog)\n" \
-                "    cpu_procs.append(cpu_proc)\n" \
+                "    start = time.perf_counter()\n" \
+                "    for i in range(cpu_threads):\n" \
+                "        cpu_proc = subprocess.Popen(cpu_prog)\n" \
+                "        cpu_procs.append(cpu_proc)\n" \
                 "\n" \
-                "mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
+                "    mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
                 "\n" \
-                "for proc in cpu_procs:\n" \
-                "    proc.wait()\n" \
-                "mem_kill = subprocess.Popen([\"killall\", \"stress-ng\"])\n" \
-                "mem_kill.wait()\n" \
-                "end = time.perf_counter()\n" \
-                "print(f\"[WfBench] [{task_name}] Metrics (compute) [time,work]: {end - start},{cpu_work}\")\n" \
-                "print(f\"[WfBench] [{task_name}] Completed CPU and Memory Benchmarks\")\n" \
+                "    for proc in cpu_procs:\n" \
+                "        proc.wait()\n" \
+                "    mem_kill = subprocess.Popen([\"killall\", \"stress-ng\"])\n" \
+                "    mem_kill.wait()\n" \
+                "    end = time.perf_counter()\n" \
+                "    print(f\"[WfBench] [{task_name}] Metrics (compute) [time,work]: {end - start},{cpu_work}\")\n" \
+                "    print(f\"[WfBench] [{task_name}] Completed CPU and Memory Benchmarks\")\n" \
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Writing output file\")\n" \
                 "start = time.perf_counter()\n" \
@@ -259,7 +277,18 @@ class SwiftTTranslator(Translator):
                         else:
                             args += f"{category}_in, "
 
-                    args += ", ".join([a.split()[1] for a in task.args[1:3]])
+                    percent_cpu = "0.1"
+                    cpu_work = "0"
+                    gpu_work = "0"
+                    for arg in task.args:
+                        if arg.startswith("--percent-cpu"):
+                            percent_cpu = arg.split()[1]
+                        elif arg.startswith("--cpu-work"):
+                            cpu_work = arg.split()[1]
+                        elif arg.startswith("--gpu-work"):
+                            gpu_work = arg.split()[1]
+
+                    args += ", ".join([gpu_work, cpu_work, percent_cpu])
                     args += f", of, {file_size}"
 
                 num_tasks += 1
