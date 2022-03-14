@@ -21,8 +21,8 @@ class SwiftTTranslator(Translator):
     """
     A WfFormat parser for creating Swift/T workflow applications.
 
-    :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
-    :type workflow_json_file_path: pathlib.Path
+    :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
+    :type workflow: Union[Workflow, pathlib.Path]
     :param work_dir: Path to the workflow working directory.
     :type work_dir: pathlib.Path
     :param stress_path: Path to the stress-ng command.
