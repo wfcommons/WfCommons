@@ -89,10 +89,22 @@ class SwiftTTranslator(Translator):
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
                 "task_name = \"%s\"\n" \
+                "files_list = \"%s\"\n" \
+                "gpu_work = int(%i)\n" \
+                "\n" \
+                "if gpu_work > 0:\n" \
+                "    while True:\n" \
+                "        proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
+                "        stdout, _ = proc.communicate()\n" \
+                "        df = pd.read_csv(StringIO(stdout.decode(\"utf-8\")), sep=\" \")\n" \
+                "        available_gpus = df[df[\"utilization.gpu\"] <= 5].index.to_list()\n" \
+                "        if available_gpus:\n" \
+                "            break\n" \
+                "        time.sleep(1)\n" \
+                "\n" \
                 "print(f\"[WfBench] [{task_name}] Starting Benchmark on {socket.gethostname()}\")\n" \
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Starting IO Read Benchmark...\")\n" \
-                "files_list = \"%s\"\n" \
                 "if \"__\" not in files_list:\n" \
                 "    with open(this_dir.joinpath(files_list), \"rb\") as fp:\n" \
                 "        start = time.perf_counter()\n" \
@@ -119,24 +131,16 @@ class SwiftTTranslator(Translator):
                 "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{file_size}\")\n" \
                 "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\")\n" \
                 "\n" \
-                "gpu_work=int(%i)\n" \
                 "if gpu_work > 0:\n" \
                 "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\")\n" \
-                "    proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
-                "    stdout, _ = proc.communicate()\n" \
-                "    df = pd.read_csv(StringIO(stdout.decode(\"utf-8\")), sep=\" \")\n" \
-                "    available_gpus = df[df[\"utilization.gpu\"] <= 5].index.to_list()\n" \
-                "    if not available_gpus:\n" \
-                "        print(f\"[WfBench] [{task_name}] No GPU available\")\n" \
-                "    else:\n" \
-                "        device = available_gpus[0]\n" \
-                "        print(f\"[WfBench] [{task_name}] Running on GPU {device}\")\n" \
-                "        gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
-                "        start = time.perf_counter()\n" \
-                "        gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
-                "        gpu_proc.wait()\n" \
-                "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] [{task_name}] Metrics (compute-gpu) [time,work]: {end - start},{gpu_work}\")\n" \
+                "    device = available_gpus[0]\n" \
+                "    print(f\"[WfBench] [{task_name}] Running on GPU {device}\")\n" \
+                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
+                "    start = time.perf_counter()\n" \
+                "    gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
+                "    gpu_proc.wait()\n" \
+                "    end = time.perf_counter()\n" \
+                "    print(f\"[WfBench] [{task_name}] Metrics (compute-gpu) [time,work]: {end - start},{gpu_work}\")\n" \
                 "\n" \
                 "cpu_work=int(%i)\n" \
                 "if cpu_work > 0:\n" \
