@@ -14,24 +14,24 @@ from logging import Logger
 from typing import Dict, Optional, Union
 
 from .abstract_translator import Translator
-from ...common.file import FileLink
+from ...common import FileLink, Workflow
 
 
 class PegasusTranslator(Translator):
     """
     A WfFormat parser for creating Pegasus workflow applications.
 
-    :param workflow_json_file_path: Path to the workflow benchmark JSON instance.
-    :type workflow_json_file_path: pathlib.Path
+    :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
+    :type workflow: Union[Workflow, pathlib.Path],
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
 
     def __init__(self,
-                 workflow_json_file_path: pathlib.Path,
+                 workflow: Union[Workflow, pathlib.Path],
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
-        super().__init__(workflow_json_file_path, logger)
+        super().__init__(workflow, logger)
 
         self.script = "import os\n" \
                       "from Pegasus.api import *\n\n\n" \
@@ -54,7 +54,7 @@ class PegasusTranslator(Translator):
         :type tasks_priorities: Optional[Dict[str, int]]
         """
         # overall workflow
-        self.script += f"wf = Workflow('{self.instance.name}', infer_dependencies=True)\n" \
+        self.script += f"wf = Workflow('{self.workflow.name}', infer_dependencies=True)\n" \
                        "tc = TransformationCatalog()\n" \
                        "rc = ReplicaCatalog()\n\n"
         self.script += "task_output_files = {}\n\n"
@@ -100,7 +100,7 @@ class PegasusTranslator(Translator):
         # write out the workflow
         self.script += "wf.add_replica_catalog(rc)\n" \
                        "wf.add_transformation_catalog(tc)\n" \
-                       f"wf.write('{self.instance.name}-benchmark-workflow.yml')\n"
+                       f"wf.write('{self.workflow.name}-benchmark-workflow.yml')\n"
 
         # write script to file
         self._write_output_file(self.script, output_file_name)
@@ -156,6 +156,7 @@ class PegasusTranslator(Translator):
                 self._add_task(child_task_name, job_name, tasks_priorities)
 
         if parent_task:
-            self.script += f"if '{parent_task}' in task_output_files:\n"
-            self.script += f"  {self.tasks_map[task_name]}.add_inputs(task_output_files['{parent_task}'])\n"
-            self.script += f"wf.add_dependency({self.tasks_map[task_name]}, parents=[{parent_task}])\n\n"
+            self.script += f"if '{parent_task}' in task_output_files:\n" \
+                        f"    for f in task_output_files['{parent_task}']:\n" \
+                        f"        {self.tasks_map[task_name]}.add_inputs(f)\n" \
+                        f"wf.add_dependency({self.tasks_map[task_name]}, parents=[{parent_task}])\n\n"
