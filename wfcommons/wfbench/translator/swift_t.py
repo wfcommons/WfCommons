@@ -83,8 +83,6 @@ class SwiftTTranslator(Translator):
                 "import socket\n" \
                 "import subprocess\n" \
                 "import time\n" \
-                "import pandas as pd\n" \
-                "from io import StringIO\n" \
                 "\n" \
                 f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
                 "\n" \
@@ -94,11 +92,16 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 "if gpu_work > 0:\n" \
                 "    while True:\n" \
-                "        proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
+                "        proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv,noheader\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
                 "        stdout, _ = proc.communicate()\n" \
-                "        df = pd.read_csv(StringIO(stdout.decode(\"utf-8\")), sep=\" \")\n" \
-                "        available_gpus = df[df[\"utilization.gpu\"] <= 5].index.to_list()\n" \
-                "        if available_gpus:\n" \
+                "        available_gpus = []\n" \
+                "        out = stdout.decode(\"utf-8\").split(\"%%\")\n" \
+                "        index = 0\n" \
+                "        for gpu in out[0:-1]:\n" \
+                "            if len(gpu.strip()) > 0 and int(gpu) == 0:\n" \
+                "                available_gpus.append(index)\n" \
+                "            index +=1\n" \
+                "        if len(available_gpus) > 0:\n" \
                 "            break\n" \
                 "        time.sleep(1)\n" \
                 "\n" \
