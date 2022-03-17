@@ -90,21 +90,6 @@ class SwiftTTranslator(Translator):
                 "files_list = \"%s\"\n" \
                 "gpu_work = int(%i)\n" \
                 "\n" \
-                "if gpu_work > 0:\n" \
-                "    while True:\n" \
-                "        proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv,noheader\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
-                "        stdout, _ = proc.communicate()\n" \
-                "        available_gpus = []\n" \
-                "        out = stdout.decode(\"utf-8\").split(\"%%\")\n" \
-                "        index = 0\n" \
-                "        for gpu in out[0:-1]:\n" \
-                "            if len(gpu.strip()) > 0 and int(gpu) == 0:\n" \
-                "                available_gpus.append(index)\n" \
-                "            index +=1\n" \
-                "        if len(available_gpus) > 0:\n" \
-                "            break\n" \
-                "        time.sleep(1)\n" \
-                "\n" \
                 "print(f\"[WfBench] [{task_name}] Starting Benchmark on {socket.gethostname()}\")\n" \
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Starting IO Read Benchmark...\")\n" \
@@ -135,6 +120,17 @@ class SwiftTTranslator(Translator):
                 "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\")\n" \
                 "\n" \
                 "if gpu_work > 0:\n" \
+                "    time.sleep(1)\n" \
+                "    proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv,noheader\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
+                "    stdout, _ = proc.communicate()\n" \
+                "    available_gpus = []\n" \
+                "    out = stdout.decode(\"utf-8\").split(\"%%\")\n" \
+                "    index = 0\n" \
+                "    for gpu in out[0:-1]:\n" \
+                "        if len(gpu.strip()) > 0 and int(gpu) == 0:\n" \
+                "            available_gpus.append(index)\n" \
+                "        index +=1\n" \
+                "\n" \
                 "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\")\n" \
                 "    device = available_gpus[0]\n" \
                 "    print(f\"[WfBench] [{task_name}] Running on GPU {device}\")\n" \
@@ -145,7 +141,7 @@ class SwiftTTranslator(Translator):
                 "    end = time.perf_counter()\n" \
                 "    print(f\"[WfBench] [{task_name}] Metrics (compute-gpu) [time,work]: {end - start},{gpu_work}\")\n" \
                 "\n" \
-                "cpu_work=int(%i)\n" \
+                "cpu_work = int(%i)\n" \
                 "if cpu_work > 0:\n" \
                 "    print(f\"[WfBench] [{task_name}] Starting CPU and Memory Benchmarks...\")\n" \
                 "    cpu_threads=int(10 * %f)\n" \
