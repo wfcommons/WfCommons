@@ -120,21 +120,8 @@ class SwiftTTranslator(Translator):
                 "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\")\n" \
                 "\n" \
                 "if gpu_work > 0:\n" \
-                "    time.sleep(1)\n" \
-                "    proc = subprocess.Popen([\"nvidia-smi\", \"--query-gpu=utilization.gpu\", \"--format=csv,noheader\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n" \
-                "    stdout, _ = proc.communicate()\n" \
-                "    available_gpus = []\n" \
-                "    out = stdout.decode(\"utf-8\").split(\"%%\")\n" \
-                "    index = 0\n" \
-                "    for gpu in out[0:-1]:\n" \
-                "        if len(gpu.strip()) > 0 and int(gpu) == 0:\n" \
-                "            available_gpus.append(index)\n" \
-                "        index +=1\n" \
-                "\n" \
                 "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\")\n" \
-                "    device = available_gpus[0]\n" \
-                "    print(f\"[WfBench] [{task_name}] Running on GPU {device}\")\n" \
-                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
+                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
                 "    start = time.perf_counter()\n" \
                 "    gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
                 "    gpu_proc.wait()\n" \
@@ -300,7 +287,7 @@ class SwiftTTranslator(Translator):
 
                 num_tasks += 1
 
-        cats = " + ".join(f"{cat}__out[0]" for cat in input_files_cat)
+        cats = " + ".join(f"{k}__out[{v - 1}]" for k, v in input_files_cat.items())
         in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "0"
