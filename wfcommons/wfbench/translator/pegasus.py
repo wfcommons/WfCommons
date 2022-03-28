@@ -133,7 +133,7 @@ class PegasusTranslator(Translator):
             for file in task.files:
                 if file.link == FileLink.OUTPUT:
                     out_file = file.name
-                    task.args.append(f"--out={out_file}")
+                    # task.args.append(f"--out={out_file}")
                     stage_out = "True" if len(children) == 0 else "False"
                     self.script += f"out_file_{self.task_counter} = File('{out_file}')\n" \
                         f"task_output_files['{job_name}'].append(out_file_{self.task_counter})\n" \
@@ -143,7 +143,8 @@ class PegasusTranslator(Translator):
             # arguments
             args = []
             for a in task.args:
-                args.append(a.replace("'", "\""))
+                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\'")
+                args.append(a)
             args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
 
