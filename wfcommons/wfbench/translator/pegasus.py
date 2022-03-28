@@ -143,7 +143,7 @@ class PegasusTranslator(Translator):
             # arguments
             args = []
             for a in task.args:
-                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\'")
+                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\"").replace(": ", ":")
                 args.append(a)
             args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
