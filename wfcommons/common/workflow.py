@@ -111,8 +111,9 @@ class Workflow(nx.DiGraph):
             task_obj = task.as_dict()
 
             # manage task dependencies
-            task_obj["parents"] = tasks_dependencies[task.name]["parents"]
-            task_obj["children"] = tasks_dependencies[task.name]["children"]
+            if task.name in tasks_dependencies:
+                task_obj["parents"] = tasks_dependencies[task.name]["parents"]
+                task_obj["children"] = tasks_dependencies[task.name]["children"]
 
             workflow_tasks.append(task_obj)
 
