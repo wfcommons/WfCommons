@@ -13,6 +13,7 @@ import pathlib
 import yaml
 import re
 import xml.etree.ElementTree
+import uuid
 
 from datetime import datetime
 from logging import Logger
@@ -57,6 +58,7 @@ class PegasusLogsParser(LogsParser):
         self.submit_dir: pathlib.Path = submit_dir
         self.ignore_auxiliary: Optional[bool] = ignore_auxiliary
         self.files_map = {}
+        self._tmp_file = f".pegasus-parser-tmp-{str(uuid.uuid4())}"
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
@@ -157,29 +159,35 @@ class PegasusLogsParser(LogsParser):
                                      executed_at=data['x-pegasus']['createdOn'])
 
             for j in data['jobs']:
-                task_name = f"{j['name']}_{j['id']}"
+                if j['type'] == "job":
 
-                list_files = [File(
-                    name=f['lfn'],
-                    size=0,
-                    link=FileLink(f['type']),
-                    logger=self.logger
-                ) for f in j['uses']]
+                    task_name = f"{j['name']}_{j['id']}"
 
-                self.workflow.add_node(
-                    task_name,
-                    task=Task(
-                        name=task_name,
-                        task_id=j['id'],
-                        category=j['name'],
-                        task_type=TaskType.COMPUTE,
-                        runtime=0,
-                        args=j['arguments'],
-                        cores=0,
-                        files=list_files,
+                    list_files = [File(
+                        name=f['lfn'],
+                        size=0,
+                        link=FileLink(f['type']),
                         logger=self.logger
+                    ) for f in j['uses']]
+
+                    self.workflow.add_node(
+                        task_name,
+                        task=Task(
+                            name=task_name,
+                            task_id=j['id'],
+                            category=j['name'],
+                            task_type=TaskType.COMPUTE,
+                            runtime=0,
+                            args=j['arguments'],
+                            cores=0,
+                            files=list_files,
+                            logger=self.logger
+                        )
                     )
-                )
+                elif j['type'] == "pegasusWorkflow":
+                    continue
+                else:
+                    raise OSError('Unknown task type (not a job nor a sub-workflow')
 
     def _parse_dax(self):
         """Parse the DAX file."""
@@ -201,7 +209,7 @@ class PegasusLogsParser(LogsParser):
                     if line_num == 1:
                         break
                     else:
-                        temp_file = open('.pegasus-parser-tmp', 'w')
+                        temp_file = open(self._tmp_file, 'w')
 
                 if line.startswith('</adag>'):
                     temp_file.write(line)
@@ -291,16 +299,18 @@ class PegasusLogsParser(LogsParser):
                             break
 
                     if not task and not self.ignore_auxiliary:
-                        task = Task(
-                            name=task_name,
-                            task_type=TaskType.COMPUTE,
-                            runtime=0,
-                            args=[],
-                            cores=0,
-                            files=[],
-                            logger=self.logger
+                        self.workflow.add_node(
+                            task_name,
+                            task=Task(
+                                name=task_name,
+                                task_type=TaskType.AUXILIARY,
+                                runtime=0,
+                                args=[],
+                                cores=0,
+                                files=[],
+                                logger=self.logger
+                            )
                         )
-                        self.workflow.add_node(task_name, task)
                     else:
                         self._parse_meta_file(task_name)
 
@@ -412,15 +422,21 @@ class PegasusLogsParser(LogsParser):
         :param output_file_path: Output file name.
         :type output_file_path: pathlib.Path
         """
-        tmp_file = pathlib.Path('.pegasus-parser-tmp')
+        tmp_file = pathlib.Path(self._tmp_file)
         with open(tmp_file, 'w') as t:
             with open(output_file_path) as f:
                 for line in f:
-                    if not line.startswith('---------------'):
+                    #TODO: added "No such file or directory" in line because
+                    ## Sometime some YAML in Pegasus are not correct and contain a weird line
+                    if not (line.startswith('---------------') or "No such file or directory" in line):
                         t.write(line)
 
-        with open(tmp_file) as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)[0]
+        with open(tmp_file, 'r') as f:
+            try:
+                data = yaml.load(f, Loader=yaml.FullLoader)[0]
+            except yaml.scanner.ScannerError as e:
+                print(f"File:{tmp_file.resolve()} => {e}")
+                exit(-1)
 
             task.program = data['transformation']
 
@@ -490,7 +506,7 @@ class PegasusLogsParser(LogsParser):
                     if line_num == 1:
                         break
                     else:
-                        temp_file = open('.pegasus-parser-tmp', 'w')
+                        temp_file = open(self._tmp_file, 'w')
 
                 if line.startswith('</invocation>'):
                     temp_file.write(line)

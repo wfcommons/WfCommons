@@ -14,7 +14,7 @@ import networkx as nx
 import pathlib
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from ..common.task import Task
 from ..version import __version__
 
@@ -145,3 +145,9 @@ class Workflow(nx.DiGraph):
         with tempfile.NamedTemporaryFile() as temp:
             self.write_json(pathlib.Path(temp.name))
             return create_graph(pathlib.Path(temp.name))
+
+    def roots(self) -> List[Task]:
+        return [n for n,d in self.in_degree() if d==0]
+
+    def leaves(self) -> List[Task]:
+        return [n for n,d in self.out_degree() if d==0]
