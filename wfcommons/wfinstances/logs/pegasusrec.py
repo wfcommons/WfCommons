@@ -29,7 +29,12 @@ import networkx as nx
 
 class HierarchicalPegasusLogsParser(LogsParser):
     """
-    Parse Pegasus submit directory to generate workflow instance.
+    Parse Pegasus submit directory to generate workflow instance. 
+    This specific parser targets Pegasus submit dir with Hierachical workflows
+    Which means that some jobs are sub-workflows and must be parse as well.
+    This parser recursively parse each sub workflow and rebuild a coherent workflow.
+
+    WARNING: one level of recursion for now (i.e., sub-workflow cannot have sub-workflow)
 
     :param submit_dir: Pegasus submit directory.
     :type submit_dir: pathlib.Path
