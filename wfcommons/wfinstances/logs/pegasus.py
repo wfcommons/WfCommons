@@ -12,6 +12,7 @@ import json
 import pathlib
 import yaml
 import re
+import os
 import xml.etree.ElementTree
 import uuid
 
@@ -423,11 +424,13 @@ class PegasusLogsParser(LogsParser):
         :type output_file_path: pathlib.Path
         """
         tmp_file = pathlib.Path(self._tmp_file)
+        ## TODO check if tmp_file is empty, if yes check output_file_path.001 instead of .000
+        if os.stat(output_file_path).st_size == 0:
+            output_file_path = pathlib.Path('.'.join(str(output_file_path).split('.')[:-1]+['001']))
         with open(tmp_file, 'w') as t:
             with open(output_file_path) as f:
                 for line in f:
-                    #TODO: added "No such file or directory" in line because
-                    ## Sometime some YAML in Pegasus are not correct and contain a weird line
+                    ## Sometimes some YAML in Pegasus are not correct and contain a weird line
                     if not (line.startswith('---------------') or "No such file or directory" in line):
                         t.write(line)
 
@@ -437,6 +440,9 @@ class PegasusLogsParser(LogsParser):
             except yaml.scanner.ScannerError as e:
                 print(f"File:{tmp_file.resolve()} => {e}")
                 exit(-1)
+            except TypeError as e:
+                print(f"[Error] File {output_file_path} is probably empty => {e}")
+                exit(-1)               
 
             task.program = data['transformation']
 

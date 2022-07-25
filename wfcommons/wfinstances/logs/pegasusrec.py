@@ -12,6 +12,7 @@ import json
 import pathlib
 import yaml
 import re
+import os
 import xml.etree.ElementTree
 import uuid
 
@@ -504,6 +505,10 @@ class HierarchicalPegasusLogsParser(LogsParser):
         :type output_file_path: pathlib.Path
         """
         tmp_file = pathlib.Path(self._tmp_file)
+        ## TODO check if tmp_file is empty, if yes check output_file_path.001 instead of .000
+        if os.stat(output_file_path).st_size == 0:
+            output_file_path = pathlib.Path('.'.join(str(output_file_path).split('.')[:-1]+['001']))
+
         with open(tmp_file, 'w') as t:
             with open(output_file_path) as f:
                 for line in f:
@@ -517,6 +522,9 @@ class HierarchicalPegasusLogsParser(LogsParser):
                 data = yaml.load(f, Loader=yaml.FullLoader)[0]
             except yaml.scanner.ScannerError as e:
                 self.logger.error(f"File:{tmp_file.resolve()} => {e}")
+                exit(-1)
+            except TypeError as e:
+                print(f"[Error] File {output_file_path} is probably empty => {e}")
                 exit(-1)
 
             task.program = data['transformation']

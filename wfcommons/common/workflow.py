@@ -44,7 +44,7 @@ class Workflow(nx.DiGraph):
     """
 
     def __init__(self,
-                 name: str,
+                 name: Optional[str] = "workflow",
                  description: Optional[str] = None,
                  wms_name: Optional[str] = None,
                  wms_version: Optional[str] = None,
