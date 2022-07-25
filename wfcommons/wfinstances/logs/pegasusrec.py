@@ -177,7 +177,9 @@ class HierarchicalPegasusLogsParser(LogsParser):
                 self.instance_name = data['pegasus_wf_name']
                 executed_at = data['timestamp']
         else:
-            raise OSError(f'Unable to find braindump files: {braindump_file} or {braindump_file_yml}')
+            print(os.listdir(self.submit_dir))
+            err_msg = f"Unable to find braindump files: {braindump_file} or {braindump_file_yml}"
+            raise OSError(err_msg)
 
         # sanity checks
         if not wms_version:
