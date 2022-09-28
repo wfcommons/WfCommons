@@ -142,7 +142,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         reference = df.columns[idx]
 
         if self.base_method == BaseMethod.ERROR_TABLE:
-            base = df.index[df[reference].argmin()]
+            base = df[reference].idxmin()
         elif self.base_method == BaseMethod.SMALLEST:
             base = min(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k] not in self.exclude_graphs],
