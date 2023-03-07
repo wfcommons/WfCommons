@@ -11,3 +11,4 @@
 from .makeflow import MakeflowLogsParser
 from .nextflow import NextflowLogsParser
 from .pegasus import PegasusLogsParser
+from .pegasusrec import HierarchicalPegasusLogsParser

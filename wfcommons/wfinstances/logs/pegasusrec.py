@@ -18,7 +18,7 @@ import uuid
 
 from datetime import datetime
 from logging import Logger
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from .abstract_logs_parser import LogsParser
 from ...common.file import File, FileLink
@@ -26,10 +26,16 @@ from ...common.machine import Machine, MachineSystem
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
 
+import networkx as nx
 
-class PegasusLogsParser(LogsParser):
+class HierarchicalPegasusLogsParser(LogsParser):
     """
-    Parse Pegasus submit directory to generate workflow instance.
+    Parse Pegasus submit directory to generate workflow instance. 
+    This specific parser targets Pegasus submit dir with Hierachical workflows
+    Which means that some jobs are sub-workflows and must be parse as well.
+    This parser recursively parse each sub workflow and rebuild a coherent workflow.
+
+    WARNING: one level of recursion for now (i.e., sub-workflow cannot have sub-workflow)
 
     :param submit_dir: Pegasus submit directory.
     :type submit_dir: pathlib.Path
@@ -60,6 +66,69 @@ class PegasusLogsParser(LogsParser):
         self.ignore_auxiliary: Optional[bool] = ignore_auxiliary
         self.files_map = {}
         self._tmp_file = f".pegasus-parser-tmp-{str(uuid.uuid4())}"
+        self.sub_workflows_dir: Dict[str,pathlib.Path] = {}
+        self.subwf: Dict[str,Workflow] = {}
+
+        self.workflow = self.build_workflow()
+
+        # WARNING: 
+        #   Deal with subworkflows recursively 
+        #   (BUT one level only! does not work for nested sub-workflows with more than one level)
+        if len(self.sub_workflows_dir) > 0:
+            for task_id,x in self.sub_workflows_dir.items():
+                self.subwf[task_id] = HierarchicalPegasusLogsParser(submit_dir=x, ignore_auxiliary=self.ignore_auxiliary)
+                # We have to make the task with a subworkflow unique in terms of name
+                subwf_starting_id = int(task_id.split("ID")[1])
+                
+                mapping = {}
+                ### TODO: remap the ID for each subworkflow
+                for node in self.subwf[task_id].workflow.nodes.data():
+                    # task = node[1]['task']
+                    # if task.type == TaskType.COMPUTE:
+                    #     current_id = int(node[0].split("ID")[1])
+                    #     new_id = 'ID' + '{message:{fill}{align}{width}}'.format(
+                    #         message=str(subwf_starting_id+current_id), fill='0', align='>', width=7)
+                    #     new_id = node[0].split('ID')[0] + new_id
+                    #     print(f"{node[0]} remapped to {new_id}")
+                    #     mapping[node[0]] = f"{new_id}"
+                    # else:
+                        # Remapping only make sense for compute tasks, not auxiliary
+                    ## Remapping is actually more complicated than envisioned
+                    mapping[node[0]] = f"{task_id}-{node[0]}"
+
+                # Mandatory as tasks can be named the same within different subworkflows
+                self.subwf[task_id].workflow = nx.relabel_nodes(self.subwf[task_id].workflow, mapping, copy=False)
+
+            # Add nodes from sub workflow into main workflows
+            for task_id,subwf in self.subwf.items():
+                # print(f"Sub-workflow {task_id}:")
+                for new_node in subwf.workflow.nodes.data():
+                    new_task = node[1]['task']
+                    # print(f"    [{task_id}] => adding the node {new_node[0]}")
+                    self.workflow.add_node(new_node[0], task=new_task)
+
+                    # Connect predecessors of sub workflow task to sub-workflows roots
+                    for predecessor in self.workflow.in_edges(task_id, data=False):
+                        if new_node[0] in subwf.workflow.roots():
+                            # print(f"        [{task_id}] => adding an entry edge from {predecessor[0]} to {new_node[0]}")
+                            self.workflow.add_edge(predecessor[0], new_node[0], weight=0)
+
+                    # Connect leaf of subworkflow to the correct nodes in the main workflow
+                    for successor in self.workflow.out_edges(task_id, data=False):
+                        if new_node[0] in subwf.workflow.leaves():
+                            # print(f"        [{task_id}] => adding an exit edge from {new_node[0]} to {successor[1]}")
+                            self.workflow.add_edge(new_node[0], successor[1], weight=0)
+
+                #add existing edge from subworkflow to actuall workflow
+                for new_edge in subwf.workflow.edges():
+                    self.workflow.add_edge(new_edge[0], new_edge[1], weight=0)
+                
+                #Now, we can delete the old subworkflow nodes (and its associated edges)
+                # print(f"[{task_id}] => removing node {task_id}\n")
+                self.workflow.remove_node(task_id)
+
+            # for edge in nx.topological_sort(nx.line_graph(self.workflow)):
+            #     print(edge)
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
@@ -108,7 +177,9 @@ class PegasusLogsParser(LogsParser):
                 self.instance_name = data['pegasus_wf_name']
                 executed_at = data['timestamp']
         else:
-            raise OSError(f'Unable to find braindump files: {braindump_file} or {braindump_file_yml}')
+            print(os.listdir(self.submit_dir))
+            err_msg = f"Unable to find braindump files: {braindump_file} or {braindump_file_yml}"
+            raise OSError(err_msg)
 
         # sanity checks
         if not wms_version:
@@ -143,21 +214,17 @@ class PegasusLogsParser(LogsParser):
         workflows_file_list = self._fetch_all_files('yml', '*workflow')
 
         if len(workflows_file_list) < 1:
-            raise OSError('Unable to find workflow file.')
+            workflows_file_list = self._fetch_all_files('yml', '*')
+            # remove braindump, we are in a subworkflow probably
+            workflows_file_list = list(filter(lambda a: "braindump" not in str(a), workflows_file_list))
+            if len(workflows_file_list) < 1:
+                raise OSError('Unable to find workflow file.')
 
         workflow_file = workflows_file_list[0]
 
         with open(workflow_file) as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
             self.logger.info(f'Processing Pegasus workflow file: {workflow_file.name}')
-
-            # create base workflow instance object
-            self.workflow = Workflow(name=self.workflow_name,
-                                     description=self.description,
-                                     wms_name=self.wms_name,
-                                     wms_version=data['pegasus'],
-                                     wms_url=self.wms_url,
-                                     executed_at=data['x-pegasus']['createdOn'])
 
             for j in data['jobs']:
                 if j['type'] == "job":
@@ -186,7 +253,24 @@ class PegasusLogsParser(LogsParser):
                         )
                     )
                 elif j['type'] == "pegasusWorkflow":
-                    continue
+                    sub_dir = pathlib.Path(j['file']).stem.split('_subwf')[0]
+                    task_name = f"pegasus-plan_{j['id']}"
+                    self.sub_workflows_dir[task_name] = pathlib.Path(str(self.submit_dir)+'/00/00/'+sub_dir)
+
+                    self.workflow.add_node(
+                        task_name,
+                        task=Task(
+                            name=task_name,
+                            task_id=j['id'],
+                            category=sub_dir,
+                            task_type=TaskType.SUBWORKFLOW,
+                            runtime=0,
+                            args=j['arguments'],
+                            cores=0,
+                            files=list_files,
+                            logger=self.logger
+                        )
+                    )
                 else:
                     raise OSError('Unknown task type (not a job nor a sub-workflow')
 
@@ -300,9 +384,8 @@ class PegasusLogsParser(LogsParser):
                             break
 
                     if not task and not self.ignore_auxiliary:
-                        self.workflow.add_node(
-                            task_name,
-                            task=Task(
+                        self.workflow.add_node(task_name, 
+                            task = Task(
                                 name=task_name,
                                 task_type=TaskType.AUXILIARY,
                                 runtime=0,
@@ -427,10 +510,12 @@ class PegasusLogsParser(LogsParser):
         ## TODO check if tmp_file is empty, if yes check output_file_path.001 instead of .000
         if os.stat(output_file_path).st_size == 0:
             output_file_path = pathlib.Path('.'.join(str(output_file_path).split('.')[:-1]+['001']))
+
         with open(tmp_file, 'w') as t:
             with open(output_file_path) as f:
                 for line in f:
-                    ## Sometimes some YAML in Pegasus are not correct and contain a weird line
+                    #FIX: added "No such file or directory" in line because
+                    #     Sometime some YAML in Pegasus are not correct and contain a weird line at the beginning
                     if not (line.startswith('---------------') or "No such file or directory" in line):
                         t.write(line)
 
@@ -438,11 +523,11 @@ class PegasusLogsParser(LogsParser):
             try:
                 data = yaml.load(f, Loader=yaml.FullLoader)[0]
             except yaml.scanner.ScannerError as e:
-                print(f"File:{tmp_file.resolve()} => {e}")
+                self.logger.error(f"File:{tmp_file.resolve()} => {e}")
                 exit(-1)
             except TypeError as e:
                 print(f"[Error] File {output_file_path} is probably empty => {e}")
-                exit(-1)               
+                exit(-1)
 
             task.program = data['transformation']
 

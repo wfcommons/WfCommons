@@ -198,11 +198,11 @@ def draw(g: nx.DiGraph,
             node_border_colors[node] = "green"
 
     pos = nx.nx_agraph.pygraphviz_layout(g, prog='dot')
-    type_set = sorted({g.nodes[node]["type"] for node in g.nodes})  # not type-hash
+    type_set = sorted({g.nodes[node]["task"].category for node in g.nodes})  # not type-hash
     types = {
         t: i for i, t in enumerate(type_set)
     }
-    node_color = [types[g.nodes[node]["type"]] for node in g.nodes]  # not type-hash
+    node_color = [types[g.nodes[node]["task"].category] for node in g.nodes]  # not type-hash
     for node in g.nodes:
         if node in subgraph:
             g.nodes[node]["node_shape"] = "s"
@@ -228,7 +228,7 @@ def draw(g: nx.DiGraph,
         if extension == 'dot':
             nx.drawing.nx_agraph.write_dot(g, save)
         else:
-            fig.savefig(f'{save}.{extension}')
+            fig.savefig(f'{save}').with_suffix(f".{extension.lstrip('.')}")
 
     if close:
         plt.close(fig)

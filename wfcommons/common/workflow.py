@@ -14,7 +14,7 @@ import networkx as nx
 import pathlib
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from ..common.task import Task
 from ..version import __version__
 
@@ -44,7 +44,7 @@ class Workflow(nx.DiGraph):
     """
 
     def __init__(self,
-                 name: str,
+                 name: Optional[str] = "workflow",
                  description: Optional[str] = None,
                  wms_name: Optional[str] = None,
                  wms_version: Optional[str] = None,
@@ -140,8 +140,9 @@ class Workflow(nx.DiGraph):
             task_obj = task.as_dict()
 
             # manage task dependencies
-            task_obj["parents"] = tasks_dependencies[task.name]["parents"]
-            task_obj["children"] = tasks_dependencies[task.name]["children"]
+            if task.name in tasks_dependencies:
+                task_obj["parents"] = tasks_dependencies[task.name]["parents"]
+                task_obj["children"] = tasks_dependencies[task.name]["children"]
 
             workflow_tasks.append(task_obj)
 
@@ -176,3 +177,9 @@ class Workflow(nx.DiGraph):
         with tempfile.NamedTemporaryFile() as temp:
             self.write_json(pathlib.Path(temp.name))
             return create_graph(pathlib.Path(temp.name))
+
+    def roots(self) -> List[Task]:
+        return [n for n,d in self.in_degree() if d==0]
+
+    def leaves(self) -> List[Task]:
+        return [n for n,d in self.out_degree() if d==0]

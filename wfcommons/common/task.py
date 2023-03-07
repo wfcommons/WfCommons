@@ -23,7 +23,7 @@ class TaskType(NoValue):
     COMPUTE = 'compute'
     AUXILIARY = 'auxiliary'
     TRANSFER = 'transfer'
-
+    SUBWORKFLOW = 'subworkflow'
 
 class Task:
     """Representation of a task.
