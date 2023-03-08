@@ -40,3 +40,5 @@ graft wfcommons/wfchef/recipes/blast
 graft wfcommons/wfchef/recipes/bwa/microstructures/**
 graft wfcommons/wfchef/recipes/bwa/microstructures
 graft wfcommons/wfchef/recipes/bwa
+include Makefile
+include bin/cpu-benchmark.cpp
