@@ -5,11 +5,12 @@
 
 `WfCommons <https://wfcommons.org>`__ is an open-source framework for
 enabling scientific workflow research and development. This Python package
-provides methods for analyzing instances, deriving recipes, and generating
-representative synthetic workflow instances.
+provides methods for analyzing instances, deriving recipes, generating
+representative synthetic workflow instances, and generating realistic 
+workflow benchmark specifications.
 
 .. figure::  images/wfcommons.png
-   :scale:   90 %
+   :scale:   80 %
    :align:   center
 
    The WfCommons conceptual architecture.
