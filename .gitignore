@@ -43,3 +43,9 @@ venv
 
 # Workflow Schema
 workflow-schema.json
+
+# wfc-1.3_to_dask specifics
+/wfcommons/wfc-1.3_to_dask/__pycache__/
+/wfcommons/wfc-1.3_to_dask/.coverage
+/wfcommons/wfc-1.3_to_dask/out
+/wfcommons/wfc-1.3_to_dask/htmlcov
