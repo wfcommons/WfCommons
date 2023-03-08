@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,9 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         :return: A recipe in the form of a dictionary in which keys are task prefixes.
         :rtype: Dict[str, Any]
         """
-        return json.loads(self.this_dir.joinpath("task_type_stats.json").read_text())
+        if not self.workflow_recipe:
+            self.workflow_recipe = json.loads(self.this_dir.joinpath("task_type_stats.json").read_text())
+        return self.workflow_recipe
 
     @classmethod
     def from_num_tasks(cls,
@@ -140,7 +142,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         reference = df.columns[idx]
 
         if self.base_method == BaseMethod.ERROR_TABLE:
-            base = df.index[df[reference].argmin()]
+            base = df[reference].idxmin()
         elif self.base_method == BaseMethod.SMALLEST:
             base = min(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k] not in self.exclude_graphs],
@@ -149,14 +151,15 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         elif self.base_method == BaseMethod.BIGGEST:
             base = max(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k]["order"] <= self.num_tasks and
-                 summary["base_graphs"][k] not in self.exclude_graphs],
+                summary["base_graphs"][k] not in self.exclude_graphs],
                 key=lambda k: summary["base_graphs"][k]["order"]
             )
         else:
             base = random.choice(
                 [k for k in summary["base_graphs"].keys() if summary["base_graphs"][k]["order"] <= self.num_tasks and
-                 summary["base_graphs"][k] not in self.exclude_graphs]
+                summary["base_graphs"][k] not in self.exclude_graphs]
             )
+     
 
         graph = duplicate(self.this_dir.joinpath("microstructures"), base, self.num_tasks)
         return graph
@@ -181,7 +184,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
             node_type = graph.nodes[node]["type"]
             task_name = self._generate_task_name(node_type)
             task = self._generate_task(node_type, task_name)
-            workflow.add_node(task_name, task=task)
+            workflow.add_task(task)
 
             task_names[node] = task_name
 
@@ -189,7 +192,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         for (src, dst) in graph.edges:
             if src in ["SRC", "DST"] or dst in ["SRC", "DST"]:
                 continue
-            workflow.add_edge(task_names[src], task_names[dst])
+            workflow.add_dependency(task_names[src], task_names[dst])
 
             if task_names[src] not in self.tasks_children:
                 self.tasks_children[task_names[src]] = []

@@ -53,7 +53,8 @@ class Instance:
                  schema_file: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow execution instance."""
-        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
+        self.logger: Logger = logging.getLogger(
+            __name__) if logger is None else logger
 
         # Internal variables to be able to iterate directly on an instance
         self._n = 0
@@ -63,13 +64,14 @@ class Instance:
         self.logger.info(f"Read a JSON instance: {input_instance}")
 
         # validate instance
-        schema_validator = SchemaValidator(schema_file)
+        schema_validator = SchemaValidator(schema_file, logger=logger)
         schema_validator.validate_instance(self.instance)
 
         # Basic global properties
         self.name: str = self.instance['name']
         self.desc: str = self.instance['description']
-        self.created_at: datetime = dateutil.parser.parse(self.instance['createdAt'])
+        self.created_at: datetime = dateutil.parser.parse(
+            self.instance['createdAt'])
         self.schema_version: str = self.instance['schemaVersion']
 
         # WMS properties
@@ -84,25 +86,29 @@ class Instance:
 
         # Workflow properties
         # Global properties
-        self.executed_at: datetime = dateutil.parser.parse(self.instance['workflow']['executedAt'])
+        self.executed_at: datetime = dateutil.parser.parse(
+            self.instance['workflow']['executedAt'])
         self.makespan: int = self.instance['workflow']['makespan']
 
         # Machines
-        self.machines: Dict[str, Machine] = {
-            machine['nodeName']: Machine(
-                name=machine['nodeName'],
-                cpu={k: v for k, v in machine['cpu'].items()},
-                system=MachineSystem(machine.get('system', None)) if machine.get('system', None) else None,
-                architecture=machine.get('architecture', None),
-                memory=machine.get('memory', None),
-                release=machine.get('release', None),
-                hashcode=machine.get('machine_code', None),
-                logger=self.logger
-            ) for machine in self.instance['workflow']['machines']
-        }
+        if 'machines' in self.instance['workflow'].keys():
+            self.machines: Dict[str, Machine] = {
+                machine['nodeName']: Machine(
+                    name=machine['nodeName'],
+                    cpu={k: v for k, v in machine['cpu'].items()},
+                    system=MachineSystem(machine.get('system', None)) if machine.get(
+                        'system', None) else None,
+                    architecture=machine.get('architecture', None),
+                    memory=machine.get('memory', None),
+                    release=machine.get('release', None),
+                    hashcode=machine.get('machine_code', None),
+                    logger=self.logger
+                ) for machine in self.instance['workflow']['machines']
+            }
 
         # Tasks
-        self.workflow: Workflow = Workflow(name=self.name, makespan=self.makespan)
+        self.workflow: Workflow = Workflow(
+            name=self.name, makespan=self.makespan)
         for task in self.instance["workflow"]["tasks"]:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
@@ -124,14 +130,13 @@ class Instance:
             # Fetch the command associated to this task
             command = task.get('command', None)
 
-            self.workflow.add_node(
-                task['name'],
-                task=Task(
+            self.workflow.add_task(
+                Task(
                     name=task['name'],
                     task_id=task.get('id', None),
                     category=task.get('category', None),
                     task_type=TaskType(task['type']),
-                    runtime=task['runtime'],
+                    runtime=task['runtime'] if 'runtime' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
                     args=command.get('arguments', None) if command else None,
@@ -150,10 +155,11 @@ class Instance:
         # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
         for task in self.instance["workflow"]["tasks"]:
             for parent in task['parents']:
-                self.workflow.add_edge(parent, task['name'], weight=0)
+                self.workflow.add_dependency(parent, task['name'])
 
         # TODO: instead of attaching files to tasks, attach them to edges based on the link direction.
-        self.logger.info(f'Parsed an instance with {len(self.workflow.nodes)} tasks')
+        self.logger.info(
+            f'Parsed an instance with {len(self.workflow.nodes)} tasks')
 
     def __iter__(self):
         """Produce an iterator based on a topological sort (e.g., scheduling order)"""
@@ -214,7 +220,8 @@ class Instance:
         """
         graphviz_found = importlib.util.find_spec('pygraphviz')
         if graphviz_found is None:
-            self.logger.error(f"\'pygraphviz\' package not found: call to {type(self).__name__}.draw() ignored.")
+            self.logger.error(
+                f"\'pygraphviz\' package not found: call to {type(self).__name__}.draw() ignored.")
             return
 
         pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')

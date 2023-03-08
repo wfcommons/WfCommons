@@ -11,13 +11,16 @@
 This Python package provides a collection of tools for:
 
 - Analyzing instances of actual workflow executions;
-- Producing recipes structures for creating workflow recipes for workflow generation; and
-- Generating synthetic realistic workflow instances.
+- Producing recipes structures for creating workflow recipes for workflow generation;
+- Generating synthetic realistic workflow instances; and
+- Generating realistic workflow benchmark specifications.
+
+[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/feature/wfperf)
 
 ## Installation
 
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
-WfCommons requires Python3.6+ and has been tested on Linux and macOS.
+WfCommons requires Python3.7+ and has been tested on Linux and macOS.
 
 ### Installation using pip
 

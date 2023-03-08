@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2022 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,12 +65,14 @@ class WorkflowRecipe(ABC):
         self.runtime_factor: Optional[float] = runtime_factor
         self.input_file_size_factor: Optional[float] = input_file_size_factor
         self.output_file_size_factor: Optional[float] = output_file_size_factor
+        self.workflow_recipe = None
         self.tasks_files: Dict[str, List[File]] = {}
         self.tasks_files_names: Dict[str, List[str]] = {}
         self.task_id_counter: int = 1
         self.tasks_map = {}
         self.tasks_children = {}
         self.tasks_parents = {}
+        self.tasks_output_files = {}
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict[str, Any]:
@@ -192,6 +194,9 @@ class WorkflowRecipe(ABC):
         :return: List of files output files.
         :rtype: List[File]
         """
+        if task.name in self.tasks_output_files.keys():
+            return self.tasks_output_files[task.name]
+
         task_recipe = self._workflow_recipe()[task.category]
 
         # generate output files
@@ -202,7 +207,10 @@ class WorkflowRecipe(ABC):
         input_files = []
         if task.name in self.tasks_parents.keys():
             for parent_task_name in self.tasks_parents[task.name]:
-                input_files.extend(self._generate_task_files(self.tasks_map[parent_task_name]))
+                output_files = self._generate_task_files(self.tasks_map[parent_task_name])
+                self.tasks_output_files.setdefault(parent_task_name, [])
+                self.tasks_output_files[parent_task_name] = output_files
+                input_files.extend(output_files)
 
         for input_file in input_files:
             if input_file.name not in self.tasks_files_names[task.name]:
@@ -239,12 +247,10 @@ class WorkflowRecipe(ABC):
 
         for extension in recipe:
             if extension not in extension_list:
-                num_files = 1
-                for _ in range(0, num_files):
-                    file = self._generate_file(extension, recipe, link)
-                    files_list.append(file)
-                    self.tasks_files[task_id].append(file)
-                    self.tasks_files_names[task_id].append(file.name)
+                file = self._generate_file(extension, recipe, link)
+                files_list.append(file)
+                self.tasks_files[task_id].append(file)
+                self.tasks_files_names[task_id].append(file.name)
 
         return files_list
 

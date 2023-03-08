@@ -20,6 +20,7 @@ import pickle
 import pkg_resources
 import subprocess
 import traceback
+import sys
 
 from typing import Dict, Optional, Union
 from stringcase import capitalcase

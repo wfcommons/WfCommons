@@ -87,7 +87,8 @@ class Task:
                  logger: Optional[Logger] = None
                  ) -> None:
         """A task in a workflow."""
-        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
+        self.logger: Logger = logging.getLogger(
+            __name__) if logger is None else logger
         self.name: str = name
         self.type: TaskType = task_type
         self.runtime: float = runtime
@@ -106,7 +107,8 @@ class Task:
         self.machine: Machine = machine
         self.priority: Optional[int] = priority
 
-        self.logger.debug(f"created {self.type} task {self.name}: runtime => {self.runtime} seconds.")
+        self.logger.debug(
+            f"created {self.type} task {self.name}: runtime => {self.runtime} seconds.")
 
     def as_dict(self) -> Dict:
         """A JSON representation of the task.
@@ -121,12 +123,13 @@ class Task:
         task_obj = {
             'name': self.name,
             'type': self.type.value,
-            'runtime': self.runtime,
             'command': {},
             'parents': [],
             'children': [],
             'files': task_files,
         }
+        if self.runtime:
+            task_obj['runtime'] = self.runtime
         if self.cores:
             task_obj['cores'] = self.cores
         if self.task_id:

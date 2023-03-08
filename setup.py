@@ -1,14 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import sys
+import subprocess
+
 from setuptools import setup, find_packages
+from setuptools.command.build_ext import build_ext
+
+
+class Build(build_ext):
+    """Customized setuptools build command - builds protos on build."""
+
+    def run(self):
+        protoc_command = ["make"]
+        if subprocess.call(protoc_command) != 0:
+            sys.exit(-1)
+        super().run()
+
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
@@ -28,6 +43,10 @@ setup(
     url='https://github.com/wfcommons/wfcommons',
     packages=find_packages(),
     include_package_data=True,
+    has_ext_modules=lambda: True,
+    cmdclass={
+        'build_ext': Build,
+    },
     install_requires=[
         'jsonschema',
         'matplotlib',
@@ -48,7 +67,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',        
+        'Programming Language :: Python :: 3.10',
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
@@ -56,11 +75,13 @@ setup(
         'Topic :: Documentation :: Sphinx',
         'Topic :: System :: Distributed Computing'
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
+    data_files=[
+        ('bin', ['bin/cpu-benchmark'])
+    ],
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main'
-
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',
