@@ -86,8 +86,8 @@ execution using the :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsPar
     that workflow executions will produce an :code:`execution_report_*.html` and an
     :code:`execution_timeline_*.html` files.
 
-Pegasus WMS
------------
+Pegasus
+-------
 
 `Pegasus <http://pegasus.isi.edu>`_ is being used in production to execute workflows
 for dozens of high-profile applications in a wide range of scientific domains. Pegasus

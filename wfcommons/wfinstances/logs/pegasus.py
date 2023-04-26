@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -300,9 +300,7 @@ class PegasusLogsParser(LogsParser):
                             break
 
                     if not task and not self.ignore_auxiliary:
-                        self.workflow.add_node(
-                            task_name,
-                            task=Task(
+                        task=Task(
                                 name=task_name,
                                 task_type=TaskType.AUXILIARY,
                                 runtime=0,
@@ -311,9 +309,11 @@ class PegasusLogsParser(LogsParser):
                                 files=[],
                                 logger=self.logger
                             )
+                        self.workflow.add_node(
+                            task_name,
+                            task=task
                         )
-                    else:
-                        self._parse_meta_file(task_name)
+                    self._parse_meta_file(task_name)
 
                     # Parsing job stdout file
                     if task:
