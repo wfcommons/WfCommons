@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class File:
 
     :param name: The name of the file.
     :type name: str
-    :param size: File size in KB.
+    :param size: File size in bytes.
     :type size: int
     :param link: Type of file link.
     :type link: FileLink
@@ -52,5 +52,5 @@ class File:
         return {
             'link': self.link.value,
             'name': self.name,
-            'size': self.size
+            'sizeInBytes': self.size
         }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2022 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ class Instance:
                     system=MachineSystem(machine.get('system', None)) if machine.get(
                         'system', None) else None,
                     architecture=machine.get('architecture', None),
-                    memory=machine.get('memory', None),
+                    memory=machine.get('memoryInBytes', None),
                     release=machine.get('release', None),
                     hashcode=machine.get('machine_code', None),
                     logger=self.logger
@@ -118,7 +118,7 @@ class Instance:
             list_files = task.get('files', [])
             list_files = [File(
                 name=f['name'],
-                size=f['size'],
+                size=f['sizeInBytes'],
                 link=FileLink(f['link']),
                 logger=self.logger
             ) for f in list_files]
@@ -136,15 +136,15 @@ class Instance:
                     task_id=task.get('id', None),
                     category=task.get('category', None),
                     task_type=TaskType(task['type']),
-                    runtime=task['runtime'] if 'runtime' in task else 0,
+                    runtime=task['runtimeInSeconds'] if 'runtimeInSeconds' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
                     args=command.get('arguments', None) if command else None,
                     cores=task.get('cores', None),
                     avg_cpu=task.get('avgCPU', None),
-                    bytes_read=task.get('bytesRead', None),
-                    bytes_written=task.get('bytesWritten', None),
-                    memory=task.get('memory', None),
+                    bytes_read=task.get('readBytes', None),
+                    bytes_written=task.get('writtenBytes', None),
+                    memory=task.get('memoryInBytes', None),
                     energy=task.get('energy', None),
                     avg_power=task.get('avgPower', None),
                     priority=task.get('priority', None),

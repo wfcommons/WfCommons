@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2022 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class Workflow(nx.DiGraph):
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
         self.created_at: str = str(datetime.utcnow().isoformat())
-        self.schema_version: str = "1.3"
+        self.schema_version: str = "1.4"
         self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
         self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
         self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
@@ -120,7 +120,7 @@ class Workflow(nx.DiGraph):
             },
             "workflow": {
                 "executedAt": self.executed_at,
-                "makespan": self.makespan,
+                "makespanInSeconds": self.makespan,
                 "tasks": workflow_tasks
             }
         }

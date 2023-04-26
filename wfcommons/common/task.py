@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2022 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ class Task:
     :type bytes_read: Optional[int]
     :param bytes_written: Total bytes written in KB.
     :type bytes_written: Optional[int]
-    :param memory: Memory (resident set) size of the process in KB.
+    :param memory: Memory (resident set) size of the process in bytes.
     :type memory: Optional[int]
     :param energy: Total energy consumption in kWh.
     :type energy: Optional[int]
@@ -129,7 +129,7 @@ class Task:
             'files': task_files,
         }
         if self.runtime:
-            task_obj['runtime'] = self.runtime
+            task_obj['runtimeInSeconds'] = self.runtime
         if self.cores:
             task_obj['cores'] = self.cores
         if self.task_id:
@@ -139,11 +139,11 @@ class Task:
         if self.avg_cpu:
             task_obj['avgCPU'] = self.avg_cpu
         if self.bytes_read:
-            task_obj['bytesRead'] = self.bytes_read
+            task_obj['readBytes'] = self.bytes_read
         if self.bytes_written:
-            task_obj['bytesWritten'] = self.bytes_written
+            task_obj['writtenBytes'] = self.bytes_written
         if self.memory:
-            task_obj['memory'] = self.memory
+            task_obj['memoryInBytes'] = self.memory
         if self.energy:
             task_obj['energy'] = self.energy
         if self.avg_power:

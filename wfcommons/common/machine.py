@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2021 The WfCommons Team.
+# Copyright (c) 2020-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ class Machine:
     :type system: MachineSystem
     :param architecture: Machine architecture (e.g., x86_64, ppc).
     :type architecture: str
-    :param memory: Total machine's RAM memory in KB.
+    :param memory: Total machine's RAM memory in bytes.
     :type memory: int
     :param release: Machine release.
     :type release: str
@@ -92,7 +92,7 @@ class Machine:
         if self.architecture:
             machine['architecture'] = self.architecture
         if self.memory:
-            machine['memory'] = self.memory
+            machine['memoryInBytes'] = self.memory
         if self.release:
             machine['release'] = self.release
         if self.cpu_cores:
