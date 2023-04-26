@@ -41,6 +41,9 @@ and a desired number of tasks. WfGen then automatically generates synthetic, yet
 realistic, randomized workflow instances with (approximately) the desired number of
 tasks.
 
+**WfBench.**
+The WfBench component 
+
 **WfSim.**
 The WfCommons project fosters the use of simulation for the development, evaluation,
 and verification of scheduling and resource provisioning algorithms (e.g.,
