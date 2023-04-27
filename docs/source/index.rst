@@ -45,6 +45,7 @@ support@wfcommons.org.
     analyzing_instances.rst
     generating_workflows_recipe.rst
     generating_workflows.rst
+    generating_workflow_benchmarks.rst
 
 .. toctree::
     :caption: API Reference
