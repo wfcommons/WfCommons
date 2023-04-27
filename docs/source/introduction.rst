@@ -42,7 +42,11 @@ realistic, randomized workflow instances with (approximately) the desired number
 tasks.
 
 **WfBench.**
-The WfBench component 
+The WfBench component is a generator of realistic workflow benchmark specifications 
+that can be translated into benchmark code to be executed with current workflow 
+systems. it generates workflow tasks with arbitrary performance characteristics (CPU,
+memory, and I/O usage) and with realistic task dependency structures based on those 
+seen in production workflows.
 
 **WfSim.**
 The WfCommons project fosters the use of simulation for the development, evaluation,
