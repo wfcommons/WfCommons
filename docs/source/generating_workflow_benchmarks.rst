@@ -14,8 +14,8 @@ benchmark specification is generated in the :ref:`json-format-label`. Then,
 this specification is translated into benchmark code to be executed with a 
 workflow system.
 
-Generating a Workflow Benchmark Specification
----------------------------------------------
+Generating Workflow Benchmark Specifications
+--------------------------------------------
 
 The :class:`~wfcommons.wfbench.bench.WorkflowBenchmark` class uses recipes
 of workflows (as described in :ref:`workflow-recipe-generator-label`) for 
@@ -30,3 +30,6 @@ generating workflow benchmarks.::
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
     # generate a specification based on performance characteristics
     path = benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+Translating Specifications into Benchmark Codes
+-----------------------------------------------
