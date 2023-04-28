@@ -14,6 +14,7 @@ Python package.
     :maxdepth: 1
 
     dev_api_wfcommons.rst
+    dev_api_wfbench.rst
     dev_api_wfchef.rst
     dev_api_wfgen.rst
     dev_api_wfinstances.rst

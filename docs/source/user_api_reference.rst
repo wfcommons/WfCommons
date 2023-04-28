@@ -12,6 +12,7 @@ Python package. Users are NOT expected to develop new
     :maxdepth: 1
 
     user_api_common.rst
+    user_api_wfbench.rst
     user_api_wfchef.rst
     user_api_wfgen.rst
     user_api_wfinstances.rst

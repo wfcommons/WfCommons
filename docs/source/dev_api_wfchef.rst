@@ -14,6 +14,16 @@ wfcommons.wfchef.chef
    :private-members:
    :noindex:
 
+wfcommons.wfchef.wfchef_abstract_recipe
+---------------------------------------
+
+.. automodule:: wfcommons.wfchef.wfchef_abstract_recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 wfcommons.wfchef.duplicate
 --------------------------
 
