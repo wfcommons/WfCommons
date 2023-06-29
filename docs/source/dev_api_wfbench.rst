@@ -13,3 +13,13 @@ wfcommons.wfbench.bench
    :show-inheritance:
    :private-members:
    :noindex:
+
+wfcommons.wfbench.translator.abstract_translator
+------------------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.abstract_translator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:

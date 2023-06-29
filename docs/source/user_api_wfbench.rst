@@ -14,3 +14,11 @@ wfcommons.wfbench.bench
    :undoc-members:
    :show-inheritance:
 
+
+wfcommons.wfbench.translator.abstract_translator
+------------------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.abstract_translator
+   :members:
+   :undoc-members:
+   :show-inheritance:

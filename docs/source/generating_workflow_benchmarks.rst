@@ -33,3 +33,62 @@ generating workflow benchmarks.::
 
 Translating Specifications into Benchmark Codes
 -----------------------------------------------
+
+WfCommons provides a collection of translators for executing the benchmarks as actual
+workflow applications. Below, we provide illustrative examples on how to generate 
+workflow benchmakrs for the currently supported workflow systems.
+
+The :class:`~wfcommons.wfbench.translator.abstract_translator.Translator` class is 
+the foundation for each translator class. This class takes as input either a 
+:class:`~wfcommons.common.workflow.Workflow` object or a path to a workflow benchmark
+description in :ref:`json-format-label`.
+
+Pegasus
++++++++
+
+`Pegasus <http://pegasus.isi.edu>`_ orchestrates the execution of complex scientific 
+workflows by providing a platform to define, organize, and automate computational 
+tasks and data dependencies. Pegasus handles the complexity of large-scale workflows 
+by automatically mapping tasks onto distributed computing resources, such as clusters, 
+grids, or clouds. Below, we provide an example on how to generate workflow benchmark 
+for running with Pegasus:::
+
+    import pathlib
+
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, PegasusTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    # generate a Pegasus workflow
+    translator = PegasusTranslator(benchmark.workflow)
+    translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.py"))
+
+Swift/T
++++++++
+
+`Swift/T <http://swift-lang.org/Swift-T/>`_ is an advanced workflow system designed 
+specifically for high-performance computing (HPC) environments. It dynamically manages 
+task dependencies and resource allocation, enabling efficient utilization of HPC 
+systems. It provides a seamless interface to diverse tools, libraries, and scientific 
+applications, making it easy to integrate existing codes into workflows. Below, we 
+provide an example on how to generate workflow benchmark for running with Swift/T:::
+
+    import pathlib
+
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, SwiftTTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    # generate a Swift/T workflow
+    translator = SwiftTTranslator(benchmark.workflow)
+    translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.swift"))
