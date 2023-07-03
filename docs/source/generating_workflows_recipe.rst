@@ -1,7 +1,7 @@
 .. _generating-workflows-recipe-label:
 
-Generating Workflows Recipes
-============================
+WfChef: Workflows Recipes
+=========================
 
 **WfChef** is the WfCommons component that automates the construction of
 synthetic workflow generators for any given workflow application. The input
@@ -35,8 +35,8 @@ for generating realistic synthetic workflow instances.
 
 .. _workflow-recipe-generator-label:
 
-Workflow Recipe Generator
---------------------------
+Generating Workflow Recipes
+---------------------------
 
 To create a recipe, WfChef analyzes the real workflow graphs in order to
 identify subgraphs that represent fundamental task dependency patterns.

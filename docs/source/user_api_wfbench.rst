@@ -15,10 +15,18 @@ wfcommons.wfbench.bench
    :show-inheritance:
 
 
-wfcommons.wfbench.translator.abstract_translator
-------------------------------------------------
+wfcommons.wfbench.translator.pegasus
+------------------------------------
 
-.. automodule:: wfcommons.wfbench.translator.abstract_translator
+.. automodule:: wfcommons.wfbench.translator.pegasus
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+wfcommons.wfbench.translator.swift_t
+------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.swift_t
    :members:
    :undoc-members:
    :show-inheritance:

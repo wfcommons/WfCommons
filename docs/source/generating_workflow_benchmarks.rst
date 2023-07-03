@@ -1,7 +1,7 @@
 .. _generating-workflow-benchmarks-label:
 
-Generating Workflow Benchmarks
-==============================
+WfBench: Workflow Benchmarks
+============================
 
 **WfBench** is a generator of realistic workflow benchmark specifications that 
 can be translated into benchmark code to be executed with current workflow 

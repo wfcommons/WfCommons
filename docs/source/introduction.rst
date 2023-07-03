@@ -19,7 +19,7 @@ integrates the four major components WfCommons: (i) workflow execution instances
 
    The WfCommons conceptual architecture.
 
-**WfInstances.**
+:ref:`WfInstances <instances-label>`.
 The WfInstances component provides a collection and curation of open-access
 production workflow instances from various scientific applications, all made
 available using a common format (i.e., :ref:`json-format-label`).
@@ -28,20 +28,20 @@ workflow on a distributed platform (e.g., clouds, grids, clusters) using a
 workflow system. We keep a `list of workflow execution instances
 <https://wfcommons.org/instances>`_ in our project website.
 
-**WfChef.**
+:ref:`WfChef <generating-workflows-recipe-label>`.
 The WfChef component automates the construction of synthetic workflow generators
 (recipes) for any given workflow application. The input to this component is a set
 of real workflow instances described in the :ref:`json-format-label` (e.g.,
 instances available in WfInstances).
 
-**WfGen.**
+:ref:`WfGen <generating-workflows-label>`.
 The WfGen component targets the generation of realistic synthetic workflow instances.
 WfGen takes as input a workflow recipe produced by WfChef for a particular application
 and a desired number of tasks. WfGen then automatically generates synthetic, yet
 realistic, randomized workflow instances with (approximately) the desired number of
 tasks.
 
-**WfBench.**
+:ref:`WfBench <generating-workflow-benchmarks-label>`.
 The WfBench component is a generator of realistic workflow benchmark specifications 
 that can be translated into benchmark code to be executed with current workflow 
 systems. it generates workflow tasks with arbitrary performance characteristics (CPU,

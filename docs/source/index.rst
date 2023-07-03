@@ -41,7 +41,6 @@ support@wfcommons.org.
     :maxdepth: 2
 
     introduction.rst
-    parsing_logs.rst
     analyzing_instances.rst
     generating_workflows_recipe.rst
     generating_workflows.rst

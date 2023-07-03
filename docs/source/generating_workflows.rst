@@ -1,7 +1,7 @@
 .. _generating-workflows-label:
 
-Generating Workflows
-====================
+WfGen: Generating Workflows
+===========================
 
 WfGen is a component of WfCommons project that targets the generation of realistic
 synthetic workflow instances with a variety of characteristics. The
