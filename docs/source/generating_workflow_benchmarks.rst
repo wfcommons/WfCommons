@@ -19,7 +19,7 @@ Generating Workflow Benchmark Specifications
 
 The :class:`~wfcommons.wfbench.bench.WorkflowBenchmark` class uses recipes
 of workflows (as described in :ref:`workflow-recipe-generator-label`) for 
-generating workflow benchmarks.::
+generating workflow benchmarks with an arbitrary number of tasks::
 
     import pathlib
 
@@ -30,6 +30,24 @@ generating workflow benchmarks.::
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
     # generate a specification based on performance characteristics
     path = benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+In the example above, the workflow benchmark generator first invokes the WfChef 
+recipe to generate a task graph. Once the task graph has been generated, each task 
+is set to be an instance of the workflow task benchmark. For each task, the following 
+values for the parameters of the workflow task benchmark can be specified:
+
+- :code:`cpu_work`: CPU work per workflow task. The :code:`cpu-benchmark` executable 
+  (compiled C++) calculates an increasingly precise value of π up until the specified 
+  total amount of computation (cpu_work) has been performed.
+- :code:`data`: Individual data volumes for each task in a way that is coherent 
+  with respect to task data dependencies (in the form of a dictionary of input 
+  size files per workflow task type). Alternatively, a total data footprint (in MB)
+  can be defined, i.e., the sum of the sizes of all data files read/written by 
+  workflow tasks, in which case uniform I/O volumes are computed for each workflow 
+  task benchmark.
+- :code:`percent_cpu`: The fraction of the computation's instructions that
+  correspond to non-memory operations. 
+
 
 Translating Specifications into Benchmark Codes
 -----------------------------------------------
@@ -42,6 +60,12 @@ The :class:`~wfcommons.wfbench.translator.abstract_translator.Translator` class 
 the foundation for each translator class. This class takes as input either a 
 :class:`~wfcommons.common.workflow.Workflow` object or a path to a workflow benchmark
 description in :ref:`json-format-label`.
+
+.. warning::
+    
+    WfBench leverages :code:`stress-ng` (https://github.com/ColinIanKing/stress-ng) 
+    to execute memory-intensive threads. Therefore, it is crucial to ensure that 
+    :code:`stress-ng` is installed on all worker nodes.
 
 Pegasus
 +++++++
