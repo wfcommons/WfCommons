@@ -51,7 +51,7 @@ workflows by providing a platform to define, organize, and automate computationa
 tasks and data dependencies. Pegasus handles the complexity of large-scale workflows 
 by automatically mapping tasks onto distributed computing resources, such as clusters, 
 grids, or clouds. Below, we provide an example on how to generate workflow benchmark 
-for running with Pegasus:::
+for running with Pegasus::
 
     import pathlib
 
@@ -68,6 +68,15 @@ for running with Pegasus:::
     translator = PegasusTranslator(benchmark.workflow)
     translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.py"))
 
+.. warning::
+
+    Pegasus utilizes the `HTCondor <https://htcondor.org/>`_ framework to orchestrate 
+    the execution of workflow tasks. By default, HTCondor does not implement CPU affinity 
+    for program threads. However, WfBench offers an extra capability to enforce CPU 
+    affinity during benchmark execution. To enable this feature, you need to specify 
+    the :code:`lock_files_folder` parameter when using 
+    :meth:`~wfcommons.wfbench.bench.WorkflowBenchmark.create_benchmark`.
+
 Swift/T
 +++++++
 
@@ -76,7 +85,7 @@ specifically for high-performance computing (HPC) environments. It dynamically m
 task dependencies and resource allocation, enabling efficient utilization of HPC 
 systems. It provides a seamless interface to diverse tools, libraries, and scientific 
 applications, making it easy to integrate existing codes into workflows. Below, we 
-provide an example on how to generate workflow benchmark for running with Swift/T:::
+provide an example on how to generate workflow benchmark for running with Swift/T::
 
     import pathlib
 
