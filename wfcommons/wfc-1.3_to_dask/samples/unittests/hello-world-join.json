@@ -1,0 +1,43 @@
+{
+  "name": "hello-world-sequence",
+  "description": "See README.md",
+  "workflow": {
+    "tasks": [
+      {
+        "name": "hello",
+        "files": [
+            {
+                "link": "output",
+                "name": "hello.dat"
+            }
+        ]
+      },
+      {
+        "name": "world",
+        "files": [
+            {
+                "link": "output",
+                "name": "world.dat"
+            }
+        ]
+      },
+      {
+        "name": "hello-world",
+        "files": [
+            {
+                "link": "input",
+                "name": "hello.dat"
+            },
+            {
+                "link": "input",
+                "name": "world.dat"
+            },
+          {
+            "link": "output",
+                "name": "helloworld.dat"
+          }
+        ]
+      }
+    ]
+  }
+}
