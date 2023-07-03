@@ -10,7 +10,7 @@ representative synthetic workflow instances, and generating realistic
 workflow benchmark specifications.
 
 .. figure::  images/wfcommons.png
-   :scale:   80 %
+   :scale:   100 %
    :align:   center
 
    The WfCommons conceptual architecture.
