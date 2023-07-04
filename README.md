@@ -88,7 +88,7 @@ that paper, as it provides a recent and general overview on the framework.
 ```
 @article{wfcommons,
     title = {{WfCommons: A Framework for Enabling Scientific Workflow Research and Development}},
-    author = {Coleman, Tain\~a and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
+    author = {Coleman, Taina and Casanova, Henri and Pottier, Loic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
     journal = {Future Generation Computer Systems},
     volume = {128},
     number = {},
