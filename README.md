@@ -20,7 +20,7 @@ This Python package provides a collection of tools for:
 ## Installation
 
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
-WfCommons requires Python3.7+ and has been tested on Linux and macOS.
+WfCommons requires Python3.8+ and has been tested on Linux and macOS.
 
 ### Installation using pip
 
@@ -86,7 +86,7 @@ When citing WfCommons, please use the following paper. You should also actually 
 that paper, as it provides a recent and general overview on the framework.
 
 ```
-@article{coleman2021fgcs,
+@article{wfcommons,
     title = {{WfCommons: A Framework for Enabling Scientific Workflow Research and Development}},
     author = {Coleman, Tain\~a and Casanova, Henri and Pottier, Lo\"ic and Kaushik, Manav and Deelman, Ewa and Ferreira da Silva, Rafael},
     journal = {Future Generation Computer Systems},
