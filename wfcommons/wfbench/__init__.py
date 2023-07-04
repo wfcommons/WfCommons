@@ -9,4 +9,4 @@
 # (at your option) any later version.
 
 from .bench import WorkflowBenchmark
-from .translator import PegasusTranslator, SwiftTTranslator
+from .translator import DaskTranslator, PegasusTranslator, SwiftTTranslator
