@@ -55,13 +55,12 @@ class Workflow(nx.DiGraph):
         """Create an object of a workflow representation."""
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
-        self.created_at: str = str(datetime.utcnow().isoformat())
+        self.created_at: str = str(datetime.now().astimezone().isoformat())
         self.schema_version: str = "1.4"
         self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
         self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
         self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
-        self.executed_at: Optional[str] = datetime.now().astimezone().strftime(
-            "%Y%m%dT%H%M%S%z") if not executed_at else executed_at
+        self.executed_at: Optional[str] = datetime.now().astimezone().isoformat()) if not executed_at else executed_at
         self.makespan: Optional[int] = makespan
         self.tasks = {}
         self.tasks_parents = {}
