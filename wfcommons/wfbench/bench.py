@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2022 The WfCommons Team.
+# Copyright (c) 2021-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,6 +79,7 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = None,
                          gpu_work: Union[int, Dict[str, int]] = None,
+                         time: Optional[int] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          mem: Optional[float] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
@@ -91,6 +92,8 @@ class WorkflowBenchmark:
         :type percent_cpu: Union[float, Dict[str, float]]
         :param cpu_work: CPU work per workflow task.
         :type cpu_work: Union[int, Dict[str, int]]
+        :param time: Time limit for running each task (in seconds).
+        :type time: Optional[int]
         :param data: Dictionary of input size files per workflow task type or total workflow data footprint (in MB).
         :type data: Optional[Union[int, Dict[str, str]]]
         :param mem: Maximum amount of memory consumption per task (in MB).
@@ -155,6 +158,9 @@ class WorkflowBenchmark:
 
             if mem:
                 params.extend([f"--mem {mem}"])
+            
+            if time:
+                params.extend([f"--time {time}"])
 
             task.runtime = 0
             task.files = []
