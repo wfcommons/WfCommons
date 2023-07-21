@@ -1,7 +1,7 @@
 .. _wfcommons-wfbench-label:
 
 wfcommons.wfbench
-================
+=================
 
 .. toctree::
    :maxdepth: 4

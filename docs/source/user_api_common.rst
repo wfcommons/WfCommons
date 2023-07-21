@@ -1,8 +1,8 @@
 wfcommons.common
-==================
+================
 
 wfcommons.common.file
------------------------
+---------------------
 
 .. automodule:: wfcommons.common.file
    :members:
@@ -11,7 +11,7 @@ wfcommons.common.file
    :private-members:
 
 wfcommons.common.task
------------------------
+---------------------
 
 .. automodule:: wfcommons.common.task
    :members:
@@ -20,7 +20,7 @@ wfcommons.common.task
    :private-members:
 
 wfcommons.common.machine
---------------------------
+------------------------
 
 .. automodule:: wfcommons.common.machine
    :members:
@@ -29,7 +29,7 @@ wfcommons.common.machine
    :private-members:
 
 wfcommons.common.workflow
----------------------------
+-------------------------
 
 .. automodule:: wfcommons.common.workflow
    :members:
