@@ -87,7 +87,8 @@ def unlock_core(path_locked: pathlib.Path,
 def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
                       mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
-                      core: Optional[int] = None) -> List:
+                      core: Optional[int] = None,
+                      total_mem: Optional[float] = None) -> List:
     """
     Run cpu and memory benchmark.
 
@@ -99,18 +100,20 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
     :type cpu_work: Optional[int]
     :param core:
     :type core: Optional[int]
+    :param total_mem:
+    :type total_mem: Optional[float]
 
     :return:
     :rtype: List
     """
-    total_mem_bytes = 100.0 / os.cpu_count()
+    total_mem = f"{total_mem}M" if total_mem else f"{100.0 / os.cpu_count()}%"
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
     cpu_prog = [
         f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
+                "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
@@ -118,9 +121,9 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    # mem_proc = subprocess.Popen(mem_prog)
-    # if core:
-    #     os.sched_setaffinity(mem_proc.pid, {core})
+    mem_proc = subprocess.Popen(mem_prog)
+    if core:
+        os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
@@ -144,6 +147,7 @@ def get_parser() -> argparse.ArgumentParser:
                         help="Path to cores file.")
     parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
+    parser.add_argument("--mem", default=None, help="Max amount (in MB) of memory consumption.")
     parser.add_argument("--out", help="output files name.")
     return parser
 
@@ -199,7 +203,8 @@ def main():
         cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
                                     mem_threads=int(10 - 10 * args.percent_cpu),
                                     cpu_work=int(args.cpu_work),
-                                    core=core)
+                                    core=core,
+                                    total_mem=args.mem)
         for proc in cpu_procs:
             proc.wait()
         mem_kill = subprocess.Popen(["killall", "stress-ng"])

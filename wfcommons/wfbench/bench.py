@@ -80,6 +80,7 @@ class WorkflowBenchmark:
                          cpu_work: Union[int, Dict[str, int]] = None,
                          gpu_work: Union[int, Dict[str, int]] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
+                         mem: Optional[float] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
                          regenerate: Optional[bool] = True) -> pathlib.Path:
         """Create a workflow benchmark.
@@ -92,6 +93,8 @@ class WorkflowBenchmark:
         :type cpu_work: Union[int, Dict[str, int]]
         :param data: Dictionary of input size files per workflow task type or total workflow data footprint (in MB).
         :type data: Optional[Union[int, Dict[str, str]]]
+        :param mem: Maximum amount of memory consumption per task (in MB).
+        :type mem: Optional[float]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
         :param regenerate: Whether to regenerate the workflow tasks
@@ -149,6 +152,9 @@ class WorkflowBenchmark:
                     gpu_work, dict) else gpu_work
 
                 params.extend([f"--gpu-work {_gpu_work}"])
+
+            if mem:
+                params.extend([f"--mem {mem}"])
 
             task.runtime = 0
             task.files = []
