@@ -135,7 +135,8 @@ class Translator(ABC):
         :return: List of task's children.
         :rtype: List[Task]
         """
-        children = None
+        self.logger.debug(f"Finding children for task '{task_name}'")
+        children = []
         for node in self.instance.instance["workflow"]["tasks"]:
             if node["name"] == task_name:
                 children = node["children"]
@@ -153,7 +154,7 @@ class Translator(ABC):
         :rtype: List[Task]
         """
         self.logger.debug(f"Finding parents for task '{task_name}'")
-        parents = None
+        parents = []
         for node in self.instance.instance["workflow"]["tasks"]:
             if node["name"] == task_name:
                 parents = node["parents"]
