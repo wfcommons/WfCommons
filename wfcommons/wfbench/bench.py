@@ -152,7 +152,7 @@ class WorkflowBenchmark:
 
             task.runtime = 0
             task.files = []
-            task.program = f"{this_dir.joinpath('wfbench.py')}"
+            task.program = "wfbench.py"
             task.args = [task.name]
             task.args.extend(params)
 

@@ -118,9 +118,9 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    mem_proc = subprocess.Popen(mem_prog)
-    if core:
-        os.sched_setaffinity(mem_proc.pid, {core})
+    # mem_proc = subprocess.Popen(mem_prog)
+    # if core:
+    #     os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
@@ -148,19 +148,19 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def io_read_benchmark_user_input_data_size(other):
+def io_read_benchmark_user_input_data_size(inputs):
     print("[WfBench] Starting IO Read Benchmark...")
-    for file in other:
-        with open(this_dir.joinpath(file), "rb") as fp:
+    for file in inputs:
+        with open(file, "rb") as fp:
             print(f"[WfBench]   Reading '{file}'")
             fp.readlines()
     print("[WfBench] Completed IO Read Benchmark!\n")
 
 
 def io_write_benchmark_user_input_data_size(outputs):
-    for task_name, file_size in outputs.items():
-        print(f"[WfBench] Writing output file '{task_name}'\n")
-        with open(this_dir.joinpath(task_name), "wb") as fp:
+    for file_name, file_size in outputs.items():
+        print(f"[WfBench] Writing output file '{file_name}'\n")
+        with open(file_name, "wb") as fp:
             fp.write(os.urandom(int(file_size)))
 
 
