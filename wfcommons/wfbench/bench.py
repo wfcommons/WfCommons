@@ -74,6 +74,89 @@ class WorkflowBenchmark:
         params = json.loads(input_file.read_text())
         return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, **params)
 
+    def create_benchmark_from_synthetic_workflow(
+            self,
+            save_dir: pathlib.Path,
+            workflow: Workflow,
+            percent_cpu: Union[float, Dict[str, float]] = 0.6,
+            cpu_work: Union[int, Dict[str, int]] = None,
+            gpu_work: Union[int, Dict[str, int]] = None,
+            time: Optional[int] = None,
+            mem: Optional[float] = None,
+            lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+
+        self.workflow = workflow
+
+        save_dir = save_dir.resolve()
+        save_dir.mkdir(exist_ok=True, parents=True)
+
+        json_path = save_dir.joinpath(
+            f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
+
+        cores, lock = self._creating_lock_files(lock_files_folder)
+        self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock)
+
+        # create data footprint
+        for task in self.workflow.tasks.values():
+            outfiles = {file.name: file.size for file in task.files if file.link == FileLink.OUTPUT}
+            outfiles_str = str(outfiles).replace("{", "\"{") \
+                .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
+            task.args.append(f"--out {outfiles_str}")
+
+            infiles = [f"\"{file.name}\"" for file in task.files if file.link == FileLink.INPUT]
+            task.args.extend(infiles)
+
+        workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
+
+        for file in workflow_input_files:
+            file_path = save_dir.joinpath(file.name)
+            if not file_path.is_file():
+                with open(file_path, 'wb') as fp:
+                    fp.write(os.urandom(int(file.size)))
+                self.logger.debug(f"Created file: {str(file_path)}")
+
+        self.logger.info(f"Saving benchmark workflow: {json_path}")
+        self.workflow.write_json(json_path)
+
+        return json_path
+
+    def _rename_files_to_wfbench_format(self) -> List[File]:
+        """
+        Rename the files in the workflow to the wfbench format.
+
+        :return: A list of the input files that need to be generated (with their new names).
+        :rtype: List[File]
+        """
+        new_file_names: Dict = {}
+        input_files: Set = set()
+        for task in self.workflow.tasks.values():
+            task_output_counter = 0
+            for file in task.files:
+                if file.link == FileLink.OUTPUT:
+                    if file.name in new_file_names:
+                        raise ValueError(f"File name {file.name} already exists")
+                    task_output_counter += 1
+                    extension = ''.join(pathlib.Path(file.name).suffixes)
+                    new_name = f"{task.name}_outfile_{task_output_counter:04d}{extension}"
+                    new_file_names[file.name] = new_name
+                    file.name = new_name
+                elif file.link == FileLink.INPUT:
+                    input_files.add(file)
+                else:
+                    raise NotImplementedError(f"File link {file.link} not supported (expected INPUT or OUTPUT)")
+
+        workflow_inputs: List[File] = []
+        for file in input_files:
+            if file.name in new_file_names:
+                # file is an output file of another task and receives the corresponding name
+                file.name = new_file_names[file.name]
+            else:
+                # file is an input file for the workflow and needs to be generated
+                workflow_inputs.append(file)
+                extension = ''.join(pathlib.Path(file.name).suffixes)
+                file.name = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
+        return workflow_inputs
+
     def create_benchmark(self,
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
@@ -178,7 +261,7 @@ class WorkflowBenchmark:
 
             task.runtime = 0
             task.files = []
-            task.program = "wfbench.py"
+            task.program = f"{this_dir.joinpath('wfbench.py')}"
             task.args = [task.name]
             task.args.extend(params)
 
