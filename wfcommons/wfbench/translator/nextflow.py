@@ -12,6 +12,7 @@ import pathlib
 import json
 
 from collections import defaultdict
+from math import ceil
 from logging import Logger
 from typing import Dict, List, Optional, Union, MutableSet
 
@@ -208,7 +209,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         if cores:
             self.script += f"  cpus {cores}\n"
         if memory:
-            self.script += f"  memory {memory}.B\n"
+            self.script += f"  memory {human_readable_memory(memory)}\n"
         self.script += "  input:\n"
         self.script += f"    tuple val( id ), path( \"*\" )\n"
 
@@ -266,3 +267,14 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         self.script += f"{self.valid_task_name(abstract_task_name)}({self.valid_task_name(abstract_task_name)}_in)\n\n"
 
         self.task_written[abstract_task_name] = True
+
+
+def human_readable_memory(mem_bytes: int) -> str:
+    idx = 0
+    memory = mem_bytes
+    l = ["B", "KB", "MB", "GB", "TB"]
+    while memory > 4096 and idx < len(l)-1:
+        memory /= 1024
+        idx += 1
+    memory = ceil(memory * 100) / 100  # ensure that it is an upper bound
+    return f"{memory:.2f}{l[idx]}"
