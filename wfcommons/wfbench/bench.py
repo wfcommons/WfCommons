@@ -84,6 +84,28 @@ class WorkflowBenchmark:
             time: Optional[int] = None,
             mem: Optional[float] = None,
             lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+        """Create a workflow benchmark from a synthetic workflow
+
+        :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
+        :type save_dir: pathlib.Path
+        :param workflow: The (synthetic) workflow to use as a benchmark.
+        :type workflow: Workflow
+        :param percent_cpu: The percentage of CPU threads.
+        :type percent_cpu: Union[float, Dict[str, float]]
+        :param cpu_work: CPU work per workflow task.
+        :type cpu_work: Union[int, Dict[str, int]]
+        :param gpu_work: GPU work per workflow task.
+        :type gpu_work: Union[int, Dict[str, int]]
+        :param time: Time limit for running each task (in seconds).
+        :type time: Optional[int]
+        :param mem: Maximum amount of memory consumption per task (in MB).
+        :type mem: Optional[float]
+        :param lock_files_folder:
+        :type lock_files_folder: Optional[pathlib.Path]
+
+        :return: The path to the workflow benchmark JSON instance.
+        :rtype: pathlib.Path
+        """
 
         self.workflow = workflow
 
@@ -95,6 +117,10 @@ class WorkflowBenchmark:
 
         cores, lock = self._creating_lock_files(lock_files_folder)
         self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock)
+
+        for task in self.workflow.tasks.values():
+            if mem:
+                task.memory = mem
 
         # create data footprint
         for task in self.workflow.tasks.values():
@@ -108,9 +134,13 @@ class WorkflowBenchmark:
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
-        for file in workflow_input_files:
+        for i, file in enumerate(workflow_input_files):
             file_path = save_dir.joinpath(file.name)
             if not file_path.is_file():
+                print(
+                    f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
+                    end='\r'
+                )
                 with open(file_path, 'wb') as fp:
                     fp.write(os.urandom(int(file.size)))
                 self.logger.debug(f"Created file: {str(file_path)}")
@@ -204,7 +234,8 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
-        self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock)
+        self._set_argument_parameters(
+            percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock, clear_files=False)
 
         self._create_data_footprint(data, save_dir)
 
@@ -241,7 +272,8 @@ class WorkflowBenchmark:
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
                                  cores: Optional[pathlib.Path],
-                                 lock: Optional[pathlib.Path]) -> None:
+                                 lock: Optional[pathlib.Path],
+                                 clear_files: bool = True) -> None:
         """
         Setting the parameters for the arguments section of the JSON
         """
@@ -260,7 +292,8 @@ class WorkflowBenchmark:
                 params.extend([f"--time {time}"])
 
             task.runtime = 0
-            task.files = []
+            if clear_files:
+                task.files = []
             task.program = f"{this_dir.joinpath('wfbench.py')}"
             task.args = [task.name]
             task.args.extend(params)
