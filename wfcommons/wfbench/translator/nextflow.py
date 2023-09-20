@@ -187,10 +187,10 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         cores_values = [task.cores for task in physical_tasks if task.cores]
         cores = max(cores_values) if cores_values else None
         memory_values = [task.memory for task in physical_tasks if task.memory]
-        memory = max(memory_values)*1024 if memory_values else 8 * 1024**3  # default to 8.GB
+        memory = max(memory_values) if memory_values else None
 
+        # creating the command for the abstract task using the first physical task as a template
         example_task = physical_tasks[0]
-
         cmd = pathlib.Path(example_task.program).name
         for a in example_task.args:
             if a == f"{abstract_task_name}_{example_task.task_id}":
@@ -205,6 +205,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
                 a = a.replace(f"{abstract_task_name}_{example_task.task_id}", f"{abstract_task_name}_${{id}}")
                 cmd += a.replace("'", "\"")
 
+        # creating the abstract task
         self.script += f"process task_{self.valid_task_name(abstract_task_name)}" + " {\n"
         if cores:
             self.script += f"  cpus {cores}\n"
@@ -212,7 +213,6 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
             self.script += f"  memory {human_readable_memory(memory)}\n"
         self.script += "  input:\n"
         self.script += f"    tuple val( id ), path( \"*\" )\n"
-
         self.script += f"  output:\n    path( \"{self.valid_task_name(abstract_task_name)}_????????_outfile_????*\" )\n"
         self.script += "  script:\n"
         self.script += "  \"\"\"\n"
