@@ -234,8 +234,7 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
-        self._set_argument_parameters(
-            percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock, clear_files=False)
+        self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock)
 
         self._create_data_footprint(data, save_dir)
 
