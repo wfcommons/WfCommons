@@ -212,11 +212,11 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         if memory:
             self.script += f"  memory '{human_readable_memory(memory)}'\n"
         self.script += "  input:\n"
-        self.script += f"    tuple val( id ), path( \"*\" )\n"
+        self.script += "    tuple val( id ), path( \"*\" )\n"
         self.script += f"  output:\n    path( \"{self.valid_task_name(abstract_task_name)}_????????_outfile_????*\" )\n"
         self.script += "  script:\n"
         self.script += "  \"\"\"\n"
-        self.script += f"  inputs=\\$(find . -maxdepth 1 -name \\\"workflow_infile_*\\\" -or -name \\\"*_outfile_0*\\\")\n"
+        self.script += "  inputs=\\$(find . -maxdepth 1 -name \\\"workflow_infile_*\\\" -or -name \\\"*_outfile_0*\\\")\n"
         self.script += f"  {cmd}\n"
         self.script += "  \"\"\"\n"
         self.script += "}\n"
@@ -252,16 +252,16 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         # creating the input channel for this abstract task by grouping the outputs from the parents by id
         self.script += f"  {self.valid_task_name(abstract_task_name)}_in = {inputs_channel}.flatten().flatMap{{\n"
         self.script += f"    List<String> ids = extractTaskIDforFile(it, \"{abstract_task_name}\")\n"
-        self.script += f"    def pairs = new ArrayList()\n"
-        self.script += f"    for (id : ids) pairs.add([id, it])\n"
-        self.script += f"    return pairs\n"
+        self.script += "    def pairs = new ArrayList()\n"
+        self.script += "    for (id : ids) pairs.add([id, it])\n"
+        self.script += "    return pairs\n"
         self.script += "  }"
 
         if self.task_input_amounts[abstract_task_name]:
             self.script += f".groupTuple(size: {self.task_input_amounts[abstract_task_name]})\n"
         else:
             self.script += f".map {{ id, file -> tuple( groupKey(id, {self.valid_task_name(abstract_task_name)}_input_amounts[id]), file ) }}\n"
-            self.script += f"  .groupTuple()\n"
+            self.script += "  .groupTuple()\n"
 
         self.script += f"  {self.valid_task_name(abstract_task_name)}_out = task_"
         self.script += f"{self.valid_task_name(abstract_task_name)}({self.valid_task_name(abstract_task_name)}_in)\n\n"
@@ -272,9 +272,9 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
 def human_readable_memory(mem_bytes: int) -> str:
     idx = 0
     memory = mem_bytes
-    l = ["B", "KB", "MB", "GB", "TB"]
-    while memory > 4096 and idx < len(l)-1:
+    memory_units = ["B", "KB", "MB", "GB", "TB"]
+    while memory > 4096 and idx < len(memory_units) - 1:
         memory /= 1024
         idx += 1
     memory = ceil(memory * 100) / 100  # ensure that it is an upper bound
-    return f"{memory:.2f} {l[idx]}"
+    return f"{memory:.2f} {memory_units[idx]}"
