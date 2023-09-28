@@ -280,7 +280,7 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             params = []
 
-            cpu_params = self._generate_task_cpu_params(task, cpu_work, percent_cpu, lock_files_folder, cores, lock)
+            cpu_params = self._generate_task_cpu_params(task, percent_cpu, cpu_work, lock_files_folder, cores, lock)
             params.extend(cpu_params)
             gpu_params = self._generate_task_gpu_params(task, gpu_work)
             params.extend(gpu_params)
