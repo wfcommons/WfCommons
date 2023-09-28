@@ -48,13 +48,33 @@ values for the parameters of the workflow task benchmark can be specified:
 - :code:`percent_cpu`: The fraction of the computation's instructions that
   correspond to non-memory operations. 
 
+Generate from synthetic workflow instances
+++++++++++++++++++++++++++++++++++++++++++
+
+WfCommons also allows you to convert synthetic workflow instances into benchmarks directly.
+The generated benchmark will have exactly the same structure as the synthetic workflow instance.
+
+    import pathlib
+
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark
+
+    # create a synthetic workflow instance with 500 tasks or use one that you already have
+    workflow = BlastRecipe.from_num_tasks(500).build_workflow()
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+    # generate a specification based on performance characteristics and the structure of the synthetic workflow instance
+    path = benchmark.create_benchmark_from_synthetic_workflow(pathlib.Path("/tmp/"), workflow, cpu_work=100, data=10, percent_cpu=0.6)
+
+This is useful when you want to generate a benchmark with a specific structure or when you want
+benchmarks with the more detailed structure provided by WfChef workflow generation.
 
 Translating Specifications into Benchmark Codes
 -----------------------------------------------
 
 WfCommons provides a collection of translators for executing the benchmarks as actual
 workflow applications. Below, we provide illustrative examples on how to generate 
-workflow benchmakrs for the currently supported workflow systems.
+workflow benchmarks for the currently supported workflow systems.
 
 The :class:`~wfcommons.wfbench.translator.abstract_translator.Translator` class is 
 the foundation for each translator class. This class takes as input either a 
