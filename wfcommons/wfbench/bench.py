@@ -116,9 +116,18 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
-        self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock, clear_files=False)
-
         for task in self.workflow.tasks.values():
+            self._set_argument_parameters(
+                task,
+                percent_cpu,
+                cpu_work * task.runtime,  # scale cpu work to task runtime to achieve a runtime distribution
+                gpu_work,
+                time,
+                mem,
+                lock_files_folder,
+                cores,
+                lock
+            )
             if mem:
                 task.memory = mem
 
@@ -234,7 +243,19 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
-        self._set_argument_parameters(percent_cpu, cpu_work, gpu_work, time, mem, lock_files_folder, cores, lock)
+        for task in self.tasks.values():
+            self._set_argument_parameters(
+                task,
+                percent_cpu,
+                cpu_work,
+                gpu_work,
+                time,
+                mem,
+                lock_files_folder,
+                cores,
+                lock
+            )
+            task.files = []
 
         self._create_data_footprint(data, save_dir)
 
@@ -264,6 +285,7 @@ class WorkflowBenchmark:
             return None, None
 
     def _set_argument_parameters(self,
+                                 task: Task,
                                  percent_cpu: Union[float, Dict[str, float]],
                                  cpu_work: Union[int, Dict[str, int]],
                                  gpu_work: Union[int, Dict[str, int]],
@@ -271,31 +293,28 @@ class WorkflowBenchmark:
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
                                  cores: Optional[pathlib.Path],
-                                 lock: Optional[pathlib.Path],
-                                 clear_files: bool = True) -> None:
+                                 lock: Optional[pathlib.Path]) -> None:
         """
         Setting the parameters for the arguments section of the JSON
         """
-        for task in self.workflow.tasks.values():
-            params = []
+        params = []
 
-            cpu_params = self._generate_task_cpu_params(task, percent_cpu, cpu_work, lock_files_folder, cores, lock)
-            params.extend(cpu_params)
-            gpu_params = self._generate_task_gpu_params(task, gpu_work)
-            params.extend(gpu_params)
+        cpu_params = self._generate_task_cpu_params(task, percent_cpu, cpu_work, lock_files_folder, cores, lock)
+        params.extend(cpu_params)
+        gpu_params = self._generate_task_gpu_params(task, gpu_work)
+        params.extend(gpu_params)
 
-            if mem:
-                params.extend([f"--mem {mem}"])
+        if mem:
+            params.extend([f"--mem {mem}"])
 
-            if time:
-                params.extend([f"--time {time}"])
+        if time:
+            params.extend([f"--time {time}"])
 
-            task.runtime = 0
-            if clear_files:
-                task.files = []
-            task.program = "wfbench.py"
-            task.args = [task.name]
-            task.args.extend(params)
+        task.runtime = 0
+
+        task.program = "wfbench.py"
+        task.args = [task.name]
+        task.args.extend(params)
 
     def _generate_task_cpu_params(self,
                                   task: Task,
