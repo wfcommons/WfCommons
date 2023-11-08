@@ -191,12 +191,10 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         : type physical_tasks: List[Task]
         """
 
-        cores_values = [task.cores for task in physical_tasks if task.cores]
-        cores = max(cores_values) if cores_values else None
-        cores = int(cores) + 1 if cores else None
-        memory_values = [task.memory for task in physical_tasks if task.memory]
-        memory = max(memory_values) if memory_values else None
-        memory *= 1.05 if memory else None
+        cores_values = [task.cores for task in physical_tasks]
+        cores = int(max(cores_values)) + 1
+        memory_values = [task.memory for task in physical_tasks]
+        memory = max(memory_values) * 1.05
 
         # creating the command for the abstract task using the first physical task as a template
         example_task = physical_tasks[0]
