@@ -90,11 +90,11 @@ class WorkflowBenchmark:
         :type save_dir: pathlib.Path
         :param workflow: The (synthetic) workflow to use as a benchmark.
         :type workflow: Workflow
-        :param percent_cpu: The percentage of CPU threads.
+        :param percent_cpu: The maximum percentage of CPU threads.
         :type percent_cpu: Union[float, Dict[str, float]]
-        :param cpu_work: CPU work per workflow task.
+        :param cpu_work: Maximum CPU work per workflow task.
         :type cpu_work: Union[int, Dict[str, int]]
-        :param gpu_work: GPU work per workflow task.
+        :param gpu_work: Maximum GPU work per workflow task.
         :type gpu_work: Union[int, Dict[str, int]]
         :param time: Time limit for running each task (in seconds).
         :type time: Optional[int]
@@ -116,20 +116,38 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
+
+        max_runtime = max(task.runtime for task in self.workflow.tasks.values())
         for task in self.workflow.tasks.values():
+            # scale argument parameters to achieve a runtime distribution
+            runtime_factor = task.runtime / max_runtime
+            task_percent_cpu = percent_cpu[task.category] if isinstance(percent_cpu, dict) else percent_cpu
+            task_percent_cpu *= runtime_factor
+            if cpu_work:
+                task_cpu_work = cpu_work[task.category] if isinstance(cpu_work, dict) else cpu_work
+                task_cpu_work = int(task_cpu_work * runtime_factor) if task_cpu_work else None
+            else:
+                task_cpu_work = None
+            if gpu_work:
+                task_gpu_work = gpu_work[task.category] if isinstance(gpu_work, dict) else gpu_work
+                task_gpu_work *= runtime_factor
+            else:
+                task_gpu_work = None
+            task_memory = int(mem * runtime_factor) if mem else None
             self._set_argument_parameters(
                 task,
-                percent_cpu,
-                cpu_work * task.runtime,  # scale cpu work to task runtime to achieve a runtime distribution
-                gpu_work,
+                task_percent_cpu,
+                task_cpu_work,
+                task_gpu_work,
                 time,
-                mem,
+                task_memory,
                 lock_files_folder,
                 cores,
                 lock
             )
-            if mem:
-                task.memory = mem
+            task.cores = int(10 * task_percent_cpu * runtime_factor)  # set number of cores to cpu threads in wfbench.py
+            if task_memory:
+                task.memory = task_memory
 
         # create data footprint
         for task in self.workflow.tasks.values():
