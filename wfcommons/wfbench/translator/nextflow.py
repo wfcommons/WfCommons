@@ -101,7 +101,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
 
     def _is_resource_arg(self, arg: str) -> bool:
         return arg.startswith("--percent-cpu") or arg.startswith("--mem") \
-            or arg.startswith("--cpu_work") or arg.startswith("--gpu_work")
+            or arg.startswith("--cpu-work") or arg.startswith("--gpu-work")
 
     def _determine_abstract_relations(self) -> None:
         """
@@ -206,19 +206,18 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
             if a == f"{abstract_task_name}_{example_task.task_id}":
                 cmd += f" {abstract_task_name}_${{id}}"
                 continue
-            cmd += ' '
             if self._is_resource_arg(a):
                 if resource_args_done:
                     continue
-                cmd += self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\") "
+                cmd += " " + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")"
                 resource_args_done = True
             elif a.startswith("--out"):
-                cmd += "--out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
+                cmd += " --out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
                 cmd += " \\$inputs"
                 break
             else:
                 a = a.replace(f"{abstract_task_name}_{example_task.task_id}", f"{abstract_task_name}_${{id}}")
-                cmd += a.replace("'", "\"")
+                cmd += " " + a.replace("'", "\"")
 
         # creating the abstract task
         self.script += f"process task_{self.valid_task_name(abstract_task_name)}" + " {\n"
