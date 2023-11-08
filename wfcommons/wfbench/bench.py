@@ -115,6 +115,15 @@ class WorkflowBenchmark:
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
+        # if no cpu_work is provided, use the maximum runtime of each task as a reference
+        if cpu_work is None:
+            cpu_work = {}
+            for task in self.workflow.tasks.values():
+                if task.category not in cpu_work or task.runtime > cpu_work[task.category]:
+                    cpu_work[task.category] = task.runtime
+            for key in cpu_work.keys():
+                cpu_work[key] *= 1000
+
         cores, lock = self._creating_lock_files(lock_files_folder)
 
         max_runtime = max(task.runtime for task in self.workflow.tasks.values())
