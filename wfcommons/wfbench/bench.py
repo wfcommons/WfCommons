@@ -157,7 +157,7 @@ class WorkflowBenchmark:
                 cores,
                 lock
             )
-            task.cores = int(10 * task_percent_cpu * runtime_factor)  # set number of cores to cpu threads in wfbench.py
+            task.cores = int(10 * task_percent_cpu)  # set number of cores to cpu threads in wfbench.py
             if task_memory:
                 task.memory = task_memory
 
