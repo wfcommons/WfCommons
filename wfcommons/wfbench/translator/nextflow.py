@@ -169,14 +169,14 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
     def _create_task_args_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
         map_name = f"{self.valid_task_name(abstract_task_name)}_args"
         task_args_map = {}
-        task_output_map = {}
-        task_resource_map = {}
         for ptask in physical_tasks:
             out_file_sizes = {file.name: file.size for file in self.task_outputs[ptask.name]}
             out_arg = str(out_file_sizes).replace("{", "").replace("}", "").replace("'", "\\\"").replace(": ", ":")
-            task_args_map["out"][ptask.task_id] = out_arg
-            task_args_map["resources"][ptask.task_id] = " ".join((arg for arg in ptask.args if self._is_resource_arg(arg)))
-        self._write_map_file({"out": task_output_map, "resources": task_resource_map}, map_name, output_file_path)
+            task_args_map[ptask.task_id] = {
+                "out": out_arg,
+                "resources": " ".join((arg for arg in ptask.args if self._is_resource_arg(arg)))
+            }
+        self._write_map_file(task_args_map, map_name, output_file_path)
 
     def valid_task_name(self, original_task_name: str) -> str:
         return original_task_name.replace('-', '_')
