@@ -21,8 +21,6 @@ import sys
 from logging import Logger
 from typing import Dict, Optional, List, Set, Tuple, Type, Union
 
-from numpy import isin
-
 from ..common import File, FileLink, Task, Workflow
 
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
@@ -126,23 +124,28 @@ class WorkflowBenchmark:
 
         cores, lock = self._creating_lock_files(lock_files_folder)
 
-        max_runtime = max(task.runtime for task in self.workflow.tasks.values())
+        task_max_runtimes = {}
         for task in self.workflow.tasks.values():
-            # scale argument parameters to achieve a runtime distribution
+            if task.category not in task_max_runtimes or task.runtime > task_max_runtimes[task.category]:
+                task_max_runtimes[task.category] = task.runtime
+        max_runtime = max(runtime for runtime in task_max_runtimes.values())
+
+        for task in self.workflow.tasks.values():
             runtime_factor = task.runtime / max_runtime
-            task_percent_cpu = percent_cpu[task.category] if isinstance(percent_cpu, dict) else percent_cpu
-            task_percent_cpu *= runtime_factor
-            if cpu_work:
-                task_cpu_work = cpu_work[task.category] if isinstance(cpu_work, dict) else cpu_work
-                task_cpu_work = int(task_cpu_work * runtime_factor) if task_cpu_work else None
+            task_runtime_factor = task.runtime / task_max_runtimes[task.category]
+            # scale argument parameters to achieve a runtime distribution
+            task_percent_cpu = percent_cpu[task.category] * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
+            if cpu_work is not None:
+                task_cpu_work = cpu_work[task.category] * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
+                task_cpu_work = int(task_cpu_work)
             else:
                 task_cpu_work = None
-            if gpu_work:
-                task_gpu_work = gpu_work[task.category] if isinstance(gpu_work, dict) else gpu_work
-                task_gpu_work *= runtime_factor
+            if gpu_work is not None:
+                task_gpu_work = gpu_work[task.category] * task_runtime_factor if isinstance(gpu_work, dict) else gpu_work * runtime_factor
+                task_gpu_work = int(task_gpu_work)
             else:
                 task_gpu_work = None
-            task_memory = int(mem * runtime_factor) if mem else None
+            task_memory = mem * runtime_factor if mem else None
             self._set_argument_parameters(
                 task,
                 task_percent_cpu,
@@ -177,8 +180,8 @@ class WorkflowBenchmark:
                     f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
                     end='\r'
                 )
-                with open(file_path, 'wb') as fp:
-                    fp.write(os.urandom(int(file.size)))
+                with open(save_dir.joinpath("to_create.txt"), "a+") as fp:
+                    fp.write(f"{file.name} {file.size}\n")
                 self.logger.debug(f"Created file: {str(file_path)}")
 
         self.logger.info(f"Saving benchmark workflow: {json_path}")
