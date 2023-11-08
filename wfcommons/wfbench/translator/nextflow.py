@@ -100,7 +100,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         self._write_output_file(self.script, output_file_path)
 
     def _is_resource_arg(self, arg: str) -> bool:
-        return arg.startswith("--percent_cpu") or arg.startswith("--mem") \
+        return arg.startswith("--percent-cpu") or arg.startswith("--mem") \
             or arg.startswith("--cpu_work") or arg.startswith("--gpu_work")
 
     def _determine_abstract_relations(self) -> None:
@@ -207,10 +207,12 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
                 cmd += f" {abstract_task_name}_${{id}}"
                 continue
             cmd += ' '
-            if not resource_args_done and self._is_resource_arg(a):
-                cmd += self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")"
+            if self._is_resource_arg(a):
+                if resource_args_done:
+                    continue
+                cmd += self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\") "
                 resource_args_done = True
-            if a.startswith("--out"):
+            elif a.startswith("--out"):
                 cmd += "--out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
                 cmd += " \\$inputs"
                 break
