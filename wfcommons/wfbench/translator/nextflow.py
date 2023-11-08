@@ -80,7 +80,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         self._create_file_task_mappings(output_file_path)
 
         for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            self._create_task_output_map(output_file_path, abstract_task_name, physical_tasks)
+            self._create_task_args_map(output_file_path, abstract_task_name, physical_tasks)
         self.script += "\n\n"
 
         self.task_written: Dict[str, bool] = {}
@@ -98,6 +98,10 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         self.script += "}\n"
 
         self._write_output_file(self.script, output_file_path)
+
+    def _is_resource_arg(self, arg: str) -> bool:
+        return arg.startswith("--percent_cpu") or arg.startswith("--mem") \
+            or arg.startswith("--cpu_work") or arg.startswith("--gpu_work")
 
     def _determine_abstract_relations(self) -> None:
         """
@@ -160,16 +164,19 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         path = output_file_path.parent.joinpath(f"{map_name}.json")
         with open(path, "w") as f:
             f.write(json.dumps(map_dict, indent=4))
-        self.script += f"{map_name} = jsonSlurper.parseText(file(\"${{params.indir}}/{map_name}.json\").text)\n"
+        self.script += f"{map_name} = jsonSlurper.parseText(file(\"{map_name}.json\").text)\n"
 
-    def _create_task_output_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
-        map_name = f"{self.valid_task_name(abstract_task_name)}_out_args"
+    def _create_task_args_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
+        map_name = f"{self.valid_task_name(abstract_task_name)}_args"
+        task_args_map = {}
         task_output_map = {}
+        task_resource_map = {}
         for ptask in physical_tasks:
             out_file_sizes = {file.name: file.size for file in self.task_outputs[ptask.name]}
             out_arg = str(out_file_sizes).replace("{", "").replace("}", "").replace("'", "\\\"").replace(": ", ":")
-            task_output_map[ptask.task_id] = out_arg
-        self._write_map_file(task_output_map, map_name, output_file_path)
+            task_args_map["out"][ptask.task_id] = out_arg
+            task_args_map["resources"][ptask.task_id] = " ".join((arg for arg in ptask.args if self._is_resource_arg(arg)))
+        self._write_map_file({"out": task_output_map, "resources": task_resource_map}, map_name, output_file_path)
 
     def valid_task_name(self, original_task_name: str) -> str:
         return original_task_name.replace('-', '_')
@@ -192,13 +199,17 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         # creating the command for the abstract task using the first physical task as a template
         example_task = physical_tasks[0]
         cmd = pathlib.Path(example_task.program).name
+        resource_args_done = False
         for a in example_task.args:
             if a == f"{abstract_task_name}_{example_task.task_id}":
                 cmd += f" {abstract_task_name}_${{id}}"
                 continue
             cmd += ' '
+            if not resource_args_done and self._is_resource_arg(a):
+                cmd += self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")"
+                resource_args_done = True
             if a.startswith("--out"):
-                cmd += "--out \"{${" + self.valid_task_name(abstract_task_name) + "_out_args.get(id)}}\""
+                cmd += "--out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
                 cmd += " \\$inputs"
                 break
             else:
