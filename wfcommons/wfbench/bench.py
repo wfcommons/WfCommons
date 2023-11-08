@@ -334,7 +334,7 @@ class WorkflowBenchmark:
         _cpu_work = cpu_work[task.category] if isinstance(
             cpu_work, dict) else cpu_work
 
-        params = [f"--percent-cpu {_percent_cpu}", f"--cpu-work {_cpu_work}"]
+        params = [f"--percent-cpu {_percent_cpu}", f"--cpu-work {int(_cpu_work)}"]
 
         if lock_files_folder:
             params.extend([f"--path-lock {lock}",
