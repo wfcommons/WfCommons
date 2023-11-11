@@ -135,6 +135,7 @@ class WorkflowBenchmark:
             task_runtime_factor = task.runtime / task_max_runtimes[task.category]
             # scale argument parameters to achieve a runtime distribution
             task_percent_cpu = percent_cpu[task.category] * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
+            task_percent_cpu = max(0.1, percent_cpu)  # set minimum to 0.1 which is equivalent to 1 thread in wfbench.py
             if cpu_work is not None:
                 task_cpu_work = cpu_work[task.category] * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
                 task_cpu_work = int(task_cpu_work)
