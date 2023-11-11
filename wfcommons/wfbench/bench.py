@@ -145,7 +145,7 @@ class WorkflowBenchmark:
                 task_gpu_work = int(task_gpu_work)
             else:
                 task_gpu_work = None
-            task_memory = mem * runtime_factor if mem else None
+            task_memory = int(mem * runtime_factor) if mem else None
             self._set_argument_parameters(
                 task,
                 task_percent_cpu,
