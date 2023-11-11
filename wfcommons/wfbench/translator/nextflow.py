@@ -164,7 +164,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         path = output_file_path.parent.joinpath(f"{map_name}.json")
         with open(path, "w") as f:
             f.write(json.dumps(map_dict, indent=4))
-        self.script += f"{map_name} = jsonSlurper.parseText(file(\"{map_name}.json\").text)\n"
+        self.script += f"{map_name} = jsonSlurper.parseText(file(\"${{projectDir}}/{map_name}.json\").text)\n"
 
     def _create_task_args_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
         map_name = f"{self.valid_task_name(abstract_task_name)}_args"
