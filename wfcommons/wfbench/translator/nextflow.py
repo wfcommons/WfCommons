@@ -195,7 +195,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         if len(cores_values) == 0:
             cores = None
         else:
-            cores = int(max(cores_values)) + 1
+            cores = int(max(cores_values))
         memory_values = [task.memory for task in physical_tasks if task.memory is not None]
         if len(memory_values) == 0:
             memory = None
