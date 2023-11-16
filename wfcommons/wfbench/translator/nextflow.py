@@ -213,7 +213,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
             if self._is_resource_arg(a):
                 if resource_args_done:
                     continue
-                cmd += " " + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")"
+                cmd += " ${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")}"
                 resource_args_done = True
             elif a.startswith("--out"):
                 cmd += " --out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
