@@ -162,7 +162,7 @@ class WorkflowBenchmark:
             )
             task.cores = task_cores + 1
             if task_memory:
-                task.memory = task_memory
+                task.memory = task_memory * 1024 * 1024  # megabytes to bytes
 
         # create data footprint
         for task in self.workflow.tasks.values():

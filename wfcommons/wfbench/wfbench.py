@@ -195,8 +195,10 @@ def main():
 
     print(f"[WfBench] Starting {args.name} Benchmark\n")
 
+    mem_bytes = args.mem * 1024 * 1024 if args.mem else None
+
     if args.out:
-        io_read_benchmark_user_input_data_size(other, memory_limit=args.mem)
+        io_read_benchmark_user_input_data_size(other, memory_limit=mem_bytes)
     
     if args.gpu_work:
         print("[WfBench] Starting GPU Benchmark...")
@@ -234,7 +236,7 @@ def main():
 
     if args.out:
         outputs = json.loads(args.out.replace("'", '"'))
-        io_write_benchmark_user_input_data_size(outputs, memory_limit=args.mem)
+        io_write_benchmark_user_input_data_size(outputs, memory_limit=mem_bytes)
 
     if core:
         unlock_core(path_locked, path_cores, core)
