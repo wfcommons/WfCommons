@@ -19,11 +19,9 @@ import uuid
 import sys
 
 from logging import Logger
-from typing import Dict, Optional, List, Set, Type, Union
+from typing import Dict, Optional, List, Set, Tuple, Type, Union
 
-from numpy import isin
-
-from ..common import File, FileLink, Task
+from ..common import File, FileLink, Task, Workflow
 
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
@@ -74,6 +72,163 @@ class WorkflowBenchmark:
         params = json.loads(input_file.read_text())
         return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, **params)
 
+    def create_benchmark_from_synthetic_workflow(
+            self,
+            save_dir: pathlib.Path,
+            workflow: Workflow,
+            percent_cpu: Union[float, Dict[str, float]] = 0.6,
+            cpu_work: Union[int, Dict[str, int]] = None,
+            gpu_work: Union[int, Dict[str, int]] = None,
+            time: Optional[int] = None,
+            mem: Optional[float] = None,
+            lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+        """Create a workflow benchmark from a synthetic workflow
+
+        :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
+        :type save_dir: pathlib.Path
+        :param workflow: The (synthetic) workflow to use as a benchmark.
+        :type workflow: Workflow
+        :param percent_cpu: The maximum percentage of CPU threads.
+        :type percent_cpu: Union[float, Dict[str, float]]
+        :param cpu_work: Maximum CPU work per workflow task.
+        :type cpu_work: Union[int, Dict[str, int]]
+        :param gpu_work: Maximum GPU work per workflow task.
+        :type gpu_work: Union[int, Dict[str, int]]
+        :param time: Time limit for running each task (in seconds).
+        :type time: Optional[int]
+        :param mem: Maximum amount of memory consumption per task (in MB).
+        :type mem: Optional[float]
+        :param lock_files_folder:
+        :type lock_files_folder: Optional[pathlib.Path]
+
+        :return: The path to the workflow benchmark JSON instance.
+        :rtype: pathlib.Path
+        """
+
+        self.workflow = workflow
+
+        save_dir = save_dir.resolve()
+        save_dir.mkdir(exist_ok=True, parents=True)
+
+        json_path = save_dir.joinpath(
+            f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
+
+        # if no cpu_work is provided, use the maximum runtime of each task as a reference
+        if cpu_work is None:
+            cpu_work = {}
+            for task in self.workflow.tasks.values():
+                if task.category not in cpu_work or task.runtime > cpu_work[task.category]:
+                    cpu_work[task.category] = task.runtime
+            for key in cpu_work.keys():
+                cpu_work[key] *= 1000
+
+        cores, lock = self._creating_lock_files(lock_files_folder)
+
+        task_max_runtimes = {}
+        for task in self.workflow.tasks.values():
+            if task.category not in task_max_runtimes or task.runtime > task_max_runtimes[task.category]:
+                task_max_runtimes[task.category] = task.runtime
+        max_runtime = max(runtime for runtime in task_max_runtimes.values())
+
+        for task in self.workflow.tasks.values():
+            runtime_factor = task.runtime / max_runtime
+            task_runtime_factor = task.runtime / task_max_runtimes[task.category]
+            # scale argument parameters to achieve a runtime distribution
+            task_percent_cpu = percent_cpu[task.category] * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
+            task_cores = int(10 * task_percent_cpu)  # set number of cores to cpu threads in wfbench.py
+            task_percent_cpu = max(0.1, task_percent_cpu)  # set minimum to 0.1 which is equivalent to 1 thread in wfbench.py
+            task_percent_cpu = round(task_percent_cpu, 2)
+            if cpu_work is not None:
+                task_cpu_work = cpu_work[task.category] * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
+                task_cpu_work = int(task_cpu_work)
+            else:
+                task_cpu_work = None
+            if gpu_work is not None:
+                task_gpu_work = gpu_work[task.category] * task_runtime_factor if isinstance(gpu_work, dict) else gpu_work * runtime_factor
+                task_gpu_work = int(task_gpu_work)
+            else:
+                task_gpu_work = None
+            task_memory = int(mem * runtime_factor) if mem else None
+            self._set_argument_parameters(
+                task,
+                task_percent_cpu,
+                task_cpu_work,
+                task_gpu_work,
+                time,
+                task_memory,
+                lock_files_folder,
+                cores,
+                lock
+            )
+            task.cores = task_cores + 1
+            if task_memory:
+                task.memory = task_memory * 1024 * 1024  # megabytes to bytes
+
+        # create data footprint
+        for task in self.workflow.tasks.values():
+            outfiles = {file.name: file.size for file in task.files if file.link == FileLink.OUTPUT}
+            outfiles_str = str(outfiles).replace("{", "\"{") \
+                .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
+            task.args.append(f"--out {outfiles_str}")
+
+            infiles = [f"\"{file.name}\"" for file in task.files if file.link == FileLink.INPUT]
+            task.args.extend(infiles)
+
+        workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
+
+        for i, file in enumerate(workflow_input_files):
+            file_path = save_dir.joinpath(file.name)
+            if not file_path.is_file():
+                print(
+                    f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
+                    end='\r'
+                )
+                with open(save_dir.joinpath("to_create.txt"), "a+") as fp:
+                    fp.write(f"{file.name} {file.size}\n")
+                self.logger.debug(f"Created file: {str(file_path)}")
+
+        self.logger.info(f"Saving benchmark workflow: {json_path}")
+        self.workflow.write_json(json_path)
+
+        return json_path
+
+    def _rename_files_to_wfbench_format(self) -> List[File]:
+        """
+        Rename the files in the workflow to the wfbench format.
+
+        :return: A list of the input files that need to be generated (with their new names).
+        :rtype: List[File]
+        """
+        new_file_names: Dict = {}
+        input_files: Set = set()
+        for task in self.workflow.tasks.values():
+            task_output_counter = 0
+            for file in task.files:
+                if file.link == FileLink.OUTPUT:
+                    if file.name in new_file_names:
+                        raise ValueError(f"File name {file.name} already exists")
+                    task_output_counter += 1
+                    extension = ''.join(pathlib.Path(file.name).suffixes)
+                    new_name = f"{task.name}_outfile_{task_output_counter:04d}{extension}"
+                    new_file_names[file.name] = new_name
+                    file.name = new_name
+                elif file.link == FileLink.INPUT:
+                    input_files.add(file)
+                else:
+                    raise NotImplementedError(f"File link {file.link} not supported (expected INPUT or OUTPUT)")
+
+        workflow_inputs: List[File] = []
+        for file in input_files:
+            if file.name in new_file_names:
+                # file is an output file of another task and receives the corresponding name
+                file.name = new_file_names[file.name]
+            else:
+                # file is an input file for the workflow and needs to be generated
+                workflow_inputs.append(file)
+                extension = ''.join(pathlib.Path(file.name).suffixes)
+                file.name = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
+        return workflow_inputs
+
     def create_benchmark(self,
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
@@ -92,6 +247,8 @@ class WorkflowBenchmark:
         :type percent_cpu: Union[float, Dict[str, float]]
         :param cpu_work: CPU work per workflow task.
         :type cpu_work: Union[int, Dict[str, int]]
+        :param gpu_work: GPU work per workflow task.
+        :type gpu_work: Union[int, Dict[str, int]]
         :param time: Time limit for running each task (in seconds).
         :type time: Optional[int]
         :param data: Dictionary of input size files per workflow task type or total workflow data footprint (in MB).
@@ -118,57 +275,120 @@ class WorkflowBenchmark:
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
-        # Creating the lock files
-        if lock_files_folder:
-            try:
-                lock_files_folder.mkdir(exist_ok=True, parents=True)
-                self.logger.debug(
-                    f"Creating lock files at: {lock_files_folder.resolve()}")
-                lock = lock_files_folder.joinpath("cores.txt.lock")
-                cores = lock_files_folder.joinpath("cores.txt")
-                with lock.open("w+"), cores.open("w+"):
-                    pass
-            except (FileNotFoundError, OSError) as e:
-                self.logger.warning(f"Could not find folder to create lock files: {lock_files_folder.resolve()}\n"
-                                    f"You will need to create them manually: 'cores.txt.lock' and 'cores.txt'")
-
-        # Setting the parameters for the arguments section of the JSON
-        for task in self.workflow.tasks.values():
-            params = []
-
-            if cpu_work:
-                _percent_cpu = percent_cpu[task.category] if isinstance(
-                    percent_cpu, dict) else percent_cpu
-                _cpu_work = cpu_work[task.category] if isinstance(
-                    cpu_work, dict) else cpu_work
-
-                params.extend([f"--percent-cpu {_percent_cpu}",
-                               f"--cpu-work {_cpu_work}"])
-
-                if lock_files_folder:
-                    params.extend([f"--path-lock {lock}",
-                                   f"--path-cores {cores}"])
-
-            # Setting gpu arguments if gpu benchmark requested
-            if gpu_work:
-                _gpu_work = gpu_work[task.category] if isinstance(
-                    gpu_work, dict) else gpu_work
-
-                params.extend([f"--gpu-work {_gpu_work}"])
-
-            if mem:
-                params.extend([f"--mem {mem}"])
-            
-            if time:
-                params.extend([f"--time {time}"])
-
-            task.runtime = 0
+        cores, lock = self._creating_lock_files(lock_files_folder)
+        for task in self.tasks.values():
+            self._set_argument_parameters(
+                task,
+                percent_cpu,
+                cpu_work,
+                gpu_work,
+                time,
+                mem,
+                lock_files_folder,
+                cores,
+                lock
+            )
             task.files = []
-            task.program = "wfbench.py"
-            task.args = [task.name]
-            task.args.extend(params)
 
-        # task's data footprint provided as individual data input size (JSON file)
+        self._create_data_footprint(data, save_dir)
+
+        self.logger.info(f"Saving benchmark workflow: {json_path}")
+        self.workflow.write_json(json_path)
+
+        return json_path
+
+    def _creating_lock_files(self, lock_files_folder: Optional[pathlib.Path]) -> Tuple[pathlib.Path, pathlib.Path]:
+        """
+        Creating the lock files
+        """
+        if not lock_files_folder:
+            return None, None
+        try:
+            lock_files_folder.mkdir(exist_ok=True, parents=True)
+            self.logger.debug(
+                f"Creating lock files at: {lock_files_folder.resolve()}")
+            lock = lock_files_folder.joinpath("cores.txt.lock")
+            cores = lock_files_folder.joinpath("cores.txt")
+            with lock.open("w+"), cores.open("w+"):
+                pass
+            return lock, cores
+        except (FileNotFoundError, OSError) as e:
+            self.logger.warning(f"Could not find folder to create lock files: {lock_files_folder.resolve()}\n"
+                                f"You will need to create them manually: 'cores.txt.lock' and 'cores.txt'")
+            return None, None
+
+    def _set_argument_parameters(self,
+                                 task: Task,
+                                 percent_cpu: Union[float, Dict[str, float]],
+                                 cpu_work: Union[int, Dict[str, int]],
+                                 gpu_work: Union[int, Dict[str, int]],
+                                 time: Optional[int],
+                                 mem: Optional[float],
+                                 lock_files_folder: Optional[pathlib.Path],
+                                 cores: Optional[pathlib.Path],
+                                 lock: Optional[pathlib.Path]) -> None:
+        """
+        Setting the parameters for the arguments section of the JSON
+        """
+        params = []
+
+        cpu_params = self._generate_task_cpu_params(task, percent_cpu, cpu_work, lock_files_folder, cores, lock)
+        params.extend(cpu_params)
+        gpu_params = self._generate_task_gpu_params(task, gpu_work)
+        params.extend(gpu_params)
+
+        if mem:
+            params.extend([f"--mem {mem}"])
+
+        if time:
+            params.extend([f"--time {time}"])
+
+        task.runtime = 0
+
+        task.program = "wfbench.py"
+        task.args = [task.name]
+        task.args.extend(params)
+
+    def _generate_task_cpu_params(self,
+                                  task: Task,
+                                  percent_cpu: Union[float, Dict[str, float]],
+                                  cpu_work: Union[int, Dict[str, int]],
+                                  lock_files_folder: Optional[pathlib.Path],
+                                  cores: Optional[pathlib.Path],
+                                  lock: Optional[pathlib.Path]) -> List[str]:
+        """
+        Setting cpu arguments if cpu benchmark requested
+        """
+        if not cpu_work:
+            return []
+
+        _percent_cpu = percent_cpu[task.category] if isinstance(
+            percent_cpu, dict) else percent_cpu
+        _cpu_work = cpu_work[task.category] if isinstance(
+            cpu_work, dict) else cpu_work
+
+        params = [f"--percent-cpu {_percent_cpu}", f"--cpu-work {int(_cpu_work)}"]
+
+        if lock_files_folder:
+            params.extend([f"--path-lock {lock}",
+                           f"--path-cores {cores}"])
+        return params
+
+    def _generate_task_gpu_params(self, task: Task, gpu_work: Union[int, Dict[str, int]]) -> List[str]:
+        """
+        Setting gpu arguments if gpu benchmark requested
+        """
+        if not gpu_work:
+            return []
+        _gpu_work = gpu_work[task.category] if isinstance(
+            gpu_work, dict) else gpu_work
+
+        return [f"--gpu-work {_gpu_work}"]
+
+    def _create_data_footprint(self, data: Optional[Union[int, Dict[str, str]]], save_dir: pathlib.Path) -> None:
+        """
+        task's data footprint provided as individual data input size (JSON file)
+        """
         if isinstance(data, dict):
             outputs = self._output_files(data)
             for task in self.workflow.tasks.values():
@@ -207,13 +427,6 @@ class WorkflowBenchmark:
             self._add_input_files(outputs, file_size)
             self.logger.debug("Generating system files.")
             self._generate_data_for_root_nodes(save_dir, file_size)
-
-        self.logger.info(f"Saving benchmark workflow: {json_path}")
-        self.workflow.write_json(json_path)
-        # json_path.write_text(json.dumps(wf, indent=4))
-        # self.workflow.workflow_json = wf
-
-        return json_path
 
     def _output_files(self, data: Dict[str, str]) -> Dict[str, Dict[str, int]]:
         """
@@ -316,7 +529,7 @@ class WorkflowBenchmark:
     def _generate_data_for_root_nodes(self, save_dir: pathlib.Path, data: Union[int, Dict[str, str]]) -> None:
         """
         Generate workflow's input data for root nodes based on user's input.
-        
+
         :param save_dir:
         :type save_dir: pathlib.Path
         :param data:
@@ -335,7 +548,7 @@ class WorkflowBenchmark:
     def generate_input_file(self, path: pathlib.Path) -> None:
         """
         Generates input file where customization of cpu percentage, cpu work, gpu work, data size
-        
+
         :param path:
         :type path: pathlib.Path
         """

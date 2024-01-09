@@ -156,20 +156,30 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def io_read_benchmark_user_input_data_size(inputs):
+def io_read_benchmark_user_input_data_size(inputs, memory_limit=None):
+    if memory_limit is None:
+        memory_limit = -1
+    memory_limit = int(memory_limit)
     print("[WfBench] Starting IO Read Benchmark...")
     for file in inputs:
         with open(file, "rb") as fp:
             print(f"[WfBench]   Reading '{file}'")
-            fp.readlines()
+            while fp.read(memory_limit):
+                pass
     print("[WfBench] Completed IO Read Benchmark!\n")
 
 
-def io_write_benchmark_user_input_data_size(outputs):
+def io_write_benchmark_user_input_data_size(outputs, memory_limit=None):
+    if memory_limit is None:
+        memory_limit = sys.maxsize
+    memory_limit = int(memory_limit)
     for file_name, file_size in outputs.items():
         print(f"[WfBench] Writing output file '{file_name}'\n")
-        with open(file_name, "wb") as fp:
-            fp.write(os.urandom(int(file_size)))
+        file_size_todo = file_size
+        while file_size_todo > 0:
+            with open(file_name, "ab") as fp:
+                chunk_size = min(file_size_todo, memory_limit)
+                file_size_todo -= fp.write(os.urandom(int(chunk_size)))
 
 
 def main():
@@ -185,8 +195,10 @@ def main():
 
     print(f"[WfBench] Starting {args.name} Benchmark\n")
 
+    mem_bytes = args.mem * 1024 * 1024 if args.mem else None
+
     if args.out:
-        io_read_benchmark_user_input_data_size(other)
+        io_read_benchmark_user_input_data_size(other, memory_limit=mem_bytes)
     
     if args.gpu_work:
         print("[WfBench] Starting GPU Benchmark...")
@@ -224,7 +236,7 @@ def main():
 
     if args.out:
         outputs = json.loads(args.out.replace("'", '"'))
-        io_write_benchmark_user_input_data_size(outputs)
+        io_write_benchmark_user_input_data_size(outputs, memory_limit=mem_bytes)
 
     if core:
         unlock_core(path_locked, path_cores, core)
