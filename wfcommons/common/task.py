@@ -10,6 +10,7 @@
 
 import logging
 
+from datetime import datetime
 from typing import Dict, List, Optional
 from logging import Logger
 
@@ -84,7 +85,9 @@ class Task:
                  avg_power: Optional[float] = None,
                  priority: Optional[int] = None,
                  files: Optional[List[File]] = None,
-                 logger: Optional[Logger] = None
+                 logger: Optional[Logger] = None,
+                 launch_dir: Optional[str] = None,
+                 start_time: Optional[str] = None,
                  ) -> None:
         """A task in a workflow."""
         self.logger: Logger = logging.getLogger(
@@ -106,7 +109,8 @@ class Task:
         self.files: List[File] = files if files else []
         self.machine: Machine = machine
         self.priority: Optional[int] = priority
-
+        self.launch_dir: Optional[str] = launch_dir
+        self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not start_time else start_time
         self.logger.debug(
             f"created {self.type} task {self.name}: runtime => {self.runtime} seconds.")
 
@@ -156,5 +160,8 @@ class Task:
             task_obj['command']['arguments'] = self.args
         if self.machine is not None:
             task_obj['machine'] = self.machine.name
-
+        if self.launch_dir:
+            task_obj['launchDir'] = self.launch_dir
+        if self.start_time:
+            task_obj['startedAt'] = self.start_time
         return task_obj

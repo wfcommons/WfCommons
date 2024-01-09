@@ -60,7 +60,7 @@ class Workflow(nx.DiGraph):
         self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
         self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
         self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
-        self.executed_at: Optional[str] = datetime.now().astimezone().isoformat() if not executed_at else executed_at
+        self.executed_at: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
         self.makespan: Optional[int] = makespan
         self.tasks = {}
         self.tasks_parents = {}
