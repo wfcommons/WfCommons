@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2022 The WfCommons Team.
+# Copyright (c) 2021-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -9,14 +9,18 @@
 # (at your option) any later version.
 
 import logging
+import os
 import pathlib
+import shutil
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
-from ...common import Task, Workflow
+from ...common import FileLink, Task, Workflow
 from ...wfinstances.instance import Instance
 
+
+this_dir = pathlib.Path(__file__).resolve().parent
 
 class Translator(ABC):
     """
@@ -69,13 +73,43 @@ class Translator(ABC):
                     self.task_children[task['name']].append(child)
 
     @abstractmethod
-    def translate(self, output_file_path: pathlib.Path) -> None:
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into an actual workflow application.
 
-        :param output_file_path: The path of the output file.
-        :type output_file_path: pathlib.Path
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
         """
+
+    def _copy_binary_files(self, output_folder: pathlib.Path) -> None:
+        """
+        Copy binary files to workflow benchmark's bin folder.
+
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
+        """
+        bin_folder = output_folder.joinpath("bin")
+        bin_folder.mkdir()
+        shutil.copy(this_dir.joinpath("../wfbench.py"), bin_folder)
+        shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
+
+    def _generate_input_files(self, output_folder: pathlib.Path) -> None:
+        """
+        Generate workflow input files into workflow benchmark's data folder.
+
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
+        """
+        generated_files = []
+        data_folder = output_folder.joinpath("data")
+        data_folder.mkdir()
+        for task_name in self.root_task_names:
+            task = self.tasks[task_name]
+            for file in task.files:
+                if file.name not in generated_files and file.link == FileLink.INPUT:
+                    generated_files.append(file.name)
+                    with open(data_folder.joinpath(file.name), "wb") as fp:
+                        fp.write(os.urandom(int(file.size)))
 
     def _write_output_file(self, contents: str, output_file_path: pathlib.Path) -> None:
         """
@@ -91,7 +125,7 @@ class Translator(ABC):
             out.write(contents)
         self.logger.info(f"Translated content written to '{output_file_path}'")
 
-    def _find_children(self, task_name: str) -> List[Task]:
+    def _find_children(self, task_name: str) -> list[Task]:
         """
         Find the children for a specific task.
 
@@ -99,8 +133,9 @@ class Translator(ABC):
         :type task_name: str
 
         :return: List of task's children.
-        :rtype: List[Task]
+        :rtype: list[Task]
         """
+        self.logger.debug(f"Finding children for task '{task_name}'")
         children = None
         for node in self.instance.instance["workflow"]["tasks"]:
             if node["name"] == task_name:
@@ -108,7 +143,7 @@ class Translator(ABC):
 
         return children
 
-    def _find_parents(self, task_name: str) -> List[Task]:
+    def _find_parents(self, task_name: str) -> list[Task]:
         """
         Find the parents for a specific task.
 
@@ -116,7 +151,7 @@ class Translator(ABC):
         :type task_name: str
 
         :return: List of task's parents.
-        :rtype: List[Task]
+        :rtype: list[Task]
         """
         self.logger.debug(f"Finding parents for task '{task_name}'")
         parents = None

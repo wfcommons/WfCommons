@@ -11,3 +11,4 @@
 from .dask import DaskTranslator
 from .pegasus import PegasusTranslator
 from .swift_t import SwiftTTranslator
+from .nextflow import NextflowTranslator

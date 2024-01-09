@@ -132,33 +132,33 @@ class Task:
             'children': [],
             'files': task_files,
         }
-        if self.runtime:
+        if self.runtime is not None:
             task_obj['runtimeInSeconds'] = self.runtime
-        if self.cores:
+        if self.cores is not None:
             task_obj['cores'] = self.cores
-        if self.task_id:
+        if self.task_id is not None:
             task_obj['id'] = self.task_id
-        if self.category:
+        if self.category is not None:
             task_obj['category'] = self.category
-        if self.avg_cpu:
+        if self.avg_cpu is not None:
             task_obj['avgCPU'] = self.avg_cpu
-        if self.bytes_read:
+        if self.bytes_read is not None:
             task_obj['readBytes'] = self.bytes_read
-        if self.bytes_written:
+        if self.bytes_written is not None:
             task_obj['writtenBytes'] = self.bytes_written
-        if self.memory:
+        if self.memory is not None:
             task_obj['memoryInBytes'] = self.memory
-        if self.energy:
+        if self.energy is not None:
             task_obj['energy'] = self.energy
-        if self.avg_power:
+        if self.avg_power is not None:
             task_obj['avgPower'] = self.avg_power
-        if self.priority:
+        if self.priority is not None:
             task_obj['priority'] = self.priority
-        if self.program:
+        if self.program is not None:
             task_obj['command']['program'] = self.program
-        if self.args:
+        if self.args is not None:
             task_obj['command']['arguments'] = self.args
-        if self.machine:
+        if self.machine is not None:
             task_obj['machine'] = self.machine.name
         if self.launch_dir:
             task_obj['launchDir'] = self.launch_dir

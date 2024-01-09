@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2022 The WfCommons Team.
+# Copyright (c) 2021-2023 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +14,11 @@ import os
 import subprocess
 import time
 import json
-from io import StringIO
+import signal
+import sys
 import pandas as pd
+
+from io import StringIO
 
 from filelock import FileLock
 from typing import List, Optional
@@ -87,7 +90,8 @@ def unlock_core(path_locked: pathlib.Path,
 def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
                       mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
-                      core: Optional[int] = None) -> List:
+                      core: Optional[int] = None,
+                      total_mem: Optional[float] = None) -> List:
     """
     Run cpu and memory benchmark.
 
@@ -99,18 +103,20 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
     :type cpu_work: Optional[int]
     :param core:
     :type core: Optional[int]
+    :param total_mem:
+    :type total_mem: Optional[float]
 
     :return:
     :rtype: List
     """
-    total_mem_bytes = 100.0 / os.cpu_count()
+    total_mem = f"{total_mem}M" if total_mem else f"{100.0 / os.cpu_count()}%"
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
     cpu_prog = [
         f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", f"{total_mem_bytes}%", "--vm-keep"]
+                "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog)
@@ -144,23 +150,25 @@ def get_parser() -> argparse.ArgumentParser:
                         help="Path to cores file.")
     parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
+    parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete the task (overrides CPU and GPU works)")
+    parser.add_argument("--mem", default=None, help="Max amount (in MB) of memory consumption.")
     parser.add_argument("--out", help="output files name.")
     return parser
 
 
-def io_read_benchmark_user_input_data_size(other):
+def io_read_benchmark_user_input_data_size(inputs):
     print("[WfBench] Starting IO Read Benchmark...")
-    for file in other:
-        with open(this_dir.joinpath(file), "rb") as fp:
+    for file in inputs:
+        with open(file, "rb") as fp:
             print(f"[WfBench]   Reading '{file}'")
             fp.readlines()
     print("[WfBench] Completed IO Read Benchmark!\n")
 
 
 def io_write_benchmark_user_input_data_size(outputs):
-    for task_name, file_size in outputs.items():
-        print(f"[WfBench] Writing output file '{task_name}'\n")
-        with open(this_dir.joinpath(task_name), "wb") as fp:
+    for file_name, file_size in outputs.items():
+        print(f"[WfBench] Writing output file '{file_name}'\n")
+        with open(file_name, "wb") as fp:
             fp.write(os.urandom(int(file_size)))
 
 
@@ -189,7 +197,7 @@ def main():
         else:
             device = available_gpus[0]
             print(f"Running on GPU {device}")
-            gpu_benchmark(args.gpu_work, device)
+            gpu_benchmark(args.gpu_work, device, time=args.time)
     
     if args.cpu_work:
         print("[WfBench] Starting CPU and Memory Benchmarks...")
@@ -198,10 +206,18 @@ def main():
 
         cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
                                     mem_threads=int(10 - 10 * args.percent_cpu),
-                                    cpu_work=int(args.cpu_work),
-                                    core=core)
-        for proc in cpu_procs:
-            proc.wait()
+                                    cpu_work=sys.maxsize if args.time else int(args.cpu_work),
+                                    core=core,
+                                    total_mem=args.mem)
+        
+        if args.time:
+            time.sleep(int(args.time))
+            for proc in cpu_procs:
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        else:
+            for proc in cpu_procs:
+                proc.wait()
+        
         mem_kill = subprocess.Popen(["killall", "stress-ng"])
         mem_kill.wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")

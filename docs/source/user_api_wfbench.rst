@@ -1,7 +1,7 @@
 .. _wfcommons-wfbench-label:
 
 wfcommons.wfbench
-================
+=================
 
 .. toctree::
    :maxdepth: 4
@@ -14,6 +14,13 @@ wfcommons.wfbench.bench
    :undoc-members:
    :show-inheritance:
 
+wfcommons.wfbench.translator.nextflow
+-------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.nextflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 wfcommons.wfbench.translator.pegasus
 ------------------------------------

@@ -38,14 +38,14 @@ class DaskTranslator(Translator):
         self.tasks_futures = {}
         self.task_id = 0
 
-    def translate(self, output_file_name: pathlib.Path) -> None:
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
-        Translate a workflow benchmark description (WfFormat) into a Dask workflow application.
+        Translate a workflow benchmark description (WfFormat) into an actual workflow application.
 
-        :param output_file_name: The name of the output file (e.g., workflow.py).
-        :type output_file_name: pathlib.Path
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
         """
-        noindent_python_codelines = self._dask_wftasks_codelines("randomizer")
+        noindent_python_codelines = self._dask_wftasks_codelines("randomizer", output_folder)
         
         for task_name in self.root_task_names:
             noindent_python_codelines.extend(self._parse_tasks(task_name))
@@ -61,11 +61,19 @@ class DaskTranslator(Translator):
         with open(this_dir.joinpath("templates/dask_template.py")) as fp:
             run_workflow_code = fp.read()
         run_workflow_code = run_workflow_code.replace("# Generated code goes here", wf_codelines)
-        with open("dask_workflow.py", "w") as fp:
+
+        # write benchmark files
+        output_folder.mkdir(parents=True)
+        with open(output_folder.joinpath("dask_workflow.py"), "w") as fp:
             fp.write(run_workflow_code)
+
+        # additional files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
         
     def _dask_wftasks_codelines(self, 
                                 randomizer_varname: str, 
+                                output_folder: pathlib.Path,
                                 simulate_minimum_execution_time: float = 0.1,
                                 simulate_maximum_execution_time: float = 1.1) -> list[str]:
         """
@@ -73,6 +81,8 @@ class DaskTranslator(Translator):
         
         :param randomizer_varname: The name of the randomizer.
         :type randomizer_varname: str
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
 
         :return: The non-indented Python lines of code used to instantiate the WorkflowTask instances.
         :rtype: list[str]
@@ -80,11 +90,24 @@ class DaskTranslator(Translator):
         codelines = ["randomizer = random.Random(seed)",
                      "TASKS = {}"]
         for task in self.tasks.values():
-            input_files = [f.name for f in task.files if f.link == FileLink.INPUT]
-            output_files = [f.name for f in task.files if f.link == FileLink.OUTPUT]
+            input_files = [str(output_folder.joinpath(f"data/{f.name}")) for f in task.files if f.link == FileLink.INPUT]
+            output_files = [str(output_folder.joinpath(f"data/{f.name}")) for f in task.files if f.link == FileLink.OUTPUT]
+            program = output_folder.joinpath(f'bin/{task.program}')
+            args = []
+            print(task.args)
+            for a in task.args:
+                if "--out" in a:
+                    a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/").replace(": ", ":")
+                elif "--" not in a: 
+                    a = str(output_folder.joinpath("data", a))
+                else: 
+                    a = a.replace("'", "\"") 
+                args.append(a)
+            print(args)
+            print("")
             code = [f"WorkflowTask(dag_id = '{task.name}',",
                     f"             name = '{task.name}',",
-                    f"             command_arguments = {[task.program] + task.args},",
+                    f"             command_arguments = {[str(program)] + args},",
                     f"             inputs = {input_files},",
                     f"             outputs = {output_files},",
                     "             simulate = simulate,",
@@ -94,6 +117,7 @@ class DaskTranslator(Translator):
                     "             )"]
             codelines.append(f"TASKS['{task.name}'] = {code[0]}")
             codelines.extend([codeline for codeline in code[1:]])
+        # exit(1)
         return codelines
 
     def _parse_tasks(self, task_name: str) -> list[str]:
@@ -115,7 +139,7 @@ class DaskTranslator(Translator):
             self.parsed_tasks.append(task_name)
             self.tasks_futures[task_name] = f"fut_dv_{self.task_id}"
             self.task_id += 1
-            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], [])"]
+            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {self.task_parents[task_name]})"]
             
             # parse children
             for child in self.task_children[task_name]:

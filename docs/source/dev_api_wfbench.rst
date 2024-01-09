@@ -13,6 +13,16 @@ wfcommons.wfbench.bench
    :show-inheritance:
    :private-members:
    :noindex:
+ 
+wfcommons.wfbench.translator.nextflow
+------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.nextflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
 
 wfcommons.wfbench.translator.pegasus
 ------------------------------------
