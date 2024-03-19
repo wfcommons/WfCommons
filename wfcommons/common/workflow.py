@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import getpass
+import importlib
 import json
 import networkx as nx
 import pathlib
@@ -181,6 +182,12 @@ class Workflow(nx.DiGraph):
         """
         if not dot_file_path:
             raise FileNotFoundError(f"Not able to find the dot file: {dot_file_path}.")
+        
+        graphviz_found = importlib.util.find_spec('pydot')
+        if graphviz_found is None:
+            raise ModuleNotFoundError(
+                f"\'pydot\' package not found: call to {type(self).__name__}.read_dot() failed.")
+        
         graph = nx.drawing.nx_pydot.read_dot(dot_file_path)
 
         tasks_map = {}

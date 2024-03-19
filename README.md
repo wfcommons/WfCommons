@@ -72,6 +72,13 @@ Then you can install pygraphviz by running:
 python3 -m pip install pygraphviz
 ```
 
+#### pydot
+WfCommons uses _pydot_ for reading and writing DOT files. If you want to enable
+this feature, you will have to install the pydot package:
+```
+python3 -m pip install pydot
+```
+
 ## Get in Touch
 
 The main channel to reach the WfCommons team is via the support email: 
