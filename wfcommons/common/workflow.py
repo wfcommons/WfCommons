@@ -192,7 +192,7 @@ class Workflow(nx.DiGraph):
 
         tasks_map = {}
         for node in graph.nodes(data=True):
-            task_name = f"{node[1]['label']}_{node[0]}"
+            task_name = f"{node[1]['label']}_ID{node[0]}"
             task = Task(name=task_name, task_type=TaskType.COMPUTE, runtime=0, task_id=node[0])
             self.add_task(task)
             tasks_map[node[0]] = task_name

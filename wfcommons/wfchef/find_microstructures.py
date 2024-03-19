@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import networkx as nx
-from hashlib import sha256
-from typing import Union, Set, Optional, Dict, Hashable, List
-from uuid import uuid4
-import pathlib
 import json
-from itertools import product
-from networkx.readwrite import read_gpickle, write_gpickle
-import numpy as np
-from itertools import chain, combinations
-import argparse
-from .utils import create_graph, string_hash, type_hash, combine_hashes, annotate, draw
 import math
+import networkx as nx
+import numpy as np
+import pathlib
+import pickle
+
+from hashlib import sha256
+from itertools import chain, combinations
+from typing import Union, Set, Optional, Dict, List
+from uuid import uuid4
+
+from .utils import create_graph, combine_hashes, annotate, draw
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -233,7 +233,8 @@ def save_microstructures(workflow_path: Union[pathlib.Path],
         g_savedir.mkdir(exist_ok=True, parents=True)
 
         base_graph_path = g_savedir.joinpath("base_graph.pickle")
-        write_gpickle(graph, str(base_graph_path))
+        with open(base_graph_path, 'wb') as pf:
+            pickle.dump(graph, pf, pickle.HIGHEST_PROTOCOL)
         summary["base_graphs"][graph.name] = {
             "size": graph.size(),
             "order": graph.order()

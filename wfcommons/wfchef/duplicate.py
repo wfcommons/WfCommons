@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,25 +92,38 @@ def duplicate(path: pathlib.Path,
             f"Cannot create synthentic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
 
     all_microstructures = json.loads(base_path.joinpath("microstructures.json").read_text())
-    microstructures, freqs = map(list, zip(*[(ms, ms["frequency"]) for ms_hash, ms in all_microstructures.items()]))
+    try:
+        microstructures, freqs = map(list, zip(*[(ms, ms["frequency"]) for ms_hash, ms in all_microstructures.items()]))
+        
+        p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
+        while graph.order() < num_nodes and microstructures:
+            i = random.choice(range(len(microstructures)))
+            ms = microstructures[i]
+            while ms["nodes"]:
+                j = random.choice(range(len(ms["nodes"])))
+                structure = ms["nodes"][j]
+                if graph.order() + len(structure) > num_nodes:
+                    del ms["nodes"][j]
+                else:
+                    break
 
-    p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
-    while graph.order() < num_nodes and microstructures:
-        i = random.choice(range(len(microstructures)))
-        ms = microstructures[i]
-        while ms["nodes"]:
-            j = random.choice(range(len(ms["nodes"])))
-            structure = ms["nodes"][j]
-            if graph.order() + len(structure) > num_nodes:
-                del ms["nodes"][j]
-            else:
+            if not ms["nodes"]:  # delete microstructure
+                del microstructures[i]
+                del p[i]
+                continue
+
+            duplicate_nodes(graph, structure)
+
+    except ValueError as e:
+        nodes = graph.copy().nodes
+        while graph.order() < num_nodes:
+            structure = set[str]()
+            if graph.order() + len(nodes) - 2 > num_nodes:
                 break
+            for node in nodes:
+                if str(node) not in ["SRC", "DST"]:
+                    structure.add(node)
 
-        if not ms["nodes"]:  # delete microstructure
-            del microstructures[i]
-            del p[i]
-            continue
-
-        duplicate_nodes(graph, structure)
+            duplicate_nodes(graph, structure)
 
     return graph
