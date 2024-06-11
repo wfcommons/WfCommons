@@ -28,6 +28,7 @@ generating workflow benchmarks with an arbitrary number of tasks::
 
     # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+
     # generate a specification based on performance characteristics
     path = benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
@@ -52,7 +53,7 @@ Generate from synthetic workflow instances
 ++++++++++++++++++++++++++++++++++++++++++
 
 WfCommons also allows you to convert synthetic workflow instances into benchmarks directly.
-The generated benchmark will have exactly the same structure as the synthetic workflow instance.
+The generated benchmark will have exactly the same structure as the synthetic workflow instance::
 
     import pathlib
 
@@ -95,7 +96,7 @@ Nextflow
 the development of portable and reproducible workflows. It supports deploying workflows
 on a variety of execution platforms including local, HPC schedulers, and cloud-based
 and container-based environments. Below, we provide an example on how to generate
-workflow benchmark for running with Nextflow:
+workflow benchmark for running with Nextflow::
 
     import pathlib
 
