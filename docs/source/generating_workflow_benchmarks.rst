@@ -61,10 +61,12 @@ The generated benchmark will have exactly the same structure as the synthetic wo
 
     # create a synthetic workflow instance with 500 tasks or use one that you already have
     workflow = BlastRecipe.from_num_tasks(500).build_workflow()
+
     # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+    
     # generate a specification based on performance characteristics and the structure of the synthetic workflow instance
-    path = benchmark.create_benchmark_from_synthetic_workflow(pathlib.Path("/tmp/"), workflow, cpu_work=100, data=10, percent_cpu=0.6)
+    path = benchmark.create_benchmark_from_synthetic_workflow(pathlib.Path("/tmp/"), workflow, cpu_work=100, percent_cpu=0.6)
 
 This is useful when you want to generate a benchmark with a specific structure or when you want
 benchmarks with the more detailed structure provided by WfChef workflow generation.
