@@ -23,7 +23,7 @@ from io import StringIO
 from filelock import FileLock
 from typing import List, Optional
 
-bin_dir = pathlib.Path("../../bin")
+this_dir = pathlib.Path(__file__).resolve().parent
 
 def lock_core(path_locked: pathlib.Path,
               path_cores: pathlib.Path) -> int:
@@ -113,11 +113,12 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
     cpu_procs = []
     cpu_prog = [
-        f"{bin_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+        f"{this_dir.parent.parent.joinpath('bin').joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
     for i in range(cpu_threads):
+        print(cpu_prog)
         cpu_proc = subprocess.Popen(cpu_prog)
         if core:
             os.sched_setaffinity(cpu_proc.pid, {core})
@@ -136,7 +137,7 @@ def get_available_gpus():
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
 def gpu_benchmark(work, device):
-    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {bin_dir.joinpath('gpu-benchmark')} {work}"]
+    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.parent.parent.joinpath('bin').joinpath('gpu-benchmark')} {work}"]
     subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
