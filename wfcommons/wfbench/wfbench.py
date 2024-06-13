@@ -24,7 +24,7 @@ from filelock import FileLock
 from typing import List, Optional
 
 this_dir = pathlib.Path(__file__).resolve().parent
-
+bin_dir = pathlib.Path("../../bin")
 
 def lock_core(path_locked: pathlib.Path,
               path_cores: pathlib.Path) -> int:
@@ -114,7 +114,7 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
     cpu_procs = []
     cpu_prog = [
-        f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+        f"{bin_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
