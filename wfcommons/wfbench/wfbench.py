@@ -23,7 +23,6 @@ from io import StringIO
 from filelock import FileLock
 from typing import List, Optional
 
-this_dir = pathlib.Path(__file__).resolve().parent
 bin_dir = pathlib.Path("../../bin")
 
 def lock_core(path_locked: pathlib.Path,
@@ -137,7 +136,7 @@ def get_available_gpus():
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
 def gpu_benchmark(work, device):
-    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
+    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {bin_dir.joinpath('gpu-benchmark')} {work}"]
     subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
