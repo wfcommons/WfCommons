@@ -15,7 +15,7 @@ This Python package provides a collection of tools for:
 - Generating synthetic realistic workflow instances; and
 - Generating realistic workflow benchmark specifications.
 
-[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/feature/wfperf)
+[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/main)
 
 ## Installation
 
