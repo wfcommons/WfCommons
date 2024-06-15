@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2023 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -135,8 +135,8 @@ class WorkflowBenchmark:
             task_runtime_factor = task.runtime / task_max_runtimes[task.category]
             # scale argument parameters to achieve a runtime distribution
             task_percent_cpu = percent_cpu[task.category] * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
-            task_cores = int(10 * task_percent_cpu)  # set number of cores to cpu threads in wfbench.py
-            task_percent_cpu = max(0.1, task_percent_cpu)  # set minimum to 0.1 which is equivalent to 1 thread in wfbench.py
+            task_cores = int(10 * task_percent_cpu)  # set number of cores to cpu threads in wfbench
+            task_percent_cpu = max(0.1, task_percent_cpu)  # set minimum to 0.1 which is equivalent to 1 thread in wfbench
             task_percent_cpu = round(task_percent_cpu, 2)
             if cpu_work is not None:
                 task_cpu_work = cpu_work[task.category] * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
@@ -345,7 +345,7 @@ class WorkflowBenchmark:
 
         task.runtime = 0
 
-        task.program = "wfbench.py"
+        task.program = "wfbench"
         task.args = [task.name]
         task.args.extend(params)
 

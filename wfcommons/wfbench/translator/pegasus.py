@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2022 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,12 +44,12 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
-    def translate(self, output_file_name: pathlib.Path, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
+    def translate(self, output_file_path: pathlib.Path, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
 
-        :param output_file_name: The name of the output file (e.g., workflow.py).
-        :type output_file_name: pathlib.Path
+        :param output_file_path: The path of the output file (e.g., workflow.py).
+        :type output_file_path: pathlib.Path
         :param tasks_priorities: Priorities to be assigned to tasks.
         :type tasks_priorities: Optional[Dict[str, int]]
         """

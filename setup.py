@@ -34,7 +34,7 @@ exec(open('wfcommons/version.py').read())
 setup(
     name='wfcommons',
     version=str(__version__),
-    license='GPLv3',
+    license='LGPLv3',
     author='WfCommons team',
     author_email='support@wfcommons.org',
     description='A Framework for Enabling Scientific Workflow Research and Education',
@@ -78,7 +78,7 @@ setup(
     ],
     python_requires='>=3.8',
     data_files=[
-        ('bin', ['bin/cpu-benchmark'])
+        ('bin', ['bin/cpu-benchmark', 'bin/wfbench'])
     ],
     entry_points={
         'console_scripts': [
