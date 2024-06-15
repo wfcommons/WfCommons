@@ -15,9 +15,9 @@ These recipes contain the necessary information for generating synthetic, yet
 realistic, workflow instances that resemble the structure and distribution of
 the original workflow executions.
 
-A `list of workflow execution instances <https://wfcommons.org/instances>`_
+A `list of workflow execution instances <https://github.com/wfcommons/wfinstances>`_
 that are compatible with :ref:`json-format-label` is kept constantly updated
-in our project website.
+in our project GitHub.
 
 .. _wfinstances-label:
 
