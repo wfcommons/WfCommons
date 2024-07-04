@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import argparse
+import multiprocessing
 import pathlib
 import os
 import subprocess
@@ -131,6 +132,43 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
     return cpu_procs
 
+
+def io_read_benchmark_user_input_data_size(inputs,
+                                           memory_limit=None):
+    if memory_limit is None:
+        memory_limit = -1
+    memory_limit = int(memory_limit)
+    print("[WfBench] Starting IO Read Benchmark...")
+    for file in inputs:
+        with open(file, "rb") as fp:
+            print(f"[WfBench]   Reading '{file}'")
+            while fp.read(memory_limit):
+                pass
+    print("[WfBench] Completed IO Read Benchmark!\n")
+
+
+def io_write_benchmark_user_input_data_size(outputs,
+                                            memory_limit=None):
+    if memory_limit is None:
+        memory_limit = sys.maxsize
+    memory_limit = int(memory_limit)
+    for file_name, file_size in outputs.items():
+        print(f"[WfBench] Writing output file '{file_name}'\n")
+        file_size_todo = file_size
+        while file_size_todo > 0:
+            with open(file_name, "ab") as fp:
+                chunk_size = min(file_size_todo, memory_limit)
+                file_size_todo -= fp.write(os.urandom(int(chunk_size)))
+
+def io_alternate(inputs, outputs, memory_limit=None):
+    """Alternate between reading and writing to a file."""
+    if memory_limit is None:
+        memory_limit = 10 * 1024 * 1024 # sys.maxsize
+    memory_limit = int(memory_limit)
+    while True:
+        io_read_benchmark_user_input_data_size(inputs, memory_limit=memory_limit)
+        io_write_benchmark_user_input_data_size(outputs, memory_limit=memory_limit)
+
 def get_available_gpus():
     proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = proc.communicate()
@@ -138,7 +176,8 @@ def get_available_gpus():
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
 def gpu_benchmark(work, device):
-    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
+    gpu_prog = ["timeout 100s glmark2"] # Run a GPU benchmark for 100 seconds
+    # gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
     subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
@@ -157,38 +196,13 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def io_read_benchmark_user_input_data_size(inputs, memory_limit=None):
-    if memory_limit is None:
-        memory_limit = -1
-    memory_limit = int(memory_limit)
-    print("[WfBench] Starting IO Read Benchmark...")
-    for file in inputs:
-        with open(file, "rb") as fp:
-            print(f"[WfBench]   Reading '{file}'")
-            while fp.read(memory_limit):
-                pass
-    print("[WfBench] Completed IO Read Benchmark!\n")
-
-
-def io_write_benchmark_user_input_data_size(outputs, memory_limit=None):
-    if memory_limit is None:
-        memory_limit = sys.maxsize
-    memory_limit = int(memory_limit)
-    for file_name, file_size in outputs.items():
-        print(f"[WfBench] Writing output file '{file_name}'\n")
-        file_size_todo = file_size
-        pathlib.Path(file_name).touch()
-        while file_size_todo > 0:
-            with open(file_name, "ab") as fp:
-                chunk_size = min(file_size_todo, memory_limit)
-                file_size_todo -= fp.write(os.urandom(int(chunk_size)))
-
+        
 
 def main():
     """Main program."""
     parser = get_parser()
     args, other = parser.parse_known_args()
-
+    print("[Wfbench] ARGS", args)
     core = None
     if args.path_lock and args.path_cores:
         path_locked = pathlib.Path(args.path_lock)
@@ -199,8 +213,18 @@ def main():
 
     mem_bytes = args.mem * 1024 * 1024 if args.mem else None
 
+    procs = []
+    io_proc = None
     if args.out:
-        io_read_benchmark_user_input_data_size(other, memory_limit=mem_bytes)
+        print("[WfBench] Starting IO benchmark...")
+        # io_read_benchmark_user_input_data_size(other, memory_limit=mem_bytes)
+        ioargs = args.out.replace("'", '"')
+        print(ioargs)
+        io_proc = multiprocessing.Process(
+            target=io_alternate,
+            args=(other, json.loads(args.out.replace("'", '"')), mem_bytes))
+        io_proc.start()
+        procs.append(io_proc)
     
     if args.gpu_work:
         print("[WfBench] Starting GPU Benchmark...")
@@ -225,26 +249,31 @@ def main():
                                     core=core,
                                     total_mem=args.mem)
         
+        procs.extend(cpu_procs)
+
         if args.time:
             time.sleep(int(args.time))
-            for proc in cpu_procs:
+            for proc in procs:
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
         else:
-            for proc in cpu_procs:
-                proc.wait()
-
-        if mem_threads > 0:
-            mem_kill = subprocess.Popen(["killall", "stress-ng"])
-            mem_kill.wait()
+            for proc in procs:
+                # if isinstance(proc, multiprocessing.Process):
+                #     proc.join()
+                if isinstance(proc, subprocess.Popen):
+                    proc.wait()
+        if io_proc is not None and io_proc.is_alive():
+            io_proc.terminate()
+            io_proc.join()
+        mem_kill = subprocess.Popen(["killall", "stress-ng"])
+        mem_kill.wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
-    if args.out:
-        outputs = json.loads(args.out.replace("'", '"'))
-        io_write_benchmark_user_input_data_size(outputs, memory_limit=mem_bytes)
+    # if args.out:
+    #     outputs = json.loads(args.out.replace("'", '"'))
+        # io_write_benchmark_user_input_data_size(outputs, memory_limit=mem_bytes)
 
     if core:
         unlock_core(path_locked, path_cores, core)
-
     print("WfBench Benchmark completed!")
 
 
