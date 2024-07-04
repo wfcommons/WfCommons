@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 import time
 import uuid
@@ -593,41 +594,64 @@ class WorkflowBenchmark:
         try:
             wf = json.loads(json_path.read_text())
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
+                print("Starting run...")
                 has_executed: Set[str] = set()
                 procs: List[subprocess.Popen] = []
                 while len(has_executed) < len(wf["workflow"]["tasks"]):
+                    
                     for task in wf["workflow"]["tasks"]:
                         if task["name"] in has_executed:
+                            # print(f'{task["name"]} has executed...')
                             continue
+
                         ready_to_execute = all([
-                            this_dir.joinpath(input_file["name"]).exists()
+                            pathlib.Path(input_file["name"]).exists()
                             for input_file in task["files"]
                             if input_file["link"] == "input"
                         ])
+
+
                         if not ready_to_execute:
                             continue
+                        print(f"Executing task: {task['name']}")
                         has_executed.add(task["name"])
 
                         executable = task["command"]["program"]
+                        executable = str(this_dir.parent.parent.joinpath(f"bin/{executable}"))
                         arguments = task["command"]["arguments"]
-                        if "--out" in arguments:
-                            files = assigning_correct_files(task)
-                            program = ["time", "python",
-                                       executable, *arguments, *files]
-                        else:
-                            program = ["time", "python",
-                                       executable, *arguments]
-                        folder = pathlib.Path(this_dir.joinpath(
-                            f"wfbench_execution/{uuid.uuid4()}"))
-                        folder.mkdir(exist_ok=True, parents=True)
-                        os.chdir(str(folder))
-                        procs.append(subprocess.Popen(
-                            program, stdout=fp, stderr=fp))
-                        os.chdir("../..")
+                        arguments = [
+                            # --[opt] [value] -> --[opt]=[value]
+                            re.sub(r'--(.*?) (.*)', r'--\1=\2', argument)
+                            for argument in arguments
+                        ]
+                        print("ARGUMENTS", arguments)
 
-                    time.sleep(1)
+                        for arg in arguments:
+                            if "--out" in arg:
+                                print("HERE")
+                                files = assigning_correct_files(task)
+                                print(files)
+                                program = ["time", "python",
+                                        executable, *arguments, *files]
+                            else:
+                                program = ["time", "python",
+                                        executable, *arguments]
+                            
+                       
+                        print("Prog:", program)
+
+                        # folder = pathlib.Path(f"wfbench_execution/{uuid.uuid4()}")
+                        # folder.mkdir(exist_ok=True, parents=True)
+                        proc = subprocess.Popen(program, stdout=fp, stderr=fp) #, cwd=folder)
+                        print(proc.args)
+                        procs.append(proc)
+
+                        print("#Tasks executed:", len(has_executed))
+                        time.sleep(1)
+                    
                 for proc in procs:
                     proc.wait()
+
             cleanup_sys_files()
 
         except Exception as e:
