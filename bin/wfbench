@@ -174,8 +174,12 @@ def get_available_gpus():
     df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
-def gpu_benchmark(work, device):
-    gpu_prog = ["timeout 100s glmark2"] # Run a GPU benchmark for 100 seconds
+def gpu_benchmark(timeout: int,
+                  run_count: Optional[int] = None,
+                  fps_limit: Optional[int] = None,
+                  quality: Optional[str] = None,
+                  resolution: Optional[str] = None): #work, device
+    gpu_prog = [f"timeout {timeout} glmark2 --run-count {run_count} --fps-limit {fps_limit} --quality {quality} --size {resolution}"] # Run a GPU benchmark for 100 seconds
     # gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
     subprocess.Popen(gpu_prog, shell=True)  
 
