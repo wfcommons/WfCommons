@@ -103,7 +103,7 @@ class PegasusTranslator(Translator):
                        f"wf.write('{self.workflow.name}-benchmark-workflow.yml')\n"
 
         # write script to file
-        self._write_output_file(self.script, output_file_name)
+        self._write_output_file(self.script, output_file_path)
 
     def _add_task(self, task_name: str, parent_task: Optional[str] = None, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
         """
