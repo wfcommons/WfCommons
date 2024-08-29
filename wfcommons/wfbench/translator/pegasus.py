@@ -75,7 +75,7 @@ class PegasusTranslator(Translator):
                                "if transformation_path is None:\n" \
                                f"    raise RuntimeError('Unable to find {task.program}')\n" \
                                f"transformation = Transformation('{task.category}', site='local',\n" \
-                               f"                                pfn='{task.program}',\n" \
+                               f"                                pfn=transformation_path,\n" \
                                "                                is_stageable=True)\n" \
                                "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
                                "transformation.add_profiles(Namespace.CONDOR, 'request_disk', '10')\n" \
