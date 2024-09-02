@@ -176,6 +176,7 @@ def io_write_benchmark_user_input_data_size(outputs, memory_limit=None):
     for file_name, file_size in outputs.items():
         print(f"[WfBench] Writing output file '{file_name}'\n")
         file_size_todo = file_size
+        Path(file_name).touch()
         while file_size_todo > 0:
             with open(file_name, "ab") as fp:
                 chunk_size = min(file_size_todo, memory_limit)
