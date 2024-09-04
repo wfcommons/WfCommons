@@ -231,9 +231,10 @@ def main():
         else:
             for proc in cpu_procs:
                 proc.wait()
-        
-        mem_kill = subprocess.Popen(["killall", "stress-ng"])
-        mem_kill.wait()
+
+        if mem_threads > 0:
+            mem_kill = subprocess.Popen(["killall", "stress-ng"])
+            mem_kill.wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
     if args.out:
