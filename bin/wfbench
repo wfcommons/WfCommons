@@ -218,8 +218,9 @@ def main():
         if core:
             print(f"[WfBench]  {args.name} acquired core {core}")
 
+        mem_threads=int(10 - 10 * args.percent_cpu)
         cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
-                                    mem_threads=int(10 - 10 * args.percent_cpu),
+                                    mem_threads=mem_threads,
                                     cpu_work=sys.maxsize if args.time else int(args.cpu_work),
                                     core=core,
                                     total_mem=args.mem)
