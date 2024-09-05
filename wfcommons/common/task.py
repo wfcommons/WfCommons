@@ -69,7 +69,7 @@ class Task:
 
     def __init__(self,
                  name: str,
-                 task_type: TaskType,
+                #  task_type: TaskType,
                  runtime: float,
                  cores: float = 1.0,
                  task_id: Optional[str] = None,
@@ -93,7 +93,7 @@ class Task:
         self.logger: Logger = logging.getLogger(
             __name__) if logger is None else logger
         self.name: str = name
-        self.type: TaskType = task_type
+        # self.type: TaskType = task_type
         self.runtime: float = runtime
         self.cores: Optional[float] = cores
         self.task_id: Optional[str] = task_id
@@ -112,7 +112,7 @@ class Task:
         self.launch_dir: Optional[str] = launch_dir
         self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not start_time else start_time
         self.logger.debug(
-            f"created {self.type} task {self.name}: runtime => {self.runtime} seconds.")
+            f"created {self.task_id} task {self.name}: runtime => {self.runtime} seconds.")
 
     def as_dict(self) -> Dict:
         """A JSON representation of the task.

@@ -76,7 +76,7 @@ class Instance:
 
         # WMS properties
         self.wms: Dict[str, str] = {
-            u: v for u, v in self.instance['wms'].items()
+            u: v for u, v in self.instance['runtimeSystem'].items()
         }
 
         # Author properties
@@ -87,8 +87,8 @@ class Instance:
         # Workflow properties
         # Global properties
         self.executed_at: datetime = dateutil.parser.parse(
-            self.instance['workflow']['executedAt'])
-        self.makespan: int = self.instance['workflow']['makespanInSeconds']
+            self.instance['workflow']['execution']['executedAt'])
+        self.makespan: int = self.instance['workflow']['execution']['makespanInSeconds']
 
         # Machines
         if 'machines' in self.instance['workflow'].keys():
@@ -109,7 +109,7 @@ class Instance:
         # Tasks
         self.workflow: Workflow = Workflow(
             name=self.name, makespan=self.makespan)
-        for task in self.instance["workflow"]["tasks"]:
+        for task in self.instance["workflow"]['specification']["tasks"]:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
             # By default the value is set to None if we do not find the value
@@ -135,7 +135,7 @@ class Instance:
                     name=task['name'],
                     task_id=task.get('id', None),
                     category=task.get('category', None),
-                    task_type=TaskType(task['type']),
+                    # task_type=TaskType(task['type']),
                     runtime=task['runtimeInSeconds'] if 'runtimeInSeconds' in task else 0,
                     machine=machine,
                     program=command.get('program', None) if command else None,
@@ -153,7 +153,7 @@ class Instance:
                 )
             )
         # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
-        for task in self.instance["workflow"]["tasks"]:
+        for task in self.instance["workflow"]["specification"]["tasks"]:
             for parent in task['parents']:
                 self.workflow.add_dependency(parent, task['name'])
 

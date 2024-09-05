@@ -193,19 +193,50 @@ def ls_recipe():
     print(get_recipes())
 
 
-def uninstall_recipe(module_name: str):
+def uninstall_recipe(wf_name: str,
+                     savedir: pathlib.Path = this_dir.joinpath("recipes")):
     """
     Uninstalls a recipe installed in the system.
     """
 
-    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
-        if entry_point.module_name == module_name:
-            print(f"Uninstalling package: wfchef.recipe.{module_name}")
-            proc = subprocess.Popen(["pip", "uninstall", f"wfchef.recipe.{module_name}"])
-            proc.wait()
-            return
+    dst = pathlib.Path(savedir, f"{savedir.stem}_recipes", wf_name).resolve()
+    try:
+        # Removing package from setup.py
+        with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("r") as fp:
+            setup_str = fp.read()
 
-    print(f"Could not find recipe with module name {module_name} installed")
+        # Find and remove the specific line that added the package
+        for line in setup_str.split("\n"):
+            if wf_name in setup_str:
+                setup_str = setup_str.replace(line, "")
+
+        with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("w") as fp:
+            fp.write(setup_str)
+
+        # Removing the import line from __init__.py
+        init_file = dst.parent.joinpath("__init__.py")
+        if init_file.exists():
+            with init_file.open("r") as fp:
+                init_str = fp.read()
+
+            # Remove the line that imports the package
+
+            for line in init_str.split("\n"):
+                if wf_name in line:
+                    init_str = init_str.replace(line, "")
+                    break
+
+            with init_file.open("w") as fp:
+                fp.write(init_str)
+            # for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
+            #     if entry_point.module_name == module_name:
+            #         print(f"Uninstalling package: {module_name}")
+            #         proc = subprocess.Popen(["pip", "uninstall", module_name])
+            #         proc.wait()
+            #         return
+    except Exception as e:
+        traceback.print_exc()
+    # print(f"Could not find recipe with module name {module_name} installed")
 
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],
@@ -300,7 +331,9 @@ def get_parser() -> argparse.ArgumentParser:
 
     uninstall_parser = subparsers.add_parser("uninstall")
     uninstall_parser.set_defaults(action=uninstall_recipe)
-    uninstall_parser.add_argument("module_name", help="name of recipe module to uninstall")
+    # uninstall_parser.add_argument("module_name", help="name of recipe module to uninstall")
+    uninstall_parser.add_argument("-n", "--name", help="name of the workflow to uninstall")
+    uninstall_parser.add_argument("-o", "--out", help="directory where the recipe is located")
 
     create_parser = subparsers.add_parser("create")
     create_parser.set_defaults(action=create_recipe)
@@ -352,7 +385,7 @@ def main():
     if args.action == ls_recipe:
         ls_recipe()
     elif args.action == uninstall_recipe:
-        uninstall_recipe(args.module_name)
+        uninstall_recipe(args.name, pathlib.Path(args.out))
     elif args.action == create_recipe:
         create_recipe(args.path, args.out, args.name, cutoff=args.cutoff, verbose=True)
 
