@@ -228,12 +228,20 @@ def uninstall_recipe(wf_name: str,
 
             with init_file.open("w") as fp:
                 fp.write(init_str)
-            # for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
-            #     if entry_point.module_name == module_name:
-            #         print(f"Uninstalling package: {module_name}")
-            #         proc = subprocess.Popen(["pip", "uninstall", module_name])
-            #         proc.wait()
-            #         return
+
+        # Removing the recipe directory 
+        if dst.exists():
+            subprocess.Popen(["rm", "-rf", str(dst)]).wait()
+
+        # Find setup.py, clean it and reinstall it
+        path_to_setup = this_dir.parent.parent.resolve()
+        # Check if the setup.py is in the same directory
+        if path_to_setup.joinpath("setup.py").exists():
+            subprocess.Popen(["python", "setup.py", "clean", "-all"]).wait()
+            subprocess.Popen(["python", "setup.py", "sdist", "bdist_wheel"]).wait()
+            subprocess.Popen(["pip", "install", "."]).wait()
+            subprocess.Popen(["pip", "cache", "purge"]).wait()
+            
     except Exception as e:
         traceback.print_exc()
     # print(f"Could not find recipe with module name {module_name} installed")
