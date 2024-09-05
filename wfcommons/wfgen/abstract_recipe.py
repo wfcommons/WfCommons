@@ -151,7 +151,7 @@ class WorkflowRecipe(ABC):
             name=task_id,
             task_id='0{}'.format(task_id.split('_0')[1]),
             category=task_name,
-            task_type=TaskType.COMPUTE,
+            # task_type=TaskType.COMPUTE,
             runtime=runtime,
             machine=None,
             program=task_name,

@@ -231,6 +231,7 @@ def uninstall_recipe(wf_name: str,
 
         # Removing the recipe directory 
         if dst.exists():
+            print(f"Removing {dst}")
             subprocess.Popen(["rm", "-rf", str(dst)]).wait()
 
         # Find setup.py, clean it and reinstall it

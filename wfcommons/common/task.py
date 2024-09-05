@@ -126,7 +126,7 @@ class Task:
 
         task_obj = {
             'name': self.name,
-            'type': self.type.value,
+            # 'type': self.type.value,
             'command': {},
             'parents': [],
             'children': [],
