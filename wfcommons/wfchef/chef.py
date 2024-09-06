@@ -307,6 +307,9 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
         skeleton_str = fp.read()
 
     skeleton_str = skeleton_str.replace("PACKAGE_NAME", savedir.stem)
+
+    
+    print(f"The setup.py file being edit is located at {dst.parent.parent.joinpath('setup.py')}")
     with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("w+") as fp:
         fp.write(skeleton_str)
 
