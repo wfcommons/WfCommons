@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2022 The WfCommons Team.
+# Copyright (c) 2020-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -148,12 +148,13 @@ class WorkflowRecipe(ABC):
         self.tasks_files[task_id] = []
         self.tasks_files_names[task_id] = []
         task = Task(
-            name=task_id,
-            task_id='0{}'.format(task_id.split('_0')[1]),
-            category=task_name,
-            # task_type=TaskType.COMPUTE,
+            name=task_name,
+            # task_id='0{}'.format(task_id.split('_0')[1]),
+            task_id=task_id,
+            # category=task_name,
+            task_type=TaskType.COMPUTE,
             runtime=runtime,
-            machine=None,
+            machines=[],
             program=task_name,
             args=[],
             cores=1,
@@ -164,7 +165,8 @@ class WorkflowRecipe(ABC):
             energy=None,
             avg_power=None,
             priority=None,
-            files=[]
+            input_files=[],
+            output_files=[]
         )
         self.tasks_map[task_id] = task
 
@@ -197,11 +199,11 @@ class WorkflowRecipe(ABC):
         if task.name in self.tasks_output_files.keys():
             return self.tasks_output_files[task.name]
 
-        task_recipe = self._workflow_recipe()[task.category]
+        task_recipe = self._workflow_recipe()[task.name]
 
         # generate output files
-        output_files_list = self._generate_files(task.name, task_recipe['output'], FileLink.OUTPUT)
-        task.files = self.tasks_files[task.name]
+        output_files_list = self._generate_files(task.task_id, task_recipe['output'], FileLink.OUTPUT)
+        task.files = self.tasks_files[task.task_id]
 
         # obtain input files from parents
         input_files = []
@@ -213,14 +215,14 @@ class WorkflowRecipe(ABC):
                 input_files.extend(output_files)
 
         for input_file in input_files:
-            if input_file.name not in self.tasks_files_names[task.name]:
-                self.tasks_files[task.name].append(File(name=input_file.name,
+            if input_file.name not in self.tasks_files_names[task.task_id]:
+                self.tasks_files[task.task_id].append(File(name=input_file.name,
                                                         link=FileLink.INPUT,
                                                         size=input_file.size))
-                self.tasks_files_names[task.name].append(input_file.name)
+                self.tasks_files_names[task.task_id].append(input_file.name)
 
         # generate additional input files
-        self._generate_files(task.name, task_recipe['input'], FileLink.INPUT)
+        self._generate_files(task.task_id, task_recipe['input'], FileLink.INPUT)
 
         return output_files_list
 
@@ -250,7 +252,7 @@ class WorkflowRecipe(ABC):
                 file = self._generate_file(extension, recipe, link)
                 files_list.append(file)
                 self.tasks_files[task_id].append(file)
-                self.tasks_files_names[task_id].append(file.name)
+                self.tasks_files_names[task_id].append(file.file_id)
 
         return files_list
 
@@ -272,7 +274,7 @@ class WorkflowRecipe(ABC):
                     else self.output_file_size_factor) * generate_rvs(recipe[extension]['distribution'],
                                                                       recipe[extension]['min'],
                                                                       recipe[extension]['max']))
-        return File(name=str(uuid.uuid4()) + extension,
+        return File(file_id=str(uuid.uuid4()) + extension,
                     link=link,
                     size=size)
 

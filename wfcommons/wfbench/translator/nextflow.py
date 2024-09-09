@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2022 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -109,11 +109,11 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         """
 
         for task in self.tasks.values():
-            abstract_task: str = task.category
+            abstract_task: str = task.name
             self.abstract_tasks[abstract_task].append(task)
 
-            for parent in self.task_parents[task.name]:
-                abstract_parent: str = self.tasks[parent].category
+            for parent in self.task_parents[task.task_id]:
+                abstract_parent: str = self.tasks[parent].name
                 self.abstract_parents[abstract_task].add(abstract_parent)
 
         tasks_with_iterations = set()
@@ -134,12 +134,12 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         Determines the inputs and outputs for the physical and abstract tasks.
         """
         for task in self.tasks.values():
-            self.task_inputs[task.name] = [file for file in task.files if file.link == FileLink.INPUT]
-            self.task_outputs[task.name] = [file for file in task.files if file.link == FileLink.OUTPUT]
+            self.task_inputs[task.task_id] = [file for file in task.files if file.link == FileLink.INPUT]
+            self.task_outputs[task.task_id] = [file for file in task.files if file.link == FileLink.OUTPUT]
 
         self.script += "// define amount of input files for abstracts tasks where the amount is not constant\n"
         for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            input_amounts = {task.task_id: len(self.task_inputs[task.name]) for task in physical_tasks}
+            input_amounts = {task.task_id: len(self.task_inputs[task.task_id]) for task in physical_tasks}
             if (max(input_amounts.values()) == min(input_amounts.values())):
                 # all physical tasks have the same amount of inputs
                 self.task_input_amounts[abstract_task_name] = max(input_amounts.values())
@@ -157,7 +157,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         for task_name, task_input_files in self.task_inputs.items():
             task = self.tasks[task_name]
             for file in task_input_files:
-                file_task_map[file.name].append([task.category, task.task_id])
+                file_task_map[file.file_id].append([task.name, task.task_id])
         self._write_map_file(file_task_map, "file_inputs", output_file_path)
 
     def _write_map_file(self, map_dict: Dict, map_name: str, output_file_path: pathlib.Path) -> None:
@@ -170,7 +170,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         map_name = f"{self.valid_task_name(abstract_task_name)}_args"
         task_args_map = {}
         for ptask in physical_tasks:
-            out_file_sizes = {file.name: file.size for file in self.task_outputs[ptask.name]}
+            out_file_sizes = {file.file_id: file.size for file in self.task_outputs[ptask.task_id]}
             out_arg = str(out_file_sizes).replace("{", "").replace("}", "").replace("'", "\\\"").replace(": ", ":")
             task_args_map[ptask.task_id] = {
                 "out": out_arg,
@@ -252,7 +252,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
             f"{self.valid_task_name(parent)}_out" for parent in parents]
         example_task = physical_tasks[0]
 
-        for input_file in self.task_inputs[example_task.name]:
+        for input_file in self.task_inputs[example_task.task_id]:
             if input_file in self.workflow_inputs:
                 input_channels.append("workflow_inputs")
                 break
