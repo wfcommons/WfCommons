@@ -69,12 +69,12 @@ class PegasusTranslator(Translator):
 
         # tasks' programs
         for task in self.tasks.values():
-            if task.category not in transformations:
-                transformations.append(task.category)
+            if task.name not in transformations:
+                transformations.append(task.name)
                 self.script += f"transformation_path = which('{task.program}')\n" \
                                "if transformation_path is None:\n" \
                                f"    raise RuntimeError('Unable to find {task.program}')\n" \
-                               f"transformation = Transformation('{task.category}', site='local',\n" \
+                               f"transformation = Transformation('{task.name}', site='local',\n" \
                                f"                                pfn=transformation_path,\n" \
                                "                                is_stageable=True)\n" \
                                "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
@@ -89,11 +89,11 @@ class PegasusTranslator(Translator):
             task = self.tasks[task_name]
             for file in task.files:
                 if file.link == FileLink.INPUT:
-                    self.script += f"in_file_{self.task_counter} = File('{file.name}')\n"
-                    self.script += f"rc.add_replica('local', '{file.name}', 'file://' + os.getcwd() + " \
-                                   f"'/data/{file.name}')\n"
+                    self.script += f"in_file_{self.task_counter} = File('{file.file_id}')\n"
+                    self.script += f"rc.add_replica('local', '{file.file_id}', 'file://' + os.getcwd() + " \
+                                   f"'/data/{file.file_id}')\n"
                     self.script += f"{self.tasks_map[task_name]}.add_inputs(in_file_{self.task_counter})\n" \
-                                   f"print('Using input data: ' + os.getcwd() + '/data/{file.name}')\n"
+                                   f"print('Using input data: ' + os.getcwd() + '/data/{file.file_id}')\n"
 
         self.script += "\n"
 
@@ -119,12 +119,12 @@ class PegasusTranslator(Translator):
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
-            self.script += f"{job_name} = Job('{task.category}', _id='{task_name}')\n" \
+            self.script += f"{job_name} = Job('{task.name}', _id='{task_name}')\n" \
                 f"task_output_files.setdefault('{job_name}', [])\n"
 
             # task priority
-            if tasks_priorities and task.category in tasks_priorities:
-                self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.category]}')\n"
+            if tasks_priorities and task.name in tasks_priorities:
+                self.script += f"{job_name}.add_condor_profile(priority='{tasks_priorities[task.name]}')\n"
 
             # find children
             children = self.task_children[task_name]
@@ -132,7 +132,7 @@ class PegasusTranslator(Translator):
             # output file
             for file in task.files:
                 if file.link == FileLink.OUTPUT:
-                    out_file = file.name
+                    out_file = file.file_id
                     # task.args.append(f"--out={out_file}")
                     stage_out = "True" if len(children) == 0 else "False"
                     self.script += f"out_file_{self.task_counter} = File('{out_file}')\n" \

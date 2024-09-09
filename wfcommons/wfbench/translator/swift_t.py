@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 The WfCommons Team.
+# Copyright (c) 2022-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,15 +52,15 @@ class SwiftTTranslator(Translator):
         # find applications
         self.apps = []
         for task in self.tasks.values():
-            self.tasks_map[task.name] = task.category
+            self.tasks_map[task.task_id] = task.name
 
-            if task.category not in self.apps:
-                self.apps.append(task.category)
+            if task.name not in self.apps:
+                self.apps.append(task.name)
             
             out_count = 0
             for file in task.files:
                 if file.link == FileLink.OUTPUT:
-                    self.files_map[file.name] = f"{task.category}__out"
+                    self.files_map[file.file_id] = f"{task.name}__out"
                     out_count += 1
 
             if out_count > 1:
@@ -178,11 +178,11 @@ class SwiftTTranslator(Translator):
             task = self.tasks[task_name]
             for file in task.files:
                 if file.link == FileLink.INPUT:
-                    if task.category not in self.categories_input.keys():
-                        self.categories_input[task.category] = in_count
-                        self.script += f"root_in_files[{in_count}] = \"{file.name}\";\n"
+                    if task.name not in self.categories_input.keys():
+                        self.categories_input[task.name] = in_count
+                        self.script += f"root_in_files[{in_count}] = \"{file.file_id}\";\n"
                         in_count += 1
-                    self.files_map[file.name] = f"ins[{in_count}]"
+                    self.files_map[file.file_id] = f"ins[{in_count}]"
         
         self.script += "\n"
 
@@ -208,13 +208,13 @@ class SwiftTTranslator(Translator):
         :type parent_task: Optional[str]
         """
         task = self.tasks[task_name]
-        if task.category in self.categories_list:
+        if task.name in self.categories_list:
             return
 
         # check dependencies
         for parent in self.task_parents[task_name]:
             parent_task = self.tasks[parent]
-            if parent_task.category not in self.categories_list:
+            if parent_task.name not in self.categories_list:
                 return
 
         self.parsed_tasks.append(task_name)
@@ -243,22 +243,22 @@ class SwiftTTranslator(Translator):
         for task_name in self.tasks:
             task = self.tasks[task_name]
 
-            if task.category == category:
+            if task.name == category:
                 # in/output files
                 input_files = []
                 prefix = ""
 
                 for file in task.files:
                     if file.link == FileLink.OUTPUT:
-                        out_file = file.name
+                        out_file = file.file_id
                         file_size = file.size
                     elif file.link == FileLink.INPUT:
-                        cat_prefix = self.files_map[file.name].split("__out")[0]
-                        if file.name not in parsed_input_files:
+                        cat_prefix = self.files_map[file.file_id].split("__out")[0]
+                        if file.file_id not in parsed_input_files:
                             input_files_cat.setdefault(cat_prefix, 0)
                             input_files_cat[cat_prefix] += 1
-                            parsed_input_files.append(file.name)
-                        input_files.append(self.files_map[file.name])
+                            parsed_input_files.append(file.file_id)
+                        input_files.append(self.files_map[file.file_id])
                         if not prefix:
                            prefix = cat_prefix
 
@@ -267,7 +267,7 @@ class SwiftTTranslator(Translator):
                     args = ""
                     if len(input_files) > 0:
                         if prefix.startswith("ins["):
-                            args += f"root_in_files[{self.categories_input[task.category]}], "
+                            args += f"root_in_files[{self.categories_input[task.name]}], "
                         else:
                             args += f"{category}_in, "
 
