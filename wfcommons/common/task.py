@@ -165,7 +165,7 @@ class Task:
             task_obj['command']['program'] = self.program
         if self.args is not None:
             task_obj['command']['arguments'] = self.args
-        if self.machines is not None:
+        if self.machines:
             task_obj['machines'] = [m.name for m in self.machines]               
         if self.start_time:
             task_obj['executedAt'] = self.start_time
