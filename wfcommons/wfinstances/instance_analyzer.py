@@ -105,16 +105,27 @@ class InstanceAnalyzer:
             for task in self.tasks_summary[task_name]:
                 runtime_list.append(task.runtime)
 
-                for file in task.files:
-                    extension: str = path.splitext(file.name)[1] if '.' in file.name else file.name
+
+                # For each input_file and output_file, append the file size to the dictionary
+                for infile in task.input_files:
+                    extension: str = path.splitext(infile.file_id)[1] if '.' in infile.file_id else infile.file_id
                     if extension[1:].isnumeric():
-                        extension = path.splitext(file.name.replace(extension, ''))[1]
+                        extension = path.splitext(infile.file_id.replace(extension, ''))[1]
 
-                    if file.link == FileLink.INPUT:
-                        _append_file_to_dict(extension, inputs_dict, file.size)
-                    elif file.link == FileLink.OUTPUT:
-                        _append_file_to_dict(extension, outputs_dict, file.size)
+                    # Check if the file is definetly an input 
+                    assert infile.link == FileLink.INPUT, f"{infile.file_id} is not set as input"
+                    _append_file_to_dict(extension, inputs_dict, infile.size)
+                
+                for outfile in task.output_files:
+                    extension: str = path.splitext(outfile.file_id)[1] if '.' in outfile.file_id else outfile.file_id
+                    if extension[1:].isnumeric():
+                        extension = path.splitext(outfile.file_id.replace(extension, ''))[1]
 
+                    # Check if the file is definetly an output
+                    assert outfile.link == FileLink.OUTPUT, f"{outfile.file_id} is not set as output"
+                    _append_file_to_dict(extension, outputs_dict, outfile.size) 
+
+            # Find the best fit distribution for each file type
             _best_fit_distribution_for_file(inputs_dict, include_raw_data)
             _best_fit_distribution_for_file(outputs_dict, include_raw_data)
 
