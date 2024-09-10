@@ -591,46 +591,71 @@ class WorkflowBenchmark:
         :type save_dir: pathlib.Path
         """
         self.logger.debug("Running")
+
         try:
             wf = json.loads(json_path.read_text())
             with save_dir.joinpath(f"run.txt").open("w+") as fp:
                 print("Starting run...")
                 has_executed: Set[str] = set()
                 procs: List[subprocess.Popen] = []
+                print("Workflow tasks:", len(wf["workflow"]["tasks"]))
+                print("Has executed:", len(has_executed))
+
                 while len(has_executed) < len(wf["workflow"]["tasks"]):
-                    
+                    print("In while loop")
                     for task in wf["workflow"]["tasks"]:
+                        input_files = []
                         if task["name"] in has_executed:
-                            # print(f'{task["name"]} has executed...')
+                            print(f'{task["name"]} has executed...')
                             continue
-
-                        ready_to_execute = all([
-                            pathlib.Path(input_file["name"]).exists()
-                            for input_file in task["files"]
-                            if input_file["link"] == "input"
-                        ])
-
-
-                        if not ready_to_execute:
+                        
+                        # Create input files 
+                        for input_file in task["files"]:
+                            if input_file["link"] == "input":
+                                # Append the input file to the list of input files
+                                input_files.append(input_file["name"])
+                            # Generate the input files
+                            if input_files:
+                                print(f"Creating files: {input_files}")
+                                generate_sys_data(num_files=1,
+                                                  file_total_size=input_file["sizeInBytes"],
+                                                  task_name=input_files,
+                                                  save_dir=save_dir)                            
+                        
+                        real_file_names = [f"{save_dir.joinpath(input_file)}" for input_file in input_files]
+                        if ready_to_execute := all([
+                            pathlib.Path(input_file).exists()
+                            for input_file in real_file_names
+                        ]):
+                            print("Ready to execute:", ready_to_execute)
+                        else:
+                            # Print the files that are not ready to execute
+                            print("Not ready to execute:", [
+                                input_file for input_file in real_file_names
+                                if not pathlib.Path(input_file).exists()
+                            ])
                             continue
+                    
                         print(f"Executing task: {task['name']}")
                         has_executed.add(task["name"])
 
                         executable = task["command"]["program"]
                         executable = str(this_dir.parent.parent.joinpath(f"bin/{executable}"))
                         arguments = task["command"]["arguments"]
-                        arguments = [
-                            # --[opt] [value] -> --[opt]=[value]
-                            re.sub(r'--(.*?) (.*)', r'--\1=\2', argument)
-                            for argument in arguments
-                        ]
+                        # Function to clean and adjust the list entries
+                        arguments = [clean_entry(entry) for entry in arguments]
+                                
+                        # arguments = [
+                        #     # --[opt] [value] -> --[opt]=[value]
+                        #     re.sub(r'--(.*?) (.*)', r'--\1=\2', argument)
+                        #     for argument in arguments
+                        # ]
                         print("ARGUMENTS", arguments)
 
                         for arg in arguments:
                             if "--out" in arg:
-                                print("HERE")
                                 files = assigning_correct_files(task)
-                                print(files)
+                                print("FILES", files)
                                 program = ["time", "python",
                                         executable, *arguments, *files]
                             else:
@@ -642,7 +667,7 @@ class WorkflowBenchmark:
 
                         # folder = pathlib.Path(f"wfbench_execution/{uuid.uuid4()}")
                         # folder.mkdir(exist_ok=True, parents=True)
-                        proc = subprocess.Popen(program, stdout=fp, stderr=fp) #, cwd=folder)
+                        proc = subprocess.Popen(program, stdout=fp, stderr=fp, cwd=save_dir)
                         print(proc.args)
                         procs.append(proc)
 
@@ -672,12 +697,17 @@ def generate_sys_data(num_files: int, file_total_size: int, task_name: List[str]
     :param save_dir: Folder to generate the workflow benchmark's input data files.
     :type save_dir: pathlib.Path
     """
+    names = []
     for _ in range(num_files):
         for name in task_name:
-            file = f"{save_dir.joinpath(f'{name}_input.txt')}"
+            # name = f'{name}_input.txt'
+            names.append(name)
+            file = f"{save_dir.joinpath(name)}"
             with open(file, 'wb') as fp:
                 fp.write(os.urandom(file_total_size))
             print(f"Created file: {file}")
+
+    return names 
 
 
 def assigning_correct_files(task: Dict[str, str]) -> List[str]:
@@ -695,3 +725,18 @@ def cleanup_sys_files() -> None:
     all_files = input_files + output_files
     for t in all_files:
         os.remove(t)
+
+
+# Function to clean and adjust the list entries
+def clean_entry(entry):
+
+    if entry.startswith('--out '):
+        # Replace --out "..." with --out=...
+        return entry.replace('--out "', '--out=').replace('}"', '}')
+    else:
+        # Remove extra double quotes
+        entry = entry.replace(' ', '=')
+        return entry.strip('"')
+    
+    
+
