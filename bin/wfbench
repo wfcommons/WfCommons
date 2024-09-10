@@ -175,18 +175,18 @@ def get_available_gpus():
     df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
-def gpu_benchmark(timeout: int,
-                  run_count: Optional[int] = None,
-                  fps_limit: Optional[int] = None,
-                  quality: Optional[str] = None,
-                  resolution: Optional[str] = None): #work, device
-    gpu_prog = [f"timeout {timeout} glmark2 --run-count {run_count} --fps-limit {fps_limit} --quality {quality} --size {resolution}"] # Run a GPU benchmark for 100 seconds
-    # gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('gpu-benchmark')} {work}"]
+def gpu_benchmark(time: int = 100,
+                  work: int = 100, 
+                  device: int = 0): #work, device
+    
+    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('./gpu_benchmark')} {work} {time}"]
+    print(f"Running GPU Benchmark: {gpu_prog}")
     subprocess.Popen(gpu_prog, shell=True)  
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Task Name")
+    parser.add_argument("--rundir", help="Run directory")
     parser.add_argument("--percent-cpu", default=0.5, type=float,
                         help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
@@ -219,14 +219,29 @@ def main():
 
     procs = []
     io_proc = None
+    outputs_dict = {}
+
+    print("Directory:", os.getcwd())
     if args.out:
         print("[WfBench] Starting IO benchmark...")
-        # io_read_benchmark_user_input_data_size(other, memory_limit=mem_bytes)
-        ioargs = args.out.replace("'", '"')
-        print(ioargs)
+        # Decode the string to handle the escaped characters
+        # cleaned_outputs = args.out.encode('utf-8').decode('unicode_escape')
+    
+        cleaned_outputs = args.out.replace('\\\\"', '"')
+        # print("Cleaned outputs:", cleaned_outputs)
+       
+        # Now load it as JSON
+        try:
+            outputs_dict = json.loads(cleaned_outputs)
+            print("Parsed JSON:", outputs_dict)
+        except json.JSONDecodeError as e:
+            print("Failed to decode JSON:", e)
+        
+        print("OUTPUT",outputs_dict)
+        print("INPUTS", other)
         io_proc = multiprocessing.Process(
             target=io_alternate,
-            args=(other, json.loads(args.out.replace("'", '"')), mem_bytes))
+            args=(other, outputs_dict, mem_bytes))
         io_proc.start()
         procs.append(io_proc)
     
@@ -239,7 +254,8 @@ def main():
         else:
             device = available_gpus[0]
             print(f"Running on GPU {device}")
-            gpu_benchmark(args.gpu_work, device, time=args.time)
+            print(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
+            gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
     
     if args.cpu_work:
         print("[WfBench] Starting CPU and Memory Benchmarks...")
