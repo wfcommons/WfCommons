@@ -12,6 +12,7 @@ import logging
 import math
 import numpy
 import scipy.stats
+import warnings
 
 from logging import Logger
 from matplotlib import pyplot
@@ -207,14 +208,16 @@ def _best_fit_distribution_for_file(dict_obj, include_raw_data) -> None:
     :param include_raw_data:
     :type include_raw_data: bool
     """
-    for ext in dict_obj:
-        dict_obj[ext]['min'] = min(dict_obj[ext]['data'])
-        dict_obj[ext]['max'] = max(dict_obj[ext]['data'])
-        if dict_obj[ext]['min'] != dict_obj[ext]['max']:
-            dict_obj[ext]['distribution'] = _json_format_distribution_fit(
-                best_fit_distribution(dict_obj[ext]['data']))
-        if not include_raw_data:
-            del dict_obj[ext]['data']
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        for ext in dict_obj:
+            dict_obj[ext]['min'] = min(dict_obj[ext]['data'])
+            dict_obj[ext]['max'] = max(dict_obj[ext]['data'])
+            if dict_obj[ext]['min'] != dict_obj[ext]['max']:
+                dict_obj[ext]['distribution'] = _json_format_distribution_fit(
+                    best_fit_distribution(dict_obj[ext]['data']))
+            if not include_raw_data:
+                del dict_obj[ext]['data']
 
 
 def _json_format_distribution_fit(dist_tuple: Tuple) -> Dict[str, Any]:
