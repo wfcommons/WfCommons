@@ -106,19 +106,21 @@ class InstanceAnalyzer:
             for task in self.tasks_summary[task_name]:
                 runtime_list.append(task.runtime)
 
-
                 # For each input_file and output_file, append the file size to the dictionary
                 for infile in task.input_files:
                     extension: str = path.splitext(infile.file_id)[1] if '.' in infile.file_id else infile.file_id
+                    # print(f"file {infile.file_id} extension: {extension}")
                     if extension[1:].isnumeric():
                         extension = path.splitext(infile.file_id.replace(extension, ''))[1]
 
                     # Check if the file is definetly an input 
                     assert infile.link == FileLink.INPUT, f"{infile.file_id} is not set as input"
                     _append_file_to_dict(extension, inputs_dict, infile.size)
+
                 
                 for outfile in task.output_files:
                     extension: str = path.splitext(outfile.file_id)[1] if '.' in outfile.file_id else outfile.file_id
+                    # print(f"file {outfile.file_id} extension: {extension}")
                     if extension[1:].isnumeric():
                         extension = path.splitext(outfile.file_id.replace(extension, ''))[1]
 
@@ -126,6 +128,7 @@ class InstanceAnalyzer:
                     assert outfile.link == FileLink.OUTPUT, f"{outfile.file_id} is not set as output"
                     _append_file_to_dict(extension, outputs_dict, outfile.size) 
 
+            
             # Find the best fit distribution for each file type
             _best_fit_distribution_for_file(inputs_dict, include_raw_data)
             _best_fit_distribution_for_file(outputs_dict, include_raw_data)
@@ -197,7 +200,6 @@ def _append_file_to_dict(extension: str, dict_obj: Dict[str, Any], file_size: in
     if extension not in dict_obj:
         dict_obj[extension] = {'data': [], 'distribution': None}
     dict_obj[extension]['data'].append(file_size)
-
 
 def _best_fit_distribution_for_file(dict_obj, include_raw_data) -> None:
     """
