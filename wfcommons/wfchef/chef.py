@@ -193,58 +193,20 @@ def ls_recipe():
     print(get_recipes())
 
 
-def uninstall_recipe(wf_name: str,
+def uninstall_recipe(module_name:str,
                      savedir: pathlib.Path = this_dir.joinpath("recipes")):
     """
     Uninstalls a recipe installed in the system.
     """
 
-    dst = pathlib.Path(savedir, f"{savedir.stem}_recipes", wf_name).resolve()
+    dst = pathlib.Path("wcommons.wfchef.recipes", f"{savedir.stem}").resolve()
     try:
-        # Removing package from setup.py
-        with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("r") as fp:
-            setup_str = fp.read()
+        subprocess.run(["pip", "uninstall", "-y", dst])
+        traceback.print_exc()
 
-        # Find and remove the specific line that added the package
-        for line in setup_str.split("\n"):
-            if wf_name in setup_str:
-                setup_str = setup_str.replace(line, "")
-
-        with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("w") as fp:
-            fp.write(setup_str)
-
-        # Removing the import line from __init__.py
-        init_file = dst.parent.joinpath("__init__.py")
-        if init_file.exists():
-            with init_file.open("r") as fp:
-                init_str = fp.read()
-
-            # Remove the line that imports the package
-
-            for line in init_str.split("\n"):
-                if wf_name in line:
-                    init_str = init_str.replace(line, "")
-                    break
-
-            with init_file.open("w") as fp:
-                fp.write(init_str)
-
-        # Removing the recipe directory 
-        if dst.exists():
-            print(f"Removing {dst}")
-            subprocess.Popen(["rm", "-rf", str(dst)]).wait()
-
-        # Find setup.py, clean it and reinstall it
-        path_to_setup = this_dir.parent.parent.resolve()
-        # Check if the setup.py is in the same directory
-        if path_to_setup.joinpath("setup.py").exists():
-            subprocess.Popen(["python", "setup.py", "clean", "-all"]).wait()
-            subprocess.Popen(["python", "setup.py", "sdist", "bdist_wheel"]).wait()
-            subprocess.Popen(["pip", "install", "."]).wait()
-            subprocess.Popen(["pip", "cache", "purge"]).wait()
-            
     except Exception as e:
         traceback.print_exc()
+        print(f"Could not uninstall recipe for {module_name}")
     # print(f"Could not find recipe with module name {module_name} installed")
 
 
