@@ -177,8 +177,17 @@ class Workflow(nx.DiGraph):
                     machines_list.append(machine.name)
                     workflow_machines.append(machine.as_dict())
 
+            # add files to the workflow json object (input and output)
+            for file in task.input_files:
+                files.append(file.as_dict())
+            for file in task.output_files:
+                files.append(file.as_dict())
+
         if workflow_machines:
             workflow_json["workflow"]["execution"]["machines"] = workflow_machines
+
+        if files and len(files) > 0:
+            workflow_json["workflow"]["specification"]["files"] = files
 
         # write to file
         if not json_file_path:

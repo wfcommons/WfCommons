@@ -109,7 +109,7 @@ class InstanceAnalyzer:
                 # For each input_file and output_file, append the file size to the dictionary
                 for infile in task.input_files:
                     extension: str = path.splitext(infile.file_id)[1] if '.' in infile.file_id else infile.file_id
-                    # print(f"file {infile.file_id} extension: {extension}")
+                    
                     if extension[1:].isnumeric():
                         extension = path.splitext(infile.file_id.replace(extension, ''))[1]
 

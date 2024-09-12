@@ -205,8 +205,6 @@ class WorkflowRecipe(ABC):
         output_files_list = self._generate_files(task.task_id, task_recipe['output'], FileLink.OUTPUT)
         task.output_files = self.tasks_files[task.task_id]
 
-        
-
         # obtain input files from parents
         input_files = []
         
@@ -221,12 +219,13 @@ class WorkflowRecipe(ABC):
             if input_file not in self.tasks_files_names[task.task_id]:
                 self.tasks_files[task.task_id].append(File(name=input_file,
                                                            link=FileLink.INPUT,
-                                                            size=input_file.size))
+                                                           size=input_file.size))
                 self.tasks_files_names[task.task_id].append(input_file)
 
         # generate additional input files
         self._generate_files(task.task_id, task_recipe['input'], FileLink.INPUT)
         task.input_files = [ifile for ifile in self.tasks_files[task.task_id] if ifile.link == FileLink.INPUT]
+
 
         return output_files_list
 
@@ -248,9 +247,9 @@ class WorkflowRecipe(ABC):
         extension_list: List[str] = []
         for f in self.tasks_files[task_id]:
             if f.link == link:
+                extension_list.append(path.splitext(f.file_id)[1] if '.' in f.file_id else f.file_id)
                 files_list.append(f)
-                extension_list.append(path.splitext(f.name)[1] if '.' in f.name else f.name)
-
+            
         for extension in recipe:
             if extension not in extension_list:
                 file = self._generate_file(extension, recipe, link)
@@ -278,9 +277,11 @@ class WorkflowRecipe(ABC):
                     else self.output_file_size_factor) * generate_rvs(recipe[extension]['distribution'],
                                                                       recipe[extension]['min'],
                                                                       recipe[extension]['max']))
+        
         return File(file_id=str(uuid.uuid4()) + extension,
                     link=link,
                     size=size)
+
 
     def _get_files_by_task_and_link(self, task_id: str, link: FileLink) -> List[File]:
         """
