@@ -199,7 +199,7 @@ def uninstall_recipe(module_name:str,
     Uninstalls a recipe installed in the system.
     """
 
-    dst = pathlib.Path("wcommons.wfchef.recipes", f"{savedir.stem}").resolve()
+    dst = pathlib.Path(this_dir.joinpath(f"recipes/{savedir.stem}")).resolve()
     try:
         subprocess.run(["pip", "uninstall", "-y", dst])
         traceback.print_exc()
@@ -207,7 +207,6 @@ def uninstall_recipe(module_name:str,
     except Exception as e:
         traceback.print_exc()
         print(f"Could not uninstall recipe for {module_name}")
-    # print(f"Could not find recipe with module name {module_name} installed")
 
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],

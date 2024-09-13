@@ -129,8 +129,8 @@ class Task:
             'id': self.task_id,
             'parents': [],
             'children': [],
-            'input_files': [f.file_id for f in self.input_files],
-            'output_files': [f.file_id for f in self.output_files]
+            'inputFiles': [f.file_id for f in self.input_files],
+            'outputFiles': [f.file_id for f in self.output_files]
         }
         return task_obj
 
