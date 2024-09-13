@@ -199,7 +199,7 @@ def uninstall_recipe(module_name:str,
     Uninstalls a recipe installed in the system.
     """
 
-    dst = pathlib.Path(this_dir.joinpath(f"recipes/{savedir.stem}")).resolve()
+    dst = f"wfcommons.wfchef.recipe.{savedir.stem}"
     try:
         subprocess.run(["pip", "uninstall", "-y", dst])
         traceback.print_exc()
