@@ -20,7 +20,7 @@ This Python package provides a collection of tools for:
 ## Installation
 
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
-WfCommons requires Python3.8+ and has been tested on Linux and macOS.
+WfCommons requires Python3.9+ and has been tested on Linux and macOS.
 
 ### Installation using pip
 
