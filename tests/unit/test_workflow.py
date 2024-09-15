@@ -39,7 +39,7 @@ class TestWorkflow:
             "createdAt": workflow.created_at,
             "schemaVersion": f"{__schema_version__}",
             "author": {
-                "name": "8uf",
+                "name": f"{workflow.author_name}",
                 "email": "support@wfcommons.org"
             },
             "workflow": {
