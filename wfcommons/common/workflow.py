@@ -172,10 +172,11 @@ class Workflow(nx.DiGraph):
             specification_tasks.append(task_spec)
 
             # add machines to the workflow json object
-            for machine in task.machines:
-                if machine.name not in machines_list:
-                    machines_list.append(machine.name)
-                    workflow_machines.append(machine.as_dict())
+            if task.machines:
+                for machine in task.machines:
+                    if machine.name not in machines_list:
+                        machines_list.append(machine.name)
+                        workflow_machines.append(machine.as_dict())
 
             # add files to the workflow json object (input and output)
             for file in task.input_files:
@@ -228,7 +229,7 @@ class Workflow(nx.DiGraph):
         tasks_map = {}
         for node in graph.nodes(data=True):
             task_id = f"{node[1]['label']}_ID{node[0]}"
-            task = Task(name=task_id, id=task_id, runtime=0, task_id=node[0])
+            task = Task(name=node[1]['label'], task_id=task_id, runtime=0)
             self.add_task(task)
             tasks_map[node[0]] = task_id
 

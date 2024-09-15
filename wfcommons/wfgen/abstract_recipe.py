@@ -203,7 +203,7 @@ class WorkflowRecipe(ABC):
 
         # generate output files
         output_files_list = self._generate_files(task.task_id, task_recipe['output'], FileLink.OUTPUT)
-        task.output_files = self.tasks_files[task.task_id]
+        task.output_files = output_files_list
 
         # obtain input files from parents
         input_files = []
