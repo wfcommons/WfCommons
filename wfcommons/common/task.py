@@ -174,3 +174,6 @@ class Task:
         if self.launch_dir:
             task_obj['launchDir'] = self.launch_dir
         return task_obj
+
+    def __str__(self) -> str:
+        return self.task_id

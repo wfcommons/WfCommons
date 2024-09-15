@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import pathlib
 import pytest
 
 from wfcommons.common import Task, Workflow
@@ -15,6 +16,7 @@ from wfcommons.version import __version__, __schema_version__
 
 
 tasks_list = [
+    ([Task(name="task_1", task_id="task_1", runtime=15.0)]),
     ([Task(name="task_1", task_id="task_1", runtime=15.0), Task(name="task_2", task_id="task_2", runtime=30.0)]),
     ([Task(name="task_1", task_id="task_1", runtime=15.0), Task(name="task_2", task_id="task_2", runtime=30.0), Task(name="task_3", task_id="task_3", runtime=60.0)]),
 ]
@@ -31,7 +33,7 @@ class TestWorkflow:
 
     @pytest.mark.unit
     def test_workflow_creation(self, workflow: Workflow) -> None:
-        workflow.write_json("/tmp/workflow_test.json")
+        workflow.write_json(pathlib.Path("/tmp/workflow_test.json"))
 
         workflow_json = {
             "name": "Workflow Test",
@@ -96,3 +98,14 @@ class TestWorkflow:
                 workflow.add_dependency(previous_task.task_id, task.task_id)
             previous_task = task
         assert(workflow.leaves() == [previous_task.task_id])
+
+    @pytest.mark.unit
+    def test_dot(self, workflow: Workflow) -> None:
+        dot_file_path = pathlib.Path("/tmp/workflow_test.dot")
+        workflow.add_task(Task(name="task_1", task_id="task_1", runtime=15.0))
+        workflow.add_task(Task(name="task_2", task_id="task_2", runtime=30.0))
+        workflow.add_dependency("task_1", "task_2")
+        workflow.write_dot(dot_file_path)
+        dot_workflow = Workflow("workflow")
+        dot_workflow.read_dot(dot_file_path)
+        # assert(workflow == dot_workflow)

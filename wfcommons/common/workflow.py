@@ -94,7 +94,7 @@ class Workflow(nx.DiGraph):
         self.tasks[task.task_id] = task
         self.tasks_parents.setdefault(task.task_id, set())
         self.tasks_children.setdefault(task.task_id, set())
-        self.add_node(task.task_id, task=task)
+        self.add_node(task.task_id, task=task, label=task.task_id)
 
     def add_dependency(self, parent: str, child: str) -> None:
         """
