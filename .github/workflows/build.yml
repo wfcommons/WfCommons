@@ -23,7 +23,7 @@ jobs:
 
       - name: Check package install
         run: |
-          pip install .
+          pip install -e .
 
       - name: Run tests
         run: pytest -m unit --cov=wfcommons tests/
