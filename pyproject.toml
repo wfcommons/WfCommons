@@ -57,12 +57,14 @@ addopts="""
 --cov-config pyproject.toml \
 --cov-report xml:coverage.xml \
 --cov-report term-missing \
---cov wfcommons \
---cov tests \
+--cov ./wfcommons \
 --ignore wfcommons/wfbench/translator/templates \
 --no-cov-on-fail \
 -ra \
 -W ignore"""
 testpaths = [
   "tests"
+]
+markers = [
+  "unit: Mark a test as a unit test"
 ]

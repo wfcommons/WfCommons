@@ -17,7 +17,7 @@ import pathlib
 from datetime import datetime
 from typing import Optional, List
 from ..common.task import Task, TaskType
-from ..version import __version__
+from ..version import __version__, __schema_version__
 
 from ..wfchef.utils import create_graph
 import tempfile
@@ -69,7 +69,7 @@ class Workflow(nx.DiGraph):
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
         self.created_at: str = str(datetime.now().astimezone().isoformat())
-        self.schema_version: str = "1.5"
+        self.schema_version: str = f"{__schema_version__}"
         self.runtime_system_name: Optional[str] = "WfCommons" if not runtime_system_name else runtime_system_name
         self.runtime_system_version: Optional[str] = str(__version__) if not runtime_system_version else runtime_system_version
         self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
