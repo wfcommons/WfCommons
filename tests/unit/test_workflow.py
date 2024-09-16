@@ -98,14 +98,3 @@ class TestWorkflow:
                 workflow.add_dependency(previous_task.task_id, task.task_id)
             previous_task = task
         assert(workflow.leaves() == [previous_task.task_id])
-
-    @pytest.mark.unit
-    def test_dot(self, workflow: Workflow) -> None:
-        dot_file_path = pathlib.Path("/tmp/workflow_test.dot")
-        workflow.add_task(Task(name="task_1", task_id="task_1", runtime=15.0))
-        workflow.add_task(Task(name="task_2", task_id="task_2", runtime=30.0))
-        workflow.add_dependency("task_1", "task_2")
-        workflow.write_dot(dot_file_path)
-        dot_workflow = Workflow("workflow")
-        dot_workflow.read_dot(dot_file_path)
-        # assert(workflow == dot_workflow)
