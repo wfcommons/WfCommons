@@ -58,7 +58,7 @@ class TestWorkflow:
             "runtimeSystem": {
                 "name": "WfCommons",
                 "version": f"{__version__}",
-                "url": "https://docs.wfcommons.org/en/v1.1.dev/"
+                "url": f"https://docs.wfcommons.org/en/v{__version__}/"
             }
         }
 
