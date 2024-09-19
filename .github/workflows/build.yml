@@ -1,9 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - main
+on: push
 
 jobs:
   build:
@@ -13,17 +10,28 @@ jobs:
         python-version: [ "3.9", "3.10", "3.11", "3.12" ]
     steps:
       - uses: actions/checkout@v4
+  
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+  
       - name: Install dependencies
         run: |
           sudo apt-get install -y python3-sphinx sphinx-rtd-theme-common
-          pip install sphinx_rtd_theme recommonmark
+          pip install sphinx_rtd_theme recommonmark pytest pytest-cov
+
       - name: Check package install
         run: |
-          pip install .
+          pip install -e .
+
+      - name: Run tests
+        run: pytest -m unit --cov=wfcommons tests/
+
+      - name: Upload coverage
+        if: github.ref == 'refs/heads/main'
+        uses: codecov/codecov-action@v4
+
       - name: Build documentation
         run: |
           cd docs

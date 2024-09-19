@@ -33,7 +33,7 @@ exec(open('wfcommons/version.py').read())
 
 setup(
     name='wfcommons',
-    version=str(__version__),
+    version="1.1",
     license='LGPLv3',
     author='WfCommons team',
     author_email='support@wfcommons.org',
@@ -75,7 +75,7 @@ setup(
         'Topic :: Documentation :: Sphinx',
         'Topic :: System :: Distributed Computing'
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     data_files=[
         ('bin', ['bin/cpu-benchmark', 'bin/wfbench'])
     ],

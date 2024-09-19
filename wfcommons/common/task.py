@@ -124,7 +124,7 @@ class Task:
         :return: A JSON object representation of the task.
         :rtype: Dict
         """
-        task_obj = {
+        return {
             'name': self.name,
             'id': self.task_id,
             'parents': [],
@@ -132,7 +132,6 @@ class Task:
             'inputFiles': [f.file_id for f in self.input_files],
             'outputFiles': [f.file_id for f in self.output_files]
         }
-        return task_obj
 
     def execution_as_dict(self) -> Dict:
         """A JSON representation of the task execution.
@@ -174,3 +173,6 @@ class Task:
         if self.launch_dir:
             task_obj['launchDir'] = self.launch_dir
         return task_obj
+
+    def __str__(self) -> str:
+        return self.task_id

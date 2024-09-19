@@ -9,3 +9,4 @@
 # (at your option) any later version.
 
 __version__ = "1.1"
+__schema_version__ = "1.5"

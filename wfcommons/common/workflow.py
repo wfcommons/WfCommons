@@ -17,7 +17,7 @@ import pathlib
 from datetime import datetime
 from typing import Optional, List
 from ..common.task import Task, TaskType
-from ..version import __version__
+from ..version import __version__, __schema_version__
 
 from ..wfchef.utils import create_graph
 import tempfile
@@ -69,7 +69,7 @@ class Workflow(nx.DiGraph):
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
         self.created_at: str = str(datetime.now().astimezone().isoformat())
-        self.schema_version: str = "1.5"
+        self.schema_version: str = f"{__schema_version__}"
         self.runtime_system_name: Optional[str] = "WfCommons" if not runtime_system_name else runtime_system_name
         self.runtime_system_version: Optional[str] = str(__version__) if not runtime_system_version else runtime_system_version
         self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
@@ -94,7 +94,7 @@ class Workflow(nx.DiGraph):
         self.tasks[task.task_id] = task
         self.tasks_parents.setdefault(task.task_id, set())
         self.tasks_children.setdefault(task.task_id, set())
-        self.add_node(task.task_id, task=task)
+        self.add_node(task.task_id, task=task, label=task.task_id)
 
     def add_dependency(self, parent: str, child: str) -> None:
         """
@@ -229,8 +229,7 @@ class Workflow(nx.DiGraph):
         tasks_map = {}
         for node in graph.nodes(data=True):
             task_id = f"{node[1]['label']}_ID{node[0]}"
-            task = Task(name=node[1]['label'], task_id=task_id, runtime=0)
-            self.add_task(task)
+            self.add_task(Task(name=node[1]['label'], task_id=task_id, runtime=0))
             tasks_map[node[0]] = task_id
 
         for edge in graph.edges:

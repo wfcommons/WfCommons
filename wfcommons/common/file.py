@@ -53,3 +53,6 @@ class File:
             'id': self.file_id,
             'sizeInBytes': self.size
         }
+
+    def __str__(self) -> str:
+        return self.file_id
