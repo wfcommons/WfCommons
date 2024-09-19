@@ -3,6 +3,7 @@
 [![License: LGPL v3][license-badge]](LICENSE)
 [![CodeFactor][codefactor-badge]][codefactor-link]
 [![Documentation Status][rtd-badge]][rtd-link]
+[![Codecov][cov-badge]][cov-link]
 [![Downloads](https://static.pepy.tech/personalized-badge/wfcommons?period=total&units=international_system&left_color=grey&right_color=yellowgreen&left_text=Downloads)](https://pepy.tech/project/wfcommons)
 
 <a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-horizontal.png" width="350" /></a>
@@ -114,3 +115,5 @@ that paper, as it provides a recent and general overview on the framework.
 [codefactor-link]:     https://www.codefactor.io/repository/github/wfcommons/wfcommons
 [rtd-badge]:           https://readthedocs.org/projects/wfcommons/badge/?version=latest
 [rtd-link]:            https://wfcommons.readthedocs.io/en/latest/?badge=latest
+[cov-badge]:           https://codecov.io/gh/wfcommons/WfCommons/graph/badge.svg?token=PJTXMLCIXD
+[cov-link]:            https://codecov.io/gh/wfcommons/WfCommons
