@@ -109,7 +109,7 @@ workflow benchmark for running with Nextflow::
 
     # generate a Nextflow workflow
     translator = NextflowTranslator(benchmark.workflow)
-    translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.nf"))
+    translator.translate(output_file_path=pathlib.Path("/tmp/benchmark-workflow.nf"))
 
 .. warning::
 
