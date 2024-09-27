@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 The WfCommons Team.
+# Copyright (c) 2023-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,8 +90,8 @@ class DaskTranslator(Translator):
         codelines = ["randomizer = random.Random(seed)",
                      "TASKS = {}"]
         for task in self.tasks.values():
-            input_files = [str(output_folder.joinpath(f"data/{f.name}")) for f in task.files if f.link == FileLink.INPUT]
-            output_files = [str(output_folder.joinpath(f"data/{f.name}")) for f in task.files if f.link == FileLink.OUTPUT]
+            input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.INPUT]
+            output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.OUTPUT]
             program = output_folder.joinpath(f'bin/{task.program}')
             args = []
             print(task.args)
@@ -105,8 +105,8 @@ class DaskTranslator(Translator):
                 args.append(a)
             print(args)
             print("")
-            code = [f"WorkflowTask(dag_id = '{task.name}',",
-                    f"             name = '{task.name}',",
+            code = [f"WorkflowTask(dag_id = '{task.task_id}',",
+                    f"             name = '{task.task_id}',",
                     f"             command_arguments = {[str(program)] + args},",
                     f"             inputs = {input_files},",
                     f"             outputs = {output_files},",
@@ -115,7 +115,7 @@ class DaskTranslator(Translator):
                     f"             simulate_minimum_execution_time = {simulate_minimum_execution_time},",
                     f"             simulate_maximum_execution_time = {simulate_maximum_execution_time},",
                     "             )"]
-            codelines.append(f"TASKS['{task.name}'] = {code[0]}")
+            codelines.append(f"TASKS['{task.task_id}'] = {code[0]}")
             codelines.extend([codeline for codeline in code[1:]])
         # exit(1)
         return codelines

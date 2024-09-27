@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2021-2024 The WfCommons Team.
@@ -125,9 +125,10 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    mem_proc = subprocess.Popen(mem_prog)
-    if core:
-        os.sched_setaffinity(mem_proc.pid, {core})
+    if mem_threads > 0:
+        mem_proc = subprocess.Popen(mem_prog)
+        if core:
+            os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
@@ -199,7 +200,32 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-        
+def io_read_benchmark_user_input_data_size(inputs, memory_limit=None):
+    if memory_limit is None:
+        memory_limit = -1
+    memory_limit = int(memory_limit)
+    print("[WfBench] Starting IO Read Benchmark...")
+    for file in inputs:
+        with open(file, "rb") as fp:
+            print(f"[WfBench]   Reading '{file}'")
+            while fp.read(memory_limit):
+                pass
+    print("[WfBench] Completed IO Read Benchmark!\n")
+
+
+def io_write_benchmark_user_input_data_size(outputs, memory_limit=None):
+    if memory_limit is None:
+        memory_limit = sys.maxsize
+    memory_limit = int(memory_limit)
+    for file_name, file_size in outputs.items():
+        print(f"[WfBench] Writing output file '{file_name}'\n")
+        file_size_todo = file_size
+        pathlib.Path(file_name).touch()
+        while file_size_todo > 0:
+            with open(file_name, "ab") as fp:
+                chunk_size = min(file_size_todo, memory_limit)
+                file_size_todo -= fp.write(os.urandom(int(chunk_size)))
+
 
 def main():
     """Main program."""
@@ -245,8 +271,9 @@ def main():
         if core:
             print(f"[WfBench]  {args.name} acquired core {core}")
 
+        mem_threads=int(10 - 10 * args.percent_cpu)
         cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
-                                    mem_threads=int(10 - 10 * args.percent_cpu),
+                                    mem_threads=mem_threads,
                                     cpu_work=sys.maxsize if args.time else int(args.cpu_work),
                                     core=core,
                                     total_mem=args.mem)

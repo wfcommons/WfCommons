@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2023 The WfCommons Team.
+# Copyright (c) 2021-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,22 +55,22 @@ class Translator(ABC):
         self.root_task_names = []
         self.task_parents = {}
         self.task_children = {}
-        for task in self.workflow.workflow_json["workflow"]["tasks"]:
+        for task in self.workflow.workflow_json["workflow"]["specification"]["tasks"]:
             if len(task["parents"]) == 0:
-                if task["name"] not in self.root_task_names:
-                    self.root_task_names.append(task["name"])
-                    self.task_parents.setdefault(task['name'], [])
+                if task["id"] not in self.root_task_names:
+                    self.root_task_names.append(task["id"])
+                    self.task_parents.setdefault(task['id'], [])
             else:
                 for parent in task["parents"]:
-                    self.task_parents.setdefault(task['name'], [])
-                    self.task_parents[task['name']].append(parent)
+                    self.task_parents.setdefault(task['id'], [])
+                    self.task_parents[task['id']].append(parent)
             
             if len(task["children"]) == 0:
-                self.task_children.setdefault(task['name'], [])
+                self.task_children.setdefault(task['id'], [])
             else:
                 for child in task["children"]:
-                    self.task_children.setdefault(task['name'], [])
-                    self.task_children[task['name']].append(child)
+                    self.task_children.setdefault(task['id'], [])
+                    self.task_children[task['id']].append(child)
 
     @abstractmethod
     def translate(self, output_folder: pathlib.Path) -> None:
@@ -106,9 +106,9 @@ class Translator(ABC):
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
             for file in task.files:
-                if file.name not in generated_files and file.link == FileLink.INPUT:
-                    generated_files.append(file.name)
-                    with open(data_folder.joinpath(file.name), "wb") as fp:
+                if file.file_id not in generated_files and file.link == FileLink.INPUT:
+                    generated_files.append(file.file_id)
+                    with open(data_folder.joinpath(file.file_id), "wb") as fp:
                         fp.write(os.urandom(int(file.size)))
 
     def _write_output_file(self, contents: str, output_file_path: pathlib.Path) -> None:

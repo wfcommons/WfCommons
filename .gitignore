@@ -44,6 +44,10 @@ venv
 # Workflow Schema
 workflow-schema.json
 
+# Binaries
+bin/cpu-benchmark
+bin/cpu-benchmark.o
+
 # wfc-1.3_to_dask specifics
 /wfcommons/wfc-1.3_to_dask/__pycache__/
 /wfcommons/wfc-1.3_to_dask/.coverage

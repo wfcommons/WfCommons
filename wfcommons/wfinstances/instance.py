@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2023 The WfCommons Team.
+# Copyright (c) 2020-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,30 +68,30 @@ class Instance:
         schema_validator.validate_instance(self.instance)
 
         # Basic global properties
-        self.name: str = self.instance['name']
-        self.desc: str = self.instance['description']
+        self.name: str = self.instance["name"]
+        self.desc: str = self.instance["description"]
         self.created_at: datetime = dateutil.parser.parse(
-            self.instance['createdAt'])
-        self.schema_version: str = self.instance['schemaVersion']
+            self.instance["createdAt"])
+        self.schema_version: str = self.instance["schemaVersion"]
 
-        # WMS properties
-        self.wms: Dict[str, str] = {
-            u: v for u, v in self.instance['wms'].items()
+        # Runtime system properties
+        self.runtime_system: Dict[str, str] = {
+            u: v for u, v in self.instance["runtimeSystem"].items()
         }
 
         # Author properties
         self.author: Dict[str, str] = {
-            u: v for u, v in self.instance['author'].items()
+            u: v for u, v in self.instance["author"].items()
         }
 
         # Workflow properties
         # Global properties
         self.executed_at: datetime = dateutil.parser.parse(
-            self.instance['workflow']['executedAt'])
-        self.makespan: int = self.instance['workflow']['makespanInSeconds']
+            self.instance["workflow"]["execution"]["executedAt"])
+        self.makespan: int = self.instance["workflow"]["execution"]["makespanInSeconds"]
 
         # Machines
-        if 'machines' in self.instance['workflow'].keys():
+        if "machines" in self.instance["workflow"]["execution"].keys():
             self.machines: Dict[str, Machine] = {
                 machine['nodeName']: Machine(
                     name=machine['nodeName'],
@@ -103,61 +103,87 @@ class Instance:
                     release=machine.get('release', None),
                     hashcode=machine.get('machine_code', None),
                     logger=self.logger
-                ) for machine in self.instance['workflow']['machines']
+                ) for machine in self.instance["workflow"]["execution"]["machines"]
             }
 
+        # Files
+        files_map = {}
+        for file in self.instance["workflow"]["specification"]["files"]:
+            files_map[file["id"]] = file["sizeInBytes"]
+
         # Tasks
-        self.workflow: Workflow = Workflow(
-            name=self.name, makespan=self.makespan)
-        for task in self.instance["workflow"]["tasks"]:
+        tasks_map = {}
+        for task in self.instance["workflow"]["specification"]["tasks"]:
             # Required arguments are defined in the JSON scheme
             # Here name, type and runtime are required
             # By default the value is set to None if we do not find the value
 
             # Create the list of files associated to this task
-            list_files = task.get('files', [])
-            list_files = [File(
-                name=f['name'],
-                size=f['sizeInBytes'],
-                link=FileLink(f['link']),
+            input_files = [File(
+                file_id=f,
+                size=files_map[f],
+                link=FileLink.INPUT,
                 logger=self.logger
-            ) for f in list_files]
+            ) for f in task.get('inputFiles', [])]
+            output_files = [File(
+                file_id=f,
+                size=files_map[f],
+                link=FileLink.OUTPUT,
+                logger=self.logger
+            ) for f in task.get('outputFiles', [])]
+
+            tasks_map[task['id']] = Task(
+                name=task['name'],
+                task_id=task['id'],
+                runtime=0,
+                category=task.get('category', None),
+                input_files=input_files,
+                output_files=output_files,
+                logger=self.logger
+            )
+
+        # Workflow
+        self.workflow: Workflow = Workflow(
+            name=self.name, 
+            makespan=self.makespan,
+            runtime_system_name=self.runtime_system["name"],
+            runtime_system_url=self.runtime_system["url"],
+            runtime_system_version=self.runtime_system["version"],
+            author_name=self.author["name"],
+            author_email=self.author["email"]
+        )
+
+        for t in self.instance["workflow"]["execution"]["tasks"]:
+            task = tasks_map[t["id"]]
+            task.runtime=t['runtimeInSeconds'] if 'runtimeInSeconds' in t else 0
+            task.cores=t.get('coreCount', None)
+            task.avg_cpu=t.get('avgCPU', None)
+            task.bytes_read=t.get('readBytes', None)
+            task.bytes_written=t.get('writtenBytes', None)
+            task.memory=t.get('memoryInBytes', None)
+            task.energy=t.get('energyInMhz', None)
+            task.avg_power=t.get('avgPowerInMhz', None)
+            task.priority=t.get('priority', None)
+            task.start_time=t.get('executedAt', None)
 
             # Fetch back the machine associated to this task
-            machine = task.get('machine', None)
-            machine = None if machine is None else self.machines[machine]
+            machines_list = t["machines"] if "machines" in t else []
+            machines = []
+            for machine in machines_list:
+                machines.append(self.machines[machine])
+            task.machines = machines
 
             # Fetch the command associated to this task
-            command = task.get('command', None)
+            command = t.get("command", None)
+            task.program=command.get('program', None) if command else None
+            task.args=command.get('arguments', None) if command else None
 
-            self.workflow.add_task(
-                Task(
-                    name=task['name'],
-                    task_id=task.get('id', None),
-                    category=task.get('category', None),
-                    task_type=TaskType(task['type']),
-                    runtime=task['runtimeInSeconds'] if 'runtimeInSeconds' in task else 0,
-                    machine=machine,
-                    program=command.get('program', None) if command else None,
-                    args=command.get('arguments', None) if command else None,
-                    cores=task.get('cores', None),
-                    avg_cpu=task.get('avgCPU', None),
-                    bytes_read=task.get('readBytes', None),
-                    bytes_written=task.get('writtenBytes', None),
-                    memory=task.get('memoryInBytes', None),
-                    energy=task.get('energy', None),
-                    avg_power=task.get('avgPower', None),
-                    priority=task.get('priority', None),
-                    files=list_files,  # TODO: sum all files read/written by this task
-                    logger=self.logger
-                )
-            )
-        # TODO: handle the case of the output files of the leaves tasks (not taken into account yet)
-        for task in self.instance["workflow"]["tasks"]:
+            self.workflow.add_task(task)
+
+        for task in self.instance["workflow"]["specification"]["tasks"]:
             for parent in task['parents']:
-                self.workflow.add_dependency(parent, task['name'])
+                self.workflow.add_dependency(parent, task["id"])
 
-        # TODO: instead of attaching files to tasks, attach them to edges based on the link direction.
         self.logger.info(
             f'Parsed an instance with {len(self.workflow.nodes)} tasks')
 

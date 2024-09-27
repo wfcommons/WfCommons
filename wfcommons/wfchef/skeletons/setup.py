@@ -13,11 +13,11 @@ import pathlib
 
 thisdir = pathlib.Path(__file__).resolve().parent
 
-workflow_recipes = [
+workflow_recipes = {
     line.strip()
     for line in thisdir.joinpath("workflow_recipes.txt").read_text().splitlines()
     if line.strip()
-]
+}
 
 setup(
     name='wfcommons.wfchef.recipe.PACKAGE_NAME',

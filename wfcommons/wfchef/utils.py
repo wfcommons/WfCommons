@@ -56,7 +56,7 @@ def create_graph(path: pathlib.Path) -> nx.DiGraph:
 
         id_count = 0
 
-        for task in content["workflow"]["tasks"]:
+        for task in content["workflow"]["specification"]["tasks"]:
 
             # specific for epigenomics -- have to think about how to do it in general
             if "genome-dax" in content["name"]:

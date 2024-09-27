@@ -25,59 +25,13 @@ class Build(build_ext):
             sys.exit(-1) 
         super().run()
 
-
-with open('README.md', 'r') as fh:
-    long_description = fh.read()
-
-# Fetch the version
-exec(open('wfcommons/version.py').read())
-
 setup(
-    name='wfcommons',
-    version=str(__version__),
-    license='LGPLv3',
-    author='WfCommons team',
-    author_email='support@wfcommons.org',
-    description='A Framework for Enabling Scientific Workflow Research and Education',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/wfcommons/wfcommons',
     packages=find_packages(),
     include_package_data=True,
     has_ext_modules=lambda: True,
     cmdclass={
         'build_ext': Build,
     },
-    install_requires=[
-        'jsonschema',
-        'matplotlib',
-        'networkx',
-        'numpy',
-        'python-dateutil',
-        'requests',
-        'scipy',
-        'setuptools',
-        'pyyaml',
-        'pandas',
-        'stringcase'
-    ],
-    classifiers=[
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Education',
-        'Intended Audience :: Science/Research',
-        'Natural Language :: English',
-        'Topic :: Documentation :: Sphinx',
-        'Topic :: System :: Distributed Computing'
-    ],
-    python_requires='>=3.8',
     data_files=[
         ('bin', ['bin/cpu-benchmark', 'bin/wfbench'])
     ],

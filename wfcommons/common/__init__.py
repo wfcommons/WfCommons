@@ -9,7 +9,6 @@
 # (at your option) any later version.
 
 from .workflow import Workflow
-from .file import File
-from .file import FileLink
-from .task import Task
-from .task import TaskType
+from .file import File, FileLink
+from .task import Task, TaskType
+from .machine import Machine, MachineSystem

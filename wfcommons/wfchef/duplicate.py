@@ -89,7 +89,7 @@ def duplicate(path: pathlib.Path,
     graph = pickle.loads(base_path.joinpath("base_graph.pickle").read_bytes())
     if num_nodes < graph.order():
         raise ValueError(
-            f"Cannot create synthentic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
+            f"Cannot create synthetic graph with {num_nodes} nodes from base graph with {graph.order()} nodes")
 
     all_microstructures = json.loads(base_path.joinpath("microstructures.json").read_text())
     try:

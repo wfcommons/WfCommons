@@ -17,7 +17,7 @@ import pathlib
 from datetime import datetime
 from typing import Optional, List
 from ..common.task import Task, TaskType
-from ..version import __version__
+from ..version import __version__, __schema_version__
 
 from ..wfchef.utils import create_graph
 import tempfile
@@ -32,37 +32,53 @@ class Workflow(nx.DiGraph):
     :type name: str
     :param description: Workflow instance description.
     :type description: Optional[str]
-    :param wms_name: WMS name.
-    :type wms_name: Optional[str]
-    :param wms_version: WMS version.
-    :type wms_version: Optional[str]
-    :param wms_url: URL for the WMS website.
-    :type wms_url: Optional[str]
+    :param runtime_system_name: WMS name.
+    :type runtime_system_name: Optional[str]
+    :param runtime_system_version: WMS version.
+    :type runtime_system_version: Optional[str]
+    :param runtime_system_url: URL for the WMS website.
+    :type runtime_system_url: Optional[str]
     :param executed_at: Workflow start timestamp in the ISO 8601 format.
     :type executed_at: Optional[str]
     :param makespan: Workflow makespan in seconds.
     :type makespan: Optional[int]
+    :param author_name: Author name.
+    :type author_name: Optional[str]
+    :param author_email: Author email.
+    :type author_email: Optional[str]
+    :param author_institution: Author institution.
+    :type author_institution: Optional[str]
+    :param author_country: Author country (preferably country code, ISO ALPHA-2 code).
+    :type author_country: Optional[str]
     """
 
     def __init__(self,
                  name: Optional[str] = "workflow",
                  description: Optional[str] = None,
-                 wms_name: Optional[str] = None,
-                 wms_version: Optional[str] = None,
-                 wms_url: Optional[str] = None,
+                 runtime_system_name: Optional[str] = None,
+                 runtime_system_version: Optional[str] = None,
+                 runtime_system_url: Optional[str] = None,
                  executed_at: Optional[str] = None,
-                 makespan: Optional[int] = 0.0
+                 makespan: Optional[int] = 0.0,
+                 author_name: Optional[str] = None,
+                 author_email: Optional[str] = None,
+                 author_institution: Optional[str] = None,
+                 author_country: Optional[str] = None
                  ) -> None:
         """Create an object of a workflow representation."""
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
         self.created_at: str = str(datetime.now().astimezone().isoformat())
-        self.schema_version: str = "1.4"
-        self.wms_name: Optional[str] = "WfCommons" if not wms_name else wms_name
-        self.wms_version: Optional[str] = str(__version__) if not wms_version else wms_version
-        self.wms_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not wms_url else wms_url
+        self.schema_version: str = f"{__schema_version__}"
+        self.runtime_system_name: Optional[str] = "WfCommons" if not runtime_system_name else runtime_system_name
+        self.runtime_system_version: Optional[str] = str(__version__) if not runtime_system_version else runtime_system_version
+        self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
         self.executed_at: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
         self.makespan: Optional[int] = makespan
+        self.author_name: Optional[str] = author_name if author_name else str(getpass.getuser())
+        self.author_email: Optional[str] = author_email if author_email else "support@wfcommons.org"
+        self.author_institution: Optional[str] = None
+        self.author_country: Optional[str] = None
         self.tasks = {}
         self.tasks_parents = {}
         self.tasks_children = {}
@@ -75,18 +91,18 @@ class Workflow(nx.DiGraph):
         :param task: A Task object.
         :type task: Task
         """
-        self.tasks[task.name] = task
-        self.tasks_parents.setdefault(task.name, set())
-        self.tasks_children.setdefault(task.name, set())
-        self.add_node(task.name, task=task)
+        self.tasks[task.task_id] = task
+        self.tasks_parents.setdefault(task.task_id, set())
+        self.tasks_children.setdefault(task.task_id, set())
+        self.add_node(task.task_id, task=task, label=task.task_id)
 
     def add_dependency(self, parent: str, child: str) -> None:
         """
         Add a dependency between tasks.
 
-        :param parent: Parent task name.
+        :param parent: Parent task id.
         :type parent: str
-        :param child: Child task name.
+        :param child: Child task id.
         :type child: str
         """
         self.tasks_parents[child].add(parent)
@@ -102,7 +118,9 @@ class Workflow(nx.DiGraph):
         """
         workflow_machines = []
         machines_list = []
-        workflow_tasks = []
+        specification_tasks = []
+        execution_tasks = []
+        files = []
 
         workflow_json = {
             "name": self.name,
@@ -110,49 +128,67 @@ class Workflow(nx.DiGraph):
             "createdAt": self.created_at,
             "schemaVersion": self.schema_version,
             "author": {
-                "name": str(getpass.getuser()),
-                "email": "support@wfcommons.org"
-            },
-            "wms": {
-                "name": self.wms_name,
-                "version": self.wms_version,
-                "url": self.wms_url
+                "name": self.author_name,
+                "email": self.author_email
             },
             "workflow": {
-                "executedAt": self.executed_at,
-                "makespanInSeconds": self.makespan,
-                "tasks": workflow_tasks
+                "specification": {
+                    "tasks": specification_tasks,
+                    "files": files
+                },
+                "execution": {
+                    "makespanInSeconds": self.makespan,
+                    "executedAt": self.executed_at,
+                    "tasks": execution_tasks
+                }
+            },
+            "runtimeSystem": {
+                "name": self.runtime_system_name,
+                "version": self.runtime_system_version,
+                "url": self.runtime_system_url
             }
         }
 
         # generate tasks parents and children
         tasks_dependencies = {}
         for edge in self.edges:
-            for task_name in edge:
-                if task_name not in tasks_dependencies:
-                    tasks_dependencies[task_name] = {"parents": [], "children": []}
+            for task_id in edge:
+                if task_id not in tasks_dependencies:
+                    tasks_dependencies[task_id] = {"parents": [], "children": []}
             tasks_dependencies[edge[0]]["children"].append(edge[1])
             tasks_dependencies[edge[1]]["parents"].append(edge[0])
 
         # add tasks to the workflow json object
         for node in self.nodes:
             task: Task = self.nodes[node]["task"]
-            task_obj = task.as_dict()
+            task_spec = task.specification_as_dict()
+            execution_tasks.append(task.execution_as_dict())
 
             # manage task dependencies
-            if task.name in tasks_dependencies:
-                task_obj["parents"] = tasks_dependencies[task.name]["parents"]
-                task_obj["children"] = tasks_dependencies[task.name]["children"]
+            if task.task_id in tasks_dependencies:
+                task_spec["parents"] = tasks_dependencies[task.task_id]["parents"]
+                task_spec["children"] = tasks_dependencies[task.task_id]["children"]
 
-            workflow_tasks.append(task_obj)
+            specification_tasks.append(task_spec)
 
             # add machines to the workflow json object
-            if task.machine and task.machine.name not in machines_list:
-                machines_list.append(task.machine.name)
-                workflow_machines.append(task.machine.as_dict())
+            if task.machines:
+                for machine in task.machines:
+                    if machine.name not in machines_list:
+                        machines_list.append(machine.name)
+                        workflow_machines.append(machine.as_dict())
+
+            # add files to the workflow json object (input and output)
+            for file in task.input_files:
+                files.append(file.as_dict())
+            for file in task.output_files:
+                files.append(file.as_dict())
 
         if workflow_machines:
-            workflow_json["workflow"]["machines"] = workflow_machines
+            workflow_json["workflow"]["execution"]["machines"] = workflow_machines
+
+        if files and len(files) > 0:
+            workflow_json["workflow"]["specification"]["files"] = files
 
         # write to file
         if not json_file_path:
@@ -192,10 +228,9 @@ class Workflow(nx.DiGraph):
 
         tasks_map = {}
         for node in graph.nodes(data=True):
-            task_name = f"{node[1]['label']}_ID{node[0]}"
-            task = Task(name=task_name, task_type=TaskType.COMPUTE, runtime=0, task_id=node[0])
-            self.add_task(task)
-            tasks_map[node[0]] = task_name
+            task_id = f"{node[1]['label']}_ID{node[0]}"
+            self.add_task(Task(name=node[1]['label'], task_id=task_id, runtime=0))
+            tasks_map[node[0]] = task_id
 
         for edge in graph.edges:
             self.add_dependency(tasks_map[edge[0]], tasks_map[edge[1]])
