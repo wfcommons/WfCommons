@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2023 The WfCommons Team.
+# Copyright (c) 2020-2024 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,9 @@ class Machine:
                 .. code-block:: python
 
                     cpu = {
-                        'count': 48,
-                        'speed': 1200
+                        'coreCount': 48,
+                        'speedInMHz': 1200,
+                        'vendor': 'Vendor Name'
                     }
 
     :type cpu: Dict[str, Union[int, str]]
@@ -73,9 +74,9 @@ class Machine:
         self.release: str = release
         self.hashcode = hashcode
 
-        self.cpu_cores: int = cpu['count']
-        self.cpu_speed: int = cpu['speed'] if 'speed' in cpu else 0
-        self.cpu_flops: int = cpu['count'] * cpu['speed'] * 10 ^ 6 if 'speed' in cpu else 0
+        self.cpu_cores: int = cpu['coreCount']
+        self.cpu_speed: int = cpu['speedInMHz'] if 'speedInMHz' in cpu else 0
+        self.cpu_flops: int = cpu['coreCount'] * cpu['speedInMHz'] * 10 ^ 6 if 'speedInMHz' in cpu else 0
         self.cpu_vendor: str = cpu['vendor'] if 'vendor' in cpu else None
 
         self.logger.debug(f"created machine: {self.name} with {self.cpu_cores} cores and {self.cpu_flops} FLOPS.")
@@ -96,9 +97,9 @@ class Machine:
         if self.release:
             machine['release'] = self.release
         if self.cpu_cores:
-            machine['cpu'] = {'count': self.cpu_cores}
+            machine['cpu'] = {'coreCount': self.cpu_cores}
         if self.cpu_speed:
-            machine['cpu']['speed'] = self.cpu_speed
+            machine['cpu']['speedInMHz'] = self.cpu_speed
         if self.cpu_vendor:
             machine['cpu']['vendor'] = self.cpu_vendor
         return machine

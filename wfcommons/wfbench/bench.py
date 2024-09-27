@@ -167,25 +167,25 @@ class WorkflowBenchmark:
 
         # create data footprint
         for task in self.workflow.tasks.values():
-            outfiles = {file.name: file.size for file in task.files if file.link == FileLink.OUTPUT}
+            outfiles = {file.file_id: file.size for file in task.files if file.link == FileLink.OUTPUT}
             outfiles_str = str(outfiles).replace("{", "\"{") \
                 .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
             task.args.append(f"--out {outfiles_str}")
 
-            infiles = [f"\"{file.name}\"" for file in task.files if file.link == FileLink.INPUT]
+            infiles = [f"\"{file.file_id}\"" for file in task.files if file.link == FileLink.INPUT]
             task.args.extend(infiles)
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
         for i, file in enumerate(workflow_input_files):
-            file_path = save_dir.joinpath(file.name)
+            file_path = save_dir.joinpath(file.file_id)
             if not file_path.is_file():
                 print(
                     f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
                     end='\r'
                 )
                 with open(save_dir.joinpath("to_create.txt"), "a+") as fp:
-                    fp.write(f"{file.name} {file.size}\n")
+                    fp.write(f"{file.file_id} {file.size}\n")
                 self.logger.debug(f"Created file: {str(file_path)}")
 
         self.logger.info(f"Saving benchmark workflow: {json_path}")
@@ -206,13 +206,13 @@ class WorkflowBenchmark:
             task_output_counter = 0
             for file in task.files:
                 if file.link == FileLink.OUTPUT:
-                    if file.name in new_file_names:
-                        raise ValueError(f"File name {file.name} already exists")
+                    if file.file_id in new_file_names:
+                        raise ValueError(f"File name {file.file_id} already exists")
                     task_output_counter += 1
-                    extension = ''.join(pathlib.Path(file.name).suffixes)
-                    new_name = f"{task.name}_outfile_{task_output_counter:04d}{extension}"
-                    new_file_names[file.name] = new_name
-                    file.name = new_name
+                    extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                    new_name = f"{task.task_id}_outfile_{task_output_counter:04d}{extension}"
+                    new_file_names[file.file_id] = new_name
+                    file.file_id = new_name
                 elif file.link == FileLink.INPUT:
                     input_files.add(file)
                 else:
@@ -220,14 +220,14 @@ class WorkflowBenchmark:
 
         workflow_inputs: List[File] = []
         for file in input_files:
-            if file.name in new_file_names:
+            if file.file_id in new_file_names:
                 # file is an output file of another task and receives the corresponding name
-                file.name = new_file_names[file.name]
+                file.file_id = new_file_names[file.file_id]
             else:
                 # file is an input file for the workflow and needs to be generated
                 workflow_inputs.append(file)
-                extension = ''.join(pathlib.Path(file.name).suffixes)
-                file.name = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
+                extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                file.file_id = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
         return workflow_inputs
 
     def create_benchmark(self,
@@ -347,7 +347,7 @@ class WorkflowBenchmark:
         task.runtime = 0
 
         task.program = "wfbench"
-        task.args = [task.name]
+        task.args = [task.task_id]
         task.args.extend(params)
 
     def _generate_task_cpu_params(self,
@@ -394,8 +394,8 @@ class WorkflowBenchmark:
             outputs = self._output_files(data)
             for task in self.workflow.tasks.values():
                 outputs_file_size = {}
-                for child, data_size in outputs[task.name].items():
-                    outputs_file_size[f"{task.name}_{child}_output.txt"] = data_size
+                for child, data_size in outputs[task.task_id].items():
+                    outputs_file_size[f"{task.task_id}_{child}_output.txt"] = data_size
 
                 task.args.extend([f"--out {outputs_file_size}"])
 
@@ -416,13 +416,13 @@ class WorkflowBenchmark:
                 f"Every input/output file is of size: {file_size}")
 
             for task in self.workflow.tasks.values():
-                output = {f"{task.name}_output.txt": file_size}
+                output = {f"{task.task_id}_output.txt": file_size}
                 task.args.extend([f"--out {output}"])
                 outputs = {}
-                if self.workflow.tasks_children[task.name]:
-                    outputs.setdefault(task.name, {})
-                    for child in self.workflow.tasks_children[task.name]:
-                        outputs[task.name][child] = file_size
+                if self.workflow.tasks_children[task.task_id]:
+                    outputs.setdefault(task.task_id, {})
+                    for child in self.workflow.tasks_children[task.task_id]:
+                        outputs[task.task_id][child] = file_size
 
             self._add_output_files(file_size)
             self._add_input_files(outputs, file_size)
@@ -442,13 +442,13 @@ class WorkflowBenchmark:
         """
         output_files = {}
         for task in self.workflow.tasks.values():
-            output_files.setdefault(task.name, {})
-            if not self.workflow.tasks_children[task.name]:
-                output_files[task.name][task.name] = int(data[task.category])
+            output_files.setdefault(task.task_id, {})
+            if not self.workflow.tasks_children[task.task_id]:
+                output_files[task.task_id][task.task_id] = int(data[task.category])
             else:
-                for child_name in self.workflow.tasks_children[task.name]:
+                for child_name in self.workflow.tasks_children[task.task_id]:
                     child = self.workflow.tasks[child_name]
-                    output_files[task.name][child.name] = int(
+                    output_files[task.task_id][child.task_id] = int(
                         data[child.category])
 
         return output_files
@@ -462,7 +462,7 @@ class WorkflowBenchmark:
         tasks_dont_need_input = 0
 
         for task in self.workflow.tasks.values():
-            parents = self.workflow.tasks_parents[task.name]
+            parents = self.workflow.tasks_parents[task.task_id]
             if not parents:
                 tasks_need_input += 1
             else:
@@ -481,12 +481,12 @@ class WorkflowBenchmark:
         """
         for task in self.workflow.tasks.values():
             if isinstance(output_files, Dict):
-                for child, file_size in output_files[task.name].items():
+                for child, file_size in output_files[task.task_id].items():
                     task.files.append(
-                        File(f"{task.name}_{child}_output.txt", file_size, FileLink.OUTPUT))
+                        File(f"{task.task_id}_{child}_output.txt", file_size, FileLink.OUTPUT))
             elif isinstance(output_files, int):
                 task.files.append(
-                    File(f"{task.name}_output.txt", output_files, FileLink.OUTPUT))
+                    File(f"{task.task_id}_output.txt", output_files, FileLink.OUTPUT))
 
     def _add_input_files(self, output_files: Dict[str, Dict[str, str]], data: Union[int, Dict[str, str]]) -> None:
         """
@@ -505,22 +505,22 @@ class WorkflowBenchmark:
 
         for task in self.workflow.tasks.values():
             inputs = []
-            if not self.workflow.tasks_parents[task.name]:
+            if not self.workflow.tasks_parents[task.task_id]:
                 task.files.append(
-                    File(f"{task.name}_input.txt",
+                    File(f"{task.task_id}_input.txt",
                          data[task.category] if isinstance(
                              data, Dict) else data,
                          FileLink.INPUT))
-                inputs.append(f'{task.name}_input.txt')
+                inputs.append(f'{task.task_id}_input.txt')
             else:
                 if isinstance(data, Dict):
-                    for parent, file_size in input_files[task.name].items():
+                    for parent, file_size in input_files[task.task_id].items():
                         task.files.append(
-                            File(f"{parent}_{task.name}_output.txt", file_size, FileLink.INPUT))
-                        inputs.append(f"{parent}_{task.name}_output.txt")
+                            File(f"{parent}_{task.task_id}_output.txt", file_size, FileLink.INPUT))
+                        inputs.append(f"{parent}_{task.task_id}_output.txt")
 
                 elif isinstance(data, int):
-                    for parent in self.workflow.tasks_parents[task.name]:
+                    for parent in self.workflow.tasks_parents[task.task_id]:
                         task.files.append(
                             File(f"{parent}_output.txt", data, FileLink.INPUT))
                         inputs.append(f"{parent}_output.txt")
@@ -537,10 +537,10 @@ class WorkflowBenchmark:
         :type data: Dict[str, str]
         """
         for task in self.workflow.tasks.values():
-            if not self.workflow.tasks_parents[task.name]:
+            if not self.workflow.tasks_parents[task.task_id]:
                 file_size = data[task.category] if isinstance(
                     data, Dict) else data
-                file = save_dir.joinpath(f"{task.name}_input.txt")
+                file = save_dir.joinpath(f"{task.task_id}_input.txt")
                 if not file.is_file():
                     with open(file, 'wb') as fp:
                         fp.write(os.urandom(int(file_size)))
@@ -572,7 +572,7 @@ class WorkflowBenchmark:
         }
         for node in workflow.nodes:
             task: Task = workflow.nodes[node]['task']
-            task_type = task.name.split("_0")[0]
+            task_type = task.task_id.split("_0")[0]
 
             for key in inputs.keys():
                 inputs[key].setdefault(task_type, defaults[key])

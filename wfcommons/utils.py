@@ -7,13 +7,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
+import warnings
+warnings.filterwarnings('ignore')
 
 import json
 import logging
 import math
 import pathlib
 import scipy.stats
-import warnings
 import numpy as np
 import operator as op
 
@@ -21,6 +22,7 @@ from enum import Enum
 from functools import reduce
 from logging import Logger
 from typing import Any, Dict, Optional, List, Tuple
+
 
 
 class NoValue(Enum):
@@ -82,8 +84,6 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
     for dist_name in distribution_names:
         # Ignore warnings from data that can't be fit
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
-
             try:
                 distribution = getattr(scipy.stats, dist_name)
                 params = distribution.fit(y)
@@ -98,7 +98,7 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
                     best_params = params
                     best_sse = sse
             except Exception as e:
-                print(f"WARNING: distribution \"{dist_name}\" failed ({e})")
+                logger.warning(f"WARNING: distribution \"{dist_name}\" failed ({e})")
 
     logger.debug(f'Best distribution fit: {best_distribution}')
     return best_distribution, best_params

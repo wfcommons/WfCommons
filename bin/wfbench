@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2021-2024 The WfCommons Team.
@@ -125,9 +125,10 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
-    mem_proc = subprocess.Popen(mem_prog)
-    if core:
-        os.sched_setaffinity(mem_proc.pid, {core})
+    if mem_threads > 0:
+        mem_proc = subprocess.Popen(mem_prog)
+        if core:
+            os.sched_setaffinity(mem_proc.pid, {core})
 
     return cpu_procs
 
@@ -261,8 +262,9 @@ def main():
         if core:
             print(f"[WfBench]  {args.name} acquired core {core}")
 
+        mem_threads=int(10 - 10 * args.percent_cpu)
         cpu_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
-                                    mem_threads=int(10 - 10 * args.percent_cpu),
+                                    mem_threads=mem_threads,
                                     cpu_work=sys.maxsize if args.time else int(args.cpu_work),
                                     core=core,
                                     total_mem=args.mem)
