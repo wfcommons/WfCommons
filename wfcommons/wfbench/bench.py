@@ -52,7 +52,7 @@ class WorkflowBenchmark:
             __name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
-        self.workflow = None
+        self.workflow: Workflow = None
 
     def create_benchmark_from_input_file(self,
                                          save_dir: pathlib.Path,
@@ -167,12 +167,12 @@ class WorkflowBenchmark:
 
         # create data footprint
         for task in self.workflow.tasks.values():
-            outfiles = {file.file_id: file.size for file in task.files if file.link == FileLink.OUTPUT}
+            outfiles = {file.file_id: file.size for file in task.output_files}
             outfiles_str = str(outfiles).replace("{", "\"{") \
                 .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
             task.args.append(f"--out {outfiles_str}")
 
-            infiles = [f"\"{file.file_id}\"" for file in task.files if file.link == FileLink.INPUT]
+            infiles = [f"\"{file.file_id}\"" for file in task.input_files]
             task.args.extend(infiles)
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
@@ -203,20 +203,20 @@ class WorkflowBenchmark:
         new_file_names: Dict = {}
         input_files: Set = set()
         for task in self.workflow.tasks.values():
-            task_output_counter = 0
-            for file in task.files:
-                if file.link == FileLink.OUTPUT:
-                    if file.file_id in new_file_names:
-                        raise ValueError(f"File name {file.file_id} already exists")
-                    task_output_counter += 1
-                    extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                    new_name = f"{task.task_id}_outfile_{task_output_counter:04d}{extension}"
-                    new_file_names[file.file_id] = new_name
-                    file.file_id = new_name
-                elif file.link == FileLink.INPUT:
-                    input_files.add(file)
-                else:
-                    raise NotImplementedError(f"File link {file.link} not supported (expected INPUT or OUTPUT)")
+            for file in task.output_files:
+                
+                if file.file_id in new_file_names:
+                    raise ValueError(f"File name {file.file_id} already exists")
+                
+                task_output_counter += 1
+                extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                new_name = f"{task.task_id}_outfile_{task_output_counter:04d}{extension}"
+                new_file_names[file.file_id] = new_name
+                file.file_id = new_name
+                
+            for file in task.input_files:
+                input_files.add(file)
+                
 
         workflow_inputs: List[File] = []
         for file in input_files:
@@ -289,9 +289,23 @@ class WorkflowBenchmark:
                 cores,
                 lock
             )
-            task.files = []
-
+            task.input_files = []
+            task.output_files = []
+        
         self._create_data_footprint(data, save_dir)
+        
+        workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
+
+        for i, file in enumerate(workflow_input_files):
+            file_path = save_dir.joinpath(file.file_id)
+            if not file_path.is_file():
+                print(
+                    f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
+                    end='\r'
+                )
+                with open(save_dir.joinpath("to_create.txt"), "a+") as fp:
+                    fp.write(f"{file.file_id} {file.size}\n")
+                self.logger.debug(f"Created file: {str(file_path)}")
 
         self.logger.info(f"Saving benchmark workflow: {json_path}")
         self.workflow.write_json(json_path)
@@ -482,10 +496,10 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             if isinstance(output_files, Dict):
                 for child, file_size in output_files[task.task_id].items():
-                    task.files.append(
+                    task.output_files.append(
                         File(f"{task.task_id}_{child}_output.txt", file_size, FileLink.OUTPUT))
             elif isinstance(output_files, int):
-                task.files.append(
+                task.output_files.append(
                     File(f"{task.task_id}_output.txt", output_files, FileLink.OUTPUT))
 
     def _add_input_files(self, output_files: Dict[str, Dict[str, str]], data: Union[int, Dict[str, str]]) -> None:
@@ -506,7 +520,7 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             inputs = []
             if not self.workflow.tasks_parents[task.task_id]:
-                task.files.append(
+                task.input_files.append(
                     File(f"{task.task_id}_input.txt",
                          data[task.category] if isinstance(
                              data, Dict) else data,
@@ -515,13 +529,13 @@ class WorkflowBenchmark:
             else:
                 if isinstance(data, Dict):
                     for parent, file_size in input_files[task.task_id].items():
-                        task.files.append(
+                        task.input_files.append(
                             File(f"{parent}_{task.task_id}_output.txt", file_size, FileLink.INPUT))
                         inputs.append(f"{parent}_{task.task_id}_output.txt")
 
                 elif isinstance(data, int):
                     for parent in self.workflow.tasks_parents[task.task_id]:
-                        task.files.append(
+                        task.input_files.append(
                             File(f"{parent}_output.txt", data, FileLink.INPUT))
                         inputs.append(f"{parent}_output.txt")
 
