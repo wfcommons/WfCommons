@@ -254,8 +254,13 @@ def main():
         else:
             device = available_gpus[0]
             print(f"Running on GPU {device}")
-            print(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
-            gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
+
+            if args.time:
+                print(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
+                gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
+            else:
+                gpu_benchmark(work=int(args.gpu_work), device=device)
+            
     
     if args.cpu_work:
         print("[WfBench] Starting CPU and Memory Benchmarks...")
