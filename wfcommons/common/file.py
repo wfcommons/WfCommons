@@ -35,7 +35,10 @@ class File:
     :type logger: Optional[Logger]
     """
 
-    def __init__(self, file_id: str, size: int, link: FileLink, logger: Optional[Logger] = None) -> None:
+    def __init__(self, file_id: str, 
+                 size: int, 
+                 link: FileLink, 
+                 logger: Optional[Logger] = None) -> None:
         """A file used by tasks."""
         self.logger: Logger = logger if logger else logging.getLogger(__name__)
 

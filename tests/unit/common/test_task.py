@@ -27,6 +27,7 @@ class TestTask:
             name=task_name,
             task_id=task_id,
             runtime=123.45,
+            cores=2.0,
             input_files=input_files,
             output_files=output_files,
             category="task_test",
@@ -58,3 +59,33 @@ class TestTask:
         }
 
         assert(task_specification == task.specification_as_dict())
+
+    @pytest.mark.unit
+    def test_task_execution(self, task: Task) -> None:
+
+        task_execution = {
+            "id": task_id,
+            "runtimeInSeconds": 123.45,
+            "command": {
+                "program": "program",
+                "arguments": ["arg_1", "arg_2"]
+            },
+            "coreCount": 2.0,
+            "avgCPU": 0.5,
+            "readBytes": 12345,
+            "writtenBytes": 54321,
+            "memoryInBytes": 10,
+            "energyInKWh": 100,
+            "avgPowerInKWh": 1.0,
+            "priority": 100,
+            "machines": ["machine_1"],
+            "executedAt": "2024-09-15T08:59:33.699321-04:00",
+            "category": "task_test",
+            "launchDir": "/tmp"
+        }
+
+        assert(task_execution == task.execution_as_dict())
+
+    @pytest.mark.unit
+    def test_task_str(self, task: Task) -> None:
+        assert(task_id == str(task))
