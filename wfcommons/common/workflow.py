@@ -79,7 +79,7 @@ class Workflow(nx.DiGraph):
         self.author_email: Optional[str] = author_email if author_email else "support@wfcommons.org"
         self.author_institution: Optional[str] = None
         self.author_country: Optional[str] = None
-        self.tasks = {}
+        self.tasks: Task = {}
         self.tasks_parents = {}
         self.tasks_children = {}
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
