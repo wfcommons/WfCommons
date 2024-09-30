@@ -598,29 +598,33 @@ class WorkflowBenchmark:
                 print("Starting run...")
                 has_executed: Set[str] = set()
                 procs: List[subprocess.Popen] = []
-                print("Workflow tasks:", len(wf["workflow"]["tasks"]))
+                print("Workflow tasks:", len(wf["workflow"]["specification"]["tasks"]))
                 print("Has executed:", len(has_executed))
 
-                while len(has_executed) < len(wf["workflow"]["tasks"]):
+                while len(has_executed) < len(wf["workflow"]["specification"]["tasks"]):
                     print("In while loop")
-                    for task in wf["workflow"]["tasks"]:
-                        input_files = []
+                    for task in wf["workflow"]["specification"]["tasks"]:
+                        input_files = {}
                         if task["name"] in has_executed:
                             print(f'{task["name"]} has executed...')
                             continue
                         
-                        # Create input files 
-                        for input_file in task["files"]:
-                            if input_file["link"] == "input":
-                                # Append the input file to the list of input files
-                                input_files.append(input_file["name"])
-                            # Generate the input files
-                            if input_files:
-                                print(f"Creating files: {input_files}")
-                                generate_sys_data(num_files=1,
-                                                  file_total_size=input_file["sizeInBytes"],
-                                                  task_name=input_files,
-                                                  save_dir=save_dir)                            
+                        # Collect input files 
+                        for input_file_name in task["inputFiles"]:
+                            input_files["name"] = input_file_name
+                            
+                            for entry in wf["workflow"]["specification"]["files"]:
+                                if input_file_name in entry["id"]:
+                                    print(f"Entry: {entry}")    
+                                    sizeInBytes = entry[input_file_name]["sizeInBytes"]
+                                    input_files[input_file_name]["size"] = sizeInBytes
+
+                        # Generate the input files
+                        if input_files:
+                            print(f"Creating files: {input_files}")
+                            generate_sys_data(num_files=1,
+                                              tasks=input_files,
+                                              save_dir=save_dir)                            
                         
                         real_file_names = [f"{save_dir.joinpath(input_file)}" for input_file in input_files]
                         if ready_to_execute := all([
@@ -687,24 +691,24 @@ class WorkflowBenchmark:
             raise FileNotFoundError("Not able to find the executable.")
 
 
-def generate_sys_data(num_files: int, file_total_size: int, task_name: List[str], save_dir: pathlib.Path) -> None:
+def generate_sys_data(num_files: int, tasks: Dict[str, int], save_dir: pathlib.Path) -> None:
     """Generate workflow's input data
 
-    :param num_files:
+    :param num_files: number of each file to be generated.
     :type num_files: int
-    :param file_total_size:
-    :type file_total_size: int
+    :param tasks: Dictionary with the name of the tasks and their data sizes.
+    :type tasks: Dict[str, int]
     :param save_dir: Folder to generate the workflow benchmark's input data files.
     :type save_dir: pathlib.Path
     """
     names = []
     for _ in range(num_files):
-        for name in task_name:
+        for name, size in tasks.items():
             # name = f'{name}_input.txt'
             names.append(name)
             file = f"{save_dir.joinpath(name)}"
             with open(file, 'wb') as fp:
-                fp.write(os.urandom(file_total_size))
+                fp.write(os.urandom(size))
             print(f"Created file: {file}")
 
     return names 
