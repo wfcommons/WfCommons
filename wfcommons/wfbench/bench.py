@@ -201,7 +201,9 @@ class WorkflowBenchmark:
         :rtype: List[File]
         """
         new_file_names: Dict = {}
-        input_files: Set = set()
+        task_output_counter = 0
+        workflow_inputs: List[File] = []
+
         for task in self.workflow.tasks.values():
             for file in task.output_files:
                 
@@ -215,19 +217,15 @@ class WorkflowBenchmark:
                 file.file_id = new_name
                 
             for file in task.input_files:
-                input_files.add(file)
+                if file.file_id in new_file_names:
+                    # file is an output file of another task and receives the corresponding name
+                    file.file_id = new_file_names[file.file_id]
+                else:
+                    # file is an input file for the workflow and needs to be generated
+                    workflow_inputs.append(file)
+                    extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                    file.file_id = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
                 
-
-        workflow_inputs: List[File] = []
-        for file in input_files:
-            if file.file_id in new_file_names:
-                # file is an output file of another task and receives the corresponding name
-                file.file_id = new_file_names[file.file_id]
-            else:
-                # file is an input file for the workflow and needs to be generated
-                workflow_inputs.append(file)
-                extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                file.file_id = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
         return workflow_inputs
 
     def create_benchmark(self,
