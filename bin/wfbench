@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2021-2024 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import os
 import pathlib
 import subprocess
@@ -242,19 +252,6 @@ def main():
         print("OUTPUT",outputs_dict)
         print("INPUTS", other)
 
-        # ### EXTRA CODE
-        # Check if file already exists 
-        # for file in other:
-        #     if pathlib.Path(file).is_file():
-        #         continue
-        #     else:
-        #         print("HERE")
-        #         infile = this_dir.joinpath(file)
-        #         with open(infile, "wb") as f:
-        #             f.write(os.urandom(1024))
-        #         print("Infile created")
-        # ####
-
         # Create a multiprocessing event that in the first run is set to True
         write_done_event = multiprocessing.Event() 
         # Set this to True to allow the first read to happen
@@ -317,8 +314,7 @@ def main():
         mem_kill.wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
-    # TODO: If you would like to run only IO add time.sleep(2)
-    time.sleep(2)
+    # NOTE: If you would like to run only IO add time.sleep(2)
     # Check if all procs are done, if not, kill them
     print("[WfBench] Checking if all processes are done...")
     for proc in procs:
