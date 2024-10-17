@@ -292,6 +292,7 @@ class WorkflowBenchmark:
         
         self._create_data_footprint(data, save_dir)
         
+        # TODO: add a flag to allow the file names to be changed 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
         for i, file in enumerate(workflow_input_files):

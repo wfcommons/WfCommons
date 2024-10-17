@@ -1,0 +1,370 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "title": "WfFormat",
+    "properties": {
+        "name": {
+            "description": "Workflow instance name",
+            "type": "string",
+            "minLength": 1
+        },
+        "description": {
+            "description": "General description of the instance",
+            "type": "string",
+            "minLength": 1
+        },
+        "createdAt": {
+            "description": "Instance creation timestamp",
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time"
+        },
+        "schemaVersion": {
+            "description": "Version of the schema used",
+            "type": "string",
+            "enum": [
+                "1.5"
+            ]
+        },
+        "runtimeSystem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Runtime system name",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "version": {
+                    "description": "Runtime system version",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "url": {
+                    "description": "Runtime system url",
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri"
+                }
+            },
+            "required": [
+                "name",
+                "version"
+            ]
+        },
+        "author": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Author name",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "email": {
+                    "description": "Author email",
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "email"
+                },
+                "institution": {
+                    "description": "Author institution",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "country": {
+                    "description": "Author country",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "required": [
+                "name",
+                "email"
+            ]
+        },
+        "workflow": {
+            "type": "object",
+            "properties": {
+                "specification": {
+                    "type": "object",
+                    "properties": {
+                        "tasks": {
+                            "description": "List of workflow tasks",
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Arbitrary task name",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "id": {
+                                        "description": "Unique task ID",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "parents": {
+                                        "description": "List of parent tasks",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "ID of the parent task",
+                                            "minLength": 0,
+                                            "pattern": "^[0-9a-zA-Z-_.]*$"
+                                        }
+                                    },
+                                    "children": {
+                                        "description": "List of children tasks",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "ID of the child task",
+                                            "minLength": 0,
+                                            "pattern": "^[0-9a-zA-Z-_.]*$"
+                                        }
+                                    },
+                                    "inputFiles": {
+                                        "description": "List of input data",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Unique file ID",
+                                            "minLength": 1,
+                                            "pattern": "^[0-9a-zA-Z-_./:]*$"
+                                        }
+                                    },
+                                    "outputFiles": {
+                                        "description": "List of output data",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Unique file ID",
+                                            "minLength": 1,
+                                            "pattern": "^[0-9a-zA-Z-_./:]*$"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "id",
+                                    "parents",
+                                    "children"
+                                ]
+                            }
+                        },
+                        "files": {
+                            "description": "List of input/output data",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "description": "Unique file ID",
+                                        "type": "string",
+                                        "pattern": "^[0-9a-zA-Z-_./:]*$",
+                                        "minLength": 1
+                                    },
+                                    "sizeInBytes": {
+                                        "description": "File size in bytes",
+                                        "type": "integer",
+                                        "minimum": 0
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "sizeInBytes"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "tasks"
+                    ]
+                },
+                "execution": {
+                    "type": "object",
+                    "properties": {
+                        "makespanInSeconds": {
+                            "description": "Workflow makespan in seconds",
+                            "type": "number"
+                        },
+                        "executedAt": {
+                            "description": "Workflow start execution timestamp",
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "tasks": {
+                            "description": "List of workflow tasks",
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "description": "Unique task ID",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "runtimeInSeconds": {
+                                        "description": "Task runtime in seconds",
+                                        "type": "number"
+                                    },
+                                    "executedAt": {
+                                        "description": "Task start execution timestamp",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "command": {
+                                        "description": "Task command description",
+                                        "type": "object",
+                                        "properties": {
+                                            "program": {
+                                                "description": "Program name",
+                                                "type": "string",
+                                                "minLength": 1
+                                            },
+                                            "arguments": {
+                                                "description": "List of task arguments",
+                                                "type": "array",
+                                                "items": {
+                                                    "description": "A task argument",
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "coreCount": {
+                                        "description": "Number of cores required by the task",
+                                        "type": "number",
+                                        "minimum": 1
+                                    },
+                                    "avgCPU": {
+                                        "description": "Average CPU utilization in %",
+                                        "type": "number"
+                                    },
+                                    "readBytes": {
+                                        "description": "Total bytes read",
+                                        "type": "number"
+                                    },
+                                    "writtenBytes": {
+                                        "description": "Total bytes written",
+                                        "type": "number"
+                                    },
+                                    "memoryInBytes": {
+                                        "description": "Memory (resident set) size of the process in bytes",
+                                        "type": "number"
+                                    },
+                                    "energyInKWh": {
+                                        "description": "Total energy consumption in kWh",
+                                        "type": "number"
+                                    },
+                                    "avgPowerInW": {
+                                        "description": "Average power consumption in W",
+                                        "type": "number"
+                                    },
+                                    "priority": {
+                                        "description": "Task priority",
+                                        "type": "number"
+                                    },
+                                    "machines": {
+                                        "description": "List of machines used by the task",
+                                        "type": "array",
+                                        "items": {
+                                            "description": "Machine name used",
+                                            "type": "string",
+                                            "minLength": 1
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "runtimeInSeconds"
+                                ]
+                            }
+                        },
+                        "machines": {
+                            "description": "List of machines used by tasks in the workflow",
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "description": "Description of the machine (node) that ran the task",
+                                "type": "object",
+                                "properties": {
+                                    "system": {
+                                        "description": "Machine system",
+                                        "type": "string",
+                                        "enum": [
+                                            "linux",
+                                            "macos",
+                                            "windows"
+                                        ]
+                                    },
+                                    "architecture": {
+                                        "description": "Machine architecture",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "nodeName": {
+                                        "description": "Machine node name",
+                                        "type": "string",
+                                        "format": "hostname",
+                                        "minLength": 1
+                                    },
+                                    "release": {
+                                        "description": "Machine release",
+                                        "type": "string",
+                                        "minLength": 1
+                                    },
+                                    "memoryInBytes": {
+                                        "description": "Total machine's RAM memory in bytes",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "cpu": {
+                                        "description": "Machine's CPU information",
+                                        "type": "object",
+                                        "properties": {
+                                            "coreCount": {
+                                                "description": "Number of CPU cores",
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "speedInMHz": {
+                                                "description": "CPU speed in MHz",
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "vendor": {
+                                                "description": "CPU vendor",
+                                                "type": "string",
+                                                "minLength": 1
+                                            }
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "nodeName"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "makespanInSeconds",
+                        "executedAt",
+                        "tasks"
+                    ]
+                }
+            },
+            "required": [
+                "specification"
+            ]
+        }
+    },
+    "required": [
+        "name",
+        "schemaVersion",
+        "workflow"
+    ]
+}

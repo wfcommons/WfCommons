@@ -53,3 +53,5 @@ bin/cpu-benchmark.o
 /wfcommons/wfc-1.3_to_dask/.coverage
 /wfcommons/wfc-1.3_to_dask/out
 /wfcommons/wfc-1.3_to_dask/htmlcov
+
+test/
