@@ -206,10 +206,9 @@ class WorkflowBenchmark:
         new_file_names: Dict = {}
         task_output_counter = 0
         workflow_inputs: List[File] = []
-
+    
         for task in self.workflow.tasks.values():
-            for file in task.output_files:
-                
+            for file in task.output_files:       
                 if file.file_id in new_file_names:
                     raise ValueError(f"File name {file.file_id} already exists")
                 
@@ -298,7 +297,7 @@ class WorkflowBenchmark:
         self._create_data_footprint(data, save_dir)
         
         # TODO: add a flag to allow the file names to be changed 
-        workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
+        workflow_input_files: List[File] = self._rename_files_to_wfbench_format()
 
         for i, file in enumerate(workflow_input_files):
             file_path = save_dir.joinpath(file.file_id)
@@ -307,10 +306,13 @@ class WorkflowBenchmark:
                     f"Creating {str(file_path)} ({file.size} bytes) ... file {i+1} out of {len(workflow_input_files)}",
                     end='\r'
                 )
-                with open(save_dir.joinpath("to_create.txt"), "a+") as fp:
+                with open(save_dir.joinpath("created_input_files.txt"), "a+") as fp:
                     fp.write(f"{file.file_id} {file.size}\n")
                 self.logger.debug(f"Created file: {str(file_path)}")
 
+                with open(rundir.joinpath(file.file_id), 'wb') as fp:
+                    fp.write(os.urandom(file.size))
+        
         self.logger.info(f"Saving benchmark workflow: {json_path}")
         self.workflow.write_json(json_path)
 
@@ -424,7 +426,7 @@ class WorkflowBenchmark:
             self._add_output_files(outputs)
             self._add_input_files(outputs, data)
             self.logger.debug("Generating system files.")
-            self._generate_data_for_root_nodes(save_dir, data)
+            # self._generate_data_for_root_nodes(save_dir, data)
 
         # data footprint provided as an integer
         elif isinstance(data, int):
@@ -449,7 +451,7 @@ class WorkflowBenchmark:
             self._add_output_files(file_size)
             self._add_input_files(outputs, file_size)
             self.logger.debug("Generating system files.")
-            self._generate_data_for_root_nodes(save_dir, file_size)
+            # self._generate_data_for_root_nodes(save_dir, file_size)
 
     def _output_files(self, data: Dict[str, str]) -> Dict[str, Dict[str, int]]:
         """
