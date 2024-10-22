@@ -57,6 +57,7 @@ class WorkflowBenchmark:
     def create_benchmark_from_input_file(self,
                                          save_dir: pathlib.Path,
                                          input_file: pathlib.Path,
+                                         rundir: Optional[pathlib.Path] = None,
                                          lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
@@ -71,7 +72,7 @@ class WorkflowBenchmark:
         :rtype: pathlib.Path
         """
         params = json.loads(input_file.read_text())
-        return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, **params)
+        return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, rundir=rundir, **params)
 
     def create_benchmark_from_synthetic_workflow(
             self,
@@ -82,7 +83,8 @@ class WorkflowBenchmark:
             gpu_work: Union[int, Dict[str, int]] = None,
             time: Optional[int] = None,
             mem: Optional[float] = None,
-            lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+            lock_files_folder: Optional[pathlib.Path] = None,
+            rundir: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark from a synthetic workflow
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -159,7 +161,8 @@ class WorkflowBenchmark:
                 task_memory,
                 lock_files_folder,
                 cores,
-                lock
+                lock,
+                rundir
             )
             task.cores = task_cores + 1
             if task_memory:
@@ -233,6 +236,7 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = None,
                          gpu_work: Union[int, Dict[str, int]] = None,
+                         rundir: Optional[pathlib.Path] = None,
                          time: Optional[int] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          mem: Optional[float] = None,
@@ -285,7 +289,8 @@ class WorkflowBenchmark:
                 mem,
                 lock_files_folder,
                 cores,
-                lock
+                lock,
+                rundir
             )
             task.input_files = []
             task.output_files = []
@@ -340,7 +345,8 @@ class WorkflowBenchmark:
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
                                  cores: Optional[pathlib.Path],
-                                 lock: Optional[pathlib.Path]) -> None:
+                                 lock: Optional[pathlib.Path], 
+                                 rundir: Optional[pathlib.Path]) -> None:
         """
         Setting the parameters for the arguments section of the JSON
         """
@@ -356,6 +362,9 @@ class WorkflowBenchmark:
 
         if time:
             params.extend([f"--time {time}"])
+
+        if rundir:
+            params.extend([f"--rundir {rundir}"])
 
         task.runtime = 0
 
