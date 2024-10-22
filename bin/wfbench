@@ -220,7 +220,11 @@ def main():
     args, other = parser.parse_known_args()
     print("[Wfbench] ARGS", args)
     core = None
-    rundir = pathlib.Path(args.rundir)
+
+    if args.rundir:
+        rundir = pathlib.Path(args.rundir)
+    else:
+        rundir = this_dir
 
     if args.path_lock and args.path_cores:
         path_locked = pathlib.Path(args.path_lock)
