@@ -213,8 +213,8 @@ class WorkflowBenchmark:
                     raise ValueError(f"File name {file.file_id} already exists")
                 
                 task_output_counter += 1
-                extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                new_name = f"{task.task_id}_outfile_{task_output_counter:04d}{extension}"
+                # extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                new_name = f"{task.task_id}_outfile_{task_output_counter:04d}" #{extension}
                 new_file_names[file.file_id] = new_name
                 file.file_id = new_name
                 
@@ -225,8 +225,8 @@ class WorkflowBenchmark:
                 else:
                     # file is an input file for the workflow and needs to be generated
                     workflow_inputs.append(file)
-                    extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                    file.file_id = f"workflow_infile_{len(workflow_inputs):04d}{extension}"
+                    # extension = ''.join(pathlib.Path(file.file_id).suffixes)
+                    file.file_id = f"workflow_infile_{len(workflow_inputs):04d}"#{extension}
                 
         return workflow_inputs
 
