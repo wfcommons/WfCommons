@@ -89,7 +89,7 @@ class Translator(ABC):
         :type output_folder: pathlib.Path
         """
         bin_folder = output_folder.joinpath("bin")
-        bin_folder.mkdir()
+        bin_folder.mkdir(exist_ok=True)
         shutil.copy(shutil.which("wfbench"), bin_folder)
         shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
 
@@ -102,11 +102,11 @@ class Translator(ABC):
         """
         generated_files = []
         data_folder = output_folder.joinpath("data")
-        data_folder.mkdir()
+        data_folder.mkdir(exist_ok=True)
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
-            for file in task.files:
-                if file.file_id not in generated_files and file.link == FileLink.INPUT:
+            for file in task.input_files:
+                if file.file_id not in generated_files:
                     generated_files.append(file.file_id)
                     with open(data_folder.joinpath(file.file_id), "wb") as fp:
                         fp.write(os.urandom(int(file.size)))
