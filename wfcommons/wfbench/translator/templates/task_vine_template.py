@@ -36,4 +36,7 @@ def wait_for_tasks_completion():
     print("all tasks complete!")
 
 
+wfbench = m.declare_file("bin/wfbech")
+cpu_bench = m.declare_file("bin/cpu-benchmark")
+
 # Generated code goes here

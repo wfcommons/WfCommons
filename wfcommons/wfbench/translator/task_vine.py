@@ -110,6 +110,8 @@ class TaskVineTranslator(Translator):
 
             # input files
             f_counter = 1
+            self.script += f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
+                            f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n"
             for in_file in task.input_files:
                 if in_file.file_id in self.output_files_map.keys():
                     self.script += f"t_{self.task_counter}.add_input({self.output_files_map[in_file.file_id]}, '{in_file}')\n"
