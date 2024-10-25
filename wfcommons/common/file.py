@@ -56,3 +56,9 @@ class File:
 
     def __str__(self) -> str:
         return self.file_id
+
+    def __eq__(self, value: object) -> bool:
+        return self.file_id == value.file_id and self.size == value.size
+    
+    def __hash__(self) -> int:
+        return hash((self.file_id, self.size))
