@@ -35,6 +35,7 @@ class TaskVineTranslator(Translator):
         super().__init__(workflow, logger)
         self.parsed_tasks = []
         self.task_counter = 1
+        self.output_files_map = {}
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -43,14 +44,13 @@ class TaskVineTranslator(Translator):
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
-        self.script = ""
-        # adding tasks
-        for task_name in self.root_task_names:
-            # input file
-            task = self.tasks[task_name]
-            for file in task.input_files:
-                self.script += f"if_{self.task_counter} = m.declare_file('data/{file.file_id}')\n"
-            self._add_task(task_name)
+        self.script = "# workflow tasks\n"
+
+        # add tasks per level
+        self.next_level = self.root_task_names.copy()
+        while self.next_level:
+            self.next_level = self._add_level_tasks(self.next_level)
+            self.script += "wait_for_tasks_completion()\n\n"
 
         # generate code
         with open(this_dir.joinpath("templates/task_vine_template.py")) as fp:
@@ -66,7 +66,26 @@ class TaskVineTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
         
-    def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> None:
+    def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
+        """
+        Add all tasks from a level in the workflow.
+
+        :param tasks_list: list of tasks in the level
+        :type tasks_list: list[str]
+
+        :return: List of next level tasks
+        :rtype: list[str]
+        """
+        next_level = set()
+        for task_name in tasks_list:
+            if set(self.task_parents[task_name]).issubset(self.parsed_tasks):
+                next_level.update(self._add_task(task_name))
+            else:
+                next_level.add(task_name)
+        
+        return list(next_level)
+
+    def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> list[str]:
         """
         Add a task and its dependencies to the workflow.
 
@@ -74,6 +93,9 @@ class TaskVineTranslator(Translator):
         :type task_name: str
         :param parent_task: name of the parent task
         :type parent_task: Optional[str]
+
+        :return: List of children tasks
+        :rtype: list[str]
         """
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
@@ -84,6 +106,30 @@ class TaskVineTranslator(Translator):
                 args.append(a)
             args = " ".join(f"{a}" for a in args)
 
-            self.script += f"t_{self.task_counter} = vine.Task('{args}')\n"
+            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n"
+
+            # input files
+            f_counter = 1
+            for in_file in task.input_files:
+                if in_file.file_id in self.output_files_map.keys():
+                    self.script += f"t_{self.task_counter}.add_input({self.output_files_map[in_file.file_id]}, '{in_file}')\n"
+                else:
+                    self.script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{in_file}')\n"
+
+            # output files
+            f_counter = 1
+            for out_file in task.output_files:
+                self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_temp()\n" \
+                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{out_file}')\n"
+                self.output_files_map[out_file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
+                f_counter += 1
+
+            self.script += f"m.submit(t_{self.task_counter})\n" \
+                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
 
             self.task_counter += 1
+            self.parsed_tasks.append(task_name)
+            
+            return self.task_children[task_name]
+        
+        return []
