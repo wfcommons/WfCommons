@@ -36,6 +36,11 @@ def wait_for_tasks_completion():
     print("all tasks complete!")
 
 
+# declare the package and its input file
+poncho_file = m.declare_file("task_vine_poncho.tar.gz", cache="workflow")
+poncho_pkg = m.declare_poncho(poncho_file, cache="workflow")
+
+# wfbench executable files
 wfbench = m.declare_file("bin/wfbench")
 cpu_bench = m.declare_file("bin/cpu-benchmark")
 

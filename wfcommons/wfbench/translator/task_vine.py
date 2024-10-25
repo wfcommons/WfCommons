@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
+import shutil
 
 from logging import Logger
 from typing import Dict, Optional, Union
@@ -65,6 +66,7 @@ class TaskVineTranslator(Translator):
         # additional files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
+        shutil.copy(this_dir.joinpath("templates/task_vine_poncho.json"), output_folder)
         
     def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
         """
@@ -110,7 +112,8 @@ class TaskVineTranslator(Translator):
 
             # input files
             f_counter = 1
-            self.script += f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
+            self.script += f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
+                            f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
                             f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n"
             for in_file in task.input_files:
                 if in_file.file_id in self.output_files_map.keys():
