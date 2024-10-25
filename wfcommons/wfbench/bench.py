@@ -213,9 +213,14 @@ class WorkflowBenchmark:
                 # extension = ''.join(pathlib.Path(file.file_id).suffixes)
                 new_name = f"{task.task_id}_outfile_{task_output_counter:04d}" #{extension}
                 new_file_names[file.file_id] = new_name
+                for i, item in enumerate(task.args):
+                    if file.file_id in item:
+                        task.args[i] = task.args[i].replace(file.file_id, new_name)
                 file.file_id = new_name
-                
+
+        for task in self.workflow.tasks.values():
             for file in task.input_files:
+                org_name = file.file_id
                 if file.file_id in new_file_names:
                     # file is an output file of another task and receives the corresponding name
                     file.file_id = new_file_names[file.file_id]
@@ -223,8 +228,13 @@ class WorkflowBenchmark:
                     # file is an input file for the workflow and needs to be generated
                     workflow_inputs.append(file)
                     # extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                    file.file_id = f"workflow_infile_{len(workflow_inputs):04d}"#{extension}
-                
+                    new_name = f"workflow_infile_{len(workflow_inputs):04d}"#{extension}
+                    new_file_names[file.file_id] = new_name
+                    file.file_id = new_name
+                for i, item in enumerate(task.args):
+                    if org_name in item:
+                        task.args[i] = task.args[i].replace(org_name, file.file_id)
+    
         return workflow_inputs
 
     def create_benchmark(self,
@@ -758,6 +768,3 @@ def clean_entry(entry):
         # Remove extra double quotes
         entry = entry.replace(' ', '=')
         return entry.strip('"')
-    
-    
-
