@@ -127,9 +127,7 @@ class TaskVineTranslator(Translator):
             # output files
             f_counter = 1
             for out_file in task.output_files:
-                # self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_temp()\n" \
-                                # f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{out_file}')\n"
-                self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('{out_file}')\n" \
+                self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('outputs/{out_file}')\n" \
                                 f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{out_file}')\n"
                 self.output_files_map[out_file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
                 f_counter += 1
