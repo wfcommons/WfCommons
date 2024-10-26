@@ -79,12 +79,15 @@ class TaskVineTranslator(Translator):
         :rtype: list[str]
         """
         next_level = set()
+        level_parsed_tasks = set()
         for task_name in tasks_list:
             if set(self.task_parents[task_name]).issubset(self.parsed_tasks):
                 next_level.update(self._add_task(task_name))
+                level_parsed_tasks.add(task_name)
             else:
                 next_level.add(task_name)
         
+        self.parsed_tasks.extend(list(level_parsed_tasks))
         return list(next_level)
 
     def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> list[str]:
@@ -136,7 +139,7 @@ class TaskVineTranslator(Translator):
                             f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
 
             self.task_counter += 1
-            self.parsed_tasks.append(task_name)
+            # self.parsed_tasks.append(task_name)
             
             return self.task_children[task_name]
         
