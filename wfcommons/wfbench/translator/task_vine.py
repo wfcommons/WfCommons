@@ -108,7 +108,8 @@ class TaskVineTranslator(Translator):
                 args.append(a)
             args = " ".join(f"{a}" for a in args)
 
-            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n"
+            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
+                            f"t_{self.task_counter}.set_cores(1)\n"
 
             # input files
             f_counter = 1
