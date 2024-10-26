@@ -114,12 +114,14 @@ class TaskVineTranslator(Translator):
             f_counter = 1
             self.script += f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
                             f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
-                            f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n"
+                            f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
+                            f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
             for in_file in task.input_files:
                 if in_file.file_id in self.output_files_map.keys():
                     self.script += f"t_{self.task_counter}.add_input({self.output_files_map[in_file.file_id]}, '{in_file}')\n"
                 else:
-                    self.script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{in_file}')\n"
+                    self.script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{in_file}')\n" \
+                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{in_file}')\n"
 
             # output files
             f_counter = 1
