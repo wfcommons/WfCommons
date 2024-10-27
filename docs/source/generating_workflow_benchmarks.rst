@@ -192,3 +192,27 @@ with TaskVine::
     
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, TaskVineTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+    
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(save_dir=pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
+
+    # generate a TaskVine workflow
+    translator = TaskVineTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./taskvine-wf/"))
+
+In the example above, WfBench will generate a folder which will contain the 
+TaskVine workflow :code:`taskvine_workflow.py`, the workflow input data 
+(:code:`./taskvine-wf/data/`), the workflow binary files (:code:`./taskvine-wf/bin/`),
+and the Poncho package specification (:code:`./taskvine-wf/taskvine_poncho.json`).
+
+.. warning::
+    This TaskVine workflow requires :code:`stress-ng` to be installed and accessible 
+    in the system's :code:`$PATH` where the manager runs.
+
+.. note::
+    Although the analysis methods are inherently used by WfCommons (specifically
+    WfChef) for :ref:`generating-workflows-recipe-label`, they can also be used
+    in a standalone manner.

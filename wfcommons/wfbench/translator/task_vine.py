@@ -60,13 +60,13 @@ class TaskVineTranslator(Translator):
     
         # write benchmark files
         output_folder.mkdir(parents=True)
-        with open(output_folder.joinpath("task_vine_workflow.py"), "w") as fp:
+        with open(output_folder.joinpath("taskvine_workflow.py"), "w") as fp:
             fp.write(run_workflow_code)
 
         # additional files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
-        shutil.copy(this_dir.joinpath("templates/task_vine_poncho.json"), output_folder)
+        shutil.copy(this_dir.joinpath("templates/taskvine_poncho.json"), output_folder)
         
     def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
         """
