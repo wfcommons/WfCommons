@@ -22,7 +22,7 @@ this_dir = pathlib.Path(__file__).resolve().parent
 
 class TaskVineTranslator(Translator):
     """
-    A WfFormat parser for creating Pegasus workflow applications.
+    A WfFormat parser for creating TaskVine workflow applications.
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path],

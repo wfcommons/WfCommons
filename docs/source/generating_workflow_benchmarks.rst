@@ -175,3 +175,20 @@ provide an example on how to generate workflow benchmark for running with Swift/
     # generate a Swift/T workflow
     translator = SwiftTTranslator(benchmark.workflow)
     translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.swift"))
+
+TaskVine
+++++++++
+
+`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for 
+building large scale data intensive dynamic workflows that run on HPC clusters, 
+GPU clusters, and commercial clouds. As tasks access external data sources and 
+produce their own outputs, more and more data is pulled into local storage on 
+workers. This data is used to accelerate future tasks and avoid re-computing 
+exisiting results. Data gradually grows "like a vine" through the cluster. 
+Below, we provide an example on how to generate workflow benchmark for running 
+with TaskVine::
+
+    import pathlib
+    
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, TaskVineTranslator
