@@ -211,8 +211,3 @@ and the Poncho package specification (:code:`./taskvine-wf/taskvine_poncho.json`
 .. warning::
     This TaskVine workflow requires :code:`stress-ng` to be installed and accessible 
     in the system's :code:`$PATH` where the manager runs.
-
-.. note::
-    Although the analysis methods are inherently used by WfCommons (specifically
-    WfChef) for :ref:`generating-workflows-recipe-label`, they can also be used
-    in a standalone manner.

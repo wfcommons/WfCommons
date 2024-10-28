@@ -54,7 +54,7 @@ class TaskVineTranslator(Translator):
             self.script += "wait_for_tasks_completion()\n\n"
 
         # generate code
-        with open(this_dir.joinpath("templates/task_vine_template.py")) as fp:
+        with open(this_dir.joinpath("templates/taskvine_template.py")) as fp:
             run_workflow_code = fp.read()
         run_workflow_code = run_workflow_code.replace("# Generated code goes here", self.script)
     
