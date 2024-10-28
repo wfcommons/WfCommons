@@ -12,4 +12,4 @@ from .dask import DaskTranslator
 from .nextflow import NextflowTranslator
 from .pegasus import PegasusTranslator
 from .swift_t import SwiftTTranslator
-from .task_vine import TaskVineTranslator
+from .taskvine import TaskVineTranslator
