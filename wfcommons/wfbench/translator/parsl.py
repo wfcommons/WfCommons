@@ -1,20 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# Copyright (c) 2024 The WfCommons Team.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
+"""Modules"""
+import logging
+from typing import Union, Optional
+from collections import defaultdict, deque
 import pathlib
-
-from logging import Logger
-from typing import Optional, Union
-
+from ...common import Workflow, FileLink
 from .abstract_translator import Translator
-from ...common import Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -30,115 +20,114 @@ class ParslTranslator(Translator):
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 logger: Optional[Logger] = None) -> None:
-        """Create an object of the translator."""
+                 logger: Optional[logging.Logger] = None) -> None:
         super().__init__(workflow, logger)
-        self.parsed_tasks = []
-        self.task_counter = 1
-        self.output_files_map = {}
+        self.parsl_script = []
+        self.task_level_map = defaultdict(lambda: [])
+
+        indegree = {}
+
+        for task in self.tasks.values():
+            indegree[task.task_id] = len(self.task_parents[task.task_id])
+        queue = deque(self.root_task_names)
+        top_sort = []
+
+        while queue:
+            task_name = queue.popleft()
+            top_sort.append(task_name)
+
+            for child in self.task_children[task_name]:
+                indegree[child] -= 1
+                if indegree[child] == 0:
+                    queue.append(child)
+
+        assert (len(top_sort) == len(self.tasks)), "Error: The workflow contains a cycle"
+
+        levels = {task_name: 0 for task_name in top_sort}
+
+        for task_name in top_sort:
+            for child in self.task_children[task_name]:
+                levels[child] = max(levels[child], levels[task_name] + 1)
+
+        for task_name, level in levels.items():
+            self.task_level_map[level].append(task_name)
 
     def translate(self, output_folder: pathlib.Path) -> None:
-        """
-        Translate a workflow benchmark description (WfFormat) into an actual workflow application.
+        # Parsing each of the WfFormat Tasks as bash apps in Parsl
+        codelines = self._parsl_wftasks_codelines()
 
-        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
-        :type output_folder: pathlib.Path
-        """
-        self.script = "# workflow tasks\n"
+        wf_codelines = "\n".join(codelines)
 
-        # add tasks per level
-        self.next_level = self.root_task_names.copy()
-        while self.next_level:
-            self.next_level = self._add_level_tasks(self.next_level)
-            self.script += "wait_for_tasks_completion()\n\n"
-
-        # generate code
-        with open(this_dir.joinpath("templates/parsl_template.py")) as fp:
+        # Opening the parsl template file
+        with open(this_dir.joinpath("templates/parsl_template.py"), encoding="utf-8") as fp:
             run_workflow_code = fp.read()
-        run_workflow_code = run_workflow_code.replace("# Generated code goes here", self.script)
-    
-        # write benchmark files
+        run_workflow_code = run_workflow_code.replace("# Generated code goes here", wf_codelines)
+
+         # Writing the generated parsl code to a file
         output_folder.mkdir(parents=True)
-        with open(output_folder.joinpath("parsl_workflow.py"), "w") as fp:
+        with open(output_folder.joinpath("parsl_workflow.py"), "w", encoding="utf-8") as fp:
             fp.write(run_workflow_code)
 
-        # additional files
+        # Additional files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
-        
-    def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
-        """
-        Add all tasks from a level in the workflow.
 
-        :param tasks_list: list of tasks in the level
-        :type tasks_list: list[str]
+    def _parsl_wftasks_codelines(self) -> None:
+        codelines = ["task_arr = []\n"]
 
-        :return: List of next level tasks
-        :rtype: list[str]
-        """
-        next_level = set()
-        level_parsed_tasks = set()
-        for task_name in tasks_list:
-            if set(self.task_parents[task_name]).issubset(self.parsed_tasks):
-                next_level.update(self._add_task(task_name))
-                level_parsed_tasks.add(task_name)
-            else:
-                next_level.add(task_name)
-        
-        self.parsed_tasks.extend(list(level_parsed_tasks))
-        return list(next_level)
+        # Parsing each steps by Workflow levels
+        for level in sorted(self.task_level_map.keys()):
+            # Parsing each task within a Workflow level
+            for task_name in self.task_level_map[level]:
+                # Getting the task object
+                task = self.tasks[task_name]
 
-    def _add_task(self, task_name: str, parent_task: Optional[str] = None) -> list[str]:
-        """
-        Add a task and its dependencies to the workflow.
+                args = []
+                for a in task.args:
+                    if a.startswith("--out"):
+                        # appending a " (double quote) to the beginning and end of the json object
+                        a = a.replace("{", "\"{").replace("}", "}\"")
+                        # replaceing ' with \\" to have an escaped double quote
+                        a = a.replace("'", "\\\\\"")
+                    args.append(a)
 
-        :param task_name: name of the task
-        :type task_name: str
-        :param parent_task: name of the parent task
-        :type parent_task: Optional[str]
+                args = " ".join(args)
 
-        :return: List of children tasks
-        :rtype: list[str]
-        """
-        if task_name not in self.parsed_tasks:
-            task = self.tasks[task_name]
-            # arguments
-            args = []
-            for a in task.args:
-                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
-                args.append(a)
-            args = " ".join(f"{a}" for a in args)
+                # if hasattr(task, "files"):
+                #     input_files = [f"{i.file_id}" for i in task.files if i.link == FileLink.INPUT]
+                #     output_files = [f"{o.file_id}" for o in task.files if o.link == FileLink.OUTPUT]
+                # else:
+                input_files = [f"{i.file_id}" for i in task.input_files]
+                output_files = [f"{o.file_id}" for o in task.output_files]
 
-            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
-                            f"t_{self.task_counter}.set_cores(1)\n"
+                code = [
+                    f"{task.task_id} = generic_shell_app('bin/{task.program} {args}',",
+                    f"                                 inputs=get_parsl_files({input_files}),",
+                    f"                                 outputs=get_parsl_files({output_files},",
+                     "                                                         True),",
+                    f"                                 stdout=\"logs/{task.task_id}_stdout.txt\",",
+                    f"                                 stderr=\"logs/{task.task_id}_stderr.txt\")",
+                    f"task_arr.append({task.task_id})\n",
+                ]
 
-            # input files
-            f_counter = 1
-            self.script += f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
-                            f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
-                            f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
-                            f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
-            for in_file in task.input_files:
-                if in_file.file_id in self.output_files_map.keys():
-                    self.script += f"t_{self.task_counter}.add_input({self.output_files_map[in_file.file_id]}, '{in_file}')\n"
-                else:
-                    self.script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{in_file}')\n" \
-                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{in_file}')\n"
+                codelines.extend(code)
 
-            # output files
-            f_counter = 1
-            for out_file in task.output_files:
-                self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('outputs/{out_file}')\n" \
-                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{out_file}')\n"
-                self.output_files_map[out_file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
-                f_counter += 1
+        cleanup_code = [
+            "try:",
+            "    for task in task_arr:",
+            "        task.result()",
+            "except Exception as e:",
+            "    print(f'A task failed to complete: {e}')",
+            "    print(f'Find more details in {task.stdout} and {task.stderr}')",
+            "    raise e",
+            "else:",
+            "    print('Workflow completed successfully')",
+            "finally:",
+            "    # Releasing all resources, and shutting down all executors and workers",
+            "    parsl.dfk().cleanup()",
+            "    parsl.clear()",
+        ]
 
-            self.script += f"m.submit(t_{self.task_counter})\n" \
-                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
+        codelines.extend(cleanup_code)
 
-            self.task_counter += 1
-            # self.parsed_tasks.append(task_name)
-            
-            return self.task_children[task_name]
-        
-        return []
+        return codelines

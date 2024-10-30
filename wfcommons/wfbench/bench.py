@@ -373,7 +373,7 @@ class WorkflowBenchmark:
 
         task.runtime = 0
 
-        task.program = "./wfbench"
+        task.program = "wfbench"
         task.args = [task.task_id]
         task.args.extend(params)
 
