@@ -133,7 +133,7 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
 
 def io_read_benchmark_user_input_data_size(inputs,
-                                           rundir=this_dir,
+                                           rundir=None,
                                            memory_limit=None):
     if memory_limit is None:
         memory_limit = -1
@@ -148,7 +148,7 @@ def io_read_benchmark_user_input_data_size(inputs,
 
 
 def io_write_benchmark_user_input_data_size(outputs,
-                                            rundir=this_dir,
+                                            rundir=None,
                                             memory_limit=None):
     if memory_limit is None:
         memory_limit = sys.maxsize
@@ -161,8 +161,9 @@ def io_write_benchmark_user_input_data_size(outputs,
                 chunk_size = min(file_size_todo, memory_limit)
                 file_size_todo -= fp.write(os.urandom(int(chunk_size)))
 
-def io_alternate(inputs, outputs, memory_limit=None, rundir=this_dir, event=None):
+def io_alternate(inputs, outputs, memory_limit=None, rundir=None, event=None):
     """Alternate between reading and writing to a file, ensuring read only happens after write."""
+    
     if memory_limit is None:
         memory_limit = 10 * 1024 * 1024  # sys.maxsize
     memory_limit = int(memory_limit)
@@ -224,7 +225,7 @@ def main():
     if args.rundir:
         rundir = pathlib.Path(args.rundir)
     else:
-        rundir = this_dir
+        rundir = pathlib.Path(os.getcwd())
 
     if args.path_lock and args.path_cores:
         path_locked = pathlib.Path(args.path_lock)
