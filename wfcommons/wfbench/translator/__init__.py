@@ -10,6 +10,7 @@
 
 from .dask import DaskTranslator
 from .nextflow import NextflowTranslator
+from .parsl import ParslTranslator
 from .pegasus import PegasusTranslator
 from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
