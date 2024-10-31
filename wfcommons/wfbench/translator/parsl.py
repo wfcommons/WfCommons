@@ -20,7 +20,7 @@ this_dir = pathlib.Path(__file__).resolve().parent
 
 class ParslTranslator(Translator):
     """
-    A WfFormat parser for creating Parsl workflow applications.
+    A WfFormat parser for creating Parsl workflow benchmarks.
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path],

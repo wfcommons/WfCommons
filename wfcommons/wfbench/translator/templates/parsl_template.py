@@ -21,6 +21,7 @@ from parsl.data_provider.files import File
 # NOTE: Uncomment the following line to enable Parsl workflow monitoring
 # from parsl.monitoring.monitoring import MonitoringHub
 
+# NOTE: update the configuration below for your desired system (https://parsl.readthedocs.io/en/stable/userguide/configuring.html)
 config = Config(
     executors=[
         HighThroughputExecutor(
