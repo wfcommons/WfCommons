@@ -1,7 +1,18 @@
-"""Modules"""
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2024 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+import parsl
+
 from pathlib import Path
 from typing import List
-import parsl
+
 from parsl.app.app import bash_app
 from parsl.config import Config
 from parsl.executors import HighThroughputExecutor

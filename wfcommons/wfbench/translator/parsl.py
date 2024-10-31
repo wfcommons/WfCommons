@@ -1,4 +1,13 @@
-"""Modules"""
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2024 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import logging
 from typing import Union, Optional
 from collections import defaultdict, deque
@@ -53,6 +62,12 @@ class ParslTranslator(Translator):
             self.task_level_map[level].append(task_name)
 
     def translate(self, output_folder: pathlib.Path) -> None:
+        """
+        Translate a workflow benchmark description (WfFormat) into an actual workflow application.
+
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
+        """
         # Parsing each of the WfFormat Tasks as bash apps in Parsl
         codelines = self._parsl_wftasks_codelines()
 
