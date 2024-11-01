@@ -134,8 +134,8 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
         Determines the inputs and outputs for the physical and abstract tasks.
         """
         for task in self.tasks.values():
-            self.task_inputs[task.task_id] = [file for file in task.files if file.link == FileLink.INPUT]
-            self.task_outputs[task.task_id] = [file for file in task.files if file.link == FileLink.OUTPUT]
+            self.task_inputs[task.task_id] = [file for file in task.input_files]
+            self.task_outputs[task.task_id] = [file for file in task.output_files]
 
         self.script += "// define amount of input files for abstracts tasks where the amount is not constant\n"
         for abstract_task_name, physical_tasks in self.abstract_tasks.items():

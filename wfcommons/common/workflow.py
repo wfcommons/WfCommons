@@ -79,7 +79,7 @@ class Workflow(nx.DiGraph):
         self.author_email: Optional[str] = author_email if author_email else "support@wfcommons.org"
         self.author_institution: Optional[str] = None
         self.author_country: Optional[str] = None
-        self.tasks = {}
+        self.tasks: Task = {}
         self.tasks_parents = {}
         self.tasks_children = {}
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
@@ -120,7 +120,7 @@ class Workflow(nx.DiGraph):
         machines_list = []
         specification_tasks = []
         execution_tasks = []
-        files = []
+        files = set()
 
         workflow_json = {
             "name": self.name,
@@ -134,7 +134,7 @@ class Workflow(nx.DiGraph):
             "workflow": {
                 "specification": {
                     "tasks": specification_tasks,
-                    "files": files
+                    "files": []
                 },
                 "execution": {
                     "makespanInSeconds": self.makespan,
@@ -180,15 +180,15 @@ class Workflow(nx.DiGraph):
 
             # add files to the workflow json object (input and output)
             for file in task.input_files:
-                files.append(file.as_dict())
+                files.add(file)
             for file in task.output_files:
-                files.append(file.as_dict())
+                files.add(file)
 
         if workflow_machines:
             workflow_json["workflow"]["execution"]["machines"] = workflow_machines
 
         if files and len(files) > 0:
-            workflow_json["workflow"]["specification"]["files"] = files
+            workflow_json["workflow"]["specification"]["files"] = list(file.as_dict() for file in files)
 
         # write to file
         if not json_file_path:
