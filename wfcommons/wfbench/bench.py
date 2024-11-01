@@ -57,7 +57,8 @@ class WorkflowBenchmark:
     def create_benchmark_from_input_file(self,
                                          save_dir: pathlib.Path,
                                          input_file: pathlib.Path,
-                                         lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+                                         lock_files_folder: Optional[pathlib.Path] = None,
+                                         rundir:Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -66,12 +67,14 @@ class WorkflowBenchmark:
         :type input_file: pathlib.Path
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
+        :param rundir: If you would like for the files to be created/saved in a different directory.
+        :type rundir: Optional[pathlib.Path]
 
         :return: The path to the workflow benchmark JSON instance.
         :rtype: pathlib.Path
         """
         params = json.loads(input_file.read_text())
-        return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, **params)
+        return self.create_benchmark(save_dir, lock_files_folder=lock_files_folder, rundir=rundir, **params)
 
     def create_benchmark_from_synthetic_workflow(
             self,
@@ -82,7 +85,8 @@ class WorkflowBenchmark:
             gpu_work: Union[int, Dict[str, int]] = None,
             time: Optional[int] = None,
             mem: Optional[float] = None,
-            lock_files_folder: Optional[pathlib.Path] = None) -> pathlib.Path:
+            lock_files_folder: Optional[pathlib.Path] = None,
+            rundir: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark from a synthetic workflow
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -101,6 +105,8 @@ class WorkflowBenchmark:
         :type mem: Optional[float]
         :param lock_files_folder:
         :type lock_files_folder: Optional[pathlib.Path]
+        :param rundir: If you would like for the files to be created/saved in a different directory.
+        :type rundir: Optional[pathlib.Path]
 
         :return: The path to the workflow benchmark JSON instance.
         :rtype: pathlib.Path
@@ -159,7 +165,8 @@ class WorkflowBenchmark:
                 task_memory,
                 lock_files_folder,
                 cores,
-                lock
+                lock,
+                rundir
             )
             task.cores = task_cores + 1
             if task_memory:
@@ -246,7 +253,8 @@ class WorkflowBenchmark:
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          mem: Optional[float] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
-                         regenerate: Optional[bool] = True) -> pathlib.Path:
+                         regenerate: Optional[bool] = True,
+                         rundir: Optional[pathlib.Path] = None) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -267,6 +275,8 @@ class WorkflowBenchmark:
         :type lock_files_folder: Optional[pathlib.Path]
         :param regenerate: Whether to regenerate the workflow tasks
         :type regenerate: Optional[bool]
+        :param rundir: If you would like for the files to be created/saved in a different directory.
+        :type rundir: Optional[pathlib.Path]
 
         :return: The path to the workflow benchmark JSON instance.
         :rtype: pathlib.Path
@@ -295,6 +305,7 @@ class WorkflowBenchmark:
                 lock_files_folder,
                 cores,
                 lock,
+                rundir
             )
             task.input_files = []
             task.output_files = []
@@ -352,7 +363,8 @@ class WorkflowBenchmark:
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
                                  cores: Optional[pathlib.Path],
-                                 lock: Optional[pathlib.Path]) -> None:
+                                 lock: Optional[pathlib.Path],
+                                 rundir: Optional[pathlib.Path]) -> None:
         """
         Setting the parameters for the arguments section of the JSON
         """
@@ -369,11 +381,12 @@ class WorkflowBenchmark:
         if time:
             params.extend([f"--time {time}"])
 
- 
+        if rundir:
+            params.extend([f"--rundir {rundir}"])
 
         task.runtime = 0
 
-        task.program = "./wfbench"
+        task.program = "wfbench"
         task.args = [task.task_id]
         task.args.extend(params)
 
