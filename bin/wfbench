@@ -126,7 +126,7 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
         cpu_procs.append(cpu_proc)
 
     if mem_threads > 0:
-        mem_proc = subprocess.Popen(mem_prog)
+        mem_proc = subprocess.Popen(mem_prog,   preexec_fn=os.setsid)
         if core:
             os.sched_setaffinity(mem_proc.pid, {core})
         mem_procs.append(mem_proc)
@@ -315,11 +315,17 @@ def main():
             io_proc.terminate()
             io_proc.join()
 
-        if mem_procs is not None:
+        if mem_procs:
             for mem_proc in mem_procs:
-                os.killpg(os.getpgid(mem_proc.pid), signal.SIGTERM)
-        # mem_kill = subprocess.Popen(["killall", "stress-ng"])
-        # mem_kill.wait()
+                try:
+                    os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
+                except subprocess.TimeoutExpired:
+                    print("Memory process did not terminate; force-killing.")
+            # As a fallback, use pkill if any remaining instances are stuck
+            subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
+
+
+        subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
     # NOTE: If you would like to run only IO add time.sleep(2)
