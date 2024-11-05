@@ -315,17 +315,15 @@ def main():
             io_proc.terminate()
             io_proc.join()
 
-        if mem_procs:
-            for mem_proc in mem_procs:
-                try:
-                    os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
-                except subprocess.TimeoutExpired:
-                    print("Memory process did not terminate; force-killing.")
-            # As a fallback, use pkill if any remaining instances are stuck
-            subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
 
-
+        for mem_proc in mem_procs:
+            try:
+                os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
+            except subprocess.TimeoutExpired:
+                print("Memory process did not terminate; force-killing.")
+        # As a fallback, use pkill if any remaining instances are stuck
         subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
+
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
 
     # NOTE: If you would like to run only IO add time.sleep(2)
