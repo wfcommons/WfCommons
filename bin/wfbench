@@ -302,7 +302,6 @@ def main():
                                                 total_mem=args.mem)
                     
         procs.extend(cpu_procs)
-        procs.extend(mem_procs)
         if args.time:
             time.sleep(int(args.time))
             for proc in procs:
@@ -315,7 +314,7 @@ def main():
             io_proc.terminate()
             io_proc.join()
 
-
+        
         for mem_proc in mem_procs:
             try:
                 os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
