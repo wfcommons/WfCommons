@@ -317,7 +317,7 @@ def main():
 
         if mem_procs is not None:
             for mem_proc in mem_procs:
-                os.killpg(os.getpgid(mem_procs.pid), signal.SIGTERM)
+                os.killpg(os.getpgid(mem_proc.pid), signal.SIGTERM)
         # mem_kill = subprocess.Popen(["killall", "stress-ng"])
         # mem_kill.wait()
         print("[WfBench] Completed CPU and Memory Benchmarks!\n")
