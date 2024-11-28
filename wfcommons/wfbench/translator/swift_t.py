@@ -14,7 +14,7 @@ from logging import Logger
 from typing import Optional, Union
 
 from .abstract_translator import Translator
-from ...common import FileLink, Workflow
+from ...common import Workflow
 
 
 class SwiftTTranslator(Translator):
@@ -23,8 +23,6 @@ class SwiftTTranslator(Translator):
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path]
-    :param work_dir: Path to the workflow working directory.
-    :type work_dir: pathlib.Path
     :param stress_path: Path to the stress-ng command.
     :type stress_path: pathlib.Path
     :param logger: The logger where to log information/warning or errors (optional).
@@ -33,13 +31,11 @@ class SwiftTTranslator(Translator):
 
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 work_dir: pathlib.Path,
                  stress_path: pathlib.Path = pathlib.Path("stress-ng"),
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
-        self.work_dir = work_dir
         self.stress_path = stress_path
         self.categories_list = []
         self.categories_input = {}
@@ -58,22 +54,21 @@ class SwiftTTranslator(Translator):
                 self.apps.append(task.name)
             
             out_count = 0
-            for file in task.files:
-                if file.link == FileLink.OUTPUT:
-                    self.files_map[file.file_id] = f"{task.name}__out"
-                    out_count += 1
+            for file in task.output_files:
+                self.files_map[file.file_id] = f"{task.name}__out"
+                out_count += 1
 
             if out_count > 1:
                 self.logger.error(
                     "Swift/T does not allow an application to have multiple outputs.")
                 exit(1)
 
-    def translate(self, output_file_path: pathlib.Path) -> None:
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Swift/T workflow application.
 
-        :param output_file_path: The path of the output file (e.g., workflow.swift).
-        :type output_file_path: pathlib.Path
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
         """
         self.logger.info("Translating workflow into Swift/T")
         self.script += "string command = \n" \
@@ -84,7 +79,7 @@ class SwiftTTranslator(Translator):
                 "import subprocess\n" \
                 "import time\n" \
                 "\n" \
-                f"this_dir = pathlib.Path(\"{self.work_dir}\").absolute()\n" \
+                f"this_dir = pathlib.Path(\".\").absolute()\n" \
                 "\n" \
                 "task_name = \"%s\"\n" \
                 "files_list = \"%s\"\n" \
@@ -94,12 +89,12 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Starting IO Read Benchmark...\", flush=True)\n" \
                 "if \"__\" not in files_list:\n" \
-                "    with open(this_dir.joinpath(files_list), \"rb\") as fp:\n" \
+                "    with open(this_dir.joinpath(f\"./data/{files_list}\"), \"rb\") as fp:\n" \
                 "        start = time.perf_counter()\n" \
                 "        print(f\"[WfBench]   Reading '{files_list}'\", flush=True)\n" \
                 "        fp.readlines()\n" \
                 "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(files_list).stat().st_size}\", flush=True)\n" \
+                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(f\"./data/{files_list}\").stat().st_size}\", flush=True)\n" \
                 "else:\n" \
                 "    files = files_list.split(\", \")\n" \
                 "    for file in files:\n" \
@@ -107,7 +102,7 @@ class SwiftTTranslator(Translator):
                 "        fd = file.split(\"__\")\n" \
                 "        start = time.perf_counter()\n" \
                 "        file_size = 0\n" \
-                "        for f in this_dir.glob(f\"{fd[0]}_*_output.txt\"):\n" \
+                "        for f in this_dir.glob(f\"./data/{fd[0]}_*_output.txt\"):\n" \
                 "            if counter >= int(fd[1]):\n" \
                 "                break\n" \
                 "            file_size += os.stat(f).st_size\n" \
@@ -121,7 +116,7 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 "if gpu_work > 0:\n" \
                 "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\", flush=True)\n" \
-                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID {this_dir.joinpath('gpu-benchmark')} {gpu_work}\"]\n" \
+                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID {this_dir.joinpath('./bin/gpu-benchmark')} {gpu_work}\"]\n" \
                 "    start = time.perf_counter()\n" \
                 "    gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
                 "    gpu_proc.wait()\n" \
@@ -138,7 +133,7 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 "    cpu_procs = []\n" \
                 "    cpu_prog = [\n" \
-                "        f\"{this_dir.joinpath('cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
+                "        f\"{this_dir.joinpath('./bin/cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
                 f"    mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
                 "                \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
                 "\n" \
@@ -159,7 +154,7 @@ class SwiftTTranslator(Translator):
                 "\n" \
                 "print(f\"[WfBench] [{task_name}] Writing output file\", flush=True)\n" \
                 "start = time.perf_counter()\n" \
-                "with open(this_dir.joinpath(\"%s\"), \"wb\") as fp:\n" \
+                "with open(this_dir.joinpath(\"./data/%s\"), \"wb\") as fp:\n" \
                 "    file_size = int(%i)\n" \
                 "    fp.write(os.urandom(file_size))\n" \
                 "end = time.perf_counter()\n" \
@@ -176,13 +171,12 @@ class SwiftTTranslator(Translator):
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
-            for file in task.files:
-                if file.link == FileLink.INPUT:
-                    if task.name not in self.categories_input.keys():
-                        self.categories_input[task.name] = in_count
-                        self.script += f"root_in_files[{in_count}] = \"{file.file_id}\";\n"
-                        in_count += 1
-                    self.files_map[file.file_id] = f"ins[{in_count}]"
+            for file in task.input_files:
+                if task.name not in self.categories_input.keys():
+                    self.categories_input[task.name] = in_count
+                    self.script += f"root_in_files[{in_count}] = \"{file.file_id}\";\n"
+                    in_count += 1
+                self.files_map[file.file_id] = f"ins[{in_count}]"
         
         self.script += "\n"
 
@@ -195,8 +189,14 @@ class SwiftTTranslator(Translator):
         for category in self.categories_list:
             self._add_tasks(category)
 
-        # write script to file
-        self._write_output_file(self.script, output_file_path)
+        # write benchmark files
+        output_folder.mkdir(parents=True)
+        with open(output_folder.joinpath("workflow.swift"), "w") as fp:
+            fp.write(self.script)
+
+        # additional files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
 
     def _find_categories_list(self, task_name: str, parent_task: Optional[str] = None) -> None:
         """"
@@ -248,19 +248,19 @@ class SwiftTTranslator(Translator):
                 input_files = []
                 prefix = ""
 
-                for file in task.files:
-                    if file.link == FileLink.OUTPUT:
-                        out_file = file.file_id
-                        file_size = file.size
-                    elif file.link == FileLink.INPUT:
-                        cat_prefix = self.files_map[file.file_id].split("__out")[0]
-                        if file.file_id not in parsed_input_files:
-                            input_files_cat.setdefault(cat_prefix, 0)
-                            input_files_cat[cat_prefix] += 1
-                            parsed_input_files.append(file.file_id)
-                        input_files.append(self.files_map[file.file_id])
-                        if not prefix:
-                           prefix = cat_prefix
+                for file in task.output_files:
+                    out_file = file.file_id
+                    file_size = file.size
+                
+                for file in task.input_files:
+                    cat_prefix = self.files_map[file.file_id].split("__out")[0]
+                    if file.file_id not in parsed_input_files:
+                        input_files_cat.setdefault(cat_prefix, 0)
+                        input_files_cat[cat_prefix] += 1
+                        parsed_input_files.append(file.file_id)
+                    input_files.append(self.files_map[file.file_id])
+                    if not prefix:
+                        prefix = cat_prefix
 
                 # arguments
                 if num_tasks == 0:

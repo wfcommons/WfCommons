@@ -170,11 +170,11 @@ provide an example on how to generate workflow benchmark for running with Swift/
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
 
     # generate a specification based on performance characteristics
-    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
 
     # generate a Swift/T workflow
     translator = SwiftTTranslator(benchmark.workflow)
-    translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.swift"))
+    translator.translate(output_folder=pathlib.Path("./swift-t-wf/"))
 
 TaskVine
 ++++++++
