@@ -43,3 +43,13 @@ wfcommons.wfbench.translator.swift_t
    :show-inheritance:
    :private-members:
    :noindex:
+
+wfcommons.wfbench.translator.task_vine
+--------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.task_vine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:

@@ -1,0 +1,11 @@
+{
+    "conda": {
+        "channels": [
+            "conda-forge"
+        ],
+        "dependencies": [
+            "pandas",
+            "filelock"
+        ]
+    }
+}

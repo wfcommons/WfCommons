@@ -175,3 +175,39 @@ provide an example on how to generate workflow benchmark for running with Swift/
     # generate a Swift/T workflow
     translator = SwiftTTranslator(benchmark.workflow)
     translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.swift"))
+
+TaskVine
+++++++++
+
+`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for 
+building large scale data intensive dynamic workflows that run on HPC clusters, 
+GPU clusters, and commercial clouds. As tasks access external data sources and 
+produce their own outputs, more and more data is pulled into local storage on 
+workers. This data is used to accelerate future tasks and avoid re-computing 
+exisiting results. Data gradually grows "like a vine" through the cluster. 
+Below, we provide an example on how to generate workflow benchmark for running 
+with TaskVine::
+
+    import pathlib
+    
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, TaskVineTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+    
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(save_dir=pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
+
+    # generate a TaskVine workflow
+    translator = TaskVineTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./taskvine-wf/"))
+
+In the example above, WfBench will generate a folder which will contain the 
+TaskVine workflow :code:`taskvine_workflow.py`, the workflow input data 
+(:code:`./taskvine-wf/data/`), the workflow binary files (:code:`./taskvine-wf/bin/`),
+and the Poncho package specification (:code:`./taskvine-wf/taskvine_poncho.json`).
+
+.. warning::
+    This TaskVine workflow requires :code:`stress-ng` to be installed and accessible 
+    in the system's :code:`$PATH` where the manager runs.
