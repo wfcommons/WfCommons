@@ -140,7 +140,7 @@ for running with Pegasus::
 
     # generate a Pegasus workflow
     translator = PegasusTranslator(benchmark.workflow)
-    translator.translate(output_file_name=pathlib.Path("/tmp/benchmark-workflow.py"))
+    translator.translate(output_folder=pathlib.Path("./pegasus-wf/"))
 
 .. warning::
 
