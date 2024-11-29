@@ -25,8 +25,8 @@ production workflow instances from various scientific applications, all made
 available using a common format (i.e., :ref:`json-format-label`).
 A workflow instance is built based on logs of an actual execution of a scientific
 workflow on a distributed platform (e.g., clouds, grids, clusters) using a
-workflow system. We keep a `list of workflow execution instances
-<https://wfcommons.org/instances>`_ in our project website.
+workflow system. We keep a `GitHub repository of workflow execution instances
+<https://github.com/wfcommons/WfInstances>`_.
 
 :ref:`WfChef <generating-workflows-recipe-label>`.
 The WfChef component automates the construction of synthetic workflow generators
@@ -55,9 +55,7 @@ multi-objective function optimization, etc.), evaluation of current and emerging
 computing platforms (e.g., clouds, IoT, extreme scale, etc.), among others.
 We do not develop simulators as part of the WfCommons project. Instead, the WfSim
 component catalogs open source WMS simulators that provide support for
-:ref:`json-format-label`. We keep a `list of open source workflow
-management systems simulators and simulation frameworks
-<https://wfcommons.org/simulation>`_ on our project website.
+:ref:`json-format-label`.
 
 .. _json-format-label:
 
@@ -68,8 +66,8 @@ The WfCommons project uses a common format for representing workflow execution
 instances and generated synthetic workflows instances. Workflow simulators and
 simulation frameworks that support WfFormat can then use both types of instances
 interchangeably. WfFormat uses a JSON specification available in the
-`WfFormat Schema GitHub <https://github.com/wfcommons/workflow-schema>`_
+`WfFormat Schema GitHub <https://github.com/wfcommons/WfFormat>`_
 repository. The current version of the WfCommons Python package uses the schema
-version :code:`1.4`. The schema GitHub repository provides detailed explanation
+version :code:`1.5`. The schema GitHub repository provides detailed explanation
 of WfFormat (including required fields), and also a validator script for verifying
 the compatibility of instances.
