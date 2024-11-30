@@ -38,10 +38,10 @@ wfcommons.wfbench.translator.swift_t
    :undoc-members:
    :show-inheritance:
 
-wfcommons.wfbench.translator.task_vine
---------------------------------------
+wfcommons.wfbench.translator.taskvine
+-------------------------------------
 
-.. automodule:: wfcommons.wfbench.translator.task_vine
+.. automodule:: wfcommons.wfbench.translator.taskvine
    :members:
    :undoc-members:
    :show-inheritance:
