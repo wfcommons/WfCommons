@@ -94,7 +94,8 @@ class SwiftTTranslator(Translator):
                 "        print(f\"[WfBench]   Reading '{files_list}'\", flush=True)\n" \
                 "        fp.readlines()\n" \
                 "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{this_dir.joinpath(f\"./data/{files_list}\").stat().st_size}\", flush=True)\n" \
+                "        data_size = this_dir.joinpath(f\"./data/{files_list}\").stat().st_size\n" \
+                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{data_size}\", flush=True)\n" \
                 "else:\n" \
                 "    files = files_list.split(\", \")\n" \
                 "    for file in files:\n" \
