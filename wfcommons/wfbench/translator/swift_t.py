@@ -135,15 +135,16 @@ class SwiftTTranslator(Translator):
                 "    cpu_procs = []\n" \
                 "    cpu_prog = [\n" \
                 "        f\"{this_dir.joinpath('./bin/cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
-                f"    mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
-                "                \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
                 "\n" \
                 "    start = time.perf_counter()\n" \
                 "    for i in range(cpu_threads):\n" \
                 "        cpu_proc = subprocess.Popen(cpu_prog)\n" \
                 "        cpu_procs.append(cpu_proc)\n" \
                 "\n" \
-                "    mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
+                "    if mem_threads > 0:\n" \
+                f"        mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
+                "                    \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
+                "        mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
                 "\n" \
                 "    for proc in cpu_procs:\n" \
                 "        proc.wait()\n" \
