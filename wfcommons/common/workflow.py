@@ -82,6 +82,7 @@ class Workflow(nx.DiGraph):
         self.tasks: Task = {}
         self.tasks_parents = {}
         self.tasks_children = {}
+        self.workflow_id: str = None
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
     def add_task(self, task: Task) -> None:

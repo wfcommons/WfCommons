@@ -10,14 +10,23 @@
 
 import pathlib
 import shutil
-
+import textwrap
 from logging import Logger
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from .abstract_translator import Translator
 from ...common import Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
+
+
+def get_flowcept_init(workflow_id, workflow_name):
+    code = textwrap.dedent(f"""
+    from flowcept.flowcept_api.flowcept_controller import Flowcept
+    f = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}")
+    f.start()
+    """)
+    return code
 
 
 class TaskVineTranslator(Translator):
@@ -31,11 +40,13 @@ class TaskVineTranslator(Translator):
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
+                 with_flowcept: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
         self.parsed_tasks = []
         self.task_counter = 1
+        self.with_flowcept = with_flowcept
         self.output_files_map = {}
 
     def translate(self, output_folder: pathlib.Path) -> None:
@@ -57,7 +68,11 @@ class TaskVineTranslator(Translator):
         with open(this_dir.joinpath("templates/taskvine_template.py")) as fp:
             run_workflow_code = fp.read()
         run_workflow_code = run_workflow_code.replace("# Generated code goes here", self.script)
-    
+
+        if self.with_flowcept:
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT", get_flowcept_init(self.workflow.workflow_id, self.workflow.name))
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", "f.stop()")
+
         # write benchmark files
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("taskvine_workflow.py"), "w") as fp:
@@ -67,6 +82,9 @@ class TaskVineTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
         shutil.copy(this_dir.joinpath("templates/taskvine_poncho.json"), output_folder)
+
+
+
         
     def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
         """
