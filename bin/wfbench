@@ -21,8 +21,6 @@ import json
 import pandas as pd
 from io import StringIO
 
-from flowcept import flowcept_task
-
 from filelock import FileLock
 from typing import List, Optional
 
@@ -222,45 +220,62 @@ def get_parser() -> argparse.ArgumentParser:
                         help="Time limit (in seconds) to complete the task (overrides CPU and GPU works)")
     parser.add_argument("--mem", default=None, help="Max amount (in MB) of memory consumption.")
     parser.add_argument("--out", help="output files name.")
-    parser.add_argument("--with-flowcept", default=False, help="If you want to use Flowcept.")
+    parser.add_argument("--with-flowcept", action="store_true", default=False, help="If you want to use Flowcept.")
     parser.add_argument("--workflow_id", default=None, help="Id to group tasks in a workflow.")
     return parser
 
 
-@flowcept_task
-def instrumented_main(known_args, other_args):
-    main(known_args, other_args)
+def begin_flowcept(args, other):
+    print("Running with Flowcept.")
+    from flowcept import Flowcept, FlowceptTask
+    # TODO: parametrize to allow storing individual tasks
+    f = Flowcept(workflow_id=args.workflow_id,
+                 bundle_exec_id=args.workflow_id,
+                 start_persistence=False, save_workflow=False)
+    f.start()
+    t = FlowceptTask(workflow_id=args.workflow_id, used={**args.__dict__, "other_args": other})
+    return f, t
 
 
-def main(known_args, other_args):
+def end_flowcept(flowcept, flowcept_task):
+    flowcept_task.end()
+    flowcept.stop()
+
+
+def main():
     """Main program."""
-    print("[Wfbench] ARGS", known_args)
+    parser = get_parser()
+    args, other = parser.parse_known_args()
+    print("[Wfbench] ARGS", args)
     core = None
 
-    if known_args.rundir:
-        rundir = pathlib.Path(known_args.rundir)
+    if args.with_flowcept:
+        flowcept, flowcept_task = begin_flowcept(args, other)
+
+    if args.rundir:
+        rundir = pathlib.Path(args.rundir)
     else:
         rundir = pathlib.Path(os.getcwd())
 
-    if known_args.path_lock and known_args.path_cores:
-        path_locked = pathlib.Path(known_args.path_lock)
-        path_cores = pathlib.Path(known_args.path_cores)
+    if args.path_lock and args.path_cores:
+        path_locked = pathlib.Path(args.path_lock)
+        path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    print(f"[WfBench] Starting {known_args.name} Benchmark\n")
+    print(f"[WfBench] Starting {args.name} Benchmark\n")
 
-    mem_bytes = known_args.mem * 1024 * 1024 if known_args.mem else None
+    mem_bytes = args.mem * 1024 * 1024 if args.mem else None
 
     procs = []
     io_proc = None
     outputs_dict = {}
 
     print("Directory:", os.getcwd())
-    if known_args.out:
+    if args.out:
         print("[WfBench] Starting IO benchmark...")
 
         # Remove all escape characters before attempting to parse the JSON string
-        cleaned_output = re.sub(r'\\+', '', known_args.out)
+        cleaned_output = re.sub(r'\\+', '', args.out)
 
         # Attempt to parse the cleaned string
         try:
@@ -270,7 +285,7 @@ def main(known_args, other_args):
             outputs_dict = {}
 
         print("OUTPUT", outputs_dict)
-        print("INPUTS", other_args)
+        print("INPUTS", other)
 
         # Create a multiprocessing event that in the first run is set to True
         write_done_event = multiprocessing.Event()
@@ -281,11 +296,11 @@ def main(known_args, other_args):
 
         io_proc = multiprocessing.Process(
             target=io_alternate,
-            args=(other_args, outputs_dict, mem_bytes, rundir, write_done_event))
+            args=(other, outputs_dict, mem_bytes, rundir, write_done_event))
         io_proc.start()
         procs.append(io_proc)
 
-    if known_args.gpu_work:
+    if args.gpu_work:
         print("[WfBench] Starting GPU Benchmark...")
         available_gpus = get_available_gpus()  # checking for available GPUs
 
@@ -295,29 +310,28 @@ def main(known_args, other_args):
             device = available_gpus[0]
             print(f"Running on GPU {device}")
 
-            if known_args.time:
-                print(f" Time:{known_args.time}, Work:{known_args.gpu_work}, Device:{device}")
-                gpu_benchmark(time=int(known_args.time), work=int(known_args.gpu_work),
-                              device=device)
+            if args.time:
+                print(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
+                gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
             else:
-                gpu_benchmark(work=int(known_args.gpu_work), device=device)
+                gpu_benchmark(work=int(args.gpu_work), device=device)
 
-    if known_args.cpu_work:
+    if args.cpu_work:
         print("[WfBench] Starting CPU and Memory Benchmarks...")
         if core:
-            print(f"[WfBench]  {known_args.name} acquired core {core}")
+            print(f"[WfBench]  {args.name} acquired core {core}")
 
-        mem_threads = int(10 - 10 * known_args.percent_cpu)
-        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_threads=int(10 * known_args.percent_cpu),
+        mem_threads = int(10 - 10 * args.percent_cpu)
+        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
                                                  mem_threads=mem_threads,
-                                                 cpu_work=sys.maxsize if known_args.time else int(
-                                                     known_args.cpu_work),
+                                                 cpu_work=sys.maxsize if args.time else int(
+                                                     args.cpu_work),
                                                  core=core,
-                                                 total_mem=known_args.mem)
+                                                 total_mem=args.mem)
 
         procs.extend(cpu_procs)
-        if known_args.time:
-            time.sleep(int(known_args.time))
+        if args.time:
+            time.sleep(int(args.time))
             for proc in procs:
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
         else:
@@ -351,17 +365,12 @@ def main(known_args, other_args):
 
     if core:
         unlock_core(path_locked, path_cores, core)
+
+    if args.with_flowcept:
+        end_flowcept(flowcept, flowcept_task)
+
     print("WfBench Benchmark completed!")
 
 
 if __name__ == "__main__":
-    parser = get_parser()
-    known_args, other_args = parser.parse_known_args()
-    workflow_id = known_args.workflow_id
-    with_flowcept = known_args.with_flowcept
-    if with_flowcept:
-        from flowcept import Flowcept
-        with Flowcept(workflow_id=workflow_id, bundle_exec_id=workflow_id, start_persistence=False):
-            instrumented_main(known_args, other_args)
-    else:
-        main(known_args, other_args)
+    main()
