@@ -14,3 +14,4 @@ from .parsl import ParslTranslator
 from .pegasus import PegasusTranslator
 from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
+from .pycompss import PyCompssTranslator

@@ -1,8 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022-2024 The WfCommons Team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
 import pathlib
-import shutil
 
 from logging import Logger
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from .abstract_translator import Translator
 from ...common import Workflow
@@ -51,49 +60,101 @@ class PyCompssTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
+
     def _pycompss_code(self) -> None:
         # GENERATES PYCOMPSS TASKS (functions)
         all_pycompss_tasks_as_functions = []
         for task in self.tasks.values():
-            # @task parameters
-            if len(task.input_files) > 0 and len(task.output_files) > 0:
-                self.script += f"@task(filePath=FILE_INOUT)\n"
-            elif len(task.input_files) > 0:
-                self.script += f"@task(filePath=FILE_IN)\n"
-            elif len(task.output_files) > 0:
-                self.script += f"@task(filePath=FILE_OUT)\n"
-            else:
-                self.script += f"@task\n"
-            # function name
-            # function_name = f"{task.name}_{task.task_id}"
+            ############################
+            # CREATE FUNCTION DECORATOR: @task parameters
+            ############################
+            task_parameter_names_file_in = ""
+            for i in range(len(task.input_files)):
+                if len(task.input_files) == 1:
+                    task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
+                else:
+                    if i == 0:
+                        task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
+                    else:
+                        task_parameter_names_file_in += f", file_in_{i}=FILE_IN"
+            task_parameter_names_file_out = ""
+            for i in range(len(task.output_files)):
+                if len(task.output_files) == 1:
+                    task_parameter_names_file_out += f"file_out_{i}=FILE_OUT"
+                else:
+                    if i == 0:
+                        task_parameter_names_file_out += f"file_out_{i}=FILE_OUT"
+                    else:
+                        task_parameter_names_file_out += f", file_out_{i}=FILE_OUT"
+            self.script += f"@task"
+            self.script += "("
+            self.script += task_parameter_names_file_in
+            self.script += ", " if len(task_parameter_names_file_in) > 0 else ""
+            self.script += task_parameter_names_file_out
+            self.script += ")\n"
+            ############################
+            # CREATE FUNCTION DEFINITION
+            ############################
             function_name = task.name
             # function parameters
-            function_parameter_names = ""
+            function_parameter_names_file_in = ""
             for i in range(len(task.input_files)):
                 if len(task.input_files) == 1:
-                    function_parameter_names += f"file{i}"
+                    function_parameter_names_file_in += f"file_in_{i}"
                 else:
                     if i == 0:
-                        function_parameter_names += f"file{i}"
+                        function_parameter_names_file_in += f"file_in_{i}"
                     else:
-                        function_parameter_names += f", file{i}"
+                        function_parameter_names_file_in += f", file_in_{i}"
+            function_parameter_names_file_out = ""
+            for i in range(len(task.output_files)):
+                if len(task.output_files) == 1:
+                    function_parameter_names_file_out += f"file_out_{i}"
+                else:
+                    if i == 0:
+                        function_parameter_names_file_out += f"file_out_{i}"
+                    else:
+                        function_parameter_names_file_out += f", file_out_{i}"
             self.script += f"def {function_name}"
             self.script += "("
-            self.script += function_parameter_names
+            self.script += function_parameter_names_file_in
+            self.script += ", " if len(function_parameter_names_file_in) > 0 else ""
+            self.script += function_parameter_names_file_out
             self.script += "):\n"
-            # function body
+            ############################
+            # CREATE FUNCTION BODY
+            ############################
+            for outfile in task.output_files:
+                # this method is in the template file 'pycompss_template.py'
+                self.script += f"\t_create_out_file({outfile})\n"
             self.script += f"\tpass\n\n"
-            # PYCOMPSS TASKS METHOD CALL DEFINITION
-            function_parameters = ""
+
+            ############################
+            # STORE FUNCTION CALL
+            ############################
+            function_parameters_in = ""
             for i in range(len(task.input_files)):
                 if len(task.input_files) == 1:
-                    function_parameters += f"{task.input_files[i].file_id}"
+                    function_parameters_in += f"{task.input_files[i].file_id}"
                 else:
                     if i == 0:
-                        function_parameters += f"{task.input_files[i].file_id}"
+                        function_parameters_in += f"{task.input_files[i].file_id}"
                     else:
-                        function_parameters += f", {task.input_files[i].file_id}"
-            all_pycompss_tasks_as_functions.append(f"{function_name}({function_parameters})")
+                        function_parameters_in += f", {task.input_files[i].file_id}"
+            function_parameters_out = ""
+            for i in range(len(task.output_files)):
+                if len(task.output_files) == 1:
+                    function_parameters_out += f"{task.output_files[i].file_id}"
+                else:
+                    if i == 0:
+                        function_parameters_out += f"{task.output_files[i].file_id}"
+                    else:
+                        function_parameters_out += f", {task.output_files[i].file_id}"
+            function_parameters_in_out = ""
+            function_parameters_in_out += function_parameters_in
+            function_parameters_in_out += ", " if len(function_parameters_in) > 0 else ""
+            function_parameters_in_out += function_parameters_out
+            all_pycompss_tasks_as_functions.append(f"{function_name}({function_parameters_in_out})")
 
         # INVOKE PYCOMPSS TASKS (functions)
         self.script += f"\n\ndef main_program():\n"

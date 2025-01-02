@@ -29,4 +29,10 @@ from pycompss.api.api import compss_barrier
 #     arg2 = sys.argv[2]
 #     main_program(arg1, arg2)
 
+def _create_out_file(filePath):
+    fos = open(filePath, 'w')
+    fos.write("a")
+    fos.close()
+
+
 # Generated code goes here
