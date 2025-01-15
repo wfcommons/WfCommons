@@ -14,7 +14,7 @@ import subprocess
 import time
 import sys
 import signal
-import multiprocessing
+from pathos.helpers import mp as multiprocessing
 import queue
 import argparse
 import re
@@ -88,11 +88,16 @@ def unlock_core(path_locked: pathlib.Path,
         finally:
             lock.release()
 
-
-import os
-import subprocess
-import multiprocessing
-from typing import Optional, List
+def monitor_progress(proc, cpu_queue):
+    """Monitor progress from the CPU benchmark process."""
+    for line in iter(proc.stdout.readline, ""):  # No decode needed
+        line = line.strip()
+        if line.startswith("Progress:"):
+            try:
+                progress = float(line.split()[1].strip('%'))
+                cpu_queue.put(progress)
+            except (ValueError, IndexError):
+                pass
 
 def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
                       cpu_threads: Optional[int] = 5,
@@ -128,16 +133,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
-    def monitor_progress(proc):
-        """Monitor progress from the CPU benchmark process."""
-        for line in iter(proc.stdout.readline, ""):  # No decode needed
-            line = line.strip()
-            if line.startswith("Progress:"):
-                try:
-                    progress = float(line.split()[1].strip('%'))
-                    cpu_queue.put(progress)
-                except (ValueError, IndexError):
-                    pass
+
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -146,7 +142,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
         cpu_procs.append(cpu_proc)
 
         # Start a thread to monitor the progress of each CPU benchmark process
-        monitor_thread = multiprocessing.Process(target=monitor_progress, args=(cpu_proc,))
+        monitor_thread = multiprocessing.Process(target=monitor_progress, args=(cpu_proc, cpu_queue))
         monitor_thread.start()
 
     if mem_threads > 0:
