@@ -113,11 +113,15 @@ class ParslTranslator(Translator):
                 #     output_files = [f"{o.file_id}" for o in task.files if o.link == FileLink.OUTPUT]
                 # else:
                 input_files = [f"{i.file_id}" for i in task.input_files]
+                dependency = [f"{p}.outputs" for p in self.task_parents[task.task_id]]
+                if len(dependency) == 0:
+                    dependency.append(f"get_parsl_files({input_files})")
+                dependency = " + ".join(dependency)
                 output_files = [f"{o.file_id}" for o in task.output_files]
 
                 code = [
                     f"{task.task_id} = generic_shell_app('bin/{task.program} {args}',",
-                    f"                                 inputs=get_parsl_files({input_files}),",
+                    f"                                 inputs={dependency},",
                     f"                                 outputs=get_parsl_files({output_files},",
                      "                                                         True),",
                     f"                                 stdout=\"logs/{task.task_id}_stdout.txt\",",
