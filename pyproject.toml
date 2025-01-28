@@ -48,6 +48,7 @@ Tracker = "https://github.com/wfcommons/WfCommons/issues"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
+flowcept = ["flowcept"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}
