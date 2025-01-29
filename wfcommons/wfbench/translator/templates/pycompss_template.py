@@ -1,6 +1,6 @@
 # IMPORTS
 import sys
-
+import os
 # PyCOMPSs imports
 # All task arguments: https://compss-doc.readthedocs.io/en/stable/Sections/02_App_Development/02_Python/01_1_Task_definition/Sections/04_Task_parameters_summary.html
 from pycompss.api.task import task
@@ -28,11 +28,5 @@ from pycompss.api.api import compss_barrier
 #     arg1 = sys.argv[1]
 #     arg2 = sys.argv[2]
 #     main_program(arg1, arg2)
-
-def _create_out_file(filePath):
-    fos = open(filePath, 'w')
-    fos.write("a")
-    fos.close()
-
 
 # Generated code goes here

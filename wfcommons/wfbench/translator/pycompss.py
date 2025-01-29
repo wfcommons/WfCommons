@@ -9,7 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
-
+import ast
 from logging import Logger
 from typing import Optional, Union
 
@@ -65,39 +65,110 @@ class PyCompssTranslator(Translator):
 
     def _pycompss_code(self) -> None:
         # GENERATES PYCOMPSS TASKS (functions)
-        bin_path = self.output_folder.joinpath("bin")
+        # bin_path = self.output_folder.joinpath("bin")
+        bin_path = "${WFBENCH_BIN}"
+        # data_folder = self.output_folder.joinpath("data")
+        data_folder = "os.getenv('WFBENCH_DATA')"
         all_pycompss_tasks_as_functions = []
         for task in self.tasks.values():
-            ############################
-            # CREATE FUNCTION DECORATOR: @binary parameters
-            ############################
-            self.script += f"@binary(binary='${bin_path}/{task.program}'"
-            if len(task.args) > 0:
-                task_args = " ".join(task.args)
-                self.script += f", args='{task_args}'"
-            self.script += f")"
-            # @binary(binary="date", args= "-d {{param_1}}")
-            ############################
-            # CREATE FUNCTION DECORATOR: @task parameters
-            ############################
+            function_name = task.name
+            is_root_task = True if task.task_id in self.root_task_names else False
+            all_input_files_name = []
             task_parameter_names_file_in = ""
+            function_parameter_names_file_in = ""
+            function_parameters_in = ""
+            task_parameter_names_file_out = ""
+            function_parameter_names_file_out = ""
+            function_parameters_out = ""
+
             for i in range(len(task.input_files)):
+                all_input_files_name.append(task.input_files[i].file_id)
                 if len(task.input_files) == 1:
                     task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
+                    function_parameter_names_file_in += f"file_in_{i}"
+                    if is_root_task:
+                        # function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
+                        function_parameters_in += "f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
+                    else:
+                        function_parameters_in += f"\'{task.input_files[i].file_id}\'"
                 else:
                     if i == 0:
                         task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
+                        function_parameter_names_file_in += f"file_in_{i}"
+                        if is_root_task:
+                            # function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
+                            function_parameters_in += "f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
+                        else:
+                            function_parameters_in += f"\'{task.input_files[i].file_id}\'"
                     else:
                         task_parameter_names_file_in += f", file_in_{i}=FILE_IN"
-            task_parameter_names_file_out = ""
+                        function_parameter_names_file_in += f", file_in_{i}"
+                        if is_root_task:
+                            # function_parameters_in += f", \'{data_folder}/{task.input_files[i].file_id}\'"
+                            function_parameters_in += ", f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
+                        else:
+                            function_parameters_in += f", \'{task.input_files[i].file_id}\'"
             for i in range(len(task.output_files)):
                 if len(task.output_files) == 1:
                     task_parameter_names_file_out += f"file_out_{i}=FILE_OUT"
+                    function_parameter_names_file_out += f"file_out_{i}"
+                    function_parameters_out += f"\'{task.output_files[i].file_id}\'"
                 else:
                     if i == 0:
                         task_parameter_names_file_out += f"file_out_{i}=FILE_OUT"
+                        function_parameter_names_file_out += f"file_out_{i}"
+                        function_parameters_out += f"\'{task.output_files[i].file_id}\'"
                     else:
                         task_parameter_names_file_out += f", file_out_{i}=FILE_OUT"
+                        function_parameter_names_file_out += f", file_out_{i}"
+                        function_parameters_out += f", \'{task.output_files[i].file_id}\'"
+            ############################
+            # STORE FUNCTION CALL
+            ############################
+            function_parameters_in_out = ""
+            function_parameters_in_out += function_parameters_in
+            function_parameters_in_out += ", " if len(function_parameters_in) > 0 else ""
+            function_parameters_in_out += function_parameters_out
+            all_pycompss_tasks_as_functions.append(f"{function_name}({function_parameters_in_out})")
+            ############################
+            # create function decorator: @binary parameters
+            ############################
+            self.script += f"@binary(binary='{bin_path}/{task.program}'"
+            # self.script += f"@binary(binary='./{task.program}'"
+            # self.script += f", working_dir='.'"
+            if len(task.args) > 0:
+                all_task_args = ""
+                # task_args = " ".join(task.args)
+                for task_arg in task.args:
+                    if task_arg.startswith("--out"):
+                        all_out_params = function_parameter_names_file_out.replace(' ', '').split(',')
+                        i = 0
+                        all_task_args += "--out "
+                        all_task_args += "{"
+                        if task_arg.find('"{') != -1:
+                            task_arg = task_arg.replace('"{', '{')
+                            task_arg = task_arg.replace('}"', '}')
+                        if task_arg.find('\\\"') != -1:
+                            task_arg = task_arg.replace('\\\"', '"')
+                        for file_out_name, file_out_size in ast.literal_eval(task_arg.split('--out ')[1]).items():
+                            if i == 0:
+                                # Failed to decode JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+                                all_task_args += "\\\\\\\"" + "{{"+ all_out_params[i] +"}}" + "\\\\\\\":" + str(file_out_size)
+                            else:
+                                all_task_args += ", \\\\\\\"" + "{{" + all_out_params[i] + "}}" + "\\\\\\\":" + str(file_out_size)
+                            i += 1
+                        all_task_args += "} "
+                    elif task_arg in all_input_files_name:
+                        continue
+                    else:
+                        all_task_args += f"{task_arg} "
+                for input_param in function_parameter_names_file_in.replace(' ', '').split(','):
+                    all_task_args += "{{"+input_param+"}} "
+                self.script += f", args='{all_task_args}'"
+            self.script += f")\n"
+            ############################
+            # CREATE FUNCTION DECORATOR: @task parameters
+            ############################
             self.script += f"@task"
             self.script += "("
             self.script += task_parameter_names_file_in
@@ -105,28 +176,8 @@ class PyCompssTranslator(Translator):
             self.script += task_parameter_names_file_out
             self.script += ")\n"
             ############################
-            # CREATE FUNCTION DEFINITION
+            # CREATE FUNCTION DEFINITION: function parameters
             ############################
-            function_name = task.name
-            # function parameters
-            function_parameter_names_file_in = ""
-            for i in range(len(task.input_files)):
-                if len(task.input_files) == 1:
-                    function_parameter_names_file_in += f"file_in_{i}"
-                else:
-                    if i == 0:
-                        function_parameter_names_file_in += f"file_in_{i}"
-                    else:
-                        function_parameter_names_file_in += f", file_in_{i}"
-            function_parameter_names_file_out = ""
-            for i in range(len(task.output_files)):
-                if len(task.output_files) == 1:
-                    function_parameter_names_file_out += f"file_out_{i}"
-                else:
-                    if i == 0:
-                        function_parameter_names_file_out += f"file_out_{i}"
-                    else:
-                        function_parameter_names_file_out += f", file_out_{i}"
             self.script += f"def {function_name}"
             self.script += "("
             self.script += function_parameter_names_file_in
@@ -136,48 +187,8 @@ class PyCompssTranslator(Translator):
             ############################
             # CREATE FUNCTION BODY
             ############################
-            for outfile in function_parameter_names_file_out.replace(' ', '').split(','):
-                # this method is in the template file 'pycompss_template.py'
-                self.script += f"\t_create_out_file({outfile})\n"
             self.script += f"\tpass\n\n"
 
-            ############################
-            # STORE FUNCTION CALL
-            ############################
-            is_root_task = True if task.name in self.root_task_names else False
-            data_folder = self.output_folder.joinpath("data")
-            function_parameters_in = ""
-            for i in range(len(task.input_files)):
-                if len(task.input_files) == 1:
-                    if is_root_task:
-                        function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
-                    else:
-                        function_parameters_in += f"\'{task.input_files[i].file_id}\'"
-                else:
-                    if i == 0:
-                        if is_root_task:
-                            function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
-                        else:
-                            function_parameters_in += f"\'{task.input_files[i].file_id}\'"
-                    else:
-                        if is_root_task:
-                            function_parameters_in += f", \'{data_folder}/{task.input_files[i].file_id}\'"
-                        else:
-                            function_parameters_in += f", \'{task.input_files[i].file_id}\'"
-            function_parameters_out = ""
-            for i in range(len(task.output_files)):
-                if len(task.output_files) == 1:
-                    function_parameters_out += f"\'{task.output_files[i].file_id}\'"
-                else:
-                    if i == 0:
-                        function_parameters_out += f"\'{task.output_files[i].file_id}\'"
-                    else:
-                        function_parameters_out += f", \'{task.output_files[i].file_id}\'"
-            function_parameters_in_out = ""
-            function_parameters_in_out += function_parameters_in
-            function_parameters_in_out += ", " if len(function_parameters_in) > 0 else ""
-            function_parameters_in_out += function_parameters_out
-            all_pycompss_tasks_as_functions.append(f"{function_name}({function_parameters_in_out})")
 
 
         # INVOKE PYCOMPSS TASKS (functions)
