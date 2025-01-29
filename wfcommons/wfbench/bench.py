@@ -46,12 +46,13 @@ class WorkflowBenchmark:
     def __init__(self,
                  recipe: Type[WfChefWorkflowRecipe],
                  num_tasks: int,
-                 logger: Optional[Logger] = None) -> None:
+                 logger: Optional[Logger] = None, with_flowcept=False) -> None:
         """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(
             __name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
+        self.with_flowcept = with_flowcept
         self.workflow: Workflow = None
 
     def create_benchmark_from_input_file(self,
@@ -254,7 +255,8 @@ class WorkflowBenchmark:
                          mem: Optional[float] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
                          regenerate: Optional[bool] = True,
-                         rundir: Optional[pathlib.Path] = None) -> pathlib.Path:
+                         rundir: Optional[pathlib.Path] = None,
+                         ) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -293,6 +295,9 @@ class WorkflowBenchmark:
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
+        if self.with_flowcept:
+            self.workflow.workflow_id = str(uuid.uuid4())
+
         cores, lock = self._creating_lock_files(lock_files_folder)
         for task in self.workflow.tasks.values():
             self._set_argument_parameters(
@@ -305,7 +310,7 @@ class WorkflowBenchmark:
                 lock_files_folder,
                 cores,
                 lock,
-                rundir
+                rundir,
             )
             task.input_files = []
             task.output_files = []
@@ -383,6 +388,12 @@ class WorkflowBenchmark:
 
         if rundir:
             params.extend([f"--rundir {rundir}"])
+
+        if self.with_flowcept:
+            params.extend(["--with-flowcept"])
+
+            if self.workflow.workflow_id:
+                params.extend([f"--workflow_id {self.workflow.workflow_id}"])
 
         task.runtime = 0
 

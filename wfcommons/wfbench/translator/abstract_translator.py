@@ -42,7 +42,7 @@ class Translator(ABC):
             self.workflow = workflow
         else:
             instance = Instance(workflow, logger=logger)
-            self.workflow = instance.workflow
+            self.workflow: Workflow = instance.workflow
 
         self.workflow.write_json()
 

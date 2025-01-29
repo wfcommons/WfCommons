@@ -12,6 +12,7 @@ import shutil
 
 import ndcctools.taskvine as vine
 
+# FLOWCEPT_INIT
 
 # Create a new manager
 m = vine.Manager(9123)
@@ -48,3 +49,5 @@ cpu_bench = m.declare_file("bin/cpu-benchmark", cache="workflow")
 stress_ng = m.declare_file(shutil.which("stress-ng"), cache="workflow")
 
 # Generated code goes here
+
+# FLOWCEPT_END
