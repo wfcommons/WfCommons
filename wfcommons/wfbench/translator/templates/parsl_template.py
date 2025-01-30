@@ -18,8 +18,9 @@ from parsl.config import Config
 from parsl.executors import HighThroughputExecutor
 from parsl.providers import LocalProvider
 from parsl.data_provider.files import File
-# NOTE: Uncomment the following line to enable Parsl workflow monitoring
+# NOTE: Uncomment the following lines to enable Parsl workflow monitoring
 # from parsl.monitoring.monitoring import MonitoringHub
+# from parsl.addresses import address_by_hostname
 
 # NOTE: update the configuration below for your desired system (https://parsl.readthedocs.io/en/stable/userguide/configuring.html)
 config = Config(
@@ -38,12 +39,12 @@ config = Config(
     strategy=None,
 
     # NOTE: Uncomment to enable Parsl workflow monitoring
-    #    monitoring=MonitoringHub(
-    #        hub_address=address_by_hostname(),
-    #        hub_port=55055,
-    #        monitoring_debug=False,
-    #        resource_monitoring_interval=10,
-    #    ),
+    # monitoring=MonitoringHub(
+    #     hub_address=address_by_hostname(),
+    #     hub_port=55055,
+    #     monitoring_debug=False,
+    #     resource_monitoring_interval=10,
+    # ),
 )
 parsl.clear()
 parsl.load(config)
