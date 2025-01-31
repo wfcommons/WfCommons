@@ -46,8 +46,13 @@ class PyCompssTranslator(Translator):
         :type output_folder: pathlib.Path
         """
         self.output_folder = output_folder
-        self.script = "\n# workflow tasks\n"
+        self.script = ""
+        # IMPORT Flowcept
+        if self.workflow.workflow_id is not None:
+            self.script += "from flowcept.flowcept_api.flowcept_controller import Flowcept\n\n"
+
         # PyCOMPSs translator
+        self.script += "\n# workflow tasks\n"
         self._pycompss_code()
 
         # Generates pycompss workflow file: template + script
@@ -199,4 +204,12 @@ class PyCompssTranslator(Translator):
 
         # CALL TO MAIN METHOD
         self.script += f"\n\nif __name__ == \"__main__\":\n"
+        # START Flowcept
+        if self.workflow.workflow_id is not None:
+            self.script += f"\tf = Flowcept(workflow_id='{self.workflow.workflow_id}', workflow_name='{self.workflow.name}', bundle_exec_id='{self.workflow.workflow_id}')\n"
+            self.script += "\tf.start()\n"
+        # main
         self.script += f"\tmain_program()\n"
+        # STOP Flowcept
+        if self.workflow.workflow_id is not None:
+            self.script += "\tf.stop()\n"
