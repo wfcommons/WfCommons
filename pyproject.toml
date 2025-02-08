@@ -36,7 +36,9 @@ dependencies = [
     "scipy",
     "pyyaml",
     "pandas",
-    "stringcase"
+    "stringcase",
+    "filelock",
+    "pathos",
 ]
 dynamic = ["version"]
 

@@ -47,6 +47,7 @@ workflow-schema.json
 # Binaries
 bin/cpu-benchmark
 bin/cpu-benchmark.o
+bin/gpu_benchmark
 
 # wfc-1.3_to_dask specifics
 /wfcommons/wfc-1.3_to_dask/__pycache__/

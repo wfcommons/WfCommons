@@ -4,6 +4,7 @@
 #include <random>
 #include <cmath>
 #include <functional>
+#include <iomanip>
 
 #define PRECISION 100000L
 
@@ -21,16 +22,20 @@ void compute_good_pi(long work) {
     rng.seed((long)&work);
 
     double good_pi = 0.0;
-    double x,y;
-    for (long sample=0; sample < work; sample++) {
+    double x, y;
+    for (long sample = 0; sample < work; sample++) {
         x = random_dist(rng);
         y = random_dist(rng);
-      good_pi += (double)(std::sqrt(x*x + y*y) < 0.5);
-    } 
-//    std::cout << "good pi = " << (good_pi/(double)work)/(0.5*0.5) << "\n";
-         
-}         
+        good_pi += (double)(std::sqrt(x * x + y * y) < 0.5);
 
+        // Print progress every 1% of completion
+        if (sample % (work / 100) == 0) {
+            double progress = (double)sample / work * 100;
+            std::cout << "\rProgress: " << std::fixed << std::setprecision(2) << progress << "%" << std::flush;
+        }
+    }
+    std::cout << "\rProgress: 100.00%\n"; // Ensure full progress is displayed
+}
 
 /**
  * This function computes pi using work trials for a Monte Carlo method. It's
@@ -44,51 +49,41 @@ void compute_terrible_pi(long work) {
     long rng = (long)&work;
     double terrible_pi = 0.0;
     double x_value, y_value;
-    for (long sample=0; sample < work; sample++) {
+    for (long sample = 0; sample < work; sample++) {
         rng = (((rng * 214013L + 2531011L) >> 16) & 32767);
         x_value = -0.5 + (rng % PRECISION) / (double)PRECISION;
         rng = (((rng * 214013L + 2531011L) >> 16) & 32767);
         y_value = -0.5 + (rng % PRECISION) / (double)PRECISION;
-        terrible_pi += (double)(std::sqrt(x_value*x_value+ y_value*y_value) < 0.5);
+        terrible_pi += (double)(std::sqrt(x_value * x_value + y_value * y_value) < 0.5);
+
+        // Print progress every 1% of completion
+        if (sample % (work / 100) == 0) {
+            double progress = (double)sample / work * 100;
+            std::cout << "\rProgress: " << std::fixed << std::setprecision(2) << progress << "%" << std::flush;
+        }
     }
- //   std::cout << "terrible pi = " << (terrible_pi/(double)work)/ (0.5*0.5) << "\n";
+    std::cout << "\rProgress: 100.00%\n"; // Ensure full progress is displayed
 }
 
 int main(int argc, char **argv) {
 
-  
     // Process command-line args
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <work (# 1M samples)>\n";
         exit(1);
     }
-    
+
     long work;
-    int num_threads;
     try {
-       work = std::stol(argv[1]);
-    //    num_threads = std::stoi(argv[2]);
+        work = std::stol(argv[1]);
     } catch (std::invalid_argument &e) {
         std::cerr << "Invalid argument: " << e.what() << "\n";
         exit(1);
     }
 
-    // Create all threads
-    // std::vector<std::thread> workers;
-    // for (unsigned int i = 0; i < num_threads; i++) {
-    //    auto t = std::thread([work]() {
-    compute_terrible_pi(1000000*work);
-    std::cout<<"Pi computed!"<<std::endl;
-    //compute_good_pi(1000000*work);
-        //   });
-    //    workers.push_back(std::move(t));
-    // }
-
-    // Wait for all threads
-    // for (unsigned int i = 0; i < num_threads; i++) {
-    //     workers.at(i).join();
-    // }
+    // Compute Pi using terrible method
+    compute_terrible_pi(1000000 * work);
+    std::cout << "Pi computation completed!\n";
 
     exit(0);
-
 }
