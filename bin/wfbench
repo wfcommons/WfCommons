@@ -195,20 +195,6 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
         memory_limit = 10 * 1024 * 1024  # sys.maxsize
     memory_limit = int(memory_limit)
 
-    # while True:
-    #     # Wait for the write to complete before reading
-    #     event.wait()
-
-    #     # Read from the file
-    #     io_read_benchmark_user_input_data_size(inputs, rundir, memory_limit=memory_limit)
-
-    #     # Clear the event to block the next read until write is done
-    #     event.clear()
-
-    #     # Write to the file and then set the event to signal completion
-    #     io_write_benchmark_user_input_data_size(outputs, rundir, memory_limit=memory_limit)
-    #     event.set()
-
     # queue will have messages in the form (cpu_percent_completed)
     # Get the last message and trash the rest
 
