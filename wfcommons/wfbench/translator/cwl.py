@@ -11,6 +11,7 @@
 import shutil
 import logging
 import pathlib
+import shlex
 from typing import Union, Optional
 from collections import defaultdict, deque
 
@@ -104,10 +105,10 @@ class CWLTranslator(Translator):
                 for item in task.args:
                     # Split elements that contain both an option and a value
                     if item.startswith("--"):
-                        parts = item.split(" ", 1)
-                        args_array.append(parts[0])
-                        if len(parts) > 1:
-                            args_array.append(parts[1])
+                        item = item.replace("\'", "\"")
+                        item = item.split(" ", 1)
+                        args_array.append(item[0])
+                        args_array.append(item[1])
                     elif not benchmark_name:
                         args_array.append(item)
                         benchmark_name = True
@@ -204,8 +205,8 @@ class CWLTranslator(Translator):
 
         clt_folder = cwl_folder.joinpath("clt")
         clt_folder.mkdir(exist_ok=True)
-        shutil.copy(pathlib.Path.cwd().joinpath("templates/wfbench.cwl"), clt_folder)
-        shutil.copy(pathlib.Path.cwd().joinpath("templates/folder.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl_templates/wfbench.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl_templates/folder.cwl"), clt_folder)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))

@@ -313,7 +313,7 @@ def main():
                 if isinstance(proc, subprocess.Popen):
                     proc.wait()
         if io_proc is not None and io_proc.is_alive():
-            io_proc.terminate()
+            # io_proc.terminate()
             io_proc.join()
 
         

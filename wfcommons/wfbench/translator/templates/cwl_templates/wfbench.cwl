@@ -2,7 +2,7 @@ cwlVersion: v1.2
 class: CommandLineTool
 requirements:
   InlineJavascriptRequirement: {}
-baseCommand: /Users/wongy/Documents/GitHub/WfFormat-To-StreamFlow-Translator/script/output/bin/wfbench.py
+baseCommand: wfbench
 arguments:
   - valueFrom: $(inputs.input_params)
 stdout: $(inputs.step_name + ".out")
@@ -16,6 +16,7 @@ inputs:
     type: File[]?
     inputBinding:
       position: 0
+      itemSeparator: " "
   output_filenames:
     type: string[]?
 outputs:
