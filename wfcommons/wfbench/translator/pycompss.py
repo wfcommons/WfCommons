@@ -75,8 +75,10 @@ class PyCompssTranslator(Translator):
         # data_folder = self.output_folder.joinpath("data")
         data_folder = "os.getenv('WFBENCH_DATA')"
         all_pycompss_tasks_as_functions = []
+        task_number = 1
         for task in self.tasks.values():
-            function_name = task.name
+            function_name = f"{task.name}{task_number}"
+            task_number += 1
             is_root_task = True if task.task_id in self.root_task_names else False
             all_input_files_name = []
             task_parameter_names_file_in = ""
