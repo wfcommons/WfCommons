@@ -14,7 +14,7 @@ from collections import defaultdict, deque
 import pathlib
 import ast
 import json
-from ...common import Workflow, FileLink
+from ...common import Workflow
 from .abstract_translator import Translator
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -70,12 +70,13 @@ class BashTranslator(Translator):
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
+
         # Parsing each of the WfFormat Tasks as bash apps in Parsl
         codelines = self._bash_wftasks_codelines()
 
         wf_codelines = "\n".join(codelines)
 
-         # Writing the generated parsl code to a file
+        # Generate an output folder
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("run_workflow.sh"), "w", encoding="utf-8") as fp:
             fp.write(wf_codelines)
@@ -97,10 +98,19 @@ class BashTranslator(Translator):
                 args = []
                 for a in task.args:
                     if a.startswith("--output-files"):
-                        # replaceing ' with "
-                        a = a.replace("'", "\"")
-                        # appending a ' (single quote) to the beginning and end of the json object
-                        a = a.replace("{", "\'{").replace("}", "}\'")
+                        split_arr = a.split(" ", 1)
+
+                        temp = ast.literal_eval(split_arr[1])
+
+                        output_files = {}
+
+                        for key, value in temp.items():
+                            output_files[f"data/{key}"] = value
+
+                        output_files = json.dumps(output_files)
+
+                        a = f"{split_arr[0]} '{output_files}'"
+                      
                     if a.startswith("--input-files"):
                         split_arr = a.split(" ", 1)
 
