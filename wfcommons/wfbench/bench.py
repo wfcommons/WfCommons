@@ -180,7 +180,9 @@ class WorkflowBenchmark:
             task.args.append(f"--out {outfiles_str}")
 
             infiles = [f"\"{file.file_id}\"" for file in task.input_files]
-            task.args.extend(infiles)
+            infiles_str = str(infiles).replace("[", "\"[") \
+                .replace("]", "]\"").replace("'", "\\\\\"")
+            task.args.append(f"--input-files {infiles_str}")
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
@@ -387,7 +389,7 @@ class WorkflowBenchmark:
         task.runtime = 0
 
         task.program = "wfbench"
-        task.args = [task.task_id]
+        task.args = [f"--name {task.task_id}"]
         task.args.extend(params)
 
     def _generate_task_cpu_params(self,
@@ -437,7 +439,7 @@ class WorkflowBenchmark:
                 for child, data_size in outputs[task.task_id].items():
                     outputs_file_size[f"{task.task_id}_{child}_output.txt"] = data_size
 
-                task.args.extend([f"--out {outputs_file_size}"])
+                task.args.extend([f"--output-files {outputs_file_size}"])
 
             self._add_output_files(outputs)
             self._add_input_files(outputs, data)
@@ -457,7 +459,7 @@ class WorkflowBenchmark:
 
             for task in self.workflow.tasks.values():
                 output = {f"{task.task_id}_output.txt": file_size}
-                task.args.extend([f"--out {output}"])
+                task.args.extend([f"--output-files {output}"])
                 outputs = {}
                 if self.workflow.tasks_children[task.task_id]:
                     outputs.setdefault(task.task_id, {})
@@ -565,7 +567,7 @@ class WorkflowBenchmark:
                             File(f"{parent}_output.txt", data, FileLink.INPUT))
                         inputs.append(f"{parent}_output.txt")
 
-            task.args.extend(inputs)
+            task.args.append(f"--input-files {inputs}")
 
     def _generate_data_for_root_nodes(self, save_dir: pathlib.Path, data: Union[int, Dict[str, str]]) -> None:
         """
