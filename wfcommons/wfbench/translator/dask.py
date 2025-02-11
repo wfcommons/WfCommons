@@ -90,21 +90,22 @@ class DaskTranslator(Translator):
         codelines = ["randomizer = random.Random(seed)",
                      "TASKS = {}"]
         for task in self.tasks.values():
-            input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.INPUT]
-            output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.OUTPUT]
+            # print(vars(task))
+            input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
+            output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
             program = output_folder.joinpath(f'bin/{task.program}')
             args = []
-            print(task.args)
             for a in task.args:
-                if "--out" in a:
-                    a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/").replace(": ", ":")
-                elif "--" not in a: 
-                    a = str(output_folder.joinpath("data", a))
-                else: 
+                # print(a)
+                if "--output-files" in a:
+                    a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/", 1).replace("'", "\\\\\"").replace(": ", ":")
+                elif "--input-files" in a:
+                    # a = str(output_folder.joinpath("data", a))
+                    a = a.replace("[", "\"[").replace("]", "]\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/", 1).replace("'", "\\\\\"").replace("'", "\\\\\"")
+                else:
                     a = a.replace("'", "\"") 
                 args.append(a)
-            print(args)
-            print("")
+
             code = [f"WorkflowTask(dag_id = '{task.task_id}',",
                     f"             name = '{task.task_id}',",
                     f"             command_arguments = {[str(program)] + args},",
