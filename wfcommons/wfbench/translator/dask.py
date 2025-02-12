@@ -12,6 +12,8 @@ import pathlib
 
 from logging import Logger
 from typing import Optional, Union
+import ast
+import json
 
 from .abstract_translator import Translator
 from ...common import FileLink, Workflow
@@ -90,21 +92,21 @@ class DaskTranslator(Translator):
         codelines = ["randomizer = random.Random(seed)",
                      "TASKS = {}"]
         for task in self.tasks.values():
-            input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.INPUT]
-            output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.files if f.link == FileLink.OUTPUT]
+            input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
+            output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
             program = output_folder.joinpath(f'bin/{task.program}')
             args = []
-            print(task.args)
             for a in task.args:
                 if "--out" in a:
-                    a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/").replace(": ", ":")
-                elif "--" not in a: 
+                    # a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/").replace(": ", ":")
+                    flag, output_files_dict = a.split(" ", 1)
+                    output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    a = f"{flag} '{json.dumps(output_files_dict)}'"
+                elif "--" not in a:
                     a = str(output_folder.joinpath("data", a))
                 else: 
                     a = a.replace("'", "\"") 
                 args.append(a)
-            print(args)
-            print("")
             code = [f"WorkflowTask(dag_id = '{task.task_id}',",
                     f"             name = '{task.task_id}',",
                     f"             command_arguments = {[str(program)] + args},",
@@ -139,7 +141,11 @@ class DaskTranslator(Translator):
             self.parsed_tasks.append(task_name)
             self.tasks_futures[task_name] = f"fut_dv_{self.task_id}"
             self.task_id += 1
-            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {self.task_parents[task_name]})"]
+
+            parent_futures = [self.tasks_futures[p] for p in self.task_parents[task_name]]
+            str_parent_futures = f"[{','.join(parent_futures)}]"
+
+            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {str_parent_futures})"]
             
             # parse children
             for child in self.task_children[task_name]:
