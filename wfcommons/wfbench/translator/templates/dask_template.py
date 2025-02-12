@@ -99,7 +99,7 @@ def process_arguments():
     parser = argparse.ArgumentParser(prog=sys.argv[0],
                                      description='Runs a (translated) workflow through Dask')  # TODO
     parser.add_argument("-sim", "--simulate",
-                        help="Sot simulate all tasks (default: run the tasks for real)", action="store_true")
+                        help="Simulate all tasks (default: run the tasks for real)", action="store_true")
     parser.add_argument("-s", "--seed", help="Randomizer seed (used when simulating)", default=42)
     return parser.parse_args()
 
