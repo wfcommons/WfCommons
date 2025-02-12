@@ -25,8 +25,47 @@ from io import StringIO
 from filelock import FileLock
 from typing import List, Optional
 from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Change this to control the verbosity
+    format="[Wrench][%(asctime)s][%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[logging.StreamHandler()]
+)
+
 
 this_dir = pathlib.Path(__file__).resolve().parent
+
+
+def log_info(msg: str):
+    """
+    Log an info message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.info(msg)
+
+def log_debug(msg: str):
+    """
+    Log a debug message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.debug(msg)
+
+def log_error(msg: str):
+    """
+    Log a error message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.error(msg)
+
 
 def lock_core(path_locked: pathlib.Path,
               path_cores: pathlib.Path) -> int:
@@ -59,7 +98,7 @@ def lock_core(path_locked: pathlib.Path,
                     path_cores.write_text("\n".join(map(str, taken_cores)))
                     return core
 
-                sys.stderr.write(f"All Cores are taken\n")
+                log_debug("All Cores are taken")
             finally:
                 lock.release()
         time.sleep(1)
@@ -165,13 +204,13 @@ def io_read_benchmark_user_input_data_size(inputs,
     if memory_limit is None:
         memory_limit = -1
     memory_limit = int(memory_limit)
-    sys.stderr.write("[WfBench] Starting IO Read Benchmark...\n")
+    log_debug("Starting IO Read Benchmark...")
     for file, size in inputs.items():
         with open(rundir.joinpath(file), "rb") as fp:
-            sys.stderr.write(f"[WfBench] Reading '{file}'\n")
+            log_debug(f"Reading '{file}'")
             while fp.read(size):
                 pass
-    sys.stderr.write("[WfBench] Completed IO Read Benchmark!\n")
+    log_debug("Completed IO Read Benchmark!")
 
 
 def io_write_benchmark_user_input_data_size(outputs,
@@ -181,7 +220,7 @@ def io_write_benchmark_user_input_data_size(outputs,
         memory_limit = sys.maxsize
     memory_limit = int(memory_limit)
     for file_name, file_size in outputs.items():
-        sys.stderr.write(f"[WfBench] Writing output file '{file_name}'\n")
+        log_debug(f"Writing output file '{file_name}'")
         file_size_todo = file_size
         while file_size_todo > 0:
             with open(rundir.joinpath(file_name), "ab") as fp:
@@ -227,7 +266,7 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
             except queue.Empty:
                 break
 
-        sys.stderr.write(f"CPU Percent: {cpu_percent}\n")
+        log_debug(f"CPU Percent: {cpu_percent}")
         if cpu_percent:
             bytes_to_read = {
                 name: int(size * (cpu_percent / 100) - bytes_read[name])
@@ -249,8 +288,8 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
                 for name in bytes_to_write
             }
 
-            sys.stderr.write(f"Bytes Read: {bytes_read}\n")
-            sys.stderr.write(f"Bytes Written: {bytes_written}\n")
+            log_debug(f"Bytes Read: {bytes_read}")
+            log_debug(f"Bytes Written: {bytes_written}")
 
             io_completed = cpu_percent
 
@@ -269,8 +308,8 @@ def gpu_benchmark(time: int = 100,
                   device: int = 0): #work, device
     
     gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('./gpu_benchmark')} {work} {time}"]
-    sys.stderr.write(f"Running GPU Benchmark: {gpu_prog}\n")
-    subprocess.Popen(gpu_prog, shell=True)  
+    log_debug(f"Running GPU Benchmark: {gpu_prog}")
+    subprocess.Popen(gpu_prog, shell=True)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -296,7 +335,6 @@ def main():
     """Main program."""
     parser = get_parser()
     args = parser.parse_args()
-    # print("[Wfbench] ARGS", args)
     core = None
 
     if args.rundir:
@@ -309,7 +347,7 @@ def main():
         path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    sys.stderr.write(f"[WfBench][{datetime.now().time()}] Starting {args.name} benchmark...\n")
+    log_info(f"Starting {args.name} Benchmark")
 
     mem_bytes = args.mem * 1024 * 1024 if args.mem else None
 
@@ -319,7 +357,7 @@ def main():
 
     cpu_queue = multiprocessing.Queue()
 
-    sys.stderr.write(f"[WfBench] Working directory: {os.getcwd()}\n")
+    log_debug(f"Working directory: {os.getcwd()}")
 
     # Deal with input/output files if any
     cleaned_input = "{}" if args.input_files is None else re.sub(r'\\+', '', args.input_files)
@@ -328,18 +366,19 @@ def main():
     # print("CLEANED OUTPUT", cleaned_output)
 
     if cleaned_input or cleaned_output:
-        sys.stderr.write("[WfBench] Starting IO benchmark...\n")
+        log_debug("Starting IO benchmark...")
+
         # Attempt to parse the cleaned string
         try:
             outputs_dict = json.loads(cleaned_output)
         except json.JSONDecodeError as e:
-            sys.stderr.write("Error: Failed to decode --output-files JSON string argument:", e)
+            log_error(f"Failed to decode --output-files JSON string argument: {e}")
             sys.exit(1)
 
         try:
             inputs_array = json.loads(cleaned_input)
         except json.JSONDecodeError as e:
-            sys.stderr.write("Error: Failed to decode --input-files JSON string argument:", e)
+            log_error(f"Failed to decode --input-files JSON string argument: {e}")
             sys.exit(1)
 
         # print("OUTPUT", outputs_dict)
@@ -360,26 +399,27 @@ def main():
         procs.append(io_proc)
 
     if args.gpu_work:
-        sys.stderr.write("[WfBench] Starting GPU Benchmark...\n")
+        log_info(f"Starting GPU Benchmark for {args.name}...")
         available_gpus = get_available_gpus() #checking for available GPUs
 
         if not available_gpus:
-            sys.stderr.write("No GPU available...\n")
+            log_error("No GPU available")
+            sys.exit(1)
         else:
             device = available_gpus[0]
-            sys.stderr.write(f"Running on GPU {device}...\n")
+            log_debug(f"Running on GPU {device}")
 
             if args.time:
-                sys.stderr.write(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}\n")
+                log_debug(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
                 gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
             else:
                 gpu_benchmark(work=int(args.gpu_work), device=device)
             
     
     if args.cpu_work:
-        sys.stderr.write("[WfBench] Starting CPU and Memory Benchmarks...\n")
+        log_info(f"Starting CPU and Memory Benchmarks for {args.name}...")
         if core:
-            sys.stderr.write(f"[WfBench]  {args.name} acquired core {core}\n")
+            log_debug(f"{args.name} acquired core {core}")
 
         mem_threads=int(10 - 10 * args.percent_cpu)
         cpu_procs, mem_procs = cpu_mem_benchmark(cpu_queue=cpu_queue, cpu_threads=int(10 * args.percent_cpu),
@@ -398,7 +438,7 @@ def main():
                 if isinstance(proc, subprocess.Popen):
                     proc.wait()
         if io_proc is not None and io_proc.is_alive():
-            io_proc.terminate()
+            # io_proc.terminate()
             io_proc.join()
 
         
@@ -406,15 +446,15 @@ def main():
             try:
                 os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
             except subprocess.TimeoutExpired:
-                sys.stderr.write("Memory process did not terminate; force-killing!\n")
+                log_debug("Memory process did not terminate; force-killing.")
         # As a fallback, use pkill if any remaining instances are stuck
         subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
 
-        sys.stderr.write("[WfBench] Completed CPU and Memory Benchmarks!\n")
+        log_debug("Completed CPU and Memory Benchmarks!")
 
     # NOTE: If you would like to run only IO add time.sleep(2)
     # Check if all procs are done, if not, kill them
-    sys.stderr.write("[WfBench] Checking if all processes are done...\n")
+    log_debug("Checking if all processes are done...")
     for proc in procs:
         if isinstance(proc, multiprocessing.Process):
             if proc.is_alive():
@@ -425,7 +465,7 @@ def main():
 
     if core:
         unlock_core(path_locked, path_cores, core)
-    sys.stderr.write("WfBench Benchmark completed!\n")
+    log_info(f"Benchmark {args.name} completed!")
 
 if __name__ == "__main__":
     main()

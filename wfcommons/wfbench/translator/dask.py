@@ -12,6 +12,8 @@ import pathlib
 
 from logging import Logger
 from typing import Optional, Union
+import ast
+import json
 
 from .abstract_translator import Translator
 from ...common import FileLink, Workflow
@@ -143,9 +145,9 @@ class DaskTranslator(Translator):
             self.parsed_tasks.append(task_name)
             self.tasks_futures[task_name] = f"fut_dv_{self.task_id}"
             self.task_id += 1
+
             parent_futures = [self.tasks_futures[p] for p in self.task_parents[task_name]]
             str_parent_futures = f"[{','.join(parent_futures)}]"
-
 
             noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {str_parent_futures})"]
             
