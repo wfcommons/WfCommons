@@ -98,38 +98,18 @@ class BashTranslator(Translator):
                 args = []
                 for a in task.args:
                     if a.startswith("--output-files"):
-                        split_arr = a.split(" ", 1)
+                        flag, output_files_dict = a.split(" ", 1)
+                        output_files_dict = {f"data/{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
+                        a = f"{flag} '{json.dumps(output_files_dict)}'"
 
-                        temp = ast.literal_eval(split_arr[1])
-
-                        output_files = {}
-
-                        for key, value in temp.items():
-                            output_files[f"data/{key}"] = value
-
-                        output_files = json.dumps(output_files)
-
-                        a = f"{split_arr[0]} '{output_files}'"
-                      
                     if a.startswith("--input-files"):
-                        split_arr = a.split(" ", 1)
-
-                        input_files = ast.literal_eval(split_arr[1])
-
-                        for index, file in enumerate(input_files):
-                            input_files[index] = f"data/{file}"
-
-                        input_files = json.dumps(input_files)
-
-                        a = f"{split_arr[0]} '{input_files}'"
-
-
+                        flag, input_files_arr = a.split(" ", 1)
+                        input_files_arr = [f"data/{file}" for file in ast.literal_eval(input_files_arr)]
+                        a = f"{flag} '{json.dumps(input_files_arr)}'"
 
                     args.append(a)
 
-                args = " ".join(args)
-
-                code = f"bin/{task.program} {args}"
+                code = f"bin/{task.program} {' '.join(args)}"
 
                 codelines.append(code)
 
