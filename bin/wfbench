@@ -332,7 +332,6 @@ def main():
     """Main program."""
     parser = get_parser()
     args, other = parser.parse_known_args()
-    print("[Wfbench] ARGS", args)
     core = None
 
     if args.rundir:
