@@ -100,12 +100,12 @@ class BashTranslator(Translator):
                     if a.startswith("--output-files"):
                         flag, output_files_dict = a.split(" ", 1)
                         output_files_dict = {f"data/{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
-                        a = f"{flag} '{json.dumps(output_files_dict)}'"
+                        a = f"{flag} '{json.dumps(output_files_dict).replace('"', '\\"')}'"
 
                     if a.startswith("--input-files"):
                         flag, input_files_arr = a.split(" ", 1)
                         input_files_arr = [f"data/{file}" for file in ast.literal_eval(input_files_arr)]
-                        a = f"{flag} '{json.dumps(input_files_arr)}'"
+                        a = f"{flag} '{json.dumps(input_files_arr).replace('"', '\\"')}'"
 
                     args.append(a)
 
