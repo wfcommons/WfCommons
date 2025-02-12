@@ -24,6 +24,7 @@ from io import StringIO
 
 from filelock import FileLock
 from typing import List, Optional
+from datetime import datetime
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -308,7 +309,7 @@ def main():
         path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    sys.stderr.write(f"[WfBench] Starting {args.name} benchmark...\n")
+    sys.stderr.write(f"[WfBench][{datetime.now().time()}] Starting {args.name} benchmark...\n")
 
     mem_bytes = args.mem * 1024 * 1024 if args.mem else None
 

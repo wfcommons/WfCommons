@@ -97,10 +97,10 @@ def run_workflow(client, simulate: bool, seed: int=42) -> list[WorkflowTask]:
 
 def process_arguments():
     parser = argparse.ArgumentParser(prog=sys.argv[0],
-                                     description='Runs a workflow through dask')  # TODO
-    parser.add_argument("-nosim", "--do-not-simulate",
-                        help="Do not simulate all tasks (default: do simulate all tasks)", action="store_false")
-    parser.add_argument("-s", "--seed", help="Randomizer seed (used when simulating)")
+                                     description='Runs the (translated) workflow using Dask')
+    parser.add_argument("-sim", "--simulate",
+                        help="Simulate all tasks (default: run the tasks for real)", action="store_true")
+    parser.add_argument("-s", "--seed", help="Randomizer seed (used only when simulating tasks)", default=42)
     return parser.parse_args()
 
 
@@ -111,6 +111,6 @@ def to_json(obj):
 if __name__ == '__main__':
     args = process_arguments()
     with build_dask_client() as client:
-        tasks = run_workflow(client, args.do_not_simulate, seed=int(args.seed))
+        tasks = run_workflow(client, args.simulate, seed=int(args.seed))
     with open("run.json", "w") as fp:
         fp.write(to_json(tasks))
