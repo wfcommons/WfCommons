@@ -30,7 +30,7 @@ import logging
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,  # Change this to control the verbosity
-    format="[Wrench][%(asctime)s][%(levelname)s] %(message)s",
+    format="[WfBench][%(asctime)s][%(levelname)s] %(message)s",
     datefmt="%H:%M:%S",
     handlers=[logging.StreamHandler()]
 )
