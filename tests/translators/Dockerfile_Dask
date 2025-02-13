@@ -1,5 +1,5 @@
-# docker build --platform amd64 -t wfcommons-dev -f Dockerfile_Dask .
-# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev /bin/bash
+# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile_Dask .
+# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-dask /bin/bash
 
 FROM amd64/ubuntu:jammy
 
