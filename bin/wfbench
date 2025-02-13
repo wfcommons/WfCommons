@@ -309,7 +309,7 @@ def gpu_benchmark(time: int = 100,
     
     gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('./gpu_benchmark')} {work} {time}"]
     log_debug(f"Running GPU Benchmark: {gpu_prog}")
-    subprocess.Popen(gpu_prog, shell=True)  
+    subprocess.Popen(gpu_prog, shell=True)
 
 
 def get_parser() -> argparse.ArgumentParser:
