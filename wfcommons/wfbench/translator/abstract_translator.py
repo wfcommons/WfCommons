@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -160,3 +160,21 @@ class Translator(ABC):
                 parents = node["parents"]
 
         return parents
+
+    def _merge_codelines(self, template_file_path: str, wf_codelines: str) -> str:
+        """
+        Incorporate generated workflow codelines into the template.
+
+        :param template_file_path: The path to the template file.
+        :type template_file_path: str
+
+        :param wf_codelines: The generated workflow codelines.
+        :type wf_codelines: str
+        
+        :return: Incorporated workflow codelines.
+        :rtype: str
+        """
+        with open(this_dir.joinpath(template_file_path)) as fp:
+            run_workflow_code = fp.read()
+            return run_workflow_code.replace("# Generated code goes here", wf_codelines)
+    

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 The WfCommons Team.
+# Copyright (c) 2024-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,9 +54,7 @@ class TaskVineTranslator(Translator):
             self.script += "wait_for_tasks_completion()\n\n"
 
         # generate code
-        with open(this_dir.joinpath("templates/taskvine_template.py")) as fp:
-            run_workflow_code = fp.read()
-        run_workflow_code = run_workflow_code.replace("# Generated code goes here", self.script)
+        run_workflow_code = self._merge_codelines("templates/taskvine_template.py", self.script)
     
         # write benchmark files
         output_folder.mkdir(parents=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023-2024 The WfCommons Team.
+# Copyright (c) 2023-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,9 +62,7 @@ class DaskTranslator(Translator):
         # generate code
         INDENT = "    "
         wf_codelines = "\n".join(["%s%s" % (INDENT, codeline) for codeline in noindent_python_codelines])
-        with open(this_dir.joinpath("templates/dask_template.py")) as fp:
-            run_workflow_code = fp.read()
-        run_workflow_code = run_workflow_code.replace("# Generated code goes here", wf_codelines)
+        run_workflow_code = self._merge_codelines("templates/dask_template.py", wf_codelines)
 
         # write benchmark files
         output_folder.mkdir(parents=True)
