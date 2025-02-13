@@ -14,7 +14,8 @@ import subprocess
 import time
 import sys
 import signal
-import multiprocessing
+from pathos.helpers import mp as multiprocessing
+import queue
 import argparse
 import re
 import json
@@ -23,8 +24,48 @@ from io import StringIO
 
 from filelock import FileLock
 from typing import List, Optional
+from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Change this to control the verbosity
+    format="[WfBench][%(asctime)s][%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[logging.StreamHandler()]
+)
+
 
 this_dir = pathlib.Path(__file__).resolve().parent
+
+
+def log_info(msg: str):
+    """
+    Log an info message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.info(msg)
+
+def log_debug(msg: str):
+    """
+    Log a debug message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.debug(msg)
+
+def log_error(msg: str):
+    """
+    Log a error message to stderr
+
+    :param msg:
+    :type msg: str
+    """
+    logging.error(msg)
+
 
 def lock_core(path_locked: pathlib.Path,
               path_cores: pathlib.Path) -> int:
@@ -48,7 +89,8 @@ def lock_core(path_locked: pathlib.Path,
             try:
                 lock.acquire()
                 taken_cores = {
-                    int(line) for line in path_cores.read_text().splitlines() if line.strip()}
+                    int(line) for line in path_cores.read_text().splitlines() if line.strip()
+                }
                 available = all_cores - taken_cores
                 if available:
                     core = available.pop()
@@ -56,7 +98,7 @@ def lock_core(path_locked: pathlib.Path,
                     path_cores.write_text("\n".join(map(str, taken_cores)))
                     return core
 
-                print(f"All Cores are taken")
+                log_debug("All Cores are taken")
             finally:
                 lock.release()
         time.sleep(1)
@@ -86,27 +128,40 @@ def unlock_core(path_locked: pathlib.Path,
         finally:
             lock.release()
 
+def monitor_progress(proc, cpu_queue):
+    """Monitor progress from the CPU benchmark process."""
+    for line in iter(proc.stdout.readline, ""):  # No decode needed
+        line = line.strip()
+        if line.startswith("Progress:"):
+            try:
+                progress = float(line.split()[1].strip('%'))
+                cpu_queue.put(progress)
+            except (ValueError, IndexError):
+                pass
 
-def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
+def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
+                      cpu_threads: Optional[int] = 5,
                       mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
                       core: Optional[int] = None,
                       total_mem: Optional[float] = None) -> List:
     """
-    Run cpu and memory benchmark.
+    Run CPU and memory benchmark.
 
-    :param cpu_threads:
+    :param cpu_queue: Queue to push CPU benchmark progress as a float.
+    :type cpu_queue: multiprocessing.Queue
+    :param cpu_threads: Number of threads for CPU benchmark.
     :type cpu_threads: Optional[int]
-    :param mem_threads:
+    :param mem_threads: Number of threads for memory benchmark.
     :type mem_threads: Optional[int]
-    :param cpu_work:
+    :param cpu_work: Total work units for CPU benchmark.
     :type cpu_work: Optional[int]
-    :param core:
+    :param core: Core to pin the benchmark processes to.
     :type core: Optional[int]
-    :param total_mem:
+    :param total_mem: Total memory to use for memory benchmark.
     :type total_mem: Optional[float]
 
-    :return:
+    :return: Lists of CPU and memory subprocesses.
     :rtype: List
     """
     total_mem = f"{total_mem}M" if total_mem else f"{100.0 / os.cpu_count()}%"
@@ -114,23 +169,33 @@ def cpu_mem_benchmark(cpu_threads: Optional[int] = 5,
 
     cpu_procs = []
     mem_procs = []
-    cpu_prog = [
-        f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
+
+
     for i in range(cpu_threads):
-        cpu_proc = subprocess.Popen(cpu_prog)
+        cpu_proc = subprocess.Popen(cpu_prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # NOTE: might be a good idea to use psutil to set the affinity (works across platforms)
         if core:
             os.sched_setaffinity(cpu_proc.pid, {core})
         cpu_procs.append(cpu_proc)
 
+        # Start a thread to monitor the progress of each CPU benchmark process
+        monitor_thread = multiprocessing.Process(target=monitor_progress, args=(cpu_proc, cpu_queue))
+        monitor_thread.start()
+
     if mem_threads > 0:
-        mem_proc = subprocess.Popen(mem_prog,   preexec_fn=os.setsid)
+        # NOTE: add a check to use creationflags=subprocess.CREATE_NEW_PROCESS_GROUP for Windows
+        mem_proc = subprocess.Popen(mem_prog, preexec_fn=os.setsid)
         if core:
             os.sched_setaffinity(mem_proc.pid, {core})
         mem_procs.append(mem_proc)
+
     return cpu_procs, mem_procs
+
 
 
 def io_read_benchmark_user_input_data_size(inputs,
@@ -139,13 +204,13 @@ def io_read_benchmark_user_input_data_size(inputs,
     if memory_limit is None:
         memory_limit = -1
     memory_limit = int(memory_limit)
-    print("[WfBench] Starting IO Read Benchmark...")
-    for file in inputs:
+    log_debug("Starting IO Read Benchmark...")
+    for file, size in inputs.items():
         with open(rundir.joinpath(file), "rb") as fp:
-            print(f"[WfBench]   Reading '{file}'")
-            while fp.read(memory_limit):
+            log_debug(f"Reading '{file}'")
+            while fp.read(size):
                 pass
-    print("[WfBench] Completed IO Read Benchmark!\n")
+    log_debug("Completed IO Read Benchmark!")
 
 
 def io_write_benchmark_user_input_data_size(outputs,
@@ -155,7 +220,7 @@ def io_write_benchmark_user_input_data_size(outputs,
         memory_limit = sys.maxsize
     memory_limit = int(memory_limit)
     for file_name, file_size in outputs.items():
-        print(f"[WfBench] Writing output file '{file_name}'\n")
+        log_debug(f"Writing output file '{file_name}'")
         file_size_todo = file_size
         while file_size_todo > 0:
             with open(rundir.joinpath(file_name), "ab") as fp:
@@ -163,27 +228,73 @@ def io_write_benchmark_user_input_data_size(outputs,
                 file_size_todo -= fp.write(os.urandom(int(chunk_size)))
 
 
-def io_alternate(inputs, outputs, memory_limit=None, rundir=None, event=None):
+def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit=None, rundir=None, event=None):
     """Alternate between reading and writing to a file, ensuring read only happens after write."""
     
     if memory_limit is None:
         memory_limit = 10 * 1024 * 1024  # sys.maxsize
     memory_limit = int(memory_limit)
 
-    while True:
-        # Wait for the write to complete before reading
-        event.wait()
+    # queue will have messages in the form (cpu_percent_completed)
+    # Get the last message and trash the rest
 
-        # Read from the file
-        io_read_benchmark_user_input_data_size(inputs, rundir, memory_limit=memory_limit)
+    # Create empty files
+    for name in outputs:
+        open(rundir.joinpath(name), "wb").close()
 
-        # Clear the event to block the next read until write is done
-        event.clear()
+    io_completed = 0
+    bytes_read = {
+        name: 0
+        for name in inputs
+    }
+    bytes_written = {
+        name: 0
+        for name in outputs
+    }
 
-        # Write to the file and then set the event to signal completion
-        io_write_benchmark_user_input_data_size(outputs, rundir, memory_limit=memory_limit)
-        event.set()
+    # get size of inputs
+    inputs = {
+        name: os.path.getsize(rundir.joinpath(name))
+        for name in inputs
+    }
 
+    while io_completed < 100:
+        cpu_percent = max(io_completed, cpu_queue.get())
+        while True: # Get the last message
+            try:
+                cpu_percent = max(io_completed, cpu_queue.get_nowait())
+            except queue.Empty:
+                break
+
+        log_debug(f"CPU Percent: {cpu_percent}")
+        if cpu_percent:
+            bytes_to_read = {
+                name: int(size * (cpu_percent / 100) - bytes_read[name])
+                for name, size in inputs.items()
+            }
+            bytes_to_write = {
+                name: int(size * (cpu_percent / 100) - bytes_written[name])
+                for name, size in outputs.items()
+            }
+            io_read_benchmark_user_input_data_size(bytes_to_read, rundir, memory_limit=memory_limit)
+            io_write_benchmark_user_input_data_size(bytes_to_write, rundir, memory_limit=memory_limit)
+
+            bytes_read = {
+                name: bytes_read[name] + bytes_to_read[name]
+                for name in bytes_to_read
+            }
+            bytes_written = {
+                name: bytes_written[name] + bytes_to_write[name]
+                for name in bytes_to_write
+            }
+
+            log_debug(f"Bytes Read: {bytes_read}")
+            log_debug(f"Bytes Written: {bytes_written}")
+
+            io_completed = cpu_percent
+
+            if io_completed >= 100:
+                break
 
 def get_available_gpus():
     proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -197,22 +308,21 @@ def gpu_benchmark(time: int = 100,
                   device: int = 0): #work, device
     
     gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('./gpu_benchmark')} {work} {time}"]
-    print(f"Running GPU Benchmark: {gpu_prog}")
-    subprocess.Popen(gpu_prog, shell=True)  
+    log_debug(f"Running GPU Benchmark: {gpu_prog}")
+    subprocess.Popen(gpu_prog, shell=True)
 
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", help="Task Name")
-    parser.add_argument("--rundir", help="Run directory")
+    parser.add_argument("name", help="Task name.")
+    parser.add_argument("--rundir", help="Run directory.")
     parser.add_argument("--percent-cpu", default=0.5, type=float,
                         help="percentage related to the number of cpu threads.")
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
-    parser.add_argument("--path-cores", default=None,
-                        help="Path to cores file.")
+    parser.add_argument("--path-cores", default=None, help="Path to cores file.")
     parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
-    parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete the task (overrides CPU and GPU works)")
+    parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete the task (overrides CPU and GPU works).")
     parser.add_argument("--mem", default=None, help="Max amount (in MB) of memory consumption.")
     parser.add_argument("--out", help="output files name.")
     return parser
@@ -222,7 +332,6 @@ def main():
     """Main program."""
     parser = get_parser()
     args, other = parser.parse_known_args()
-    print("[Wfbench] ARGS", args)
     core = None
 
     if args.rundir:
@@ -235,7 +344,7 @@ def main():
         path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    print(f"[WfBench] Starting {args.name} Benchmark\n")
+    log_info(f"Starting {args.name} Benchmark")
 
     mem_bytes = args.mem * 1024 * 1024 if args.mem else None
 
@@ -243,61 +352,61 @@ def main():
     io_proc = None
     outputs_dict = {}
 
-    print("Directory:", os.getcwd())
+    cpu_queue = multiprocessing.Queue()
+
+    # print("Directory:", os.getcwd())
     if args.out:
-        print("[WfBench] Starting IO benchmark...")
+        log_info(f"Starting IO benchmark for {args.name}...")
 
         # Remove all escape characters before attempting to parse the JSON string
         cleaned_output = re.sub(r'\\+', '', args.out)
-        
+
         # Attempt to parse the cleaned string
         try:
             outputs_dict = json.loads(cleaned_output)
         except json.JSONDecodeError as e:
-            print("Failed to decode JSON:", e)
-            outputs_dict = {}
-
-        print("OUTPUT",outputs_dict)
-        print("INPUTS", other)
+            log_error(f"Failed to decode JSON: {e}")
+            sys.exit(1)
 
         # Create a multiprocessing event that in the first run is set to True
         write_done_event = multiprocessing.Event() 
         # Set this to True to allow the first read to happen
         write_done_event.set()
         # Print the value of the event
-        print("Event Value:", write_done_event.is_set())
+        # print("Event Value:", write_done_event.is_set())
 
         io_proc = multiprocessing.Process(
             target=io_alternate,
-            args=(other, outputs_dict, mem_bytes, rundir, write_done_event))
+            args=(other, outputs_dict, cpu_queue, mem_bytes, rundir, write_done_event)
+        )
         io_proc.start()
         procs.append(io_proc)
 
-   
     if args.gpu_work:
-        print("[WfBench] Starting GPU Benchmark...")
+        log_info(f"Starting GPU Benchmark for {args.name}...")
         available_gpus = get_available_gpus() #checking for available GPUs
 
         if not available_gpus:
-            print("No GPU available")
+            log_error("No GPU available")
+            sys.exit(1)
         else:
             device = available_gpus[0]
-            print(f"Running on GPU {device}")
+            log_debug(f"Running on GPU {device}")
 
             if args.time:
-                print(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
+                log_debug(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
                 gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
             else:
                 gpu_benchmark(work=int(args.gpu_work), device=device)
             
     
     if args.cpu_work:
-        print("[WfBench] Starting CPU and Memory Benchmarks...")
+        log_info(f"Starting CPU and Memory Benchmarks for {args.name}...")
         if core:
-            print(f"[WfBench]  {args.name} acquired core {core}")
+            log_debug(f"{args.name} acquired core {core}")
 
         mem_threads=int(10 - 10 * args.percent_cpu)
-        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_threads=int(10 * args.percent_cpu),
+        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_queue=cpu_queue, cpu_threads=int(10 * args.percent_cpu),
                                                 mem_threads=mem_threads,
                                                 cpu_work=sys.maxsize if args.time else int(args.cpu_work),
                                                 core=core,
@@ -313,7 +422,7 @@ def main():
                 if isinstance(proc, subprocess.Popen):
                     proc.wait()
         if io_proc is not None and io_proc.is_alive():
-            io_proc.terminate()
+            # io_proc.terminate()
             io_proc.join()
 
         
@@ -321,15 +430,15 @@ def main():
             try:
                 os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
             except subprocess.TimeoutExpired:
-                print("Memory process did not terminate; force-killing.")
+                log_debug("Memory process did not terminate; force-killing.")
         # As a fallback, use pkill if any remaining instances are stuck
         subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
 
-        print("[WfBench] Completed CPU and Memory Benchmarks!\n")
+        log_debug("Completed CPU and Memory Benchmarks!")
 
     # NOTE: If you would like to run only IO add time.sleep(2)
     # Check if all procs are done, if not, kill them
-    print("[WfBench] Checking if all processes are done...")
+    log_debug("Checking if all processes are done...")
     for proc in procs:
         if isinstance(proc, multiprocessing.Process):
             if proc.is_alive():
@@ -340,7 +449,7 @@ def main():
 
     if core:
         unlock_core(path_locked, path_cores, core)
-    print("WfBench Benchmark completed!")
+    log_info(f"Benchmark {args.name} completed!")
 
 if __name__ == "__main__":
     main()
