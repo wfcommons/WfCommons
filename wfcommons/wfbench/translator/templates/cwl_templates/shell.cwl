@@ -1,8 +1,8 @@
 cwlVersion: v1.0
 class: CommandLineTool
-
-baseCommand: ["/bin/bash", "-c"]
-
+requirements:
+  InlineJavascriptRequirement: {}
+  ShellCommandRequirement: {}
 stdout: $("logs/" + inputs.step_name + ".out")
 stderr: $("logs/" + inputs.step_name + ".err")
 
@@ -18,6 +18,7 @@ arguments:
         }
         return cmd;
       }
+    shellQuote: false
 
 inputs:
   command:
