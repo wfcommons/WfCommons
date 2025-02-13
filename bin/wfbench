@@ -325,6 +325,8 @@ def get_parser() -> argparse.ArgumentParser:
                                                "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
     parser.add_argument("--input-files", help="input files names as a JSON array "
                                               "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
+    parser.add_argument("--debug", action="store_true", help="Enable debug messages.")
+
     return parser
     
 
@@ -333,6 +335,9 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     core = None
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     if args.rundir:
         rundir = pathlib.Path(args.rundir)
