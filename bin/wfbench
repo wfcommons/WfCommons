@@ -365,9 +365,8 @@ def main():
         try:
             outputs_dict = json.loads(cleaned_output)
         except json.JSONDecodeError as e:
-            log_error("Failed to decode JSON:", e)
+            log_error(f"Failed to decode JSON: {e}")
             sys.exit(1)
-            outputs_dict = {}
 
         # Create a multiprocessing event that in the first run is set to True
         write_done_event = multiprocessing.Event() 
