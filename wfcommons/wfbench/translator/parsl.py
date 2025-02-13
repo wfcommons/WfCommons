@@ -12,7 +12,9 @@ import logging
 from typing import Union, Optional
 from collections import defaultdict, deque
 import pathlib
-from ...common import Workflow, FileLink
+import json
+import ast
+from ...common import Workflow
 from .abstract_translator import Translator
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -99,11 +101,17 @@ class ParslTranslator(Translator):
 
                 args = []
                 for a in task.args:
-                    if a.startswith("--out"):
-                        # appending a " (double quote) to the beginning and end of the json object
-                        a = a.replace("{", "\"{").replace("}", "}\"")
-                        # replaceing ' with \\" to have an escaped double quote
-                        a = a.replace("'", "\\\\\"")
+                    if a.startswith("--output-files"):
+                        flag, output_files_dict = a.split(" ", 1)
+                        output_files_dict = ast.literal_eval(output_files_dict)
+                        a = f"{flag} '{json.dumps(output_files_dict).replace('"', '\\"')}'"
+                        print(a)
+
+                    if a.startswith("--input-files"):
+                        flag, input_files_arr = a.split(" ", 1)
+                        input_files_arr = ast.literal_eval(input_files_arr)
+                        a = f"{flag} '{json.dumps(input_files_arr).replace('"', '\\"')}'"
+                        print(a)
                     args.append(a)
 
                 args = " ".join(args)
@@ -120,7 +128,7 @@ class ParslTranslator(Translator):
                 output_files = [f"{o.file_id}" for o in task.output_files]
 
                 code = [
-                    f"{task.task_id} = generic_shell_app('bin/{task.program} {args}',",
+                    f"{task.task_id} = generic_shell_app(\"bin/{task.program} {args}\",",
                     f"                                 inputs={dependency},",
                     f"                                 outputs=get_parsl_files({output_files},",
                      "                                                         True),",
