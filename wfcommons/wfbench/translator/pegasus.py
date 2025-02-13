@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,9 +87,7 @@ class PegasusTranslator(Translator):
                        "wf.add_transformation_catalog(tc)\n" \
                        f"wf.write('{self.workflow.name}-benchmark-workflow.yml')\n"
 
-        with open(this_dir.joinpath("templates/pegasus_template.py")) as fp:
-            run_workflow_code = fp.read()
-        run_workflow_code = run_workflow_code.replace("# Generated code goes here", self.script)
+        run_workflow_code = self._merge_codelines("templates/pegasus_template.py", self.script)
 
         # write benchmark files
         output_folder.mkdir(parents=True)
@@ -137,7 +135,7 @@ class PegasusTranslator(Translator):
             # arguments
             args = []
             for a in task.args:
-                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
+                a = a.replace("'", "\"") if "--output-files" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
                 args.append(a)
             args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
