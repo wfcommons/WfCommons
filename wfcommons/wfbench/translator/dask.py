@@ -12,9 +12,13 @@ import pathlib
 
 from logging import Logger
 from typing import Optional, Union
+import ast
+import json
 
 from .abstract_translator import Translator
 from ...common import FileLink, Workflow
+import json
+import ast
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -90,18 +94,19 @@ class DaskTranslator(Translator):
         codelines = ["randomizer = random.Random(seed)",
                      "TASKS = {}"]
         for task in self.tasks.values():
-            # print(vars(task))
             input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
             output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
             program = output_folder.joinpath(f'bin/{task.program}')
             args = []
             for a in task.args:
-                # print(a)
                 if "--output-files" in a:
-                    a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/", 1).replace("'", "\\\\\"").replace(": ", ":")
+                    flag, output_files_dict = a.split(" ", 1)
+                    output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    a = f"{flag} '{json.dumps(output_files_dict)}'"
                 elif "--input-files" in a:
-                    # a = str(output_folder.joinpath("data", a))
-                    a = a.replace("[", "\"[").replace("]", "]\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/", 1).replace("'", "\\\\\"").replace("'", "\\\\\"")
+                    flag, input_files_arr = a.split(" ", 1)
+                    input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
+                    a = f"{flag} '{json.dumps(input_files_arr)}'"
                 else:
                     a = a.replace("'", "\"") 
                 args.append(a)
@@ -140,7 +145,11 @@ class DaskTranslator(Translator):
             self.parsed_tasks.append(task_name)
             self.tasks_futures[task_name] = f"fut_dv_{self.task_id}"
             self.task_id += 1
-            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {self.task_parents[task_name]})"]
+
+            parent_futures = [self.tasks_futures[p] for p in self.task_parents[task_name]]
+            str_parent_futures = f"[{','.join(parent_futures)}]"
+
+            noindent_python_codelines = [f"{self.tasks_futures[task_name]} = client.submit(execute_task, TASKS['{task_name}'], {str_parent_futures})"]
             
             # parse children
             for child in self.task_children[task_name]:
