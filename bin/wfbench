@@ -208,7 +208,8 @@ def io_read_benchmark_user_input_data_size(inputs,
     for file, size in inputs.items():
         with open(rundir.joinpath(file), "rb") as fp:
             log_debug(f"Reading '{file}'")
-            while fp.read(size):
+            chunk_size = min(size, memory_limit)
+            while fp.read(chunk_size):
                 pass
     log_debug("Completed IO Read Benchmark!")
 
