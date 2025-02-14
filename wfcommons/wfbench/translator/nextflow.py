@@ -10,6 +10,7 @@
 
 import pathlib
 import json
+import ast
 
 from collections import defaultdict
 from math import ceil
@@ -58,6 +59,19 @@ class NextflowTranslator(Translator):
         # Output the code for each task
         for task in sorted_tasks:
             self.script += self._generate_task_code(task)
+
+        # Output the code for the workflow
+        self.script += self._generate_workflow_code(sorted_tasks)
+
+        # Output the code to the workflow file
+        self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
+
+        # Create the README file
+        self._write_readme_file(output_folder)
+
+        # Create additional files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
 
         return
 
@@ -131,33 +145,62 @@ class NextflowTranslator(Translator):
 
     def _generate_task_code(self, task: Task) -> str:
         code = f"process {task.task_id}()" + "{\n"
-        code = f"\tinput:\n"
+        code += f"\tinput:\n"
         if self._find_parents(task.task_id):
             for f in task.input_files:
                 code += f"\t\tval {f.file_id}\n"
         code += "\n"
 
-        code = f"\toutput:\n"
+        code += f"\toutput:\n"
         for f in task.output_files:
             code += f"\t\tval {f.file_id}\n"
         code += "\n"
 
         code += "\tscript:\n"
-        code += "\"\"\"\n"
+        code += "\t\t\"\"\"\n"
 
-        code += "\"${params.pwd}/bin/" + task.program + "\" "
-        for arg in task.args:
-            if "--out" in arg:
-                XXXX
+        code += "\t\t\"${params.pwd}/bin/" + task.program + "\""
+        for a in task.args:
+            if "--output-files" in a:
+                flag, output_files_dict = a.split(" ", 1)
+                output_files_dict = {str("\"${params.pwd}/data/" + key): value for key, value in
+                                     ast.literal_eval(output_files_dict).items()}
+                a = f"{flag} '{json.dumps(output_files_dict)}'"
+            elif "--input-files" in a:
+                flag, input_files_arr = a.split(" ", 1)
+                input_files_arr = [str("\"${params.pwd}/data/" + file) for file in
+                                   ast.literal_eval(input_files_arr)]
+                a = f"{flag} '{json.dumps(input_files_arr)}'"
+
+            code += " " + a
         code += " ".join(task.args) + "\n"
 
-        code += "\"\"\"\n"
-        code += "}\n"
+        code += "\t\t\"\"\"\n"
+        code += "}\n\n"
         print(code)
         return code
 
+    def _generate_workflow_code(self, sorted_tasks: List[Task]) -> str:
+        code = "workflow {\n"
+        for task in sorted_tasks:
+            code += self._generate_task_invocation_code(task)
+        code += "}\n"
+        return code
 
+    def _generate_task_invocation_code(self, task: Task) -> str:
 
+        # Figure out task output values
+        if task.output_files and self._find_children(task.task_id):
+            output_values = "(" + ",".join(["SSS"+f.file_id for f in task.output_files]) + ")"
+        else:
+            output_values = "_"
+
+        # Figure out task input values
+        input_values = ",".join([f.file_id for f in task.input_files])
+
+        code = output_values + " = " + task.task_id + "(" + input_values + ")\n\n"
+
+        return code
 
 
     def _write_readme_file(self, output_folder: pathlib.Path) -> None:
