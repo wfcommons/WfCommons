@@ -1,7 +1,7 @@
 # docker build --platform amd64 -t wfcommons-dev-nextflow -f Dockerfile_Nextflow .
 # docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-nextflow /bin/bash
 
-FROM amd64/ubuntu:jammy
+FROM amd64/ubuntu:noble
 
 LABEL org.containers.image.authors="henric@hawaii.edu"
 
@@ -26,10 +26,10 @@ RUN apt-get -y install gcc-multilib
 
 # Python stuff
 RUN apt-get -y install python3 python3-pip
-RUN python3 -m pip install pathos pandas filelock
-RUN python3 -m pip install networkx scipy matplotlib
-RUN python3 -m pip install pyyaml jsonschema requests
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN pip install --break-system-packages pathos pandas filelock 
+RUN pip install --break-system-packages networkx scipy matplotlib
+RUN pip install --break-system-packages pyyaml jsonschema requests
 
 # Stress-ng
 RUN apt-get -y install stress-ng
