@@ -16,6 +16,8 @@ from math import ceil
 from logging import Logger
 from typing import Dict, List, Optional, Union, MutableSet
 
+from pyparsing import empty
+
 from .abstract_translator import Translator
 from ...common import File, FileLink, Workflow
 from ...common.task import Task
@@ -37,67 +39,139 @@ class NextflowTranslator(Translator):
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
-        self.script = """
-import groovy.json.JsonSlurper
-def jsonSlurper = new JsonSlurper()
+        self.script = ""
 
-List<String> extractTaskIDforFile(Path filepath, String task_name) {
-  String filename = filepath as String
-  filename = filename[filename.lastIndexOf('/')+1..-1]
-
-  List<String> ids_for_file = new ArrayList<String>()
-  for (destination : file_inputs[filename]) {
-    def destination_task_name = destination[0]
-    def destination_task_id = destination[1]
-    if (destination_task_name == task_name)
-      ids_for_file.add(destination_task_id)
-  }
-  return ids_for_file
-}
-
-"""
-
-    def translate(self, output_file_path: pathlib.Path) -> None:
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description(WfFormat) into a Nextflow workflow application.
 
-        : param output_file_path: The name of the output file(e.g., workflow.py).
-        : type output_file_path: pathlib.Path
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
         """
 
-        # determine the abstract tasks and their abstract parents and children
-        self.abstract_tasks = defaultdict(list)
-        self.abstract_parents: Dict[str, MutableSet[str]] = defaultdict(set)
-        self._determine_abstract_relations()
+        # Create the output folder
+        output_folder.mkdir(parents=True)
 
-        self.task_inputs: Dict[str, List[File]] = {}
-        self.task_outputs: Dict[str, List[File]] = {}
-        self.task_input_amounts: Dict[str, int] = {}
-        self._determine_input_output()
+        # Create a topological order of the tasks
+        sorted_tasks = self._get_tasks_in_topological_order()
 
-        self.workflow_inputs = set().union(*self.task_inputs.values()).difference(*self.task_outputs.values())
+        # Output the code for each task
+        for task in sorted_tasks:
+            self.script += self._generate_task_code(task)
 
-        self._create_file_task_mappings(output_file_path)
+        return
 
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            self._create_task_args_map(output_file_path, abstract_task_name, physical_tasks)
-        self.script += "\n\n"
 
-        self.task_written: Dict[str, bool] = {}
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            self.task_written[abstract_task_name] = False
-            self._add_abstract_task_definition(abstract_task_name, physical_tasks)
+        # # determine the abstract tasks and their abstract parents and children
+        # self.abstract_tasks = defaultdict(list)
+        # self.abstract_parents: Dict[str, MutableSet[str]] = defaultdict(set)
+        # self._determine_abstract_relations()
+        #
+        # self.task_inputs: Dict[str, List[File]] = {}
+        # self.task_outputs: Dict[str, List[File]] = {}
+        # self.task_input_amounts: Dict[str, int] = {}
+        # self._determine_input_output()
+        #
+        #
+        #
+        # self.workflow_inputs = set().union(*self.task_inputs.values()).difference(*self.task_outputs.values())
+        #
+        # self._create_file_task_mappings(output_folder)
+        #
+        # for abstract_task_name, physical_tasks in self.abstract_tasks.items():
+        #     self._create_task_args_map(output_folder, abstract_task_name, physical_tasks)
+        # self.script += "\n\n"
+        #
+        # self.task_written: Dict[str, bool] = {}
+        # for abstract_task_name, physical_tasks in self.abstract_tasks.items():
+        #     self.task_written[abstract_task_name] = False
+        #     self._add_abstract_task_definition(abstract_task_name, physical_tasks)
+        #
+        # self.script += "workflow {\n"
+        # self.script += "  workflow_inputs = Channel.fromPath(\"${params.indir}/*\")\n"
+        # self.script += "\n"
+        #
+        # for abstract_task_name, physical_tasks in self.abstract_tasks.items():
+        #     if not self.task_written[abstract_task_name]:
+        #         self._add_call_to_abstract_task(abstract_task_name, physical_tasks)
+        # self.script += "}\n"
+        #
+        # self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
+        #
+        # self._write_readme_file(output_folder)
+        #
+        # # additional files
+        # self._copy_binary_files(output_folder)
+        # self._generate_input_files(output_folder)
 
-        self.script += "workflow {\n"
-        self.script += "  workflow_inputs = Channel.fromPath(\"${params.indir}/*\")\n"
-        self.script += "\n"
+    def _get_tasks_in_topological_order(self) -> List[Task]:
+        levels = {0: self._find_root_tasks()}
+        sorted_tasks: List[Task] = levels[0]
+        current_level = 1
+        while (True):
+            # print(f"Dealing with level {current_level}")
+            tasks_in_current_level = []
+            all_children = [self._find_children(p.task_id) for p in levels[current_level-1]]
+            all_children = [item for sublist in all_children for item in sublist]
+            print(all_children)
+            if not all_children:
+                # print("NO MORE CHILDREN - DONE")
+                break
+            for potential_task in all_children:
+                # print(f"Looking at child {potential_task.task_id}")
+                if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
+                    tasks_in_current_level.append(potential_task)
+            levels[current_level] = tasks_in_current_level
+            sorted_tasks.extend(tasks_in_current_level)
+            current_level += 1
+        # for level in levels:
+            # print(f"Level {level}: {[t.task_id for t in levels[level]]}")
+        return sorted_tasks
 
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            if not self.task_written[abstract_task_name]:
-                self._add_call_to_abstract_task(abstract_task_name, physical_tasks)
-        self.script += "}\n"
 
-        self._write_output_file(self.script, output_file_path)
+    def _generate_task_code(self, task: Task) -> str:
+        code = f"process {task.task_id}()" + "{\n"
+        code = f"\tinput:\n"
+        if self._find_parents(task.task_id):
+            for f in task.input_files:
+                code += f"\t\tval {f.file_id}\n"
+        code += "\n"
+
+        code = f"\toutput:\n"
+        for f in task.output_files:
+            code += f"\t\tval {f.file_id}\n"
+        code += "\n"
+
+        code += "\tscript:\n"
+        code += "\"\"\"\n"
+
+        code += "\"${params.pwd}/bin/" + task.program + "\" "
+        for arg in task.args:
+            if "--out" in arg:
+                XXXX
+        code += " ".join(task.args) + "\n"
+
+        code += "\"\"\"\n"
+        code += "}\n"
+        print(code)
+        return code
+
+
+
+
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
+            out.write(f"nextflow run ./workflow.nf --indir .\n")
+
 
     def _is_resource_arg(self, arg: str) -> bool:
         return arg.startswith("--percent-cpu") or arg.startswith("--mem") \
@@ -152,38 +226,38 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
                 self.task_input_amounts[abstract_task_name] = None
         self.script += "\n"
 
-    def _create_file_task_mappings(self, output_file_path: pathlib.Path) -> None:
+    def _create_file_task_mappings(self, output_folder: pathlib.Path) -> None:
         file_task_map = defaultdict(list)
         for task_name, task_input_files in self.task_inputs.items():
             task = self.tasks[task_name]
             for file in task_input_files:
-                file_task_map[file.file_id].append([task.name, task.task_id])
-        self._write_map_file(file_task_map, "file_inputs", output_file_path)
+                file_task_map[str(output_folder) + "/data/" + file.file_id].append([task.name, task.task_id])
+        self._write_map_file(file_task_map, "file_inputs", output_folder)
 
-    def _write_map_file(self, map_dict: Dict, map_name: str, output_file_path: pathlib.Path) -> None:
-        path = output_file_path.parent.joinpath(f"{map_name}.json")
+    def _write_map_file(self, map_dict: Dict, map_name: str, output_folder: pathlib.Path) -> None:
+        path = output_folder.joinpath(f"{map_name}.json")
         with open(path, "w") as f:
             f.write(json.dumps(map_dict, indent=4))
         self.script += f"{map_name} = jsonSlurper.parseText(file(\"${{projectDir}}/{map_name}.json\").text)\n"
 
-    def _create_task_args_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
+    def _create_task_args_map(self, output_folder: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
         map_name = f"{self.valid_task_name(abstract_task_name)}_args"
         task_args_map = {}
         for ptask in physical_tasks:
-            out_file_sizes = {file.file_id: file.size for file in self.task_outputs[ptask.task_id]}
+            out_file_sizes = {str(output_folder) + "/data/" + file.file_id: file.size for file in self.task_outputs[ptask.task_id]}
             out_arg = str(out_file_sizes).replace("{", "").replace("}", "").replace("'", "\\\"").replace(": ", ":")
             task_args_map[ptask.task_id] = {
                 "out": out_arg,
                 "resources": " ".join((arg for arg in ptask.args if self._is_resource_arg(arg)))
             }
-        self._write_map_file(task_args_map, map_name, output_file_path)
+        self._write_map_file(task_args_map, map_name, output_folder)
 
     def valid_task_name(self, original_task_name: str) -> str:
         return original_task_name.replace('-', '_')
 
     def _add_abstract_task_definition(self, abstract_task_name: str, physical_tasks: List[Task]) -> None:
         """
-        Add an abstract task to the workflow considering it's physical tasks.
+        Add an abstract task to the workflow considering its physical tasks.
 
         : param abstract_task_name: the name of the abstract task
         : type abstract_task_name: str
@@ -204,10 +278,14 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
 
         # creating the command for the abstract task using the first physical task as a template
         example_task = physical_tasks[0]
+        print(example_task)
         cmd = pathlib.Path(example_task.program).name
         resource_args_done = False
         for a in example_task.args:
+            print("ARG = " , a)
+            print(f"{abstract_task_name}_{example_task.task_id}")
             if a == f"{abstract_task_name}_{example_task.task_id}":
+                print("GOT THE ABSTRACT TASK NAME")
                 cmd += f" {abstract_task_name}_${{id}}"
                 continue
             if self._is_resource_arg(a):
@@ -220,6 +298,7 @@ List<String> extractTaskIDforFile(Path filepath, String task_name) {
                 cmd += " \\$inputs"
                 break
             else:
+                print("===> ", a)
                 a = a.replace(f"{abstract_task_name}_{example_task.task_id}", f"{abstract_task_name}_${{id}}")
                 cmd += " " + a.replace("'", "\"")
 

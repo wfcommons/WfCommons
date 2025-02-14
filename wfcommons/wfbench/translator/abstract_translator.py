@@ -125,6 +125,15 @@ class Translator(ABC):
             out.write(contents)
         self.logger.info(f"Translated content written to '{output_file_path}'")
 
+    def _find_root_tasks(self) -> list[Task]:
+        """
+        Find the workflow's root (i.e., parentless) tasks.
+
+        :return: List of task
+        :rtype: list[Task]
+        """
+        return [self.tasks[task_name] for task_name in self.root_task_names]
+
     def _find_children(self, task_name: str) -> list[Task]:
         """
         Find the children for a specific task.
@@ -136,12 +145,7 @@ class Translator(ABC):
         :rtype: list[Task]
         """
         self.logger.debug(f"Finding children for task '{task_name}'")
-        children = None
-        for node in self.instance.instance["workflow"]["tasks"]:
-            if node["name"] == task_name:
-                children = node["children"]
-
-        return children
+        return [self.tasks[task_id] for task_id in self.task_children[task_name]]
 
     def _find_parents(self, task_name: str) -> list[Task]:
         """
@@ -154,12 +158,7 @@ class Translator(ABC):
         :rtype: list[Task]
         """
         self.logger.debug(f"Finding parents for task '{task_name}'")
-        parents = None
-        for node in self.instance.instance["workflow"]["tasks"]:
-            if node["name"] == task_name:
-                parents = node["parents"]
-
-        return parents
+        return [self.tasks[task_id] for task_id in self.task_parents[task_name]]
 
     def _merge_codelines(self, template_file_path: str, wf_codelines: str) -> str:
         """
