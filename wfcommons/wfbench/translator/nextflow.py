@@ -191,32 +191,53 @@ class NextflowTranslator(Translator):
         return code
 
     def _generate_workflow_code(self, sorted_tasks: List[Task]) -> str:
-        code = "workflow {\n"
+        code = ""
+
+        # Generate bootstrap function
+        code += ("// Bootstrap function\n"
+                 "def bootstrap() {\n"
+                 "\tdef outputs = [:]\n"
+                 "\treturn outputs\n"
+                 "}\n\n")
+
+        # Generate all task functions
         for task in sorted_tasks:
-            code += self._generate_task_invocation_code(task)
+            code += self._generate_task_function(task)
+
+        # Generate workflow function
+        code += "workflow {\n"
+        code += "\tresults = bootstrap()\n"
+        for task in sorted_tasks:
+            code += f"\tresults = function_{task.task_id}(results)\n"
         code += "}\n"
         return code
 
-    def _generate_task_invocation_code(self, task: Task) -> str:
-        code = f"\t// Calling task {task.task_id}\n"
+    def _generate_task_function(self, task: Task) -> str:
+        code = f"// Function to call task {task.task_id}\n"
+        code += f"def function_{task.task_id}(Map inputs) " + "{\n"
+
         if self._find_parents(task.task_id):
             # Input channel mixing and then call
             code += f"\tdef {task.task_id}_necessary_input = Channel.empty()\n"
             for f in task.input_files:
-                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix({f.file_id})\n"
+                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix(inputs.{f.file_id})\n"
             code += f"\tdef {task.task_id}_necessary_input_future = {task.task_id}_necessary_input.collect()\n"
             code += f"\tdef {task.task_id}_produced_output = {task.task_id}({task.task_id}_necessary_input_future)\n"
         else:
             # Simple call
             code += f"\tdef {task.task_id}_produced_output = {task.task_id}()\n"
 
-        # Output file convenience variables
+        # Pass on the outputs
+        code += "\n"
+        code += "\tdef outputs = inputs.clone()\n"
         if self._find_children(task.task_id):
             counter = 0
             for f in task.output_files:
-                code += f"\tdef {f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
+                code += f"\toutputs.{f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
                 counter += 1
-        code += "\n"
+        code += "\treturn outputs\n"
+        code += "}\n\n"
+
         return code
 
 
