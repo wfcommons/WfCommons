@@ -42,6 +42,7 @@ class NextflowTranslator(Translator):
 
         self.script = ""
 
+
     def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description(WfFormat) into a Nextflow workflow application.
@@ -56,7 +57,7 @@ class NextflowTranslator(Translator):
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
         # print([t.task_id for t in sorted_tasks])
-
+        
         # Output the code for each task
         for task in sorted_tasks:
             self.script += self._generate_task_code(task)
@@ -100,42 +101,90 @@ class NextflowTranslator(Translator):
 
     def _generate_task_code(self, task: Task) -> str:
         code = f"process {task.task_id}()" + "{\n"
-        code += f"\tinput:\n"
-        if self._find_parents(task.task_id):
-            for f in task.input_files:
-                code += f"\t\tval {f.file_id}\n"
-        code += "\n"
 
-        code += f"\toutput:\n"
+        # File variables
         if self._find_children(task.task_id):
             for f in task.output_files:
-                code += f"\t\tval {f.file_id}\n"
-            code += "\n"
+                code += f"\tdef {f.file_id} = " + "\"${params.pwd}/data/" + f.file_id + "\"\n"
 
+        # Input declaration
+        code += f"\tinput:\n"
+        if self._find_parents(task.task_id):
+            code += f"\t\tval {task.task_id}_ifs\n"
+
+        # Output declaration
+        code += f"\toutput:\n"
+        if self._find_children(task.task_id):
+            code += "\t\tval([\n"
+            for f in task.output_files:
+                code += f"\t\t\t{f.file_id},\n"
+            code = code[:-2]
+            code += "\n])\n"
+
+        # Script
         code += "\tscript:\n"
+        # Input convenience vars
+        if self._find_parents(task.task_id):
+            counter = 0
+            for f in task.input_files:
+                code += f"\t\tdef {f.file_id} = {task.task_id}_ifs[{counter}]\n"
+                counter += 1
+            code += "\n"
 
         # Generate output variables
         if self._find_children(task.task_id):
             for f in task.output_files:
                 code += "\t\t" + f.file_id + " = \"${params.pwd}/data/" + f.file_id + "\"\n"
 
+        # Generate input spec
+        if task.input_files:
+            if True:
+                code += "\t\tdef input_spec = \"[\"\n"
+                for f in task.input_files:
+                    code += "\t\tinput_spec += \"\\\"${params.pwd}/data/" + f.file_id + "\\\",\"\n"
+                code = code[:-3] + "]\"\n"
+            else:
+                tmp_file_input_spec = f"/tmp/input_spec_{task.task_id}.json"
+                code += f"\t\ttouch {tmp_file_input_spec}\n"
+                code += f"\t\techo -n \"[\" >> {tmp_file_input_spec}\n"
+                for f in task.input_files[:-1]:
+                    code += "\t\techo -n \"\\\"${params.pwd}/data/" + f.file_id + "\\\",\"" + f">> {tmp_file_input_spec}\n"
+                code += "\t\techo -n \"\\\"${params.pwd}/data/" + task.input_files[-1].file_id + "\\\"\"" + f">> {tmp_file_input_spec}\n"
+                code += f"\t\techo -n \"]\" >> {tmp_file_input_spec}\n"
+
+        # Generate output spec
+        if task.output_files:
+            if True:
+                code += "\t\tdef output_spec = \"{\"\n"
+                for f in task.input_files:
+                    code += "\t\toutput_spec += \"\\\"${params.pwd}/data/" + f.file_id + "\\\": " + str(f.size) + ",\"\n"
+                code = code[:-3] + "}\"\n"
+            else:
+                tmp_file_output_spec = f"/tmp/output_spec_{task.task_id}.json"
+                code += f"\t\ttouch {tmp_file_output_spec}\n"
+                code += "\t\techo -n \"{\" " + f">> {tmp_file_output_spec}\n"
+                for f in task.output_files[:-1]:
+                    code += "\t\techo -n \"\\\"${params.pwd}/data/" + f.file_id + f"\\\":{f.size},\"" + f">> {tmp_file_output_spec}\n"
+                code += "\t\techo -n \"\\\"${params.pwd}/data/" + task.output_files[-1].file_id + f"\\\":{task.output_files[-1].size},\"" + f">> {tmp_file_output_spec}\n"
+                code += "\t\techo -n \"}\"" + f" >> {tmp_file_output_spec}\n"
+
+        code += "\t\t\"\"\"\n"  # FOR NOW
         # Generate command
-        code += "\t\t\"\"\"\n"
-        code += "\t\t\"${params.pwd}/bin/" + task.program + "\""
+        code += "\t\t\"${params.pwd}/bin/" + task.program + "\" "
         for a in task.args:
             if "--output-files" in a:
-                flag, output_files_dict = a.split(" ", 1)
-                output_files_dict = {str("${params.pwd}/data/" + key): value for key, value in
-                                     ast.literal_eval(output_files_dict).items()}
-                a = f"{flag} '{json.dumps(output_files_dict)}'"
+                code += "--output-files '" + "${output_spec}' "
+                # code += f"--output-files `cat {tmp_file_output_spec}` "
+                pass
             elif "--input-files" in a:
-                flag, input_files_arr = a.split(" ", 1)
-                input_files_arr = [str("${params.pwd}/data/" + file) for file in
-                                   ast.literal_eval(input_files_arr)]
-                a = f"{flag} '{json.dumps(input_files_arr)}'"
-
-            code += " " + a
+                tmp_file = f"/tmp/input_spec_{task.task_id}.json"
+                code += "--input-files '" + "${input_spec}' "
+                # code += f"--input-files `cat {tmp_file_input_spec}` "
+                pass
+            else:
+                code += a + " "
         code += "\n"
+        code += "\t\t/bin/rm -f " + tmp_file + "\n"
         code += "\t\t\"\"\"\n"
 
         code += "}\n\n"
@@ -149,21 +198,25 @@ class NextflowTranslator(Translator):
         return code
 
     def _generate_task_invocation_code(self, task: Task) -> str:
-
-        # Figure out task output values
-        if task.output_files and self._find_children(task.task_id):
-            output_values = "(" + "\t,\n".join([f.file_id for f in task.output_files]) + ")"
+        code = f"\t// Calling task {task.task_id}\n"
+        if self._find_parents(task.task_id):
+            # Input channel mixing and then call
+            code += f"\tdef {task.task_id}_necessary_input = Channel.empty()\n"
+            for f in task.input_files:
+                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix({f.file_id})\n"
+            code += f"\tdef {task.task_id}_necessary_input_future = {task.task_id}_necessary_input.collect()\n"
+            code += f"\tdef {task.task_id}_produced_output = {task.task_id}({task.task_id}_necessary_input_future)\n"
         else:
-            output_values = "_"
+            # Simple call
+            code += f"\tdef {task.task_id}_produced_output = {task.task_id}()\n"
 
-        # Figure out task input values
-        if task.input_files and self._find_parents(task.task_id):
-            input_values = "\t,\n".join([f.file_id for f in task.input_files])
-        else:
-            input_values = ""
-
-        code = output_values + " = " + task.task_id + "(" + input_values + ")\n\n"
-
+        # Output file convenience variables
+        if self._find_children(task.task_id):
+            counter = 0
+            for f in task.output_files:
+                code += f"\tdef {f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
+                counter += 1
+        code += "\n"
         return code
 
 
