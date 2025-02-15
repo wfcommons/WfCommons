@@ -174,15 +174,11 @@ class WorkflowBenchmark:
 
         # create data footprint
         for task in self.workflow.tasks.values():
-            outfiles = {file.file_id: file.size for file in task.output_files}
-            outfiles_str = str(outfiles).replace("{", "\"{") \
-                .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
-            task.args.append(f"--out {outfiles_str}")
+            output_files = {file.file_id: file.size for file in task.output_files}
+            task.args.append(f"--output-files {output_files}")
 
-            infiles = [f"\"{file.file_id}\"" for file in task.input_files]
-            infiles_str = str(infiles).replace("[", "\"[") \
-                .replace("]", "]\"").replace("'", "\\\\\"")
-            task.args.append(f"--input-files {infiles_str}")
+            input_files = [file.file_id for file in task.input_files]
+            task.args.append(f"--input-files {input_files}")
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
