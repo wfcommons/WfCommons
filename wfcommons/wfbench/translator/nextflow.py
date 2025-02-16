@@ -9,11 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
-import json
-import ast
 
-from collections import defaultdict
-from math import ceil
 from logging import Logger
 from typing import Dict, List, Optional, Union, MutableSet
 
@@ -87,6 +83,12 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
         return
 
     def _create_workflow_script(self, tasks: list[Task]):
+        """
+        Create the Nextflow script.
+
+        :param tasks: The (sorted) list of tasks.
+        :type tasks: list[Task]
+        """
 
         # Output the code for command-line argument processing
         self.script += self._generate_arg_parsing_code()
@@ -101,6 +103,12 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
         return
 
     def _generate_arg_parsing_code(self):
+        """
+        Generate the code to parse command-line argument.
+
+        :return: The code.
+        :rtype: str
+        """
 
         code = r'''
 params.simulate = false
@@ -145,6 +153,12 @@ validateParams()
         return code
 
     def _get_tasks_in_topological_order(self) -> List[Task]:
+        """
+        Sort the workflow tasks in topological order.
+
+        :return: A sorted list of tasks.
+        :rtype: List[Task]
+        """
         levels = {0: self._find_root_tasks()}
         sorted_tasks: List[Task] = levels[0]
         current_level = 1
@@ -165,6 +179,17 @@ validateParams()
 
 
     def _create_task_script(self, output_folder: pathlib.Path, task: Task):
+        """
+        Generate the bash script for invoking a task.
+
+        :param output_folder: The path to the output folder.
+        :type output_folder: pathlib.Path
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
+
         code = "#!/bin/bash\n\n"
 
         # Generate input spec
@@ -195,6 +220,15 @@ validateParams()
             out.write(code)
 
     def _generate_task_code(self, task: Task) -> str:
+        """
+        Generate the code for a task, as a Nextflow process.
+
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
+
         code = f"process {task.task_id}()" + "{\n"
 
         # File variables
@@ -239,6 +273,15 @@ validateParams()
         return code
 
     def _generate_workflow_code(self, sorted_tasks: List[Task]) -> str:
+        """
+        Generate the code for the workflow.
+
+        :param sorted_tasks: The task.
+        :type sorted_tasks: List[Task]
+        :return: The code.
+        :rtype: str
+        """
+
         code = ""
 
         # Generate bootstrap function
@@ -261,6 +304,14 @@ validateParams()
         return code
 
     def _generate_task_function(self, task: Task) -> str:
+        """
+        Generate the code for a starting a task's Nextflow process, as a Nextflow function.
+
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
         code = f"// Function to call task {task.task_id}\n"
         code += f"def function_{task.task_id}(Map inputs) " + "{\n"
 
