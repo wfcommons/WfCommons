@@ -50,7 +50,7 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
     Optional parameters:
       --help        Show this message and exit.
-      --simulate    Use a "sleep 1" for all tasks insted of the WfBench benchmark.
+      --simulate    Use a "sleep 1" for all tasks instead of the WfBench benchmark.
 """
 
 
@@ -233,7 +233,7 @@ validateParams()
 
 
         code += "\t\t\"\"\"\n"
-        code += "\t\tbash \"${pwd}/bin/script_" + task.task_id + ".sh\"\n"
+        code += "\t\t${params.simulate ? 'sleep 1' : \"bash ${pwd}/bin/script_" + task.task_id + ".sh\"}\n"
         code += "\t\t\"\"\"\n"
         code += "}\n\n"
         return code
