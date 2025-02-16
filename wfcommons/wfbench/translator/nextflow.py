@@ -54,10 +54,18 @@ class NextflowTranslator(Translator):
         # Create the output folder
         output_folder.mkdir(parents=True)
 
+        # Create benchmark files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
+
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
         # print([t.task_id for t in sorted_tasks])
-        
+
+        # Create the bash script for each task
+        for task in sorted_tasks:
+            self._create_task_script(output_folder, task)
+
         # Output the code for each task
         for task in sorted_tasks:
             self.script += self._generate_task_code(task)
@@ -72,9 +80,6 @@ class NextflowTranslator(Translator):
         # Create the README file
         self._write_readme_file(output_folder)
 
-        # Create additional files
-        self._copy_binary_files(output_folder)
-        self._generate_input_files(output_folder)
 
         return
 
@@ -98,6 +103,35 @@ class NextflowTranslator(Translator):
             current_level += 1
         return sorted_tasks
 
+    def _create_task_script(self, output_folder: pathlib.Path, task: Task):
+        code = "#!/bin/bash\n\n"
+
+        # Generate input spec
+        input_spec = "'\\["
+        for f in task.input_files:
+            input_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\","
+        input_spec = input_spec[:-1] + "\\]'"
+
+        # Generate output spec
+        output_spec = "'\\{"
+        for f in task.output_files:
+            output_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\":" + str(f.size)+ ","
+        output_spec = output_spec[:-1] + "\\}'"
+
+        code += str(output_folder.joinpath(f"bin/{task.program} "))
+
+        for a in task.args:
+            if "--output-files" in a:
+                code += "--output-files " + output_spec + " "
+            elif "--input-files" in a:
+                code += "--input-files " + input_spec + " "
+            else:
+                code += a + " "
+        code += "\n"
+
+        script_file_path = output_folder.joinpath(f"bin/script_{task.task_id}.sh")
+        with open(script_file_path, "w") as out:
+            out.write(code)
 
     def _generate_task_code(self, task: Task) -> str:
         code = f"process {task.task_id}()" + "{\n"
@@ -136,57 +170,10 @@ class NextflowTranslator(Translator):
             for f in task.output_files:
                 code += "\t\t" + f.file_id + " = \"${params.pwd}/data/" + f.file_id + "\"\n"
 
-        # Generate input spec
-        if task.input_files:
-            if True:
-                code += "\t\tdef input_spec = \"[\"\n"
-                for f in task.input_files:
-                    code += "\t\tinput_spec += \"\\\"${params.pwd}/data/" + f.file_id + "\\\",\"\n"
-                code = code[:-3] + "]\"\n"
-            else:
-                tmp_file_input_spec = f"/tmp/input_spec_{task.task_id}.json"
-                code += f"\t\ttouch {tmp_file_input_spec}\n"
-                code += f"\t\techo -n \"[\" >> {tmp_file_input_spec}\n"
-                for f in task.input_files[:-1]:
-                    code += "\t\techo -n \"\\\"${params.pwd}/data/" + f.file_id + "\\\",\"" + f">> {tmp_file_input_spec}\n"
-                code += "\t\techo -n \"\\\"${params.pwd}/data/" + task.input_files[-1].file_id + "\\\"\"" + f">> {tmp_file_input_spec}\n"
-                code += f"\t\techo -n \"]\" >> {tmp_file_input_spec}\n"
 
-        # Generate output spec
-        if task.output_files:
-            if True:
-                code += "\t\tdef output_spec = \"{\"\n"
-                for f in task.input_files:
-                    code += "\t\toutput_spec += \"\\\"${params.pwd}/data/" + f.file_id + "\\\": " + str(f.size) + ",\"\n"
-                code = code[:-3] + "}\"\n"
-            else:
-                tmp_file_output_spec = f"/tmp/output_spec_{task.task_id}.json"
-                code += f"\t\ttouch {tmp_file_output_spec}\n"
-                code += "\t\techo -n \"{\" " + f">> {tmp_file_output_spec}\n"
-                for f in task.output_files[:-1]:
-                    code += "\t\techo -n \"\\\"${params.pwd}/data/" + f.file_id + f"\\\":{f.size},\"" + f">> {tmp_file_output_spec}\n"
-                code += "\t\techo -n \"\\\"${params.pwd}/data/" + task.output_files[-1].file_id + f"\\\":{task.output_files[-1].size},\"" + f">> {tmp_file_output_spec}\n"
-                code += "\t\techo -n \"}\"" + f" >> {tmp_file_output_spec}\n"
-
-        code += "\t\t\"\"\"\n"  # FOR NOW
-        # Generate command
-        code += "\t\t\"${params.pwd}/bin/" + task.program + "\" "
-        for a in task.args:
-            if "--output-files" in a:
-                code += "--output-files '" + "${output_spec}' "
-                # code += f"--output-files `cat {tmp_file_output_spec}` "
-                pass
-            elif "--input-files" in a:
-                tmp_file = f"/tmp/input_spec_{task.task_id}.json"
-                code += "--input-files '" + "${input_spec}' "
-                # code += f"--input-files `cat {tmp_file_input_spec}` "
-                pass
-            else:
-                code += a + " "
-        code += "\n"
-        code += "\t\t/bin/rm -f " + tmp_file + "\n"
         code += "\t\t\"\"\"\n"
-
+        code += "\t\tbash \"${params.pwd}/bin/script_" + task.task_id + ".sh\"\n"
+        code += "\t\t\"\"\"\n"
         code += "}\n\n"
         return code
 
