@@ -42,6 +42,17 @@ class NextflowTranslator(Translator):
 
         self.script = ""
 
+        self._usage_string = """
+Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
+
+    Required parameters:
+      --pwd         Working directory (where the workflow.nf file is located)
+
+    Optional parameters:
+      --help        Show this message and exit.
+      --simulate    Use a "sleep 1" for all tasks insted of the WfBench benchmark.
+"""
+
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -66,23 +77,72 @@ class NextflowTranslator(Translator):
         for task in sorted_tasks:
             self._create_task_script(output_folder, task)
 
-        # Output the code for each task
-        for task in sorted_tasks:
-            self.script += self._generate_task_code(task)
-
-        # Output the code for the workflow
-        self.script += self._generate_workflow_code(sorted_tasks)
-
-
-        # Output the code to the workflow file
+        # Create the Nextflow workflow script and file
+        self._create_workflow_script(sorted_tasks)
         self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
 
         # Create the README file
         self._write_readme_file(output_folder)
 
+        return
+
+    def _create_workflow_script(self, tasks: list[Task]):
+
+        # Output the code for command-line argument processing
+        self.script += self._generate_arg_parsing_code()
+
+        # Output the code for each task
+        for task in tasks:
+            self.script += self._generate_task_code(task)
+
+        # Output the code for the workflow
+        self.script += self._generate_workflow_code(tasks)
 
         return
 
+    def _generate_arg_parsing_code(self):
+
+        code = r'''
+params.simulate = false
+params.pwd = null
+params.help = null
+pwd = null
+
+def printUsage(error_msg, exit_code) {
+
+    def usage_string = """
+'''
+        code += self._usage_string
+
+        code += r'''
+"""
+    if (error_msg) {
+        def RED = '\u001B[31m'
+        def RESET = '\u001B[0m'
+        System.err.println "${RED}Error: ${RESET}" + error_msg
+    }
+    System.err.println usage_string
+    exit exit_code
+}
+
+def validateParams() {
+    if (params.help) {
+        printUsage(msg = "", exit_code=0)
+    }
+    if (params.pwd == null) {
+        printUsage(msg = "Missing required parameter: --pwd", exit_code=1)
+    }
+    pwd = file(params.pwd).toAbsolutePath().toString()
+    if (!file(pwd).exists()) {
+        printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
+    } 
+}
+
+// Call validation at the start
+validateParams()
+
+'''
+        return code
 
     def _get_tasks_in_topological_order(self) -> List[Task]:
         levels = {0: self._find_root_tasks()}
@@ -102,6 +162,7 @@ class NextflowTranslator(Translator):
             sorted_tasks += tasks_in_current_level
             current_level += 1
         return sorted_tasks
+
 
     def _create_task_script(self, output_folder: pathlib.Path, task: Task):
         code = "#!/bin/bash\n\n"
@@ -139,7 +200,7 @@ class NextflowTranslator(Translator):
         # File variables
         if self._find_children(task.task_id):
             for f in task.output_files:
-                code += f"\tdef {f.file_id} = " + "\"${params.pwd}/data/" + f.file_id + "\"\n"
+                code += f"\tdef {f.file_id} = " + "\"${pwd}/data/" + f.file_id + "\"\n"
 
         # Input declaration
         code += f"\tinput:\n"
@@ -153,7 +214,7 @@ class NextflowTranslator(Translator):
             for f in task.output_files:
                 code += f"\t\t\t{f.file_id},\n"
             code = code[:-2]
-            code += "\n])\n"
+            code += "\n\t\t])\n"
 
         # Script
         code += "\tscript:\n"
@@ -168,11 +229,11 @@ class NextflowTranslator(Translator):
         # Generate output variables
         if self._find_children(task.task_id):
             for f in task.output_files:
-                code += "\t\t" + f.file_id + " = \"${params.pwd}/data/" + f.file_id + "\"\n"
+                code += "\t\t" + f.file_id + " = \"${pwd}/data/" + f.file_id + "\"\n"
 
 
         code += "\t\t\"\"\"\n"
-        code += "\t\tbash \"${params.pwd}/bin/script_" + task.task_id + ".sh\"\n"
+        code += "\t\tbash \"${pwd}/bin/script_" + task.task_id + ".sh\"\n"
         code += "\t\t\"\"\"\n"
         code += "}\n\n"
         return code
@@ -238,5 +299,8 @@ class NextflowTranslator(Translator):
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
-            out.write(f"nextflow run ./workflow.nf --pwd `pwd`\n")
+
+            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd`\n")
+            out.write("\n")
+            out.write(self._usage_string)
 
