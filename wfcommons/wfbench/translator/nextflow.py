@@ -11,12 +11,10 @@
 import pathlib
 
 from logging import Logger
-from typing import Dict, List, Optional, Union, MutableSet
-
-from pyparsing import empty
+from typing import List, Optional, Union
 
 from .abstract_translator import Translator
-from ...common import File, FileLink, Workflow
+from ...common import Workflow
 from ...common.task import Task
 
 
@@ -162,7 +160,7 @@ validateParams()
         levels = {0: self._find_root_tasks()}
         sorted_tasks: List[Task] = levels[0]
         current_level = 1
-        while (True):
+        while True:
             tasks_in_current_level = []
             all_children = [self._find_children(p.task_id) for p in levels[current_level-1]]
             all_children = [item for sublist in all_children for item in sublist]
@@ -178,7 +176,8 @@ validateParams()
         return sorted_tasks
 
 
-    def _create_task_script(self, output_folder: pathlib.Path, task: Task):
+    @staticmethod
+    def _create_task_script(output_folder: pathlib.Path, task: Task):
         """
         Generate the bash script for invoking a task.
 

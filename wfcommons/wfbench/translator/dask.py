@@ -12,11 +12,9 @@ import pathlib
 
 from logging import Logger
 from typing import Optional, Union
-import ast
-import json
 
 from .abstract_translator import Translator
-from ...common import FileLink, Workflow
+from ...common import Workflow
 import json
 import ast
 
