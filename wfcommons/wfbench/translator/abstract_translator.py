@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -125,6 +125,15 @@ class Translator(ABC):
             out.write(contents)
         self.logger.info(f"Translated content written to '{output_file_path}'")
 
+    def _find_root_tasks(self) -> list[Task]:
+        """
+        Find the workflow's root (i.e., parentless) tasks.
+
+        :return: List of task
+        :rtype: list[Task]
+        """
+        return [self.tasks[task_name] for task_name in self.root_task_names]
+
     def _find_children(self, task_name: str) -> list[Task]:
         """
         Find the children for a specific task.
@@ -136,12 +145,7 @@ class Translator(ABC):
         :rtype: list[Task]
         """
         self.logger.debug(f"Finding children for task '{task_name}'")
-        children = None
-        for node in self.instance.instance["workflow"]["tasks"]:
-            if node["name"] == task_name:
-                children = node["children"]
-
-        return children
+        return [self.tasks[task_id] for task_id in self.task_children[task_name]]
 
     def _find_parents(self, task_name: str) -> list[Task]:
         """
@@ -154,9 +158,22 @@ class Translator(ABC):
         :rtype: list[Task]
         """
         self.logger.debug(f"Finding parents for task '{task_name}'")
-        parents = None
-        for node in self.instance.instance["workflow"]["tasks"]:
-            if node["name"] == task_name:
-                parents = node["parents"]
+        return [self.tasks[task_id] for task_id in self.task_parents[task_name]]
 
-        return parents
+    def _merge_codelines(self, template_file_path: str, wf_codelines: str) -> str:
+        """
+        Incorporate generated workflow codelines into the template.
+
+        :param template_file_path: The path to the template file.
+        :type template_file_path: str
+
+        :param wf_codelines: The generated workflow codelines.
+        :type wf_codelines: str
+        
+        :return: Incorporated workflow codelines.
+        :rtype: str
+        """
+        with open(this_dir.joinpath(template_file_path)) as fp:
+            run_workflow_code = fp.read()
+            return run_workflow_code.replace("# Generated code goes here", wf_codelines)
+    

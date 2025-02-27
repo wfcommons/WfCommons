@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023-2024 The WfCommons Team.
+# Copyright (c) 2023-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,11 +12,11 @@ import pathlib
 
 from logging import Logger
 from typing import Optional, Union
-import ast
-import json
 
 from .abstract_translator import Translator
-from ...common import FileLink, Workflow
+from ...common import Workflow
+import json
+import ast
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -60,9 +60,7 @@ class DaskTranslator(Translator):
         # generate code
         INDENT = "    "
         wf_codelines = "\n".join(["%s%s" % (INDENT, codeline) for codeline in noindent_python_codelines])
-        with open(this_dir.joinpath("templates/dask_template.py")) as fp:
-            run_workflow_code = fp.read()
-        run_workflow_code = run_workflow_code.replace("# Generated code goes here", wf_codelines)
+        run_workflow_code = self._merge_codelines("templates/dask_template.py", wf_codelines)
 
         # write benchmark files
         output_folder.mkdir(parents=True)
@@ -97,16 +95,18 @@ class DaskTranslator(Translator):
             program = output_folder.joinpath(f'bin/{task.program}')
             args = []
             for a in task.args:
-                if "--out" in a:
-                    # a = a.replace("{", "\"{").replace("}", "}\"").replace(".txt'", ".txt\\\\\"").replace("'", "\\\\\"" + str(output_folder.joinpath("data")) + "/").replace(": ", ":")
+                if "--output-files" in a:
                     flag, output_files_dict = a.split(" ", 1)
                     output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
                     a = f"{flag} '{json.dumps(output_files_dict)}'"
-                elif "--" not in a:
-                    a = str(output_folder.joinpath("data", a))
-                else: 
+                elif "--input-files" in a:
+                    flag, input_files_arr = a.split(" ", 1)
+                    input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
+                    a = f"{flag} '{json.dumps(input_files_arr)}'"
+                else:
                     a = a.replace("'", "\"") 
                 args.append(a)
+
             code = [f"WorkflowTask(dag_id = '{task.task_id}',",
                     f"             name = '{task.task_id}',",
                     f"             command_arguments = {[str(program)] + args},",

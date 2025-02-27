@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -9,15 +9,12 @@
 # (at your option) any later version.
 
 import pathlib
-import json
 
-from collections import defaultdict
-from math import ceil
 from logging import Logger
-from typing import Dict, List, Optional, Union, MutableSet
+from typing import List, Optional, Union
 
 from .abstract_translator import Translator
-from ...common import File, FileLink, Workflow
+from ...common import Workflow
 from ...common.task import Task
 
 
@@ -37,262 +34,323 @@ class NextflowTranslator(Translator):
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
-        self.script = """
-import groovy.json.JsonSlurper
-def jsonSlurper = new JsonSlurper()
+        self.script = ""
 
-List<String> extractTaskIDforFile(Path filepath, String task_name) {
-  String filename = filepath as String
-  filename = filename[filename.lastIndexOf('/')+1..-1]
+        self._usage_string = """
+Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
-  List<String> ids_for_file = new ArrayList<String>()
-  for (destination : file_inputs[filename]) {
-    def destination_task_name = destination[0]
-    def destination_task_id = destination[1]
-    if (destination_task_name == task_name)
-      ids_for_file.add(destination_task_id)
-  }
-  return ids_for_file
-}
+    Required parameters:
+      --pwd         Working directory (where the workflow.nf file is located)
 
+    Optional parameters:
+      --help        Show this message and exit.
+      --simulate    Use a "sleep 1" for all tasks instead of the WfBench benchmark.
 """
 
-    def translate(self, output_file_path: pathlib.Path) -> None:
+
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description(WfFormat) into a Nextflow workflow application.
 
-        : param output_file_path: The name of the output file(e.g., workflow.py).
-        : type output_file_path: pathlib.Path
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
         """
 
-        # determine the abstract tasks and their abstract parents and children
-        self.abstract_tasks = defaultdict(list)
-        self.abstract_parents: Dict[str, MutableSet[str]] = defaultdict(set)
-        self._determine_abstract_relations()
+        # Create the output folder
+        output_folder.mkdir(parents=True)
 
-        self.task_inputs: Dict[str, List[File]] = {}
-        self.task_outputs: Dict[str, List[File]] = {}
-        self.task_input_amounts: Dict[str, int] = {}
-        self._determine_input_output()
+        # Create benchmark files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
 
-        self.workflow_inputs = set().union(*self.task_inputs.values()).difference(*self.task_outputs.values())
+        # Create a topological order of the tasks
+        sorted_tasks = self._get_tasks_in_topological_order()
+        # print([t.task_id for t in sorted_tasks])
 
-        self._create_file_task_mappings(output_file_path)
+        # Create the bash script for each task
+        for task in sorted_tasks:
+            self._create_task_script(output_folder, task)
 
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            self._create_task_args_map(output_file_path, abstract_task_name, physical_tasks)
-        self.script += "\n\n"
+        # Create the Nextflow workflow script and file
+        self._create_workflow_script(sorted_tasks)
+        self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
 
-        self.task_written: Dict[str, bool] = {}
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            self.task_written[abstract_task_name] = False
-            self._add_abstract_task_definition(abstract_task_name, physical_tasks)
+        # Create the README file
+        self._write_readme_file(output_folder)
 
-        self.script += "workflow {\n"
-        self.script += "  workflow_inputs = Channel.fromPath(\"${params.indir}/*\")\n"
-        self.script += "\n"
+        return
 
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            if not self.task_written[abstract_task_name]:
-                self._add_call_to_abstract_task(abstract_task_name, physical_tasks)
-        self.script += "}\n"
-
-        self._write_output_file(self.script, output_file_path)
-
-    def _is_resource_arg(self, arg: str) -> bool:
-        return arg.startswith("--percent-cpu") or arg.startswith("--mem") \
-            or arg.startswith("--cpu-work") or arg.startswith("--gpu-work")
-
-    def _determine_abstract_relations(self) -> None:
+    def _create_workflow_script(self, tasks: list[Task]):
         """
-        Determines the abstract tasks that will be used for the nextflow definition of the workflow.
+        Create the Nextflow script.
+
+        :param tasks: The (sorted) list of tasks.
+        :type tasks: list[Task]
         """
 
-        for task in self.tasks.values():
-            abstract_task: str = task.name
-            self.abstract_tasks[abstract_task].append(task)
+        # Output the code for command-line argument processing
+        self.script += self._generate_arg_parsing_code()
 
-            for parent in self.task_parents[task.task_id]:
-                abstract_parent: str = self.tasks[parent].name
-                self.abstract_parents[abstract_task].add(abstract_parent)
+        # Output the code for each task
+        for task in tasks:
+            self.script += self._generate_task_code(task)
 
-        tasks_with_iterations = set()
-        for abstract_task in self.abstract_tasks:
-            for abstract_parent in self.abstract_parents[abstract_task]:
-                if abstract_parent == abstract_task:
-                    tasks_with_iterations.add(abstract_task)
-        if tasks_with_iterations:
-            error_msg: str = "Iterations are not supported by Nextflow. "\
-                "Thus, this workflow has no Nextflow translation since the following "\
-                f"{'task uses' if len(tasks_with_iterations) == 1 else 'tasks use'} "\
-                "iterations:\n    "
-            error_msg += ", ".join(tasks_with_iterations)
-            raise RuntimeError(error_msg)
+        # Output the code for the workflow
+        self.script += self._generate_workflow_code(tasks)
 
-    def _determine_input_output(self) -> None:
+        return
+
+    def _generate_arg_parsing_code(self):
         """
-        Determines the inputs and outputs for the physical and abstract tasks.
-        """
-        for task in self.tasks.values():
-            self.task_inputs[task.task_id] = [file for file in task.input_files]
-            self.task_outputs[task.task_id] = [file for file in task.output_files]
+        Generate the code to parse command-line argument.
 
-        self.script += "// define amount of input files for abstracts tasks where the amount is not constant\n"
-        for abstract_task_name, physical_tasks in self.abstract_tasks.items():
-            input_amounts = {task.task_id: len(self.task_inputs[task.task_id]) for task in physical_tasks}
-            if (max(input_amounts.values()) == min(input_amounts.values())):
-                # all physical tasks have the same amount of inputs
-                self.task_input_amounts[abstract_task_name] = max(input_amounts.values())
-            else:
-                # define amount of inputs for each physical task
-                self.script += f"def {self.valid_task_name(abstract_task_name)}_input_amounts = [\n"
-                for k, v in input_amounts.items():
-                    self.script += f"  \"{k}\": {v},\n"
-                self.script += "]\n"
-                self.task_input_amounts[abstract_task_name] = None
-        self.script += "\n"
-
-    def _create_file_task_mappings(self, output_file_path: pathlib.Path) -> None:
-        file_task_map = defaultdict(list)
-        for task_name, task_input_files in self.task_inputs.items():
-            task = self.tasks[task_name]
-            for file in task_input_files:
-                file_task_map[file.file_id].append([task.name, task.task_id])
-        self._write_map_file(file_task_map, "file_inputs", output_file_path)
-
-    def _write_map_file(self, map_dict: Dict, map_name: str, output_file_path: pathlib.Path) -> None:
-        path = output_file_path.parent.joinpath(f"{map_name}.json")
-        with open(path, "w") as f:
-            f.write(json.dumps(map_dict, indent=4))
-        self.script += f"{map_name} = jsonSlurper.parseText(file(\"${{projectDir}}/{map_name}.json\").text)\n"
-
-    def _create_task_args_map(self, output_file_path: pathlib.Path, abstract_task_name: str, physical_tasks: List[Task]) -> None:
-        map_name = f"{self.valid_task_name(abstract_task_name)}_args"
-        task_args_map = {}
-        for ptask in physical_tasks:
-            out_file_sizes = {file.file_id: file.size for file in self.task_outputs[ptask.task_id]}
-            out_arg = str(out_file_sizes).replace("{", "").replace("}", "").replace("'", "\\\"").replace(": ", ":")
-            task_args_map[ptask.task_id] = {
-                "out": out_arg,
-                "resources": " ".join((arg for arg in ptask.args if self._is_resource_arg(arg)))
-            }
-        self._write_map_file(task_args_map, map_name, output_file_path)
-
-    def valid_task_name(self, original_task_name: str) -> str:
-        return original_task_name.replace('-', '_')
-
-    def _add_abstract_task_definition(self, abstract_task_name: str, physical_tasks: List[Task]) -> None:
-        """
-        Add an abstract task to the workflow considering it's physical tasks.
-
-        : param abstract_task_name: the name of the abstract task
-        : type abstract_task_name: str
-        : param physical_tasks: a list of physical tasks for this abstract tasks
-        : type physical_tasks: List[Task]
+        :return: The code.
+        :rtype: str
         """
 
-        cores_values = [task.cores for task in physical_tasks if task.cores is not None]
-        if len(cores_values) == 0:
-            cores = None
-        else:
-            cores = int(max(cores_values))
-        memory_values = [task.memory for task in physical_tasks if task.memory is not None]
-        if len(memory_values) == 0:
-            memory = None
-        else:
-            memory = max(memory_values) * 1.05
+        code = r'''
+params.simulate = false
+params.pwd = null
+params.help = null
+pwd = null
 
-        # creating the command for the abstract task using the first physical task as a template
-        example_task = physical_tasks[0]
-        cmd = pathlib.Path(example_task.program).name
-        resource_args_done = False
-        for a in example_task.args:
-            if a == f"{abstract_task_name}_{example_task.task_id}":
-                cmd += f" {abstract_task_name}_${{id}}"
-                continue
-            if self._is_resource_arg(a):
-                if resource_args_done:
-                    continue
-                cmd += " ${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"resources\")}"
-                resource_args_done = True
-            elif a.startswith("--out"):
-                cmd += " --out \"{${" + self.valid_task_name(abstract_task_name) + "_args.get(id).get(\"out\")}}\""
-                cmd += " \\$inputs"
+def printUsage(error_msg, exit_code) {
+
+    def usage_string = """
+'''
+        code += self._usage_string
+
+        code += r'''
+"""
+    if (error_msg) {
+        def RED = '\u001B[31m'
+        def RESET = '\u001B[0m'
+        System.err.println "${RED}Error: ${RESET}" + error_msg
+    }
+    System.err.println usage_string
+    exit exit_code
+}
+
+def validateParams() {
+    if (params.help) {
+        printUsage(msg = "", exit_code=0)
+    }
+    if (params.pwd == null) {
+        printUsage(msg = "Missing required parameter: --pwd", exit_code=1)
+    }
+    pwd = file(params.pwd).toAbsolutePath().toString()
+    if (!file(pwd).exists()) {
+        printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
+    } 
+}
+
+// Call validation at the start
+validateParams()
+
+'''
+        return code
+
+    def _get_tasks_in_topological_order(self) -> List[Task]:
+        """
+        Sort the workflow tasks in topological order.
+
+        :return: A sorted list of tasks.
+        :rtype: List[Task]
+        """
+        levels = {0: self._find_root_tasks()}
+        sorted_tasks: List[Task] = levels[0]
+        current_level = 1
+        while True:
+            tasks_in_current_level = []
+            all_children = [self._find_children(p.task_id) for p in levels[current_level-1]]
+            all_children = [item for sublist in all_children for item in sublist]
+            all_children = list(set(all_children))
+            if not all_children:
                 break
+            for potential_task in all_children:
+                if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
+                    tasks_in_current_level.append(potential_task)
+            levels[current_level] = tasks_in_current_level
+            sorted_tasks += tasks_in_current_level
+            current_level += 1
+        return sorted_tasks
+
+
+    @staticmethod
+    def _create_task_script(output_folder: pathlib.Path, task: Task):
+        """
+        Generate the bash script for invoking a task.
+
+        :param output_folder: The path to the output folder.
+        :type output_folder: pathlib.Path
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
+
+        code = "#!/bin/bash\n\n"
+
+        # Generate input spec
+        input_spec = "'\\["
+        for f in task.input_files:
+            input_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\","
+        input_spec = input_spec[:-1] + "\\]'"
+
+        # Generate output spec
+        output_spec = "'\\{"
+        for f in task.output_files:
+            output_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\":" + str(f.size)+ ","
+        output_spec = output_spec[:-1] + "\\}'"
+
+        code += str(output_folder.joinpath(f"bin/{task.program} "))
+
+        for a in task.args:
+            if "--output-files" in a:
+                code += f"--output-files {output_spec} "
+            elif "--input-files" in a:
+                code += f"--input-files {input_spec} "
             else:
-                a = a.replace(f"{abstract_task_name}_{example_task.task_id}", f"{abstract_task_name}_${{id}}")
-                cmd += " " + a.replace("'", "\"")
+                code += f"{a} "
+        code += "\n"
 
-        # creating the abstract task
-        self.script += f"process task_{self.valid_task_name(abstract_task_name)}" + " {\n"
-        if cores:
-            self.script += f"  cpus {cores}\n"
-        if memory:
-            self.script += f"  memory '{human_readable_memory(memory)}'\n"
-        self.script += "  input:\n"
-        self.script += "    tuple val( id ), path( \"*\" )\n"
-        self.script += f"  output:\n    path( \"{self.valid_task_name(abstract_task_name)}_????????_outfile_????*\" )\n"
-        self.script += "  script:\n"
-        self.script += "  \"\"\"\n"
-        self.script += "  inputs=\\$(find . -maxdepth 1 -name \\\"workflow_infile_*\\\" -or -name \\\"*_outfile_0*\\\")\n"
-        self.script += f"  {cmd}\n"
-        self.script += "  \"\"\"\n"
-        self.script += "}\n"
+        script_file_path = output_folder.joinpath(f"bin/script_{task.task_id}.sh")
+        with open(script_file_path, "w") as out:
+            out.write(code)
 
-    def _add_call_to_abstract_task(self, abstract_task_name: str, physical_tasks: List[Task]) -> None:
-        parents = self.abstract_parents[abstract_task_name]
-        for parent in parents:
-            if parent == abstract_task_name:
-                raise RuntimeError("Iterations are not supported by Nextflow.")
-            if not self.task_written[parent]:
-                self._add_call_to_abstract_task(parent, self.abstract_tasks[parent])
+    def _generate_task_code(self, task: Task) -> str:
+        """
+        Generate the code for a task, as a Nextflow process.
 
-        # determining the channel of all raw inputs (outputs of other tasks)
-        input_channels = [
-            f"{self.valid_task_name(parent)}_out" for parent in parents]
-        example_task = physical_tasks[0]
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
 
-        for input_file in self.task_inputs[example_task.task_id]:
-            if input_file in self.workflow_inputs:
-                input_channels.append("workflow_inputs")
-                break
+        code = f"process {task.task_id}()" + "{\n"
 
-        if len(input_channels) == 1:
-            inputs_channel = input_channels[0]
-        elif len(input_channels) != 0:
-            # concatenating all the input channels into one big channel
-            one_channel = input_channels.pop()
-            inputs_channel = f"concatenated_FOR_{self.valid_task_name(abstract_task_name)}"
-            self.script += f"  {inputs_channel} = {one_channel}.concat({', '.join(input_channels)})\n"
+        # File variables
+        if self._find_children(task.task_id):
+            for f in task.output_files:
+                code += f"\tdef {f.file_id} = " + "\"${pwd}/data/" + f.file_id + "\"\n"
+
+        # Input declaration
+        code += f"\tinput:\n"
+        if self._find_parents(task.task_id):
+            code += f"\t\tval {task.task_id}_ifs\n"
+
+        # Output declaration
+        code += f"\toutput:\n"
+        if self._find_children(task.task_id):
+            code += "\t\tval([\n"
+            for f in task.output_files:
+                code += f"\t\t\t{f.file_id},\n"
+            code = code[:-2]
+            code += "\n\t\t])\n"
+
+        # Script
+        code += "\tscript:\n"
+        # Input convenience vars
+        if self._find_parents(task.task_id):
+            counter = 0
+            for f in task.input_files:
+                code += f"\t\tdef {f.file_id} = {task.task_id}_ifs[{counter}]\n"
+                counter += 1
+            code += "\n"
+
+        # Generate output variables
+        if self._find_children(task.task_id):
+            for f in task.output_files:
+                code += "\t\t" + f.file_id + " = \"${pwd}/data/" + f.file_id + "\"\n"
+
+
+        code += "\t\t\"\"\"\n"
+        code += "\t\t${params.simulate ? 'sleep 1' : \"bash ${pwd}/bin/script_" + task.task_id + ".sh\"}\n"
+        code += "\t\t\"\"\"\n"
+        code += "}\n\n"
+        return code
+
+    def _generate_workflow_code(self, sorted_tasks: List[Task]) -> str:
+        """
+        Generate the code for the workflow.
+
+        :param sorted_tasks: The task.
+        :type sorted_tasks: List[Task]
+        :return: The code.
+        :rtype: str
+        """
+
+        code = ""
+
+        # Generate bootstrap function
+        code += ("// Bootstrap function\n"
+                 "def bootstrap() {\n"
+                 "\tdef outputs = [:]\n"
+                 "\treturn outputs\n"
+                 "}\n\n")
+
+        # Generate all task functions
+        for task in sorted_tasks:
+            code += self._generate_task_function(task)
+
+        # Generate workflow function
+        code += "workflow {\n"
+        code += "\tresults = bootstrap()\n"
+        for task in sorted_tasks:
+            code += f"\tresults = function_{task.task_id}(results)\n"
+        code += "}\n"
+        return code
+
+    def _generate_task_function(self, task: Task) -> str:
+        """
+        Generate the code for a starting a task's Nextflow process, as a Nextflow function.
+
+        :param task: The task.
+        :type task: Task
+        :return: The code.
+        :rtype: str
+        """
+        code = f"// Function to call task {task.task_id}\n"
+        code += f"def function_{task.task_id}(Map inputs) " + "{\n"
+
+        if self._find_parents(task.task_id):
+            # Input channel mixing and then call
+            code += f"\tdef {task.task_id}_necessary_input = Channel.empty()\n"
+            for f in task.input_files:
+                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix(inputs.{f.file_id})\n"
+            code += f"\tdef {task.task_id}_necessary_input_future = {task.task_id}_necessary_input.collect()\n"
+            code += f"\tdef {task.task_id}_produced_output = {task.task_id}({task.task_id}_necessary_input_future)\n"
         else:
-            raise RuntimeError(f"The abstract task {abstract_task_name} has no inputs.")
+            # Simple call
+            code += f"\tdef {task.task_id}_produced_output = {task.task_id}()\n"
 
-        # creating the input channel for this abstract task by grouping the outputs from the parents by id
-        self.script += f"  {self.valid_task_name(abstract_task_name)}_in = {inputs_channel}.flatten().flatMap{{\n"
-        self.script += f"    List<String> ids = extractTaskIDforFile(it, \"{abstract_task_name}\")\n"
-        self.script += "    def pairs = new ArrayList()\n"
-        self.script += "    for (id : ids) pairs.add([id, it])\n"
-        self.script += "    return pairs\n"
-        self.script += "  }"
+        # Pass on the outputs
+        code += "\n"
+        code += "\tdef outputs = inputs.clone()\n"
+        if self._find_children(task.task_id):
+            counter = 0
+            for f in task.output_files:
+                code += f"\toutputs.{f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
+                counter += 1
+        code += "\treturn outputs\n"
+        code += "}\n\n"
 
-        if self.task_input_amounts[abstract_task_name]:
-            self.script += f".groupTuple(size: {self.task_input_amounts[abstract_task_name]})\n"
-        else:
-            self.script += f".map {{ id, file -> tuple( groupKey(id, {self.valid_task_name(abstract_task_name)}_input_amounts[id]), file ) }}\n"
-            self.script += "  .groupTuple()\n"
-
-        self.script += f"  {self.valid_task_name(abstract_task_name)}_out = task_"
-        self.script += f"{self.valid_task_name(abstract_task_name)}({self.valid_task_name(abstract_task_name)}_in)\n\n"
-
-        self.task_written[abstract_task_name] = True
+        return code
 
 
-def human_readable_memory(mem_bytes: int) -> str:
-    idx = 0
-    memory = mem_bytes
-    memory_units = ["B", "KB", "MB", "GB", "TB"]
-    while memory > 4096 and idx < len(memory_units) - 1:
-        memory /= 1024
-        idx += 1
-    memory = ceil(memory * 100) / 100  # ensure that it is an upper bound
-    return f"{memory:.2f} {memory_units[idx]}"
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
+
+            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd`\n")
+            out.write("\n")
+            out.write(self._usage_string)
+

@@ -1,5 +1,5 @@
-# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile_Dask .
-# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-dask /bin/bash
+# docker build --platform amd64 -t wfcommons-dev -f Dockerfile_Parsl .
+# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev /bin/bash
 
 FROM amd64/ubuntu:noble
 
@@ -33,9 +33,8 @@ RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
 # Stress-ng
 RUN apt-get -y install stress-ng
 
-# Install Dask
-RUN python3 -m pip install --break-system-packages  "dask[complete]"
-RUN python3 -m pip install --break-system-packages "dask[distributed]"
+# Install Parsl
+RUN python3 -m pip install --break-system-packages  parsl
 
 # Add wfcommons user
 RUN useradd -ms /bin/bash wfcommons
