@@ -12,7 +12,7 @@ import pathlib
 import shutil
 
 from logging import Logger
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from .abstract_translator import Translator
 from ...common import Workflow
@@ -102,42 +102,53 @@ class TaskVineTranslator(Translator):
         """
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
-            # arguments
-            args = []
-            for a in task.args:
-                a = a.replace("'", "\"") if "--out" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
-                args.append(a)
-            args = " ".join(f"{a}" for a in args)
-
-            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
-                            f"t_{self.task_counter}.set_cores(1)\n"
 
             # input files
             f_counter = 1
-            self.script += f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
-                            f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
-                            f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
-                            f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
-            for in_file in task.input_files:
-                if in_file.file_id in self.output_files_map.keys():
-                    self.script += f"t_{self.task_counter}.add_input({self.output_files_map[in_file.file_id]}, '{in_file}')\n"
+            task_script = f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
+                           f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
+                           f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
+                           f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
+            input_spec = "["
+            for file in task.input_files:
+                if file.file_id in self.output_files_map.keys():
+                    task_script += f"t_{self.task_counter}.add_input({self.output_files_map[file.file_id]}, '{file}')\n"
                 else:
-                    self.script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{in_file}')\n" \
-                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{in_file}')\n"
+                    task_script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{file}')\n" \
+                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{file}')\n"
+                f_counter += 1
+                input_spec += f"\"{file.file_id}\","
+            input_spec = input_spec[:-1] + "]"
 
             # output files
             f_counter = 1
-            for out_file in task.output_files:
-                self.script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('outputs/{out_file}')\n" \
-                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{out_file}')\n"
-                self.output_files_map[out_file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
+            output_spec = "\"{"
+            for file in task.output_files:
+                output_spec += f"\\\\\"{file.file_id}\\\\\":{str(file.size)},"
+                task_script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('outputs/{file}')\n" \
+                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{file}')\n"
+                self.output_files_map[file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
                 f_counter += 1
+            output_spec = output_spec[:-1] + "}\""
 
-            self.script += f"m.submit(t_{self.task_counter})\n" \
-                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
-
+            task_script += f"m.submit(t_{self.task_counter})\n" \
+                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"            
             self.task_counter += 1
-            # self.parsed_tasks.append(task_name)
+
+            # arguments
+            args = []
+            for a in task.args:
+                if "--output-files" in a:
+                    args.append(f"--output-files {output_spec}")
+                elif "--input-files" in a:
+                    args.append(f"--input-files {input_spec}")
+                else:
+                    args.append(a)
+            args = " ".join(f"{a}" for a in args)
+
+            # write task
+            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
+                f"t_{self.task_counter}.set_cores(1)\n{task_script}"
             
             return self.task_children[task_name]
         
