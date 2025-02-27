@@ -207,11 +207,11 @@ validateParams()
 
         for a in task.args:
             if "--output-files" in a:
-                code += "--output-files " + output_spec + " "
+                code += f"--output-files {output_spec} "
             elif "--input-files" in a:
-                code += "--input-files " + input_spec + " "
+                code += f"--input-files {input_spec} "
             else:
-                code += a + " "
+                code += f"{a} "
         code += "\n"
 
         script_file_path = output_folder.joinpath(f"bin/script_{task.task_id}.sh")
