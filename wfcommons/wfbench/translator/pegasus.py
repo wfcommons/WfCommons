@@ -122,21 +122,32 @@ class PegasusTranslator(Translator):
             # find children
             children = self.task_children[task_name]
 
-            # output file
+            # Generate input spec
+            input_spec = "["
+            for f in task.input_files:
+                input_spec += f"\"{f.file_id}\","
+            input_spec = input_spec[:-1] + "]"
+
+            # output files
+            output_spec = "\"{"
             for file in task.output_files:
-                out_file = file.file_id
-                # task.args.append(f"--out={out_file}")
+                output_spec += f"\\\\\"{file.file_id}\\\\\":{str(file.size)},"
                 stage_out = "True" if len(children) == 0 else "False"
-                self.script += f"out_file_{self.task_counter} = File('{out_file}')\n" \
+                self.script += f"out_file_{self.task_counter} = File('{file.file_id}')\n" \
                     f"task_output_files['{job_name}'].append(out_file_{self.task_counter})\n" \
                     f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
                     f"stage_out={stage_out}, register_replica={stage_out})\n"
+            output_spec = output_spec[:-1] + "}\""
 
             # arguments
             args = []
             for a in task.args:
-                a = a.replace("'", "\"") if "--output-files" not in a else a.replace("{", "\"{").replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
-                args.append(a)
+                if "--output-files" in a:
+                    args.append(f"--output-files {output_spec}")
+                elif "--input-files" in a:
+                    args.append(f"--input-files {input_spec}")
+                else:
+                    args.append(a)
             args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
 
