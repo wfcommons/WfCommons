@@ -132,7 +132,7 @@ class TaskVineTranslator(Translator):
             output_spec = output_spec[:-1] + "}\""
 
             task_script += f"m.submit(t_{self.task_counter})\n" \
-                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"            
+                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
             self.task_counter += 1
 
             # arguments
