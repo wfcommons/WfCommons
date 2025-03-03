@@ -12,7 +12,7 @@ import pathlib
 import ast
 from logging import Logger
 from typing import Optional, Union
-
+import copy
 from .abstract_translator import Translator
 from ...common import Workflow
 
@@ -74,7 +74,7 @@ class PyCompssTranslator(Translator):
         bin_path = "${WFBENCH_BIN}"
         # data_folder = self.output_folder.joinpath("data")
         data_folder = "os.getenv('WFBENCH_DATA')"
-        all_pycompss_tasks_as_functions = []
+        all_pycompss_tasks_as_functions = {}
         task_number = 1
         for task in self.tasks.values():
             function_name = f"{task.name}{task_number}"
@@ -136,7 +136,7 @@ class PyCompssTranslator(Translator):
             function_parameters_in_out += function_parameters_in
             function_parameters_in_out += ", " if len(function_parameters_in) > 0 else ""
             function_parameters_in_out += function_parameters_out
-            all_pycompss_tasks_as_functions.append(f"{function_name}({function_parameters_in_out})")
+            all_pycompss_tasks_as_functions[task.task_id] = f"{function_name}({function_parameters_in_out})"
             ############################
             # create function decorator: @binary parameters
             ############################
@@ -200,9 +200,33 @@ class PyCompssTranslator(Translator):
 
         # INVOKE PYCOMPSS TASKS (functions)
         self.script += f"\n\ndef main_program():\n"
-        # tasks
-        for func in all_pycompss_tasks_as_functions:
-            self.script += f"\t{func}\n"
+        added_tasks = []
+        copy_of_task_parents = copy.deepcopy(self.task_parents)
+        # call root tasks first (no parents)
+        for task_id, my_parents in copy_of_task_parents.items():
+            if len(my_parents) == 0:
+                self.script += f"\t{all_pycompss_tasks_as_functions.pop(task_id)}\n"
+                added_tasks.append(task_id)
+        # remove added tasks from dict
+        for task_id in added_tasks:
+            copy_of_task_parents.pop(task_id) if task_id in copy_of_task_parents else None
+
+        # call tasks with parents
+        while len(all_pycompss_tasks_as_functions) > 0:
+            for task_id, my_parents in copy_of_task_parents.items():
+                is_ready = False
+                for parent in my_parents:
+                    if parent not in added_tasks:
+                        is_ready = False
+                        break
+                    else:
+                        is_ready = True
+                if is_ready:
+                    self.script += f"\t{all_pycompss_tasks_as_functions.pop(task_id)}\n"
+                    added_tasks.append(task_id)
+            # remove added tasks from dict
+            for task_id in added_tasks:
+                copy_of_task_parents.pop(task_id) if task_id in copy_of_task_parents else None
 
         # CALL TO MAIN METHOD
         self.script += f"\n\nif __name__ == \"__main__\":\n"
