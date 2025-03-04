@@ -270,7 +270,7 @@ def _generate_fit_plots(el: Dict, title: str, xlabel: str, outfile: str, font_si
 
     raw_data = el['data']
     bins = math.ceil(len(raw_data) / 10)
-    normalized = (raw_data - numpy.min(raw_data)) / (numpy.max(raw_data) - numpy.min(raw_data))
+    normalized = (raw_data - numpy.min(raw_data)) / (numpy.max(raw_data) - numpy.min(raw_data)) if len(raw_data) > 1 else raw_data
     y, x = numpy.histogram(normalized, bins=bins, density=True)
 
     if font_size:
