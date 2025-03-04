@@ -70,9 +70,7 @@ class PyCompssTranslator(Translator):
 
     def _pycompss_code(self) -> None:
         # GENERATES PYCOMPSS TASKS (functions)
-        # bin_path = self.output_folder.joinpath("bin")
         bin_path = "${WFBENCH_BIN}"
-        # data_folder = self.output_folder.joinpath("data")
         data_folder = "os.getenv('WFBENCH_DATA')"
         all_pycompss_tasks_as_functions = {}
         task_number = 1
@@ -94,7 +92,6 @@ class PyCompssTranslator(Translator):
                     task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
                     function_parameter_names_file_in += f"file_in_{i}"
                     if is_root_task:
-                        # function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
                         function_parameters_in += "f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
                     else:
                         function_parameters_in += f"\'{task.input_files[i].file_id}\'"
@@ -103,7 +100,6 @@ class PyCompssTranslator(Translator):
                         task_parameter_names_file_in += f"file_in_{i}=FILE_IN"
                         function_parameter_names_file_in += f"file_in_{i}"
                         if is_root_task:
-                            # function_parameters_in += f"\'{data_folder}/{task.input_files[i].file_id}\'"
                             function_parameters_in += "f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
                         else:
                             function_parameters_in += f"\'{task.input_files[i].file_id}\'"
@@ -111,7 +107,6 @@ class PyCompssTranslator(Translator):
                         task_parameter_names_file_in += f", file_in_{i}=FILE_IN"
                         function_parameter_names_file_in += f", file_in_{i}"
                         if is_root_task:
-                            # function_parameters_in += f", \'{data_folder}/{task.input_files[i].file_id}\'"
                             function_parameters_in += ", f\"{" + data_folder + "}" + f"/{task.input_files[i].file_id}" + "\""
                         else:
                             function_parameters_in += f", \'{task.input_files[i].file_id}\'"
@@ -141,38 +136,43 @@ class PyCompssTranslator(Translator):
             # create function decorator: @binary parameters
             ############################
             self.script += f"@binary(binary='{bin_path}/{task.program}'"
-            # self.script += f"@binary(binary='./{task.program}'"
-            # self.script += f", working_dir='.'"
             if len(task.args) > 0:
                 all_task_args = ""
-                # task_args = " ".join(task.args)
                 for task_arg in task.args:
-                    if task_arg.startswith("--out"):
+                    if task_arg.startswith("--output-files"):
                         all_out_params = function_parameter_names_file_out.replace(' ', '').split(',')
                         i = 0
-                        all_task_args += "--out "
+                        all_task_args += "--output-files "
                         all_task_args += "{"
                         if task_arg.find('"{') != -1:
                             task_arg = task_arg.replace('"{', '{')
                             task_arg = task_arg.replace('}"', '}')
                         if task_arg.find('\\\"') != -1:
                             task_arg = task_arg.replace('\\\"', '"')
-                        for file_out_name, file_out_size in ast.literal_eval(task_arg.split('--out ')[1]).items():
+                        for file_out_name, file_out_size in ast.literal_eval(task_arg.split('--output-files ')[1]).items():
                             if i == 0:
-                                # Failed to decode JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
                                 all_task_args += "\\\\\\\"" + "{{"+ all_out_params[i] +"}}" + "\\\\\\\":" + str(file_out_size)
                             else:
                                 all_task_args += ", \\\\\\\"" + "{{" + all_out_params[i] + "}}" + "\\\\\\\":" + str(file_out_size)
                             i += 1
                         all_task_args += "} "
-                    elif task_arg in all_input_files_name:
-                        continue
+                    elif task_arg.startswith("--input-files"):
+                        all_task_args += "--input-files "
+                        all_task_args += "["
+                        i = 0
+                        for input_param in function_parameter_names_file_in.replace(' ', '').split(','):
+                            if i == 0:
+                                all_task_args += "\\\\\\\"" + "{{"+ input_param +"}}" + "\\\\\\\""
+                            else:
+                                all_task_args += ", \\\\\\\"" + "{{" + input_param + "}}" + "\\\\\\\""
+                            i += 1
+                        all_task_args += "] "
                     else:
                         all_task_args += f"{task_arg} "
-                for input_param in function_parameter_names_file_in.replace(' ', '').split(','):
-                    all_task_args += "{{"+input_param+"}} "
                 self.script += f", args='{all_task_args}'"
             self.script += f")\n"
+
+
             ############################
             # CREATE FUNCTION DECORATOR: @task parameters
             ############################
