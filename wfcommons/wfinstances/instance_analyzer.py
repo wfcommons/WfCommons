@@ -91,8 +91,11 @@ class InstanceAnalyzer:
 
             for node in instance.workflow.nodes.data():
                 task: Task = node[1]['task']
-                task_name: str = [j for j in tasks_list if task.name.startswith(j)][
-                    0]  # it was eliminating bwa_index because bwa came before it
+                task_names: list[str] = [j for j in tasks_list if task.name.startswith(j)]
+                if len(task_names) == 0:
+                    continue
+
+                task_name = task_names[0]  # it was eliminating bwa_index because bwa came before it
                 if task_name not in self.tasks_summary:
                     self.tasks_summary[task_name] = []
                 self.tasks_summary[task_name].append(task)
