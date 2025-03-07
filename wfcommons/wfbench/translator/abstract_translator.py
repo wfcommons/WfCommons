@@ -44,7 +44,7 @@ class Translator(ABC):
             instance = Instance(workflow, logger=logger)
             self.workflow: Workflow = instance.workflow
 
-        self.workflow.write_json()
+        self.workflow.generate_json()
 
         # find all tasks
         self.tasks = {}
