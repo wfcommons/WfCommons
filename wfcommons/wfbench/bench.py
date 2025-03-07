@@ -211,7 +211,8 @@ class WorkflowBenchmark:
         workflow_inputs: List[File] = []
     
         for task in self.workflow.tasks.values():
-            for file in task.output_files:       
+            output_files = sorted(task.output_files, key=lambda x: -len(x.file_id))
+            for file in output_files:
                 if file.file_id in new_file_names:
                     raise ValueError(f"File name {file.file_id} already exists")
                 
@@ -225,7 +226,8 @@ class WorkflowBenchmark:
                 file.file_id = new_name
 
         for task in self.workflow.tasks.values():
-            for file in task.input_files:
+            input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
+            for file in input_files:
                 org_name = file.file_id
                 if file.file_id in new_file_names:
                     # file is an output file of another task and receives the corresponding name

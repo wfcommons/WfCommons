@@ -83,6 +83,7 @@ class Workflow(nx.DiGraph):
         self.tasks_parents = {}
         self.tasks_children = {}
         self.workflow_id: str = None
+        self.workflow_json = {}
         super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
 
     def add_task(self, task: Task) -> None:
@@ -116,6 +117,22 @@ class Workflow(nx.DiGraph):
 
         :param json_file_path: JSON output file name.
         :type json_file_path: Optional[pathlib.Path]
+        """
+
+        self.generate_json()
+
+         # write to file
+        if not json_file_path:
+            json_file_path = pathlib.Path(f"{self.name.lower()}.json")
+        with open(json_file_path, "w") as outfile:
+            outfile.write(json.dumps(self.workflow_json, indent=4))
+
+    def generate_json(self) -> dict:
+        """
+        Generate a JSON representation of the workflow instance.
+
+        :return: A JSON representation of the workflow instance.
+        :rtype: dict
         """
         workflow_machines = []
         machines_list = []
@@ -191,12 +208,6 @@ class Workflow(nx.DiGraph):
         if files and len(files) > 0:
             workflow_json["workflow"]["specification"]["files"] = list(file.as_dict() for file in files)
 
-        # write to file
-        if not json_file_path:
-            json_file_path = pathlib.Path(f"{self.name.lower()}.json")
-        with open(json_file_path, "w") as outfile:
-            outfile.write(json.dumps(workflow_json, indent=4))
-        
         self.workflow_json = workflow_json
 
     def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:

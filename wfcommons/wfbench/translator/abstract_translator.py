@@ -44,7 +44,7 @@ class Translator(ABC):
             instance = Instance(workflow, logger=logger)
             self.workflow: Workflow = instance.workflow
 
-        self.workflow.write_json()
+        self.workflow.generate_json()
 
         # find all tasks
         self.tasks = {}
@@ -100,14 +100,21 @@ class Translator(ABC):
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
-        generated_files = []
+        workflow_input_files = []
+        input_files = set()
+        output_files = set()
+
+        for task in self.workflow.tasks.values():
+            for file in task.input_files:
+                input_files.add(file)
+            for file in task.output_files:
+                output_files.add(file)
+        
+        workflow_input_files = input_files - output_files
+
         data_folder = output_folder.joinpath("data")
         data_folder.mkdir(exist_ok=True)
-        for task_name in self.root_task_names:
-            task = self.tasks[task_name]
-            for file in task.input_files:
-                if file.file_id not in generated_files:
-                    generated_files.append(file.file_id)
+        for file in workflow_input_files:
                     with open(data_folder.joinpath(file.file_id), "wb") as fp:
                         fp.write(os.urandom(int(file.size)))
 
