@@ -40,7 +40,7 @@ dependencies = [
     "filelock",
     "pathos",
 ]
-dynamic = ["version"]
+dynamic = ["version", "entry-points", "scripts"]
 
 [project.urls]
 Homepage = "https://wfcommons.org"
