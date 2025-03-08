@@ -130,7 +130,7 @@ class WorkflowBenchmark:
             for key in cpu_work.keys():
                 cpu_work[key] *= 1000
 
-        cores, lock = self._creating_lock_files(lock_files_folder)
+        cores, lock = self._creating_lock_files(lock_files_folder   )
 
         task_max_runtimes = {}
         for task in self.workflow.tasks.values():
@@ -218,7 +218,9 @@ class WorkflowBenchmark:
                 
                 task_output_counter += 1
                 # extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                new_name = f"{task.task_id}_outfile_{task_output_counter:04d}" #{extension}
+                new_name = f"workflow_outfile_{task_output_counter:04d}" #{extension}
+                print(file.file_id)
+                print(new_name)
                 new_file_names[file.file_id] = new_name
                 for i, item in enumerate(task.args):
                     if file.file_id in item:
