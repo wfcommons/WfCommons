@@ -219,8 +219,6 @@ class WorkflowBenchmark:
                 task_output_counter += 1
                 # extension = ''.join(pathlib.Path(file.file_id).suffixes)
                 new_name = f"workflow_outfile_{task_output_counter:04d}" #{extension}
-                print(file.file_id)
-                print(new_name)
                 new_file_names[file.file_id] = new_name
                 for i, item in enumerate(task.args):
                     if file.file_id in item:
