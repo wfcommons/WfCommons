@@ -221,7 +221,7 @@ class WorkflowBenchmark:
                 new_name = f"workflow_outfile_{task_output_counter:04d}" #{extension}
                 new_file_names[file.file_id] = new_name
                 for i, item in enumerate(task.args):
-                    if file.file_id in item:
+                    if file.file_id in item and item.startswith("--output-files"):
                         task.args[i] = task.args[i].replace(file.file_id, new_name)
                 file.file_id = new_name
 
@@ -240,7 +240,7 @@ class WorkflowBenchmark:
                     new_file_names[file.file_id] = new_name
                     file.file_id = new_name
                 for i, item in enumerate(task.args):
-                    if org_name in item:
+                    if org_name in item and item.startswith("--input-files"):
                         task.args[i] = task.args[i].replace(org_name, file.file_id)
     
         return workflow_inputs
