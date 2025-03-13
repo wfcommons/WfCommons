@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,18 +14,18 @@ import subprocess
 import time
 import sys
 import signal
-from pathos.helpers import mp as multiprocessing
 import queue
 import argparse
 import re
 import json
-import pandas as pd
-from io import StringIO
-
-from filelock import FileLock
-from typing import List, Optional
-from datetime import datetime
 import logging
+import pandas as pd
+
+from io import StringIO
+from filelock import FileLock
+from pathos.helpers import mp as multiprocessing
+from typing import List, Optional
+
 
 # Configure logging
 logging.basicConfig(
@@ -144,7 +144,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
                       mem_threads: Optional[int] = 5,
                       cpu_work: Optional[int] = 100,
                       core: Optional[int] = None,
-                      total_mem: Optional[float] = None) -> List:
+                      total_mem: Optional[int] = None) -> List:
     """
     Run CPU and memory benchmark.
 
@@ -164,7 +164,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
     :return: Lists of CPU and memory subprocesses.
     :rtype: List
     """
-    total_mem = f"{total_mem}M" if total_mem else f"{100.0 / os.cpu_count()}%"
+    total_mem = f"{total_mem}B" if total_mem else f"{100.0 / os.cpu_count()}%"
     cpu_work_per_thread = int(cpu_work / cpu_threads)
 
     cpu_procs = []
@@ -172,8 +172,6 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
     cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
-
-
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -197,7 +195,6 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
     return cpu_procs, mem_procs
 
 
-
 def io_read_benchmark_user_input_data_size(inputs,
                                            rundir=None,
                                            memory_limit=None):
@@ -208,7 +205,8 @@ def io_read_benchmark_user_input_data_size(inputs,
     for file, size in inputs.items():
         with open(rundir.joinpath(file), "rb") as fp:
             log_debug(f"Reading '{file}'")
-            while fp.read(size):
+            chunk_size = min(size, memory_limit)
+            while fp.read(chunk_size):
                 pass
     log_debug("Completed IO Read Benchmark!")
 
@@ -230,7 +228,7 @@ def io_write_benchmark_user_input_data_size(outputs,
 
 def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit=None, rundir=None, event=None):
     """Alternate between reading and writing to a file, ensuring read only happens after write."""
-    
+
     if memory_limit is None:
         memory_limit = 10 * 1024 * 1024  # sys.maxsize
     memory_limit = int(memory_limit)
@@ -314,25 +312,33 @@ def gpu_benchmark(time: int = 100,
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("name", help="Task name.")
+    parser.add_argument("--name", default=None, required=True, help="Task name.")
     parser.add_argument("--rundir", help="Run directory.")
     parser.add_argument("--percent-cpu", default=0.5, type=float,
-                        help="percentage related to the number of cpu threads.")
+                        help="percentage related to the number of CPU threads.")
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
     parser.add_argument("--path-cores", default=None, help="Path to cores file.")
     parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
     parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete the task (overrides CPU and GPU works).")
-    parser.add_argument("--mem", default=None, help="Max amount (in MB) of memory consumption.")
-    parser.add_argument("--out", help="output files name.")
+    parser.add_argument("--mem", type=float, default=None, help="Max amount (in MB) of memory consumption.")
+    parser.add_argument("--output-files", help="output file names with sizes in bytes as a JSON dictionary "
+                                               "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
+    parser.add_argument("--input-files", help="input files names as a JSON array "
+                                              "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
+    parser.add_argument("--debug", action="store_true", help="Enable debug messages.")
+
     return parser
     
 
 def main():
     """Main program."""
     parser = get_parser()
-    args, other = parser.parse_known_args()
+    args = parser.parse_args()
     core = None
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     if args.rundir:
         rundir = pathlib.Path(args.rundir)
@@ -354,19 +360,32 @@ def main():
 
     cpu_queue = multiprocessing.Queue()
 
-    # print("Directory:", os.getcwd())
-    if args.out:
-        log_info(f"Starting IO benchmark for {args.name}...")
+    log_debug(f"Working directory: {os.getcwd()}")
 
-        # Remove all escape characters before attempting to parse the JSON string
-        cleaned_output = re.sub(r'\\+', '', args.out)
+    # Deal with input/output files if any
+    cleaned_input = "{}" if args.input_files is None else re.sub(r'\\+', '', args.input_files)
+    cleaned_output = "{}" if args.output_files is None else re.sub(r'\\+', '', args.output_files)
+    # print("CLEANED INPUT", cleaned_input)
+    # print("CLEANED OUTPUT", cleaned_output)
+
+    if cleaned_input or cleaned_output:
+        log_debug("Starting IO benchmark...")
 
         # Attempt to parse the cleaned string
         try:
             outputs_dict = json.loads(cleaned_output)
         except json.JSONDecodeError as e:
-            log_error(f"Failed to decode JSON: {e}")
+            log_error(f"Failed to decode --output-files JSON string argument: {e}")
             sys.exit(1)
+
+        try:
+            inputs_array = json.loads(cleaned_input)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode --input-files JSON string argument: {e}")
+            sys.exit(1)
+
+        # print("OUTPUT", outputs_dict)
+        # print("INPUTS", inputs_array)
 
         # Create a multiprocessing event that in the first run is set to True
         write_done_event = multiprocessing.Event() 
@@ -377,7 +396,7 @@ def main():
 
         io_proc = multiprocessing.Process(
             target=io_alternate,
-            args=(other, outputs_dict, cpu_queue, mem_bytes, rundir, write_done_event)
+            args=(inputs_array, outputs_dict, cpu_queue, mem_bytes, rundir, write_done_event)
         )
         io_proc.start()
         procs.append(io_proc)
@@ -399,18 +418,18 @@ def main():
             else:
                 gpu_benchmark(work=int(args.gpu_work), device=device)
             
-    
     if args.cpu_work:
         log_info(f"Starting CPU and Memory Benchmarks for {args.name}...")
         if core:
             log_debug(f"{args.name} acquired core {core}")
 
         mem_threads=int(10 - 10 * args.percent_cpu)
-        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_queue=cpu_queue, cpu_threads=int(10 * args.percent_cpu),
-                                                mem_threads=mem_threads,
-                                                cpu_work=sys.maxsize if args.time else int(args.cpu_work),
-                                                core=core,
-                                                total_mem=args.mem)
+        cpu_procs, mem_procs = cpu_mem_benchmark(cpu_queue=cpu_queue, 
+                                                 cpu_threads=int(10 * args.percent_cpu),
+                                                 mem_threads=mem_threads,
+                                                 cpu_work=sys.maxsize if args.time else int(args.cpu_work),
+                                                 core=core,
+                                                 total_mem=mem_bytes)
                     
         procs.extend(cpu_procs)
         if args.time:
@@ -425,7 +444,6 @@ def main():
             # io_proc.terminate()
             io_proc.join()
 
-        
         for mem_proc in mem_procs:
             try:
                 os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails

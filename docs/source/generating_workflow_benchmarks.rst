@@ -109,13 +109,37 @@ workflow benchmark for running with Nextflow::
 
     # generate a Nextflow workflow
     translator = NextflowTranslator(benchmark.workflow)
-    translator.translate(output_file_path=pathlib.Path("/tmp/benchmark-workflow.nf"))
+    translator.translate(output_folder=pathlib.Path("./nextflow-wf/""))
 
 .. warning::
 
     Nextflow's way of defining workflows does not support tasks with iterations i.e. tasks 
     that depend on another instance of the same abstract task. Thus, the translator
     fails when you try to translate a workflow with iterations.
+
+Dask
+++++++++
+`Dask <https://www.dask.org/>`_ is an open-source library for parallel computing
+in Python. It makes it possible to easily implement and execute workflows local machines, HPC cluster schedulers, and cloud-based
+and container-based environments. Below, we provide an example on how to generate
+workflow benchmark for running with Dask::
+
+    import pathlib
+
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, DaskTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    # generate a Dask workflow
+    translator = DaskTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./dask-wf/""))
+
+
 
 Pegasus
 +++++++

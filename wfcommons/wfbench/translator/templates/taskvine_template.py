@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 The WfCommons Team.
+# Copyright (c) 2024-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,7 @@ import shutil
 
 import ndcctools.taskvine as vine
 
+# FLOWCEPT_INIT
 
 # Create a new manager
 m = vine.Manager(9123)
@@ -48,3 +49,5 @@ cpu_bench = m.declare_file("bin/cpu-benchmark", cache="workflow")
 stress_ng = m.declare_file(shutil.which("stress-ng"), cache="workflow")
 
 # Generated code goes here
+
+# FLOWCEPT_END

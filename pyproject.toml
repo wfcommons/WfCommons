@@ -40,7 +40,7 @@ dependencies = [
     "filelock",
     "pathos",
 ]
-dynamic = ["version"]
+dynamic = ["version", "entry-points", "scripts"]
 
 [project.urls]
 Homepage = "https://wfcommons.org"
@@ -50,6 +50,7 @@ Tracker = "https://github.com/wfcommons/WfCommons/issues"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
+flowcept = ["flowcept"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}

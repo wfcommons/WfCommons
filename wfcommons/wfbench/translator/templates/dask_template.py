@@ -97,10 +97,10 @@ def run_workflow(client, simulate: bool, seed: int=42) -> list[WorkflowTask]:
 
 def process_arguments():
     parser = argparse.ArgumentParser(prog=sys.argv[0],
-                                     description='Runs a (translated) workflow through Dask')  # TODO
+                                     description='Runs a (translated) workflow using Dask')
     parser.add_argument("-sim", "--simulate",
                         help="Simulate all tasks (default: run the tasks for real)", action="store_true")
-    parser.add_argument("-s", "--seed", help="Randomizer seed (used when simulating)", default=42)
+    parser.add_argument("-s", "--seed", help="Randomizer seed (used only when simulating tasks)", default=42)
     return parser.parse_args()
 
 

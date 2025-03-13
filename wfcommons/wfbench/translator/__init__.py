@@ -16,3 +16,5 @@ from .pegasus import PegasusTranslator
 from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
 from .cwl import CWLTranslator
+from .bash import BashTranslator
+from .pycompss import PyCompssTranslator

@@ -46,12 +46,13 @@ class WorkflowBenchmark:
     def __init__(self,
                  recipe: Type[WfChefWorkflowRecipe],
                  num_tasks: int,
-                 logger: Optional[Logger] = None) -> None:
+                 logger: Optional[Logger] = None, with_flowcept=False) -> None:
         """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(
             __name__) if logger is None else logger
         self.recipe = recipe
         self.num_tasks = num_tasks
+        self.with_flowcept = with_flowcept
         self.workflow: Workflow = None
 
     def create_benchmark_from_input_file(self,
@@ -174,13 +175,11 @@ class WorkflowBenchmark:
 
         # create data footprint
         for task in self.workflow.tasks.values():
-            outfiles = {file.file_id: file.size for file in task.output_files}
-            outfiles_str = str(outfiles).replace("{", "\"{") \
-                .replace("}", "}\"").replace("'", "\\\\\"").replace(": ", ":")
-            task.args.append(f"--out {outfiles_str}")
+            output_files = {file.file_id: file.size for file in task.output_files}
+            task.args.append(f"--output-files {output_files}")
 
-            infiles = [f"\"{file.file_id}\"" for file in task.input_files]
-            task.args.extend(infiles)
+            input_files = [file.file_id for file in task.input_files]
+            task.args.append(f"--input-files {input_files}")
 
         workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
 
@@ -212,7 +211,8 @@ class WorkflowBenchmark:
         workflow_inputs: List[File] = []
     
         for task in self.workflow.tasks.values():
-            for file in task.output_files:       
+            output_files = sorted(task.output_files, key=lambda x: -len(x.file_id))
+            for file in output_files:
                 if file.file_id in new_file_names:
                     raise ValueError(f"File name {file.file_id} already exists")
                 
@@ -226,7 +226,8 @@ class WorkflowBenchmark:
                 file.file_id = new_name
 
         for task in self.workflow.tasks.values():
-            for file in task.input_files:
+            input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
+            for file in input_files:
                 org_name = file.file_id
                 if file.file_id in new_file_names:
                     # file is an output file of another task and receives the corresponding name
@@ -254,7 +255,8 @@ class WorkflowBenchmark:
                          mem: Optional[float] = None,
                          lock_files_folder: Optional[pathlib.Path] = None,
                          regenerate: Optional[bool] = True,
-                         rundir: Optional[pathlib.Path] = None) -> pathlib.Path:
+                         rundir: Optional[pathlib.Path] = None,
+                         ) -> pathlib.Path:
         """Create a workflow benchmark.
 
         :param save_dir: Folder to generate the workflow benchmark JSON instance and input data files.
@@ -293,6 +295,9 @@ class WorkflowBenchmark:
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
+        if self.with_flowcept:
+            self.workflow.workflow_id = str(uuid.uuid4())
+
         cores, lock = self._creating_lock_files(lock_files_folder)
         for task in self.workflow.tasks.values():
             self._set_argument_parameters(
@@ -305,7 +310,7 @@ class WorkflowBenchmark:
                 lock_files_folder,
                 cores,
                 lock,
-                rundir
+                rundir,
             )
             task.input_files = []
             task.output_files = []
@@ -384,10 +389,16 @@ class WorkflowBenchmark:
         if rundir:
             params.extend([f"--rundir {rundir}"])
 
+        if self.with_flowcept:
+            params.extend(["--with-flowcept"])
+
+            if self.workflow.workflow_id:
+                params.extend([f"--workflow_id {self.workflow.workflow_id}"])
+
         task.runtime = 0
 
         task.program = "wfbench"
-        task.args = [task.task_id]
+        task.args = [f"--name {task.task_id}"]
         task.args.extend(params)
 
     def _generate_task_cpu_params(self,
@@ -437,7 +448,7 @@ class WorkflowBenchmark:
                 for child, data_size in outputs[task.task_id].items():
                     outputs_file_size[f"{task.task_id}_{child}_output.txt"] = data_size
 
-                task.args.extend([f"--out {outputs_file_size}"])
+                task.args.extend([f"--output-files {outputs_file_size}"])
 
             self._add_output_files(outputs)
             self._add_input_files(outputs, data)
@@ -457,7 +468,7 @@ class WorkflowBenchmark:
 
             for task in self.workflow.tasks.values():
                 output = {f"{task.task_id}_output.txt": file_size}
-                task.args.extend([f"--out {output}"])
+                task.args.extend([f"--output-files {output}"])
                 outputs = {}
                 if self.workflow.tasks_children[task.task_id]:
                     outputs.setdefault(task.task_id, {})
@@ -565,7 +576,7 @@ class WorkflowBenchmark:
                             File(f"{parent}_output.txt", data, FileLink.INPUT))
                         inputs.append(f"{parent}_output.txt")
 
-            task.args.extend(inputs)
+            task.args.append(f"--input-files {inputs}")
 
     def _generate_data_for_root_nodes(self, save_dir: pathlib.Path, data: Union[int, Dict[str, str]]) -> None:
         """

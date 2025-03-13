@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022-2024 The WfCommons Team.
+# Copyright (c) 2022-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@ class SwiftTTranslator(Translator):
         self.files_map = {}
         self.tasks_map = {}
         self.cmd_counter = 1
-        self.script = "import files;\nimport io;\nimport python;\nimport string;\nimport unix;\n\n"
 
         # find applications
         self.apps = []
@@ -71,105 +70,11 @@ class SwiftTTranslator(Translator):
         :type output_folder: pathlib.Path
         """
         self.logger.info("Translating workflow into Swift/T")
-        self.script += "string command = \n" \
-                "\"\"\"\n" \
-                "import os\n" \
-                "import pathlib\n" \
-                "import socket\n" \
-                "import subprocess\n" \
-                "import time\n" \
-                "\n" \
-                f"this_dir = pathlib.Path(\".\").absolute()\n" \
-                "\n" \
-                "task_name = \"%s\"\n" \
-                "files_list = \"%s\"\n" \
-                "gpu_work = int(%i)\n" \
-                "\n" \
-                "print(f\"[WfBench] [{task_name}] Starting Benchmark on {socket.gethostname()}\", flush=True)\n" \
-                "\n" \
-                "print(f\"[WfBench] [{task_name}] Starting IO Read Benchmark...\", flush=True)\n" \
-                "if \"__\" not in files_list:\n" \
-                "    with open(this_dir.joinpath(f\"./data/{files_list}\"), \"rb\") as fp:\n" \
-                "        start = time.perf_counter()\n" \
-                "        print(f\"[WfBench]   Reading '{files_list}'\", flush=True)\n" \
-                "        fp.readlines()\n" \
-                "        end = time.perf_counter()\n" \
-                "        data_size = this_dir.joinpath(f\"./data/{files_list}\").stat().st_size\n" \
-                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{data_size}\", flush=True)\n" \
-                "else:\n" \
-                "    files = files_list.split(\", \")\n" \
-                "    for file in files:\n" \
-                "        counter = 0\n" \
-                "        fd = file.split(\"__\")\n" \
-                "        start = time.perf_counter()\n" \
-                "        file_size = 0\n" \
-                "        for f in this_dir.glob(f\"./data/{fd[0]}_*_output.txt\"):\n" \
-                "            if counter >= int(fd[1]):\n" \
-                "                break\n" \
-                "            file_size += os.stat(f).st_size\n" \
-                "            with open(f, \"rb\") as fp:\n" \
-                "                print(f\"[WfBench]   Reading '{f}'\", flush=True)\n" \
-                "                fp.readlines()\n" \
-                "            counter += 1\n" \
-                "        end = time.perf_counter()\n" \
-                "        print(f\"[WfBench] [{task_name}] Metrics (read) [time,size]: {end - start},{file_size}\", flush=True)\n" \
-                "print(f\"[WfBench] [{task_name}] Completed IO Read Benchmark\", flush=True)\n" \
-                "\n" \
-                "if gpu_work > 0:\n" \
-                "    print(f\"[WfBench] [{task_name}] Starting GPU Benchmark...\", flush=True)\n" \
-                "    gpu_prog = [f\"CUDA_DEVICE_ORDER=PCI_BUS_ID {this_dir.joinpath('./bin/gpu-benchmark')} {gpu_work}\"]\n" \
-                "    start = time.perf_counter()\n" \
-                "    gpu_proc = subprocess.Popen(gpu_prog, shell=True)\n" \
-                "    gpu_proc.wait()\n" \
-                "    end = time.perf_counter()\n" \
-                "    print(f\"[WfBench] [{task_name}] Metrics (compute-gpu) [time,work]: {end - start},{gpu_work}\", flush=True)\n" \
-                "\n" \
-                "cpu_work = int(%i)\n" \
-                "if cpu_work > 0:\n" \
-                "    print(f\"[WfBench] [{task_name}] Starting CPU and Memory Benchmarks...\", flush=True)\n" \
-                "    cpu_threads=int(10 * %f)\n" \
-                "    mem_threads=10 - cpu_threads\n" \
-                "    total_mem_bytes = 0.05\n" \
-                "    cpu_work_per_thread = int(cpu_work / cpu_threads)\n" \
-                "\n" \
-                "    cpu_procs = []\n" \
-                "    cpu_prog = [\n" \
-                "        f\"{this_dir.joinpath('./bin/cpu-benchmark')}\", f\"{cpu_work_per_thread}\"]\n" \
-                "\n" \
-                "    start = time.perf_counter()\n" \
-                "    for i in range(cpu_threads):\n" \
-                "        cpu_proc = subprocess.Popen(cpu_prog)\n" \
-                "        cpu_procs.append(cpu_proc)\n" \
-                "\n" \
-                "    if mem_threads > 0:\n" \
-                f"        mem_prog = [\"{self.stress_path}\", \"--vm\", f\"{{mem_threads}}\",\n" \
-                "                    \"--vm-bytes\", f\"{total_mem_bytes}%%\", \"--vm-keep\"]\n" \
-                "        mem_proc = subprocess.Popen(mem_prog, stderr=subprocess.DEVNULL)\n" \
-                "\n" \
-                "    for proc in cpu_procs:\n" \
-                "        proc.wait()\n" \
-                "    mem_kill = subprocess.Popen([\"killall\", \"stress-ng\"])\n" \
-                "    mem_kill.wait()\n" \
-                "    end = time.perf_counter()\n" \
-                "    print(f\"[WfBench] [{task_name}] Metrics (compute) [time,work]: {end - start},{cpu_work}\", flush=True)\n" \
-                "    print(f\"[WfBench] [{task_name}] Completed CPU and Memory Benchmarks\", flush=True)\n" \
-                "\n" \
-                "print(f\"[WfBench] [{task_name}] Writing output file\", flush=True)\n" \
-                "start = time.perf_counter()\n" \
-                "with open(this_dir.joinpath(\"./data/%s\"), \"wb\") as fp:\n" \
-                "    file_size = int(%i)\n" \
-                "    fp.write(os.urandom(file_size))\n" \
-                "end = time.perf_counter()\n" \
-                "print(f\"[WfBench] [{task_name}] Metrics (write) [time,size]: {end - start},{file_size}\", flush=True)\n" \
-                "\n" \
-                "print(f\"[WfBench] [{task_name}] Benchmark completed!\", flush=True)\n" \
-                "dep = %i\n" \
-                "\"\"\";\n\n"
 
         # defining input files
         self.logger.debug("Defining input files")
         in_count = 0
-        self.script += f"string root_in_files[];\n"
+        self.script = f"string root_in_files[];\n"
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
@@ -191,10 +96,12 @@ class SwiftTTranslator(Translator):
         for category in self.categories_list:
             self._add_tasks(category)
 
+        run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
+
         # write benchmark files
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("workflow.swift"), "w") as fp:
-            fp.write(self.script)
+            fp.write(run_workflow_code)
 
         # additional files
         self._copy_binary_files(output_folder)

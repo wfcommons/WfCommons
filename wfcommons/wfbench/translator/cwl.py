@@ -11,7 +11,8 @@
 import shutil
 import logging
 import pathlib
-import shlex
+import ast
+import json
 from typing import Union, Optional
 from collections import defaultdict, deque
 
@@ -38,7 +39,7 @@ class CWLTranslator(Translator):
                            "requirements:",
                            "  MultipleInputFeatureRequirement: {}",
                            "  StepInputExpressionRequirement: {}",
-                           "  InlineJavascriptRequirement: {}"]
+                           "  InlineJavascriptRequirement: {}\n"]
         self.yml_script = []
         self.parsed_tasks = []
         self.task_level_map = defaultdict(lambda: [])
@@ -85,11 +86,12 @@ class CWLTranslator(Translator):
         # Writing the CWL files to the output folder
         self._write_cwl_files(output_folder)
 
-        return 0
-
     def _parse_steps(self) -> None:
-        steps_folder_source = []
-        self.cwl_script.append("\nsteps:")
+        self.cwl_script.append("steps:")
+
+        output_files_sources = []
+        log_files_sources = []
+
         # Parsing each steps by Workflow levels
         for level in sorted(self.task_level_map.keys()):
             # Parsing each task within a Workflow level
@@ -100,80 +102,88 @@ class CWLTranslator(Translator):
 
                 # Parsing the arguments of the task
                 args_array = []
-                benchmark_name = False
 
-                for item in task.args:
-                    # Split elements that contain both an option and a value
-                    if item.startswith("--"):
-                        item = item.replace("\'", "\"")
-                        item = item.split(" ", 1)
-                        args_array.append(item[0])
-                        args_array.append(item[1])
-                    elif not benchmark_name:
-                        args_array.append(item)
-                        benchmark_name = True
+                for a in task.args:
+                    if a.startswith("--output-files"):
+                        flag, output_files_dict = a.split(" ", 1)
+                        output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
+                        a = f"{flag} '{json.dumps(output_files_dict).replace('"', '\\"')}'"
+                    if a.startswith("--input-files"):
+                        flag, input_files_arr = a.split(" ", 1)
+                        input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
+                        a = f"{flag} '{json.dumps(input_files_arr).replace('"', '\\"')}'"
+                    args_array.append(a)
+
+
+                cmd = f"{task.program} {' '.join(args_array)}"
 
                 output_files = [
                     f.file_id for f in task.output_files]
 
-                # Adding the step to the cwl script
-
-                self.cwl_script.append(f"  {task.task_id}:")
-                # TODO: change so that it doesn't only run wfbench programs
-                if not task.program.startswith("wfbench"):
-                    raise ValueError("Only wfbench programs are supported")
-                self.cwl_script.append("    run: clt/wfbench.cwl")
-
-                self.cwl_script.append("    in:")
                 if level == 0:
-                    self.cwl_script.append(
-                        f"      input_files: {task.task_id}_input")
+                    input_files = [f"      input_files: {task.task_id}_input"]
                 else:
-                    self.cwl_script.append(
-                        "      input_files:")
-                    self.cwl_script.append(
-                        "        linkMerge: merge_flattened")
-                    self.cwl_script.append(
-                        "        source:")
-                    for parent in self.task_parents[task_name]:
-                        self.cwl_script.append(
-                            f"          - {parent}/output_files")
-                self.cwl_script.append(
-                    f"      input_params: {{ default: {args_array} }}")
-                self.cwl_script.append("      step_name:")
-                self.cwl_script.append(f"        valueFrom: {task.task_id}")
-                self.cwl_script.append(f"      output_filenames: {{ default: {output_files} }}")
-                self.cwl_script.append(
-                    "    out: [out, err, output_files]\n")
+                    input_files = [  "      input_files:",
+                                     "        linkMerge: merge_flattened",
+                                     "        source:"]
+                    input_files += [f"          - {p}/output_files" for p in self.task_parents[task.task_id]]
 
-                # Adding a step to create a directory with the output files
-                self.cwl_script.append(f"  {task.task_id}_folder:")
-                self.cwl_script.append("    run: clt/folder.cwl")
-                self.cwl_script.append("    in:")
-                self.cwl_script.append("      - id: item")
-                self.cwl_script.append("        linkMerge: merge_flattened")
-                self.cwl_script.append("        source:")
-                self.cwl_script.append(f"          - {task.task_id}/out")
-                self.cwl_script.append(f"          - {task.task_id}/err")
-                self.cwl_script.append(f"          - {task.task_id}/output_files")
-                self.cwl_script.append("      - id: name")
-                self.cwl_script.append(f"        valueFrom: \"{level}_{task.task_id}\"")
-                self.cwl_script.append("    out: [out]\n")
+                code = [
+                    f"  {task.task_id}:",
+                    "    run: clt/bash.cwl",
+                    "    in:",
+                ]
 
-                # adding the folder id to grand list of step folders
-                steps_folder_source.append(f"{task.task_id}_folder")
+                code += input_files
 
-        self.cwl_script.append("  final_folder:")
-        self.cwl_script.append("    run: clt/folder.cwl")
-        self.cwl_script.append("    in:")
-        self.cwl_script.append("      - id: item")
-        self.cwl_script.append("        linkMerge: merge_flattened")
-        self.cwl_script.append("        source:")
-        for folder in steps_folder_source:
-            self.cwl_script.append(f"          - {folder}/out")
-        self.cwl_script.append("      - id: name")
-        self.cwl_script.append("        valueFrom: \"final_output\"")
-        self.cwl_script.append("    out: [out]")
+                code += [
+                    f"      command: {{default: \"{cmd}\"}}",
+                     "      step_name:",
+                    f"        valueFrom: \"{task.task_id}\"",
+                    f"      output_filenames: {{default: {output_files}}}",
+                     "    out: [out, err, output_files]\n"
+                ]
+
+                self.cwl_script.extend(code)
+                output_files_sources.append(f"          - {task.task_id}/output_files")
+                log_files_sources.append(f"          - {task.task_id}/out")
+                log_files_sources.append(f"          - {task.task_id}/err")
+
+        code = [
+             "  compile_output_files:",
+             "    run: clt/folder.cwl",
+             "    in:",
+             "      - id: name",
+             "        valueFrom: \"output\"",
+             "      - id: item",
+             "        linkMerge: merge_flattened",
+             "        source:",
+        ]
+
+        code += output_files_sources
+
+        code += [
+             "    out: [out]\n"
+        ]
+
+        code += [
+             "  compile_log_files:",
+             "    run: clt/folder.cwl",
+             "    in:",
+             "      - id: name",
+             "        valueFrom: \"logs\"",
+             "      - id: item",
+             "        linkMerge: merge_flattened",
+             "        source:",
+        ]
+
+        code += log_files_sources
+
+        code += [
+             "    out: [out]\n"
+        ]
+
+        self.cwl_script.extend(code)
 
     def _parse_inputs_outputs(self) -> None:
         # Parsing the inputs of all root tasks
@@ -195,10 +205,15 @@ class CWLTranslator(Translator):
                 self.yml_script.append(f"    path: data/{f.file_id}")
 
         # Appending the output to the cwl script
-        self.cwl_script.append("\noutputs:")
-        self.cwl_script.append("  final_output_folder:")
-        self.cwl_script.append("    type: Directory")
-        self.cwl_script.append("    outputSource: final_folder/out")
+        code = ["\noutputs:",
+                "  data_folder:",
+                "    type: Directory",
+                "    outputSource: compile_output_files/out",
+                "  log_folder:",
+                "    type: Directory",
+                "    outputSource: compile_log_files/out\n"]
+
+        self.cwl_script.extend(code)
 
     def _write_cwl_files(self, output_folder: pathlib.Path) -> None:
         cwl_folder = output_folder
@@ -207,6 +222,7 @@ class CWLTranslator(Translator):
         clt_folder.mkdir(exist_ok=True)
         shutil.copy(this_dir.joinpath("templates/cwl_templates/wfbench.cwl"), clt_folder)
         shutil.copy(this_dir.joinpath("templates/cwl_templates/folder.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl_templates/bash.cwl"), clt_folder)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))
