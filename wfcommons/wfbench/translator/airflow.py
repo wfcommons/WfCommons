@@ -10,6 +10,8 @@
 
 import pathlib
 import re
+import ast
+import json
 
 from logging import Logger
 from typing import Optional, Union
@@ -30,13 +32,13 @@ class AirflowTranslator(Translator):
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
                  logger: Optional[Logger] = None,
-                 input_file_directory: pathlib.Path = pathlib.Path("/")) -> None:
+                 # input_file_directory: pathlib.Path = pathlib.Path("/")
+                 ) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
-        self.input_file_directory = input_file_directory
-        self._prep_commands()
-
+        # self.input_file_directory = input_file_directory
+        #
         self.script = f"""
 from __future__ import annotations
 
@@ -54,40 +56,79 @@ with DAG(
 ) as dag:
 """
 
-    def translate(self, output_file_path: pathlib.Path) -> None:
+    def translate(self, output_folder: pathlib.Path) -> None:
         """
         Translate a workflow benchmark description(WfFormat) into a Airflow workflow application.
 
-        : param output_file_path: The name of the output file(e.g., workflow.py).
-        : type output_file_path: pathlib.Path
+        : param output_folder: The name of the output folder.
+        : type output_folder: pathlib.Path
         """
 
-        for task in self.tasks:
+        self._prep_commands(output_folder)
+
+        for task in self.tasks.values():
             self.script += f"""
-    {task} = BashOperator(
-        task_id="{task}",
+    {task.task_id} = BashOperator(
+        task_id="{task.task_id}",
         depends_on_past=False,
-        bash_command="{self.task_commands[task]}",
+        bash_command="{self.task_commands[task.task_id]}",
         retries=3,
         )
 """
-        for task in self.tasks:
-            parents = ", ".join(self.task_parents[task])
+        for task in self.tasks.values():
+            parents = ", ".join(self.task_parents[task.task_id])
             if parents:
                 self.script += f"""
-    [{parents}] >> {task}
+    [{parents}] >> {task.task_id}
 """
+        # write benchmark files
+        output_folder.mkdir(parents=True)
+        with open(output_folder.joinpath("workflow.py"), "w") as fp:
+            fp.write(self.script)
 
-        self._write_output_file(self.script, output_file_path)
+        # additional files
+        self._copy_binary_files(output_folder)
+        self._generate_input_files(output_folder)
 
-    def _prep_commands(self):
+    def _prep_commands(self, output_folder: pathlib.Path) -> None:
         self.task_commands = {}
-        for task in self.workflow.workflow_json["workflow"]["execution"]["tasks"]:
-            command_str = " ".join([task["command"]["program"]] + task["command"]["arguments"])
+
+        for task in self.tasks.values():
+            # input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
+            # output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
+            program = output_folder.joinpath(f'bin/{task.program}')
+            args = []
+            for a in task.args:
+                if "--output-files" in a:
+                    flag, output_files_dict = a.split(" ", 1)
+                    output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    a = f"{flag} '{json.dumps(output_files_dict)}'"
+                elif "--input-files" in a:
+                    flag, input_files_arr = a.split(" ", 1)
+                    input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
+                    a = f"{flag} '{json.dumps(input_files_arr)}'"
+                else:
+                    a = a.replace("'", "\"")
+                args.append(a)
+
+            command_str = " ".join([str(program)] + args)
             # Prepends { and } with \" (i.e. {hi} -> \"{hi\"}
             command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
             # Prepends txt filenames with absolute path
-            command_str = re.sub(r"([\w\-]+\.txt)",
-                                 lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",
-                                 command_str)
-            self.task_commands[task["id"]] = command_str
+            # command_str = re.sub(r"([\w\-]+\.txt)",
+            #                      lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",
+            #                      command_str)
+            self.task_commands[task.task_id] = command_str
+
+
+    # def _prep_commands(self):
+    #     self.task_commands = {}
+    #     for task in self.workflow.workflow_json["workflow"]["execution"]["tasks"]:
+    #         command_str = " ".join([task["command"]["program"]] + task["command"]["arguments"])
+    #         # Prepends { and } with \" (i.e. {hi} -> \"{hi\"}
+    #         command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
+    #         # Prepends txt filenames with absolute path
+    #         command_str = re.sub(r"([\w\-]+\.txt)",
+    #                              lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",
+    #                              command_str)
+    #         self.task_commands[task["id"]] = command_str
