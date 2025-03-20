@@ -55,7 +55,14 @@ class TaskVineTranslator(Translator):
 
         # generate code
         run_workflow_code = self._merge_codelines("templates/taskvine_template.py", self.script)
-    
+
+        # generate Flowcept code
+        if self.workflow.workflow_id is not None:
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT",
+                                                          self._flowcept_init(self.workflow.workflow_id,
+                                                                            self.workflow.name))
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", self._flowcept_stop())
+
         # write benchmark files
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("taskvine_workflow.py"), "w") as fp:

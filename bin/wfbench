@@ -327,15 +327,37 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--input-files", help="input files names as a JSON array "
                                               "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
     parser.add_argument("--debug", action="store_true", help="Enable debug messages.")
+    parser.add_argument("--with-flowcept", action="store_true", default=False, help="If you want to use Flowcept.")
+    parser.add_argument("--workflow_id", default=None, help="Id to group tasks in a workflow.")
 
     return parser
     
+
+def begin_flowcept(args):
+    print("Running with Flowcept.")
+    from flowcept import Flowcept, FlowceptTask
+    # TODO: parametrize to allow storing individual tasks
+    f = Flowcept(workflow_id=args.workflow_id,
+                 bundle_exec_id=args.workflow_id,
+                 start_persistence=False, save_workflow=False)
+    f.start()
+    t = FlowceptTask(workflow_id=args.workflow_id, used={**args.__dict__})
+    return f, t
+
+
+def end_flowcept(flowcept, flowcept_task):
+    flowcept_task.end()
+    flowcept.stop()
+
 
 def main():
     """Main program."""
     parser = get_parser()
     args = parser.parse_args()
     core = None
+
+    if args.with_flowcept:
+        flowcept, flowcept_task = begin_flowcept(args)
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -467,6 +489,10 @@ def main():
 
     if core:
         unlock_core(path_locked, path_cores, core)
+
+    if args.with_flowcept:
+        end_flowcept(flowcept, flowcept_task)
+
     log_info(f"Benchmark {args.name} completed!")
 
 if __name__ == "__main__":
