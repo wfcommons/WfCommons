@@ -12,7 +12,7 @@ import logging
 import os
 import pathlib
 import shutil
-
+import textwrap
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
@@ -183,4 +183,15 @@ class Translator(ABC):
         with open(this_dir.joinpath(template_file_path)) as fp:
             run_workflow_code = fp.read()
             return run_workflow_code.replace("# Generated code goes here", wf_codelines)
+
+    def _flowcept_init(self, workflow_id, workflow_name):
+        code = textwrap.dedent(f"""
+        from flowcept.flowcept_api.flowcept_controller import Flowcept
+        f = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}")
+        f.start()
+        """)
+        return code
+
+    def _flowcept_stop(self):
+        return "f.stop()"
     
