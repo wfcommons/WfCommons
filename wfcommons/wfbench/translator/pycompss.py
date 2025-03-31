@@ -229,10 +229,10 @@ class PyCompssTranslator(Translator):
         self.script += f"\n\nif __name__ == \"__main__\":\n"
         # START Flowcept
         if self.workflow.workflow_id is not None:
-            flowcept_init_code = self._flowcept_init(self.workflow.workflow_id, self.workflow.name)
+            flowcept_init_code = self._flowcept_init_python(self.workflow.workflow_id, self.workflow.name)
             self.script += "".join("\t" + line + "\n" for line in flowcept_init_code.splitlines())
         # main
         self.script += f"\tmain_program()\n"
         # STOP Flowcept
         if self.workflow.workflow_id is not None:
-            self.script += f"\t{self._flowcept_stop()}\n"
+            self.script += f"\t{self._flowcept_stop_python()}\n"
