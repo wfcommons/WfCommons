@@ -3,11 +3,11 @@
 1. Instrument the template with:
 
     ```
-    # INIT_FLOWCEPT
+    # FLOWCEPT_INIT
 
     # Generated code goes here
 
-    # END_FLOWCEPT
+    # FLOWCEPT_END
     ```
 
     These `# tags` will be replaced by the translator
