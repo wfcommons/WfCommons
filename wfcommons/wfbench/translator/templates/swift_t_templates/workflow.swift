@@ -57,12 +57,11 @@ logging.debug(f"Working directory: {os.getcwd()}")
 
 logging.debug("Starting IO benchmark...")
 io_proc = None
-write_done_event = multiprocessing.Event() 
-write_done_event.set()
+termination_event = multiprocessing.Event()
 
 io_proc = multiprocessing.Process(
     target=lambda inputs=files_list, outputs=output_data, cpu_queue=cpu_queue, 
-           memory_limit=None, event=write_done_event: (
+           termination_event=termination_event: (
         memory_limit := 10 * 1024 * 1024,
         [open(this_dir.joinpath(name), "wb").close() for name in outputs],
         io_completed := 0,
@@ -71,32 +70,47 @@ io_proc = multiprocessing.Process(
         input_sizes := {name: os.path.getsize(this_dir.joinpath(name)) for name in inputs},
         [
             (
-                cpu_percent := max(io_completed, cpu_queue.get()),    
-                [
-                    cpu_percent := max(io_completed, cpu_queue.get_nowait())
-                    for _ in range(1) 
-                    if all(
-                        [
-                            try_again := True,
-                            [try_again := False for _ in range(1) if not cpu_queue.empty()][0] if not cpu_queue.empty() else None,
-                            try_again
-                        ]
-                    )
-                ],
-                logging.debug(f"CPU Percent: {cpu_percent}"),                
-                [
+                cpu_percent := cpu_queue.get(timeout=1.0),                
+                should_exit := termination_event.is_set(),
+                (
+                    while_loop_var := True,
+                    [
+                        (
+                            new_val := (
+                                cpu_queue.get(timeout = 1.0)
+                                if not cpu_queue.empty() else None
+                            ),
+                            cpu_percent := (
+                                max(cpu_percent, new_val) 
+                                if new_val is not None else cpu_percent
+                            ),
+                            while_loop_var := (
+                                new_val is not None and not cpu_queue.empty()
+                            )
+                        )
+                        for _ in range(100) if while_loop_var
+                    ],
                     bytes_to_read := {
-                        name: int(size * (cpu_percent / 100) - bytes_read[name])
+                        name: max(0, int(size * (cpu_percent / 100) - bytes_read[name]))
                         for name, size in input_sizes.items()
-                    },                    
+                    },
                     bytes_to_write := {
-                        name: int(size * (cpu_percent / 100) - bytes_written[name])
+                        name: max(0, int(size * (cpu_percent / 100) - bytes_written[name]))
                         for name, size in outputs.items()
                     },
+                    logging.debug("Starting IO Read Benchmark..."),
+                    in_file := list(bytes_to_read.keys())[0],
+                    in_size := list(bytes_to_read.values())[0],
+                    open(this_dir.joinpath(in_file), "rb").read(int(in_size)),
+                    logging.debug("Completed IO Read Benchmark!"),
+                    out_file := list(output_data.keys())[0],
+                    out_size := list(output_data.values())[0],
+                    logging.debug(f"Writing output file '{out_file}'"),
+                    open(this_dir.joinpath(out_file), "ab").write(os.urandom(int(out_size))),
                     bytes_read.update({
                         name: bytes_read[name] + bytes_to_read[name]
                         for name in bytes_to_read
-                    }),                    
+                    }),
                     bytes_written.update({
                         name: bytes_written[name] + bytes_to_write[name]
                         for name in bytes_to_write
@@ -104,12 +118,14 @@ io_proc = multiprocessing.Process(
                     
                     logging.debug(f"Bytes Read: {bytes_read}"),
                     logging.debug(f"Bytes Written: {bytes_written}"),
-                    io_completed := cpu_percent
-                ][0] if cpu_percent else None,
-                io_completed < 100
+                    io_completed := cpu_percent,
+                ) if cpu_percent is not None else time.sleep(0.1),
+                not (should_exit or io_completed >= 100)
             )
-            for _ in iter(int, 1) if io_completed < 100
-        ]
+            for _ in range(1000000)
+            if not (io_completed >= 100 or termination_event.is_set())
+        ],
+        logging.info("IO benchmark completed")
     )
 )
 io_proc.start()
