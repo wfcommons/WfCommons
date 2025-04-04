@@ -66,7 +66,7 @@ io_proc = multiprocessing.Process(
         io_completed := 0,
         bytes_read := {name: 0 for name in inputs},
         bytes_written := {name: 0 for name in outputs},
-        input_sizes := {name: os.path.getsize(name) for name in inputs},
+        input_sizes := {name: __import__("os").path.getsize(name) for name in inputs},
         [
             (
                 cpu_percent := cpu_queue.get(timeout=1.0),                
@@ -105,7 +105,7 @@ io_proc = multiprocessing.Process(
                     out_file := list(output_data.keys())[0],
                     out_size := list(output_data.values())[0],
                     logging.debug(f"Writing output file '{out_file}'"),
-                    open(out_file, "ab").write(os.urandom(int(out_size))),
+                    open(out_file, "ab").write(__import__("os").urandom(int(out_size))),
                     bytes_read.update({
                         name: bytes_read[name] + bytes_to_read[name]
                         for name in bytes_to_read
