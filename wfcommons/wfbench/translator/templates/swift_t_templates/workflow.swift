@@ -32,21 +32,22 @@ output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
 
-logging.info("Running with Flowcept.")
-from flowcept import Flowcept, FlowceptTask
-flowcept_agent = Flowcept(workflow_id=workflow_id,
-                          bundle_exec_id=workflow_id,
-                          start_persistence=False, save_workflow=False)
-flowcept_agent.start()
-flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
-    "name": task_name,
-    "inputs": files_list,
-    "gpu_work": gpu_work,
-    "cpu_work": cpu_work,
-    "cpu_threads": cpu_threads,
-    "outputs": output_data,
-    "workflow_id": workflow_id
-})
+if workflow_id:
+    logging.info("Running with Flowcept.")
+    from flowcept import Flowcept, FlowceptTask
+    flowcept_agent = Flowcept(workflow_id=workflow_id,
+                            bundle_exec_id=workflow_id,
+                            start_persistence=False, save_workflow=False)
+    flowcept_agent.start()
+    flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
+        "name": task_name,
+        "inputs": files_list,
+        "gpu_work": gpu_work,
+        "cpu_work": cpu_work,
+        "cpu_threads": cpu_threads,
+        "outputs": output_data,
+        "workflow_id": workflow_id
+    })
 
 logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
@@ -162,13 +163,10 @@ if cpu_work > 0:
     procs.extend(cpu_procs)
     for proc in procs:
         if isinstance(proc, subprocess.Popen):
-            logging.info("Waiting for CPU")
             proc.wait()
     if io_proc is not None and io_proc.is_alive():
-        logging.info("Joining IO PROC")
         io_proc.join()
 
-    logging.info("Looking for mem procs")
     for mem_proc in mem_procs:
         try:
             os.kill(mem_proc.pid, signal.SIGKILL)
@@ -178,8 +176,9 @@ if cpu_work > 0:
 
     logging.debug("Completed CPU and Memory Benchmarks!")
     
-flowcept_task.end()
-flowcept_agent.stop()
+if workflow_id:
+    flowcept_task.end()
+    flowcept_agent.stop()
 
 logging.info(f"Benchmark {task_name} completed!")
 """;
