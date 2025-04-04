@@ -30,7 +30,7 @@ cpu_work = int(%i)
 cpu_threads = int(10 * %f)
 output_data = {"%s": int(%i)}
 dep = %i
-workflow_id =  "%s"
+workflow_id = "%s"
 
 logging.info("Running with Flowcept.")
 from flowcept import Flowcept, FlowceptTask

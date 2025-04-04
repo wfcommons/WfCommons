@@ -206,8 +206,7 @@ class SwiftTTranslator(Translator):
             in_str = ""
         self.script += f"int dep_{self.cmd_counter} = {cats};\n"
         args += f", dep_{self.cmd_counter}"
-        if self.workflow.workflow_id:
-            args += f", \"{self.workflow.workflow_id}\""
+        args += f", \"{self.workflow.workflow_id}\"" if self.workflow.workflow_id else ", \"\""
         self.script += f"string {category}_in = \"{self.output_folder.absolute()}/data/{in_str}\";\n"
 
         if num_tasks > 1:
