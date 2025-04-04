@@ -19,8 +19,8 @@ this_dir = pathlib.Path(".").absolute()
 
 logging.basicConfig(
     level=logging.INFO,
-    format="[WfBench][%(asctime)s][%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
+    format="[WfBench][%%(asctime)s][%%(levelname)s] %%(message)s",
+    datefmt="%%H:%%M:%%S",
     handlers=[logging.StreamHandler()]
 )
 
@@ -31,7 +31,7 @@ cpu_work = int(%i)
 cpu_threads = int(10 * %f)
 output_data = {"%s": int(%i)}
 dep = %i
-workflow_id =  "%s%
+workflow_id =  "%s"
 
 logging.info("Running with Flowcept.")
 from flowcept import Flowcept, FlowceptTask
@@ -141,7 +141,7 @@ if cpu_work > 0:
     mem_procs = []
     cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", "0.05%", "--vm-keep"]
+                "--vm-bytes", "0.05%%", "--vm-keep"]
 
     for i in range(cpu_threads):
         cpu_proc = subprocess.Popen(cpu_prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -149,7 +149,7 @@ if cpu_work > 0:
         monitor_thread = multiprocessing.Process(
             target=lambda proc=cpu_proc, queue=cpu_queue: 
                 [
-                    queue.put(float(line.strip().split()[1].strip('%')))
+                    queue.put(float(line.strip().split()[1].strip('%%')))
                     for line in iter(proc.stdout.readline, "") 
                     if line.strip() and line.strip().startswith("Progress:")
                 ]
