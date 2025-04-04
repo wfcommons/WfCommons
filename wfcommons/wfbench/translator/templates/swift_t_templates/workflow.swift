@@ -15,8 +15,6 @@ import subprocess
 import time
 from pathos.helpers import mp as multiprocessing
 
-this_dir = pathlib.Path(".").absolute()
-
 logging.basicConfig(
     level=logging.INFO,
     format="[WfBench][%%(asctime)s][%%(levelname)s] %%(message)s",
@@ -24,6 +22,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+cpu_benchmark = "%s"
 task_name = "%s"
 files_list = ["%s"]
 gpu_work = int(%i)
@@ -139,7 +138,7 @@ if cpu_work > 0:
 
     cpu_procs = []
     mem_procs = []
-    cpu_prog = [f"{this_dir.joinpath('cpu-benchmark')}", f"{cpu_work_per_thread}"]
+    cpu_prog = [f"{cpu_benchmark}", f"{cpu_work_per_thread}"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", "0.05%%", "--vm-keep"]
 
