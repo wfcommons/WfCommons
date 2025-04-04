@@ -200,7 +200,7 @@ class SwiftTTranslator(Translator):
                 num_tasks += 1
 
         cats = " + ".join(f"{k}__out[{v - 1}]" for k, v in input_files_cat.items())
-        in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
+        in_str = ", ".join(f"{k}_{v - 1}_output.txt" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "0"
             in_str = ""
@@ -208,7 +208,7 @@ class SwiftTTranslator(Translator):
         args += f", dep_{self.cmd_counter}"
         if self.workflow.workflow_id:
             args += f", \"{self.workflow.workflow_id}\""
-        self.script += f"string {category}_in = \"{in_str}\";\n"
+        self.script += f"string {category}_in = \"{self.output_folder.absolute()}/data/{in_str}\";\n"
 
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
