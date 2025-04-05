@@ -6,7 +6,6 @@ import unix;
 
 string flowcept_start = 
 """
-logging.info("Running with Flowcept.")
 workflow_id = "%s"
 from flowcept import Flowcept, FlowceptTask
 flowcept_agent = Flowcept(workflow_id=workflow_id,
@@ -16,13 +15,13 @@ flowcept_agent.start()
 flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
     "workflow_id": workflow_id
 })
-"""
+""";
 
 string flowcept_stop = 
 """
 flowcept_task.end()
 flowcept_agent.stop()
-"""
+""";
 
 string command = 
 """
