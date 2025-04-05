@@ -76,7 +76,8 @@ class SwiftTTranslator(Translator):
         in_count = 0
         self.output_folder = output_folder
         self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
-        self.script = f"string root_in_files[];\n"
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\npython_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
@@ -98,6 +99,10 @@ class SwiftTTranslator(Translator):
         self.logger.info("Adding tasks")
         for category in self.categories_list:
             self._add_tasks(category)
+
+        # flowcept stop
+        if self.workflow.workflow_id:
+            self.script += "string fss = sprintf(flowcept_stop);\npython_persist(fss);"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
 
@@ -213,7 +218,7 @@ class SwiftTTranslator(Translator):
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{self.output_folder.absolute()}/data/{category}_%i_output.txt\", i);\n" \
                 f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
-                f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
+                f"  string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
@@ -222,7 +227,7 @@ class SwiftTTranslator(Translator):
             args = args.replace(
                 ", of", f", \"{self.output_folder.absolute()}/data/{category}_0_output.txt\"").replace("[i]", "[0]")
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
-                f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
+                f"string co_{self.cmd_counter} = python(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
         

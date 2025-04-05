@@ -4,6 +4,26 @@ import python;
 import string;
 import unix;
 
+string flowcept_start = 
+"""
+logging.info("Running with Flowcept.")
+workflow_id = "%s"
+from flowcept import Flowcept, FlowceptTask
+flowcept_agent = Flowcept(workflow_id=workflow_id,
+                        bundle_exec_id=workflow_id,
+                        start_persistence=False, save_workflow=False)
+flowcept_agent.start()
+flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
+    "workflow_id": workflow_id
+})
+"""
+
+string flowcept_stop = 
+"""
+flowcept_task.end()
+flowcept_agent.stop()
+"""
+
 string command = 
 """
 import logging
@@ -31,23 +51,6 @@ cpu_threads = int(10 * %f)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
-
-if workflow_id:
-    logging.info("Running with Flowcept.")
-    from flowcept import Flowcept, FlowceptTask
-    flowcept_agent = Flowcept(workflow_id=workflow_id,
-                            bundle_exec_id=workflow_id,
-                            start_persistence=False, save_workflow=False)
-    flowcept_agent.start()
-    flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
-        "name": task_name,
-        "inputs": files_list,
-        "gpu_work": gpu_work,
-        "cpu_work": cpu_work,
-        "cpu_threads": cpu_threads,
-        "outputs": output_data,
-        "workflow_id": workflow_id
-    })
 
 logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
@@ -176,10 +179,6 @@ if cpu_work > 0:
 
     logging.debug("Completed CPU and Memory Benchmarks!")
     
-if workflow_id:
-    flowcept_task.end()
-    flowcept_agent.stop()
-
 logging.info(f"Benchmark {task_name} completed!")
 """;
 
