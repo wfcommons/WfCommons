@@ -4,25 +4,6 @@ import python;
 import string;
 import unix;
 
-string flowcept_start = 
-"""
-workflow_id = "%s"
-from flowcept import Flowcept, FlowceptTask
-flowcept_agent = Flowcept(workflow_id=workflow_id,
-                        bundle_exec_id=workflow_id,
-                        start_persistence=False, save_workflow=False)
-flowcept_agent.start()
-flowcept_task = FlowceptTask(workflow_id=workflow_id, used={
-    "workflow_id": workflow_id
-})
-""";
-
-string flowcept_stop = 
-"""
-flowcept_task.end()
-flowcept_agent.stop()
-""";
-
 string command = 
 """
 import logging
@@ -50,6 +31,17 @@ cpu_threads = int(10 * %f)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
+
+if 'workflow_id':
+    loggin.info("Running with Flowcept.")
+    from flowcept import Flowcept, FlowceptTask
+    fc = Flowcept(workflow_id=args.workflow_id,
+                bundle_exec_id=args.workflow_id,
+                start_persistence=False, save_workflow=False)
+    fc.start()
+    fc_task = FlowceptTask(workflow_id=args.workflow_id, used={
+      'workflow_id': workflow_id
+    })
 
 logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
@@ -179,6 +171,10 @@ if cpu_work > 0:
     logging.debug("Completed CPU and Memory Benchmarks!")
     
 logging.info(f"Benchmark {task_name} completed!")
+
+if 'workflow_id':
+    fc_task.end()
+    fc.stop()
 """;
 
 # Generated code goes here
