@@ -76,7 +76,8 @@ class SwiftTTranslator(Translator):
         in_count = 0
         self.output_folder = output_folder
         self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
-        self.script = "string root_in_files[];\n"
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
@@ -98,6 +99,10 @@ class SwiftTTranslator(Translator):
         self.logger.info("Adding tasks")
         for category in self.categories_list:
             self._add_tasks(category)
+
+        # flowcept stop
+        # if self.workflow.workflow_id:
+        #     self.script += "string fss = sprintf(flowcept_stop);\npython_persist(fss);"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
 
@@ -206,7 +211,7 @@ class SwiftTTranslator(Translator):
             in_str = ""
         self.script += f"int dep_{self.cmd_counter} = {cats};\n"
         args += f", dep_{self.cmd_counter}"
-        args += f", \"{self.workflow.workflow_id}\"" if self.workflow.workflow_id else ", \"\""
+        args += f", \"{self.workflow.workflow_id}\", fss" if self.workflow.workflow_id else ", \"\""
         self.script += f"string {category}_in = \"{self.output_folder.absolute()}/data/{in_str}\";\n"
 
         if num_tasks > 1:

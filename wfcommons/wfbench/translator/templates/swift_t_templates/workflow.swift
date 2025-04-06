@@ -4,6 +4,14 @@ import python;
 import string;
 import unix;
 
+global const string flowcept_start = 
+"""
+workflow_id = "%s"
+from flowcept.flowcept_api.flowcept_controller import Flowcept
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="Blast-Benchmark", bundle_exec_id=workflow_id)
+flowcept_agent.start()
+"""
+
 string command = 
 """
 import logging
@@ -33,7 +41,7 @@ dep = %i
 workflow_id = "%s"
 
 if 'workflow_id':
-    loggin.info("Running with Flowcept.")
+    logging.info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     fc = Flowcept(workflow_id=args.workflow_id,
                 bundle_exec_id=args.workflow_id,
