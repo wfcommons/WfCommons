@@ -76,7 +76,7 @@ class SwiftTTranslator(Translator):
         in_count = 0
         self.output_folder = output_folder
         self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
-        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
         self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:

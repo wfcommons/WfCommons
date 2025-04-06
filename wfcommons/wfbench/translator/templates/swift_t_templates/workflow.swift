@@ -8,7 +8,7 @@ global const string flowcept_start =
 """
 workflow_id = "%s"
 from flowcept.flowcept_api.flowcept_controller import Flowcept
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="Blast-Benchmark", bundle_exec_id=workflow_id)
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="%s", bundle_exec_id=workflow_id)
 flowcept_agent.start()
 """
 
@@ -43,11 +43,11 @@ workflow_id = "%s"
 if 'workflow_id':
     logging.info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
-    fc = Flowcept(workflow_id=args.workflow_id,
-                bundle_exec_id=args.workflow_id,
+    fc = Flowcept(workflow_id=workflow_id,
+                bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=args.workflow_id, used={
+    fc_task = FlowceptTask(workflow_id=workflow_id, used={
       'workflow_id': workflow_id
     })
 
