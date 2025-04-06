@@ -10,7 +10,7 @@ workflow_id = "%s"
 from flowcept.flowcept_api.flowcept_controller import Flowcept
 flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="%s", bundle_exec_id=workflow_id)
 flowcept_agent.start()
-"""
+""";
 
 string command = 
 """
