@@ -9,7 +9,12 @@ global const string flowcept_start =
 workflow_id = "%s"
 from flowcept.flowcept_api.flowcept_controller import Flowcept
 flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="%s", bundle_exec_id=workflow_id)
-flowcept_agent.start()
+
+try:
+    flowcept_agent.start()
+except Exception:
+    import traceback
+    traceback.print_exc()
 """;
 
 string command = 
@@ -183,6 +188,7 @@ logging.info(f"Benchmark {task_name} completed!")
 if 'workflow_id':
     fc_task.end()
     fc.stop()
+    time.sleep(1)
 """;
 
 # Generated code goes here
