@@ -74,14 +74,18 @@ class SwiftTTranslator(Translator):
         # defining input files
         self.logger.debug("Defining input files")
         in_count = 0
-        self.script = f"string root_in_files[];\n"
+        self.output_folder = output_folder
+        self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:
             task = self.tasks[task_name]
             for file in task.input_files:
                 if task.name not in self.categories_input.keys():
                     self.categories_input[task.name] = in_count
-                    self.script += f"root_in_files[{in_count}] = \"{file.file_id}\";\n"
+                    in_file = output_folder.joinpath(f"./data/{file.file_id}").absolute()
+                    self.script += f"root_in_files[{in_count}] = \"{in_file}\";\n"
                     in_count += 1
                 self.files_map[file.file_id] = f"ins[{in_count}]"
         
@@ -95,6 +99,10 @@ class SwiftTTranslator(Translator):
         self.logger.info("Adding tasks")
         for category in self.categories_list:
             self._add_tasks(category)
+
+        # flowcept stop
+        # if self.workflow.workflow_id:
+        #     self.script += "string fss = sprintf(flowcept_stop);\npython_persist(fss);"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
 
@@ -197,18 +205,19 @@ class SwiftTTranslator(Translator):
                 num_tasks += 1
 
         cats = " + ".join(f"{k}__out[{v - 1}]" for k, v in input_files_cat.items())
-        in_str = ", ".join(f"{k}__{v}" for k, v in input_files_cat.items())
+        in_str = ", ".join(f"{k}_{v - 1}_output.txt" for k, v in input_files_cat.items())
         if "ins[" in cats:
             cats = "0"
             in_str = ""
         self.script += f"int dep_{self.cmd_counter} = {cats};\n"
         args += f", dep_{self.cmd_counter}"
-        self.script += f"string {category}_in = \"{in_str}\";\n"
+        args += f", \"{self.workflow.workflow_id}\", fss" if self.workflow.workflow_id else ", \"\""
+        self.script += f"string {category}_in = \"{self.output_folder.absolute()}/data/{in_str}\";\n"
 
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
-                f"  string of = sprintf(\"{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
+                f"  string of = sprintf(\"{self.output_folder.absolute()}/data/{category}_%i_output.txt\", i);\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
                 f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
@@ -216,8 +225,8 @@ class SwiftTTranslator(Translator):
             
         else:
             args = args.replace(
-                ", of", f", \"{category}_0_output.txt\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{category}\", {args});\n" \
+                ", of", f", \"{self.output_folder.absolute()}/data/{category}_0_output.txt\"").replace("[i]", "[0]")
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"

@@ -334,7 +334,7 @@ def get_parser() -> argparse.ArgumentParser:
     
 
 def begin_flowcept(args):
-    print("Running with Flowcept.")
+    log_info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     # TODO: parametrize to allow storing individual tasks
     f = Flowcept(workflow_id=args.workflow_id,
