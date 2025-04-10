@@ -1,0 +1,43 @@
+Download wfcommons:
+    pip install wfcommons
+
+Download airflow with:
+    pip install apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
+
+Download MySQL and MySQLClient:
+    apt-get -y install pkg-config
+    apt-get install -y mysql-server
+    apt-get install -y python3-dev build-essential
+    apt-get install -y default-libmysqlclient-dev
+    pip install mysqlclient
+
+Setup database for Airflow:
+    mysqld --explicit-defaults-for-timestamp &
+    In MySQL:
+        CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';
+        GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';
+
+Set airflow home directory:
+    export AIRFLOW_HOME="$(pwd)"
+
+Edit AIRFLOW_HOME/airflow.cfg (may need to run 'airflow dags list' to make the file appear):
+    sql_alchemy_conn = mysql+mysqldb://airflow_user:airflow_pass@localhost:3306/airflow_db
+
+Finish setting up database:
+    airflow db migrate
+
+Move the translated workflow.py file to AIRFLOW_HOME/dags/
+
+Run workflow:
+    airflow dags test {workflow_name}
+
+
+
+
+
+(and running the translator)
+Initialize the AirflowTranslator with the workflow to translate and the directory that will contain the workflow's input files.
+Build the Airflow Docker container and run it in the directory with the translated dag. (Make sure there isn't a pre-existing 'airflow' directory.)
+    docker build -t wfcommons-dev -f Dockerfile_Airflow .
+    docker run -it --rm -v .:/home/wfcommons wfcommons-dev /bin/bash

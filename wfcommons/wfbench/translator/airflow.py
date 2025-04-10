@@ -47,7 +47,7 @@ from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 
 with DAG(
-    "{self.workflow.name}_wfcommons",
+    "{self.workflow.name}",
     description="airflow translation of a wfcommons instance",
     schedule="0 0 * * *",
     start_date=datetime(2021, 1, 1),
@@ -71,7 +71,7 @@ with DAG(
     {task.task_id} = BashOperator(
         task_id="{task.task_id}",
         depends_on_past=False,
-        bash_command="{self.task_commands[task.task_id]}",
+        bash_command='{self.task_commands[task.task_id]}',
         retries=3,
         )
 """
@@ -102,18 +102,18 @@ with DAG(
                 if "--output-files" in a:
                     flag, output_files_dict = a.split(" ", 1)
                     output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
-                    a = f"{flag} '{json.dumps(output_files_dict)}'"
+                    a = f"{flag} {json.dumps(output_files_dict)}"
                 elif "--input-files" in a:
                     flag, input_files_arr = a.split(" ", 1)
                     input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
-                    a = f"{flag} '{json.dumps(input_files_arr)}'"
+                    a = f"{flag} {json.dumps(input_files_arr)}"
                 else:
                     a = a.replace("'", "\"")
                 args.append(a)
 
             command_str = " ".join([str(program)] + args)
             # Prepends { and } with \" (i.e. {hi} -> \"{hi\"}
-            command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
+            # command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
             # Prepends txt filenames with absolute path
             # command_str = re.sub(r"([\w\-]+\.txt)",
             #                      lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",

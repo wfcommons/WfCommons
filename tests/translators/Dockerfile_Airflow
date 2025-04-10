@@ -1,5 +1,5 @@
 # docker build -t wfcommons-dev -f Dockerfile_Airflow .
-# docker run -it --rm -v .:/home/wfcommons wfcommons-dev /bin/bash
+# docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
 
 FROM ubuntu:noble
 
@@ -21,7 +21,7 @@ RUN apt-get -y install cmake-data
 RUN apt-get -y install sudo 
 RUN apt-get -y install vim --fix-missing
 RUN apt-get -y install gcc 
-#RUN apt-get -y install gcc-multilib
+RUN apt-get -y install gcc-multilib
 
 # Python stuff
 RUN apt-get -y install python3 python3-pip
@@ -33,47 +33,43 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 # Stress-ng
 RUN apt-get -y install stress-ng
 
+# WfCommons
+RUN python3 -m pip install wfcommons
+
 # Install Airflow
-RUN python3 -m pip install --break-system-packages apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
+RUN python3 -m pip install apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
 
 # Install MySQL/MyClient
 RUN apt-get install -y mysql-server
 RUN apt-get install -y python3-dev build-essential
 RUN apt-get install -y default-libmysqlclient-dev
-RUN python3 -m pip install --break-system-packages mysqlclient
+RUN python3 -m pip install mysqlclient
+
+# Setup directory
+RUN mkdir /home/wfcommons
 
 # Create an entrypoint script to start mysqld in the background
 # and setup the Airflow DB
 RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'sudo mysqld --explicit-defaults-for-timestamp &' >> /entrypoint.sh && \
-    echo 'until sudo mysqladmin ping -h localhost --silent; do' >> /entrypoint.sh && \
+    echo 'mysqld --explicit-defaults-for-timestamp &' >> /entrypoint.sh && \
+    echo 'until mysqladmin ping -h localhost --silent; do' >> /entrypoint.sh && \
     echo '    echo "Waiting for MySQL to be ready..."' >> /entrypoint.sh && \
     echo '    sleep 2' >> /entrypoint.sh && \
     echo 'done' >> /entrypoint.sh && \
     echo 'echo "MySQL is ready!"' >> /entrypoint.sh && \
     echo 'echo "Setting up database for Airflow..."' >> /entrypoint.sh && \
-    echo 'sudo mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /entrypoint.sh && \
-    echo "sudo mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /entrypoint.sh && \
-    echo "sudo mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /entrypoint.sh && \
+    echo 'mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /entrypoint.sh && \
+    echo "mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /entrypoint.sh && \
+    echo "mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /entrypoint.sh && \
+    echo 'export AIRFLOW_HOME="$(pwd)"/home/wfcommons/airflow/' >> /entrypoint.sh && \
     echo "airflow config list 1> /dev/null" >> /entrypoint.sh && \
     echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /entrypoint.sh && \
+    echo 'airflow db migrate' >> /entrypoint.sh && \
     echo 'echo "Airflow database setup!"' >> /entrypoint.sh && \
+    echo 'mkdir ./airflow/dags' >> /entrypoint.sh && \
     echo 'exec bash' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
-# Setup database for Airflow
-#RUN mysqld --explicit-defaults-for-timestamp
-#RUN mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
-#RUN mysql -u root -e "CREATE USER 'airflow_user' IDENTIFIED BY 'airflow_pass'";
-#RUN mysql -u root -e "GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user'";
-
-# Add wfcommons user
-RUN useradd -ms /bin/bash wfcommons
-RUN adduser wfcommons sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-ENV PATH="$PATH:/home/wfcommons/.local/bin/"
-
-USER wfcommons
 WORKDIR /home/wfcommons
 
 ENTRYPOINT ["/entrypoint.sh"]
