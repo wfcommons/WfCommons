@@ -58,10 +58,10 @@ with DAG(
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
-        Translate a workflow benchmark description(WfFormat) into a Airflow workflow application.
+        Translate a workflow benchmark description(WfFormat) into an Airflow workflow application.
 
-        : param output_folder: The name of the output folder.
-        : type output_folder: pathlib.Path
+        :param output_folder: The name of the output folder.
+        :type output_folder: pathlib.Path
         """
 
         self._prep_commands(output_folder)
