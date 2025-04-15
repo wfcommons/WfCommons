@@ -21,7 +21,7 @@ RUN apt-get -y install cmake-data
 RUN apt-get -y install sudo 
 RUN apt-get -y install vim --fix-missing
 RUN apt-get -y install gcc 
-RUN apt-get -y install gcc-multilib
+#RUN apt-get -y install gcc-multilib
 
 # Python stuff
 RUN apt-get -y install python3 python3-pip

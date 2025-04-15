@@ -1,43 +1,98 @@
-Download wfcommons:
-    pip install wfcommons
+This README file describes steps to install/run Airflow, and then run a translated workflow. 
 
-Download airflow with:
+There are three sections:
+  - Installing Airflow on bare-metal
+  - Installing Airflow via Docker
+  - Running a translated workflow
+
+
+Install Airflow on bare-metal
+------------------------------
+
+1. Install Airflow
+
     pip install apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
 
-Download MySQL and MySQLClient:
+2. Install MySQL and MySQLClient
+
     apt-get -y install pkg-config
     apt-get install -y mysql-server
     apt-get install -y python3-dev build-essential
     apt-get install -y default-libmysqlclient-dev
     pip install mysqlclient
 
-Setup database for Airflow:
+3.  Setup database for Airflow
+
     mysqld --explicit-defaults-for-timestamp &
-    In MySQL:
+    In MySQL client, type the following:
         CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
         CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';
         GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';
 
-Set airflow home directory:
+4.  Set env variable for Airflow's home directory
+
     export AIRFLOW_HOME="$(pwd)"
 
-Edit AIRFLOW_HOME/airflow.cfg (may need to run 'airflow dags list' to make the file appear):
+5.  Edit $AIRFLOW_HOME/airflow.cfg (may need to run `airflow dags list` to create this file in the first place)
+
+    Update the "sql_alchemy_conn = ..." line to be:
+
     sql_alchemy_conn = mysql+mysqldb://airflow_user:airflow_pass@localhost:3306/airflow_db
 
-Finish setting up database:
+6.  Finish setting up the database
+
     airflow db migrate
 
-Move the translated workflow.py file to AIRFLOW_HOME/dags/
 
-Run workflow:
-    airflow dags test {workflow_name}
+Installing Airflow via Docker
+-----------------------------
+
+A much simpler alternative is to use Docker. 
+
+1. Build the docker image
+
+   docker build -t wfcommons-dev -f Dockerfile_Airflow .
+
+   (if building on a Mac, add the `--platform linux/amd64` argument after build above)
+
+2. Run the docker container in the directory to contains the translated workflow (see last section below)
+
+   docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
+
+
+Running a translated workflow with Airflow
+-------------------------------------------
+
+Assuming that you have run the airflow translator, for instance, using this Python code:
+
+```
+import pathlib
+
+from wfcommons import BlastRecipe
+from wfcommons.wfbench import WorkflowBenchmark, AirflowTranslator
+
+# create a workflow benchmark object to generate specifications based on a recipe
+benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=45)
+
+# generate a specification based on performance characteristics
+benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+# generate an Airflow  workflow
+translator = AirflowTranslator(benchmark.workflow)
+translator.translate(output_folder=pathlib.Path("/tmp/translated_workflow/"))
+```
+
+The above will create a JSON worfklow file in /tmp/blast-benchmark-45.json.
+In that file, the workflow name (this is used below) is set to
+"Blast-Benchmark".  The above will also create the translated workflow the
+/tmp/translated_workflow/ directory. Some directories and files need to be copied/moved as follows:
+
+  cp -r /tmp/translated_workflow/ $AIRFLOW_HOME/dags/
+  mv $AIRFLOW_HOME/dags/translated_workflow/workflow.py $AIRFLOW_HOME/dags/
+
+Finally, run the workflow as: 
+
+  airflow dags test Blast-Benchmark    (not the "Blast-Benchmark" workflow name from above)
 
 
 
-
-
-(and running the translator)
-Initialize the AirflowTranslator with the workflow to translate and the directory that will contain the workflow's input files.
-Build the Airflow Docker container and run it in the directory with the translated dag. (Make sure there isn't a pre-existing 'airflow' directory.)
-    docker build -t wfcommons-dev -f Dockerfile_Airflow .
-    docker run -it --rm -v .:/home/wfcommons wfcommons-dev /bin/bash
