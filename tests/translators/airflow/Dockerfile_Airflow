@@ -35,18 +35,15 @@ RUN apt-get -y install stress-ng
 
 # WfCommons
 RUN python3 -m pip install --break-system-packages wfcommons
-RUN python3 -m pip install wfcommons
 
 # Install Airflow
 RUN python3 -m pip install --break-system-packages apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
-RUN python3 -m pip install apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
 
 # Install MySQL/MyClient
 RUN apt-get install -y mysql-server
 RUN apt-get install -y python3-dev build-essential
 RUN apt-get install -y default-libmysqlclient-dev
 RUN python3 -m pip install --break-system-packages mysqlclient
-RUN python3 -m pip install mysqlclient
 
 # Setup directory
 RUN mkdir /home/wfcommons
@@ -64,7 +61,7 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo 'mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /entrypoint.sh && \
     echo "mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /entrypoint.sh && \
     echo "mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /entrypoint.sh && \
-    echo 'export AIRFLOW_HOME="$(pwd)"/home/wfcommons/airflow/' >> /entrypoint.sh && \
+    echo 'export AIRFLOW_HOME="$(pwd)"/airflow/' >> /entrypoint.sh && \
     echo "airflow config list 1> /dev/null" >> /entrypoint.sh && \
     echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /entrypoint.sh && \
     echo 'airflow db migrate' >> /entrypoint.sh && \

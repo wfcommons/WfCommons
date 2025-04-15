@@ -42,6 +42,7 @@ class AirflowTranslator(Translator):
         self.script = f"""
 from __future__ import annotations
 
+import os
 from datetime import datetime
 from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
@@ -72,6 +73,7 @@ with DAG(
         task_id="{task.task_id}",
         depends_on_past=False,
         bash_command='{self.task_commands[task.task_id]}',
+        env={{"AIRFLOW_HOME": os.environ["AIRFLOW_HOME"]}},
         retries=3,
         )
 """
@@ -96,16 +98,17 @@ with DAG(
         for task in self.tasks.values():
             # input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
             # output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
-            program = output_folder.joinpath(f'bin/{task.program}')
+            # program = "${AIRFLOW_HOME}/dags/" / output_folder / f"bin/{task.program}"
+            program = task.program
             args = []
             for a in task.args:
                 if "--output-files" in a:
                     flag, output_files_dict = a.split(" ", 1)
-                    output_files_dict = {str(output_folder.joinpath(f"data/{key}")): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    output_files_dict = {str("${AIRFLOW_HOME}/dags/" / output_folder / f"data/{key}"): value for key, value in ast.literal_eval(output_files_dict).items()}
                     a = f"{flag} {json.dumps(output_files_dict)}"
                 elif "--input-files" in a:
                     flag, input_files_arr = a.split(" ", 1)
-                    input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
+                    input_files_arr = [str("${AIRFLOW_HOME}/dags/" / output_folder / f"data/{file}") for file in ast.literal_eval(input_files_arr)]
                     a = f"{flag} {json.dumps(input_files_arr)}"
                 else:
                     a = a.replace("'", "\"")
