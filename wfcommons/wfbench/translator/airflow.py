@@ -95,6 +95,8 @@ with DAG(
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
         self.task_commands = {}
 
+        
+
         for task in self.tasks.values():
             # input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
             # output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
@@ -104,11 +106,11 @@ with DAG(
             for a in task.args:
                 if "--output-files" in a:
                     flag, output_files_dict = a.split(" ", 1)
-                    output_files_dict = {str("${AIRFLOW_HOME}/dags/" / output_folder / f"data/{key}"): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    output_files_dict = {str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{key}"): value for key, value in ast.literal_eval(output_files_dict).items()}
                     a = f"{flag} {json.dumps(output_files_dict)}"
                 elif "--input-files" in a:
                     flag, input_files_arr = a.split(" ", 1)
-                    input_files_arr = [str("${AIRFLOW_HOME}/dags/" / output_folder / f"data/{file}") for file in ast.literal_eval(input_files_arr)]
+                    input_files_arr = [str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{file}") for file in ast.literal_eval(input_files_arr)]
                     a = f"{flag} {json.dumps(input_files_arr)}"
                 else:
                     a = a.replace("'", "\"")
