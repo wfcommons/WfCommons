@@ -95,7 +95,7 @@ with DAG(
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
         self.task_commands = {}
 
-        
+
 
         for task in self.tasks.values():
             # input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
@@ -117,12 +117,17 @@ with DAG(
                 args.append(a)
 
             command_str = " ".join([str(program)] + args)
-            # Prepends { and } with \" (i.e. {hi} -> \"{hi\"}
-            # command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
-            # Prepends txt filenames with absolute path
-            # command_str = re.sub(r"([\w\-]+\.txt)",
-            #                      lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",
-            #                      command_str)
+
+            # Escapes all double quotes
+            command_str = command_str.replace('"', '\\\\"')
+
+            # Wraps --output-files and --input-files arguments in double quotes
+            command_str = re.sub(
+                r'(--output-files) (\{.*\}) (--input-files) (\[.*?\])',
+                lambda m: f'{m.group(1)} "{m.group(2)}" {m.group(3)} "{m.group(4)}"',
+                command_str
+            )
+
             self.task_commands[task.task_id] = command_str
 
 
