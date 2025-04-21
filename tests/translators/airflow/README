@@ -1,4 +1,5 @@
-This README file describes steps to install/run Airflow, and then run a translated workflow. 
+This README file describes steps to install/run Airflow, and then run a
+translated workflow.
 
 There are three sections:
   - Installing Airflow on bare-metal
@@ -55,7 +56,8 @@ A much simpler alternative is to use Docker.
 
    (if building on a Mac, add the `--platform linux/amd64` argument after build above)
 
-2. Run the docker container in the directory to contains the translated workflow (see last section below)
+2. Run the docker container in the directory to contains the translated
+   workflow (see last section below)
 
    docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
 
@@ -77,14 +79,16 @@ benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=45)
 # generate a specification based on performance characteristics
 benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
-# generate an Airflow  workflow
+# generate an Airflow workflow
 translator = AirflowTranslator(benchmark.workflow)
 translator.translate(output_folder=pathlib.Path("/tmp/translated_workflow/"))
 ```
 
 The above will create a JSON worfklow file in /tmp/blast-benchmark-45.json.
 In that file, the workflow name (this is used below) is set to
-"Blast-Benchmark".  The above will also create the translated workflow the
+"Blast-Benchmark".
+
+The above will also create the translated workflow the
 /tmp/translated_workflow/ directory. Some directories and files need to be copied/moved as follows:
 
   cp -r /tmp/translated_workflow/ $AIRFLOW_HOME/dags/
