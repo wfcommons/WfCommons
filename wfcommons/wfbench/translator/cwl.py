@@ -107,11 +107,13 @@ class CWLTranslator(Translator):
                     if a.startswith("--output-files"):
                         flag, output_files_dict = a.split(" ", 1)
                         output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
-                        a = f"{flag} '{json.dumps(output_files_dict).replace('"', '\\"')}'"
+                        output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
+                        a = f"{flag} '{output_files_dict}'"
                     if a.startswith("--input-files"):
                         flag, input_files_arr = a.split(" ", 1)
                         input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
-                        a = f"{flag} '{json.dumps(input_files_arr).replace('"', '\\"')}'"
+                        input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
+                        a = f"{flag} '{input_files_arr}'"
                     args_array.append(a)
 
 

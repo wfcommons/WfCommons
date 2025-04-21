@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2024 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,9 @@ import json
 import logging
 import os
 import pathlib
-import re
 import subprocess
 import time
-import uuid
+import shortuuid
 import sys
 
 from logging import Logger
@@ -39,6 +38,8 @@ class WorkflowBenchmark:
     :type recipe: Type[WfChefWorkflowRecipe]
     :param num_tasks: Total number of tasks in the benchmark workflow.
     :type num_tasks: int
+    :param with_flowcept:
+    :type with_flowcept: bool
     :param logger: The logger where to log information/warning or errors.
     :type logger: Optional[Logger]
     """
@@ -46,7 +47,8 @@ class WorkflowBenchmark:
     def __init__(self,
                  recipe: Type[WfChefWorkflowRecipe],
                  num_tasks: int,
-                 logger: Optional[Logger] = None, with_flowcept=False) -> None:
+                 with_flowcept: bool = False,
+                 logger: Optional[Logger] = None) -> None:
         """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(
             __name__) if logger is None else logger
@@ -296,7 +298,7 @@ class WorkflowBenchmark:
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
         if self.with_flowcept:
-            self.workflow.workflow_id = str(uuid.uuid4())
+            self.workflow.workflow_id = str(shortuuid.uuid())
 
         cores, lock = self._creating_lock_files(lock_files_folder)
         for task in self.workflow.tasks.values():
