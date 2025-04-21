@@ -31,14 +31,10 @@ class AirflowTranslator(Translator):
 
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 logger: Optional[Logger] = None,
-                 # input_file_directory: pathlib.Path = pathlib.Path("/")
-                 ) -> None:
+                 logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
-        # self.input_file_directory = input_file_directory
-        #
         self.script = f"""
 from __future__ import annotations
 
@@ -93,14 +89,15 @@ with DAG(
         self._generate_input_files(output_folder)
 
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
+        """
+        Prepares the bash_command strings for the BashOperators.
+
+        :param output_folder: The name of the output folder.
+        :type output_folder: pathlib.Path
+        """
         self.task_commands = {}
 
-
-
         for task in self.tasks.values():
-            # input_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.input_files]
-            # output_files = [str(output_folder.joinpath(f"data/{f.file_id}")) for f in task.output_files]
-            # program = "${AIRFLOW_HOME}/dags/" / output_folder / f"bin/{task.program}"
             program = task.program
             args = []
             for a in task.args:
@@ -130,15 +127,3 @@ with DAG(
 
             self.task_commands[task.task_id] = command_str
 
-
-    # def _prep_commands(self):
-    #     self.task_commands = {}
-    #     for task in self.workflow.workflow_json["workflow"]["execution"]["tasks"]:
-    #         command_str = " ".join([task["command"]["program"]] + task["command"]["arguments"])
-    #         # Prepends { and } with \" (i.e. {hi} -> \"{hi\"}
-    #         command_str = re.sub(r"(\{|\})", r"\"\1", command_str)
-    #         # Prepends txt filenames with absolute path
-    #         command_str = re.sub(r"([\w\-]+\.txt)",
-    #                              lambda m: f"{self.input_file_directory.absolute().as_posix()}/{m.group(1)}",
-    #                              command_str)
-    #         self.task_commands[task["id"]] = command_str
