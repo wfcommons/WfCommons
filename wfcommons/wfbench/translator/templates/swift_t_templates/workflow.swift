@@ -17,6 +17,13 @@ except Exception:
     traceback.print_exc()
 """;
 
+global const string flowcept_stop = 
+"""
+import time
+dep = %i
+time.sleep(240)
+""";
+
 string command = 
 """
 import logging

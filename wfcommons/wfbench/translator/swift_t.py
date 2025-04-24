@@ -100,9 +100,10 @@ class SwiftTTranslator(Translator):
         for category in self.categories_list:
             self._add_tasks(category)
 
-        # flowcept stop
-        # if self.workflow.workflow_id:
-        #     self.script += "string fss = sprintf(flowcept_stop);\npython_persist(fss);"
+        # flowcept end
+        if self.workflow.workflow_id:
+            self.script += f"string fc_stop = sprintf(flowcept_stop, dep_{self.cmd_counter - 1});\n" \
+                            "python_persist(fc_stop);"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
 
