@@ -4,17 +4,62 @@ import python;
 import string;
 import unix;
 
-global const string flowcept_start = 
+global const string flowcept_start =
 """
+import time
 workflow_id = "%s"
+time.sleep(30)
+""";
+
+global const string flowcept =
+"""
+import logging
+import pathlib
+import subprocess
+import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="%s", bundle_exec_id=workflow_id)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[WfBench][%%(asctime)s][%%(levelname)s] %%(message)s",
+    datefmt="%%H:%%M:%%S",
+    handlers=[logging.StreamHandler()]
+)
+
+workflow_id = "%s"  
+workflow_name = "%s"
+out_files = [%s]
+
+logging.info("Flowcept Starting")
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id)
 
 try:
     flowcept_agent.start()
 except Exception:
     import traceback
     traceback.print_exc()
+
+remaining_files = set(out_files)
+
+while remaining_files:
+    found_files = set()
+    for f in remaining_files:
+        if pathlib.Path(f).exists():
+            found_files.add(f)
+    remaining_files -= found_files
+    if not remaining_files:
+        break
+    time.sleep(1)
+    
+time.sleep(180)
+try:
+    flowcept_agent.stop()
+    time.sleep(120)
+except Exception:
+    import traceback
+    traceback.print_exc()
+
+logging.info("Flowcept Completed")
 """;
 
 string command = 
@@ -188,7 +233,6 @@ logging.info(f"Benchmark {task_name} completed!")
 if 'workflow_id':
     fc_task.end()
     fc.stop()
-    time.sleep(1)
 """;
 
 # Generated code goes here
