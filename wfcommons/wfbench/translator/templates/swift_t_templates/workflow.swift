@@ -51,10 +51,10 @@ while remaining_files:
         break
     time.sleep(1)
     
-time.sleep(120)
+time.sleep(180)
 try:
     flowcept_agent.stop()
-    time.sleep(60)
+    time.sleep(120)
 except Exception:
     import traceback
     traceback.print_exc()
