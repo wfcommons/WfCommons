@@ -43,7 +43,7 @@ class SwiftTTranslator(Translator):
         self.files_map = {}
         self.tasks_map = {}
         self.cmd_counter = 1
-        self.last_file = ""
+        self.out_files = []
 
         # find applications
         self.apps = []
@@ -103,7 +103,9 @@ class SwiftTTranslator(Translator):
 
         # flowcept end
         if self.workflow.workflow_id:
-            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", \"{self.last_file}\");\n" \
+            out_files = ", ".join(f'"{item}"' for item in self.out_files)
+            self.script += f"string out_files[] = [{out_files}];\n"
+            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", out_files);\n" \
                             "python_persist(fc);\n"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
@@ -223,11 +225,12 @@ class SwiftTTranslator(Translator):
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
-            self.last_file = f"{self.output_folder.absolute()}/data/{category}_{num_tasks - 1}_output.txt"
+            self.out_files.append(f"{self.output_folder.absolute()}/data/{category}_{num_tasks - 1}_output.txt")
         else:
-            self.last_file = f"{self.output_folder.absolute()}/data/{category}_0_output.txt"
+            out_file = f"{self.output_folder.absolute()}/data/{category}_0_output.txt"
+            self.out_files.append(out_file)
             args = args.replace(
-                ", of", f", \"{self.last_file}\"").replace("[i]", "[0]")
+                ", of", f", \"{out_file}\"").replace("[i]", "[0]")
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \

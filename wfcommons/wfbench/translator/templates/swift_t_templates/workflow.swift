@@ -14,10 +14,10 @@ time.sleep(30)
 global const string flowcept =
 """
 import logging
-import os.path
 import subprocess
 import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +28,7 @@ logging.basicConfig(
 
 workflow_id = "%s"
 workflow_name = "%s"
-file_path = "%s"
+out_files = "%A"
 
 logging.info("Flowcept Starting")
 flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id)
@@ -39,18 +39,22 @@ except Exception:
     import traceback
     traceback.print_exc()
 
-while not os.path.exists(file_path):
+remaining_files = set(out_files)
+
+while remaining_files:
+    found_files = {f for f in remaining_files if Path(f).exists()}
+    if found_files:
+        remaining_files -= found_files
+    if not remaining_files:
+        break
     time.sleep(1)
 
-if os.path.isfile(file_path):
-    time.sleep(240)
-    try:
-        flowcept_agent.stop()
-    except Exception:
-        import traceback
-        traceback.print_exc()
-else:
-    raise ValueError(f"{file_path} is not a file!")
+time.sleep(240)
+try:
+    flowcept_agent.stop()
+except Exception:
+    import traceback
+    traceback.print_exc()
 
 logging.info("Flowcept Completed")
 """;
