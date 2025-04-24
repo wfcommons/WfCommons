@@ -103,9 +103,8 @@ class SwiftTTranslator(Translator):
 
         # flowcept end
         if self.workflow.workflow_id:
-            out_files = ", ".join(f'"{item}"' for item in self.out_files)
-            self.script += f"string out_files[] = [{out_files}];\n"
-            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", out_files);\n" \
+            out_files = ", ".join(f"'{item}'" for item in self.out_files)
+            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", \"{out_files}\");\n" \
                             "python_persist(fc);\n"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)

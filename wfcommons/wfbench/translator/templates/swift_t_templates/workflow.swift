@@ -14,10 +14,10 @@ time.sleep(30)
 global const string flowcept =
 """
 import logging
+import pathlib
 import subprocess
 import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
-from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,9 +26,9 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-workflow_id = "%s"
+workflow_id = "%s"  
 workflow_name = "%s"
-out_files = "%A"
+out_files = [%s]
 
 logging.info("Flowcept Starting")
 flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id)
@@ -42,13 +42,15 @@ except Exception:
 remaining_files = set(out_files)
 
 while remaining_files:
-    found_files = {f for f in remaining_files if Path(f).exists()}
-    if found_files:
-        remaining_files -= found_files
+    found_files = set()
+    for f in remaining_files:
+        if pathlib.Path(f).exists():
+            found_files.add(f)
+    remaining_files -= found_files
     if not remaining_files:
         break
     time.sleep(1)
-
+    
 time.sleep(240)
 try:
     flowcept_agent.stop()
