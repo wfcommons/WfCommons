@@ -77,7 +77,7 @@ class SwiftTTranslator(Translator):
         in_count = 0
         self.output_folder = output_folder
         self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
-        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
         self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:
@@ -103,9 +103,8 @@ class SwiftTTranslator(Translator):
 
         # flowcept end
         if self.workflow.workflow_id:
-            self.script += f"int dep_{self.cmd_counter} = {self.last_file};\n" \
-                            f"string fc_stop = sprintf(flowcept_stop, dep_{self.cmd_counter});\n" \
-                            "python_persist(fc_stop);"
+            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", \"{self.last_file}\");\n" \
+                            "python_persist(fc);\n"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
 
@@ -169,7 +168,6 @@ class SwiftTTranslator(Translator):
                 prefix = ""
 
                 for file in task.output_files:
-                    out_file = file.file_id
                     file_size = file.size
                 
                 for file in task.input_files:
@@ -225,15 +223,14 @@ class SwiftTTranslator(Translator):
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
-            self.last_file = f"{category}__out[{num_tasks - 1}]"
-            
+            self.last_file = f"{self.output_folder.absolute()}/data/{category}_{num_tasks - 1}_output.txt"
         else:
+            self.last_file = f"{self.output_folder.absolute()}/data/{category}_0_output.txt"
             args = args.replace(
-                ", of", f", \"{self.output_folder.absolute()}/data/{category}_0_output.txt\"").replace("[i]", "[0]")
+                ", of", f", \"{self.last_file}\"").replace("[i]", "[0]")
             self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
-            self.last_file = f"{category}__out[0]"
         
         self.cmd_counter += 1
