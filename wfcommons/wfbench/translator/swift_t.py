@@ -43,6 +43,7 @@ class SwiftTTranslator(Translator):
         self.files_map = {}
         self.tasks_map = {}
         self.cmd_counter = 1
+        self.last_file = ""
 
         # find applications
         self.apps = []
@@ -102,7 +103,8 @@ class SwiftTTranslator(Translator):
 
         # flowcept end
         if self.workflow.workflow_id:
-            self.script += f"string fc_stop = sprintf(flowcept_stop, dep_{self.cmd_counter - 1});\n" \
+            self.script += f"int dep_{self.cmd_counter} = {self.last_file};\n" \
+                            f"string fc_stop = sprintf(flowcept_stop, dep_{self.cmd_counter});\n" \
                             "python_persist(fc_stop);"
 
         run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
@@ -223,6 +225,7 @@ class SwiftTTranslator(Translator):
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
+            self.last_file = f"{category}__out[{num_tasks - 1}]"
             
         else:
             args = args.replace(
@@ -231,5 +234,6 @@ class SwiftTTranslator(Translator):
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
+            self.last_file = f"{category}__out[0]"
         
         self.cmd_counter += 1
