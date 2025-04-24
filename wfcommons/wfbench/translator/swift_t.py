@@ -224,7 +224,8 @@ class SwiftTTranslator(Translator):
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
-            self.out_files.append(f"{self.output_folder.absolute()}/data/{category}_{num_tasks - 1}_output.txt")
+            for i in range(num_tasks):
+                self.out_files.append(f"{self.output_folder.absolute()}/data/{category}_{i}_output.txt")
         else:
             out_file = f"{self.output_folder.absolute()}/data/{category}_0_output.txt"
             self.out_files.append(out_file)
