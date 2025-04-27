@@ -19,9 +19,6 @@ from typing import Dict
 class TestUtils:
 
     @pytest.mark.unit
-    def test_best_fit_distribution(self) -> None:
-        pass
-
     @pytest.mark.parametrize(
         "distribution,min_value,max_value",
         [
@@ -32,6 +29,7 @@ class TestUtils:
     def test_generate_rvs(self, distribution: Dict, min_value: float, max_value: float) -> None:
         assert(min_value <= wfcommons.utils.generate_rvs(distribution, min_value, max_value) <= max_value )
 
+    @pytest.mark.unit
     @pytest.mark.parametrize(
         "n,r,combinations",
         [
