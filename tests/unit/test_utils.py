@@ -13,10 +13,21 @@ import pathlib
 import pytest
 import wfcommons.utils
 
-from typing import Dict
+from typing import Dict, List, Tuple
 
 
 class TestUtils:
+    
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "data,distribution",
+        [
+            pytest.param([1, 2, 3], ("rdist", (1.5504806356651624, 0.0013236200991527764, 0.0013236200991527767))),
+            pytest.param([1, 1, 1], ("pareto", (2.25803497307119, -7.535551383120264e-19, 4.806600020282434e-19))),
+        ],
+    )
+    def test_best_fit_distribution(self, data: List[float], distribution: Tuple) -> None:
+        assert(wfcommons.utils.best_fit_distribution(data) == distribution)
 
     @pytest.mark.unit
     @pytest.mark.parametrize(
