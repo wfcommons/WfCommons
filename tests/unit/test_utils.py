@@ -23,13 +23,13 @@ class TestUtils:
         pass
 
     @pytest.mark.parametrize(
-        "distribution,min_value,max_value,variable",
+        "distribution,min_value,max_value",
         [
-            pytest.param(None, 10, 100, 10),
-            pytest.param({"name": "norm", "params": [0.08688656476267097, 0.2572832376513094]}, 10, 100, 10),
+            pytest.param(None, 10, 100),
+            pytest.param({"name": "norm", "params": [0.08688656476267097, 0.2572832376513094]}, 10, 100),
         ],
     ) 
-    def test_generate_rvs(self, distribution: Dict, min_value: float, max_value: float, variable: float) -> None:
+    def test_generate_rvs(self, distribution: Dict, min_value: float, max_value: float) -> None:
         assert(min_value <= wfcommons.utils.generate_rvs(distribution, min_value, max_value) <= max_value )
 
     @pytest.mark.parametrize(
