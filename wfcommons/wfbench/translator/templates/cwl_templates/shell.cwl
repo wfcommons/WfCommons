@@ -3,8 +3,8 @@ class: CommandLineTool
 requirements:
   InlineJavascriptRequirement: {}
   ShellCommandRequirement: {}
-stdout: $("logs/" + inputs.step_name + ".out")
-stderr: $("logs/" + inputs.step_name + ".err")
+stdout: $(inputs.step_name + ".out")
+stderr: $(inputs.step_name + ".err")
 
 arguments:
   - position: 1
