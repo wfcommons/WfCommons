@@ -457,7 +457,11 @@ def main():
         if args.time:
             time.sleep(int(args.time))
             for proc in procs:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                if isinstance(proc, multiprocessing.Process):
+                    if proc.is_alive():
+                        proc.terminate()
+                elif isinstance(proc, subprocess.Popen):
+                    proc.terminate()
         else:
             for proc in procs:
                 if isinstance(proc, subprocess.Popen):
