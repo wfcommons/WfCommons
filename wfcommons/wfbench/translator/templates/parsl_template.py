@@ -99,8 +99,4 @@ def get_parsl_files (filenames: List[str], is_output: bool = False) -> List[File
 
     return parsl_files
 
-# FLOWCEPT_INIT
-
 # Generated code goes here
-
-# FLOWCEPT_END

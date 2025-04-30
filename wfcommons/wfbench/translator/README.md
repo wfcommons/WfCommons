@@ -1,16 +1,16 @@
 # Adding Flowcept to a new translator
 
-1. Instrument the template with:
+1. For some translators (e.g., Dask), you can instrument the template with:
 
     ```
     # FLOWCEPT_INIT
-
-    # Generated code goes here
-
     # FLOWCEPT_END
     ```
 
-    These `# tags` will be replaced by the translator
+    These `# tags` will be replaced by the translator, and you must know where to place them in your template file.
+    
+    For some translators (e.g., Parsl), these tags will be placed within the translator.
+    For some translators (e.g., Pycompss), these tags will NOT be used, but you will use just `self._flowcept_init_python()` and `self._flowcept_stop_python()`.
 
 2. Add the following code to the `Translator.translate` method
 

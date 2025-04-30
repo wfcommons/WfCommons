@@ -19,7 +19,6 @@ import time
 
 from dask.distributed import Client
 
-# FLOWCEPT_INIT
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -110,10 +109,10 @@ def to_json(obj):
 
 
 if __name__ == '__main__':
+    # FLOWCEPT_INIT
     args = process_arguments()
     with build_dask_client() as client:
         tasks = run_workflow(client, args.simulate, seed=int(args.seed))
     with open("run.json", "w") as fp:
         fp.write(to_json(tasks))
-
-# FLOWCEPT_END
+    # FLOWCEPT_END

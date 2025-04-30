@@ -64,9 +64,12 @@ class DaskTranslator(Translator):
 
         # generate Flowcept code
         if self.workflow.workflow_id is not None:
+            flowcept_init_code = self._flowcept_init_python(self.workflow.workflow_id, self.workflow.name)
+            flowcept_init_code_indented = ""
+            flowcept_init_code_indented += "".join("    " + line + "\n" for line in flowcept_init_code.splitlines())
+
             run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT",
-                                                          self._flowcept_init_python(self.workflow.workflow_id,
-                                                                                     self.workflow.name))
+                                                          flowcept_init_code_indented)
             run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", self._flowcept_stop_python())
 
         # write benchmark files

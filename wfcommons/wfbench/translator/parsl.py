@@ -145,6 +145,7 @@ class ParslTranslator(Translator):
                 codelines.extend(code)
 
         cleanup_code = [
+            "# FLOWCEPT_INIT",
             "try:",
             "    for task in task_arr:",
             "        task.result()",
@@ -158,6 +159,7 @@ class ParslTranslator(Translator):
             "    # Releasing all resources, and shutting down all executors and workers",
             "    parsl.dfk().cleanup()",
             "    parsl.clear()",
+            "    # FLOWCEPT_END",
         ]
 
         codelines.extend(cleanup_code)
