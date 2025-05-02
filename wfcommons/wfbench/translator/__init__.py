@@ -18,3 +18,4 @@ from .taskvine import TaskVineTranslator
 from .cwl import CWLTranslator
 from .bash import BashTranslator
 from .pycompss import PyCompssTranslator
+from .streamflow import StreamFlowTranslator

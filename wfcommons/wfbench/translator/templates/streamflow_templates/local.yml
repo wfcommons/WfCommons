@@ -1,0 +1,7 @@
+version: v1.0
+workflows:
+  montage:
+    type: cwl
+    config:
+      file: cwl/main.cwl
+      settings: cwl/config.yml
