@@ -79,12 +79,12 @@ class StreamFlowTranslator(Translator):
         # Parsing the steos
         self._parse_steps()
 
-        # additional files
-        self._copy_binary_files(output_folder)
-        self._generate_input_files(output_folder)
-
         # Writing the CWL files to the output folder
         self._write_cwl_files(output_folder)
+        
+        # additional files
+        self._copy_binary_files(output_folder.joinpath("cwl"))
+        self._generate_input_files(output_folder.joinpath("cwl"))
 
     def _parse_steps(self) -> None:
         self.cwl_script.append("steps:")
