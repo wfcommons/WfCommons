@@ -3,5 +3,5 @@ workflows:
   montage:
     type: cwl
     config:
-      file: cwl/main.cwl
-      settings: cwl/config.yml
+      file: ./cwl/main.cwl
+      settings: ./cwl/config.yml
