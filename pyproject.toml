@@ -36,6 +36,7 @@ dependencies = [
     "scipy",
     "pyyaml",
     "pandas",
+    "shortuuid",
     "stringcase",
     "filelock",
     "pathos",
