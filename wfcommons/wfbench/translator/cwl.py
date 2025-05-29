@@ -132,7 +132,7 @@ class CWLTranslator(Translator):
 
                 code = [
                     f"  {task.task_id}:",
-                    "    run: clt/bash.cwl",
+                    "    run: clt/shell.cwl",
                     "    in:",
                 ]
 
@@ -224,7 +224,7 @@ class CWLTranslator(Translator):
         clt_folder.mkdir(exist_ok=True)
         shutil.copy(this_dir.joinpath("templates/cwl_templates/wfbench.cwl"), clt_folder)
         shutil.copy(this_dir.joinpath("templates/cwl_templates/folder.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/bash.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl_templates/shell.cwl"), clt_folder)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))
