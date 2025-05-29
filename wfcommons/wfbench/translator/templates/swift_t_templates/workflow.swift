@@ -85,7 +85,8 @@ task_name = "%s"
 files_list = ["%s"]
 gpu_work = int(%i)
 cpu_work = int(%i)
-cpu_threads = int(10 * %f)
+percent_cpu = %f
+cpu_threads = int(10 * percent_cpu)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
@@ -98,7 +99,11 @@ if 'workflow_id':
                 start_persistence=False, save_workflow=False)
     fc.start()
     fc_task = FlowceptTask(workflow_id=workflow_id, used={
-      'workflow_id': workflow_id
+      'workflow_id': workflow_id,
+      'name': task_name,
+      'percent-cpu': percent_cpu,
+      'cpu-work': cpu_work,
+      'gpu-work': gpu_work
     })
 
 logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
