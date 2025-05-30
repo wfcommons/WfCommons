@@ -98,7 +98,7 @@ if 'workflow_id':
                 bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=workflow_id, used={
+    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_name, used={
       'workflow_id': workflow_id,
       'name': task_name,
       'percent-cpu': percent_cpu,

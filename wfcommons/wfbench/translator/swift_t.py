@@ -217,7 +217,8 @@ class SwiftTTranslator(Translator):
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{self.output_folder.absolute()}/data/{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
+                f"  string task_id = \"{category}_\" + i;\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", task_id, {args});\n" \
                 f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
