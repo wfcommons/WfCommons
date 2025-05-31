@@ -232,7 +232,7 @@ class SwiftTTranslator(Translator):
                 self.out_files.add(out_file)
             args = args.replace(
                 ", of", f", \"{out_file}\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}_{self.cmd_counter}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
