@@ -31,7 +31,7 @@ workflow_name = "%s"
 out_files = [%s]
 
 logging.info("Flowcept Starting")
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id, start_persistence=False, save_workflow=False)
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id, start_persistence=False, save_workflow=True)
 
 try:
     flowcept_agent.start()
