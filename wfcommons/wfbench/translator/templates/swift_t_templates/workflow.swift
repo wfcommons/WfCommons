@@ -90,6 +90,7 @@ cpu_threads = int(10 * percent_cpu)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
+task_id = f"{workflow_id}_{task_name}"
 
 if 'workflow_id':
     logging.info("Running with Flowcept.")
@@ -98,7 +99,7 @@ if 'workflow_id':
                 bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_name, used={
+    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_id, used={
       'workflow_id': workflow_id,
       'name': task_name,
       'percent-cpu': percent_cpu,
