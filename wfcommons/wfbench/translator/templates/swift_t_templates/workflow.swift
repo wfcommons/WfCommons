@@ -31,7 +31,7 @@ workflow_name = "%s"
 out_files = [%s]
 
 logging.info("Flowcept Starting")
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id)
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id, start_persistence=False, save_workflow=True)
 
 try:
     flowcept_agent.start()
@@ -51,10 +51,8 @@ while remaining_files:
         break
     time.sleep(1)
     
-time.sleep(180)
 try:
     flowcept_agent.stop()
-    time.sleep(120)
 except Exception:
     import traceback
     traceback.print_exc()
@@ -90,6 +88,7 @@ cpu_threads = int(10 * percent_cpu)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
+task_id = f"{workflow_id}_{task_name}"
 
 if 'workflow_id':
     logging.info("Running with Flowcept.")
@@ -98,7 +97,7 @@ if 'workflow_id':
                 bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=workflow_id, used={
+    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_id, used={
       'workflow_id': workflow_id,
       'name': task_name,
       'percent-cpu': percent_cpu,
