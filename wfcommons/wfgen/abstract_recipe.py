@@ -196,8 +196,8 @@ class WorkflowRecipe(ABC):
         :return: List of files output files.
         :rtype: List[File]
         """
-        if task.name in self.tasks_output_files.keys():
-            return self.tasks_output_files[task.name]
+        if task.task_id in self.tasks_output_files.keys():
+            return self.tasks_output_files[task.task_id]
 
         task_recipe = self._workflow_recipe()[task.name]
 
@@ -208,19 +208,19 @@ class WorkflowRecipe(ABC):
         # obtain input files from parents
         input_files = []
         
-        if task.name in self.tasks_parents.keys():
-            for parent_task_name in self.tasks_parents[task.name]:
+        if task.task_id in self.tasks_parents.keys():
+            for parent_task_name in self.tasks_parents[task.task_id]:
                 output_files = self._generate_task_files(self.tasks_map[parent_task_name])
                 self.tasks_output_files.setdefault(parent_task_name, [])
                 self.tasks_output_files[parent_task_name] = output_files
                 input_files.extend(output_files)
 
         for input_file in input_files:
-            if input_file not in self.tasks_files_names[task.task_id]:
-                self.tasks_files[task.task_id].append(File(name=input_file,
+            if input_file.file_id not in self.tasks_files_names[task.task_id]:
+                self.tasks_files[task.task_id].append(File(file_id=input_file.file_id,
                                                            link=FileLink.INPUT,
                                                            size=input_file.size))
-                self.tasks_files_names[task.task_id].append(input_file)
+                self.tasks_files_names[task.task_id].append(input_file.file_id)
 
         # generate additional input files
         self._generate_files(task.task_id, task_recipe['input'], FileLink.INPUT)
