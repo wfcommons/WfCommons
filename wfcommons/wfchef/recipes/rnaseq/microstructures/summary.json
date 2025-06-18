@@ -1,0 +1,17 @@
+{
+  "frequencies": {},
+  "base_graphs": {
+    "rnaseq-t1l": {
+      "size": 126,
+      "order": 65
+    },
+    "rnaseq-3l": {
+      "size": 128,
+      "order": 66
+    },
+    "rnaseq-6l": {
+      "size": 128,
+      "order": 66
+    }
+  }
+}

@@ -63,8 +63,9 @@ class NextflowLogsParser(LogsParser):
                                  description=self.description,
                                  executed_at=self.executed_at,
                                  makespan=self.makespan,
-                                 wms_name=self.wms_name,
-                                 wms_url=self.wms_url)
+                                 # wms_name=self.wms_name,
+                                 # wms_url=self.wms_url
+                                 )
 
         self._parse_execution_report_file()
         self._parse_execution_timeline_file()
@@ -88,7 +89,7 @@ class NextflowLogsParser(LogsParser):
                         program=category,
                         args=list(filter(None, t['script'].replace('\n', '').split(' '))),
                         cores=float(t['cpus']),
-                        files=[],
+                        #files=[],
                         avg_cpu=float(_parse_number(t['%cpu'])),
                         bytes_read=round((int(_parse_number(t['rchar'])) + int(_parse_number(t['read_bytes']))) / 1024),
                         bytes_written=round(
