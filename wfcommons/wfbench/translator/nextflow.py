@@ -227,8 +227,8 @@ validateParams()
         :return: The code.
         :rtype: str
         """
-
-        code = f"process {task.task_id}()" + "{\n"
+        function_name = task.task_id.replace(".", "_")
+        code = f"process {function_name}()" + "{\n"
 
         # File variables
         if self._find_children(task.task_id):
