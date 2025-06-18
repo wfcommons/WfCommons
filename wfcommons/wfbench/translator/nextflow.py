@@ -298,7 +298,8 @@ validateParams()
         code += "workflow {\n"
         code += "\tresults = bootstrap()\n"
         for task in sorted_tasks:
-            code += f"\tresults = function_{task.task_id}(results)\n"
+            function_name = task.task_id.replace(".", "_")
+            code += f"\tresults = function_{function_name}(results)\n"
         code += "}\n"
         return code
 
@@ -312,7 +313,8 @@ validateParams()
         :rtype: str
         """
         code = f"// Function to call task {task.task_id}\n"
-        code += f"def function_{task.task_id}(Map inputs) " + "{\n"
+        function_name = task.task_id.replace(".", "_")
+        code += f"def function_{function_name}(Map inputs) " + "{\n"
 
         if self._find_parents(task.task_id):
             # Input channel mixing and then call
