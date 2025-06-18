@@ -298,7 +298,8 @@ validateParams()
         code += "workflow {\n"
         code += "\tresults = bootstrap()\n"
         for task in sorted_tasks:
-            code += f"\tresults = function_{task.task_id}(results)\n"
+            function_name = task.task_id.replace(".", "_")
+            code += f"\tresults = function_{function_name}(results)\n"
         code += "}\n"
         return code
 
@@ -312,18 +313,19 @@ validateParams()
         :rtype: str
         """
         code = f"// Function to call task {task.task_id}\n"
-        code += f"def function_{task.task_id}(Map inputs) " + "{\n"
+        function_name = task.task_id.replace(".", "_")
+        code += f"def function_{function_name}(Map inputs) " + "{\n"
 
         if self._find_parents(task.task_id):
             # Input channel mixing and then call
-            code += f"\tdef {task.task_id}_necessary_input = Channel.empty()\n"
+            code += f"\tdef {function_name}_necessary_input = Channel.empty()\n"
             for f in task.input_files:
-                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix(inputs.{f.file_id})\n"
-            code += f"\tdef {task.task_id}_necessary_input_future = {task.task_id}_necessary_input.collect()\n"
-            code += f"\tdef {task.task_id}_produced_output = {task.task_id}({task.task_id}_necessary_input_future)\n"
+                code += f"\t{function_name}_necessary_input = {function_name}_necessary_input.mix(inputs.{f.file_id})\n"
+            code += f"\tdef {function_name}_necessary_input_future = {function_name}_necessary_input.collect()\n"
+            code += f"\tdef {function_name}_produced_output = {function_name}({function_name}_necessary_input_future)\n"
         else:
             # Simple call
-            code += f"\tdef {task.task_id}_produced_output = {task.task_id}()\n"
+            code += f"\tdef {function_name}_produced_output = {function_name}()\n"
 
         # Pass on the outputs
         code += "\n"
@@ -331,7 +333,7 @@ validateParams()
         if self._find_children(task.task_id):
             counter = 0
             for f in task.output_files:
-                code += f"\toutputs.{f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
+                code += f"\toutputs.{f.file_id} = {function_name}_produced_output.map" + "{it[" + str(counter) + "]}\n"
                 counter += 1
         code += "\treturn outputs\n"
         code += "}\n\n"
