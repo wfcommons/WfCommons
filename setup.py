@@ -49,6 +49,7 @@ setup(
             'genome_recipe = wfcommons.wfchef.recipes:GenomeRecipe',
             'blast_recipe = wfcommons.wfchef.recipes:BlastRecipe',
             'bwa_recipe = wfcommons.wfchef.recipes:BwaRecipe',
+            'rnaseq_recipe = wfcommons.wfchef.recipes:RnaseqRecipe',
         ]
     },
 )

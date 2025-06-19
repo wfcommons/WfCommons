@@ -1,3 +1,6 @@
+graft wfcommons/wfchef/recipes/rnaseq/microstructures/**
+graft wfcommons/wfchef/recipes/rnaseq/microstructures
+graft wfcommons/wfchef/recipes/rnaseq
 graft wfcommons/wfchef/recipes/epigenomics/microstructures/**
 graft wfcommons/wfchef/recipes/epigenomics/microstructures
 graft wfcommons/wfchef/recipes/epigenomics

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2023 The WfCommons Team.
+# Copyright (c) 2020-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ class Task:
                  energy: Optional[int] = None,
                  avg_power: Optional[float] = None,
                  priority: Optional[int] = None,
-                 executedAt: Optional[str] = None,
+                 executed_at: Optional[str] = None,
                  task_type: Optional[TaskType] = None,
                  launch_dir: Optional[str] = None,
                  logger: Optional[Logger] = None,
@@ -114,7 +114,7 @@ class Task:
         self.priority: Optional[int] = priority
         self.type: Optional[TaskType] = task_type
         self.launch_dir: Optional[str] = launch_dir
-        self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executedAt else executedAt
+        self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
         self.logger.debug(
             f"created task {self.task_id}: runtime => {self.runtime} seconds.")
 

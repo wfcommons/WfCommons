@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     :param verbose: when set, prints status messages.
     :type cutoff: bool
     :param verbose: number of times to repeat the err calculation process (due to randomization).
-    :type runs:bool
+    :type runs: bool
     """
     camelname = capitalcase(wf_name)
     savedir.mkdir(exist_ok=True, parents=True)
