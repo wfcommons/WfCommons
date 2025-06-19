@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 The WfCommons Team.
+# Copyright (c) 2024-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,6 +11,7 @@
 import pathlib
 import pytest
 
+from datetime import datetime
 from wfcommons.common import Task, Workflow
 from wfcommons.version import __version__, __schema_version__
 
@@ -28,7 +29,8 @@ class TestWorkflow:
     def workflow(self) -> Workflow:
         return Workflow(
             name="Workflow Test",
-            makespan=100.0
+            makespan=100.0,
+            executed_at=str(datetime.now().astimezone().isoformat())
         )
 
     @pytest.mark.unit

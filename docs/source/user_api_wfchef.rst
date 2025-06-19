@@ -54,6 +54,14 @@ wfcommons.wfchef.recipes.montage.recipe
    :undoc-members:
    :show-inheritance:
 
+wfcommons.wfchef.recipes.rnaseq.recipe
+--------------------------------------
+
+.. automodule:: wfcommons.wfchef.recipes.rnaseq.recipe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 wfcommons.wfchef.recipes.seismology.recipe
 ------------------------------------------
 
