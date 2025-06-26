@@ -251,7 +251,7 @@ class WorkflowBenchmark:
                          save_dir: pathlib.Path,
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = None,
-                         gpu_work: Union[int, Dict[str, int]] = None,
+                         gpu_work: Dict = None,
                          time: Optional[int] = None,
                          data: Optional[Union[int, Dict[str, str]]] = None,
                          mem: Optional[float] = None,
@@ -267,8 +267,8 @@ class WorkflowBenchmark:
         :type percent_cpu: Union[float, Dict[str, float]]
         :param cpu_work: CPU work per workflow task.
         :type cpu_work: Union[int, Dict[str, int]]
-        :param gpu_work: GPU work per workflow task.
-        :type gpu_work: Union[int, Dict[str, int]]
+        :param gpu_work: GPU list of params
+        :type gpu_work: Dict
         :param time: Time limit for running each task (in seconds).
         :type time: Optional[int]
         :param data: Dictionary of input size files per workflow task type or total workflow data footprint (in MB).
@@ -365,7 +365,7 @@ class WorkflowBenchmark:
                                  task: Task,
                                  percent_cpu: Union[float, Dict[str, float]],
                                  cpu_work: Union[int, Dict[str, int]],
-                                 gpu_work: Union[int, Dict[str, int]],
+                                 gpu_work: Dict,
                                  time: Optional[int],
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
@@ -428,16 +428,35 @@ class WorkflowBenchmark:
                            f"--path-cores {cores}"])
         return params
 
-    def _generate_task_gpu_params(self, task: Task, gpu_work: Union[int, Dict[str, int]]) -> List[str]:
-        """
-        Setting gpu arguments if gpu benchmark requested
-        """
+    def _generate_task_gpu_params(self, task: Task, gpu_work: Union[dict, None]) -> List[str]:
         if not gpu_work:
             return []
-        _gpu_work = gpu_work[task.category] if isinstance(
-            gpu_work, dict) else gpu_work
 
-        return [f"--gpu-work {_gpu_work}"]
+        # Determine if this is a flat config (applies to all tasks)
+        is_flat = all(isinstance(v, (int, list)) for v in gpu_work.values())
+
+        if is_flat:
+            _params = gpu_work
+        else:
+            # Hierarchical config: task_id > category > fallback to {}
+            _params = gpu_work.get(task.task_id) or gpu_work.get(task.category) or {}
+
+        params = []
+
+        if "gpu_compute_size" in _params:
+            params.append(f"--gpu_compute_size {_params['gpu_compute_size']}")
+
+        if "gpu_mem_size" in _params:
+            params.extend([f"--gpu_mem_size {_params['gpu_mem_size']}"])
+
+        if "kernel_size" in _params:
+            ks = _params["kernel_size"]
+            if isinstance(ks, list) and len(ks) == 2:
+                params.extend([f"--gpu_kernel_size {str(ks[0])} {str(ks[1])}"])
+            else:
+                params.append("--gpu_kernel")
+
+        return params
 
     def _create_data_footprint(self, data: Optional[Union[int, Dict[str, str]]], save_dir: pathlib.Path) -> None:
         """

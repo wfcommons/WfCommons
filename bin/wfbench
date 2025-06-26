@@ -301,13 +301,31 @@ def get_available_gpus():
     return df[df["utilization.gpu"] <= 5].index.to_list()
 
 
-def gpu_benchmark(time: int = 100,
-                  work: int = 100, 
-                  device: int = 0): #work, device
-    
-    gpu_prog = [f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={device} {this_dir.joinpath('./gpu_benchmark')} {work} {time}"]
-    log_debug(f"Running GPU Benchmark: {gpu_prog}")
-    subprocess.Popen(gpu_prog, shell=True)
+def gpu_benchmark(gpu_params: dict, device: int):
+    """
+    Launch GPU benchmark based on parsed gpu_params.
+    """
+    script_path = this_dir / "gpu_benchmark.py"
+    gpu_prog = ["python", str(script_path)]
+
+    if "gpu_compute_size" in gpu_params:
+        gpu_prog.extend(["--gpu_compute_size", str(gpu_params["gpu_compute_size"])])
+
+    if "gpu_mem_size" in gpu_params:
+        gpu_prog.extend(["--gpu_mem_size", str(gpu_params["gpu_mem_size"])])
+
+    if "kernel_size" in gpu_params:
+        ks = gpu_params["kernel_size"]
+        if isinstance(ks, list) and len(ks) == 2:
+            gpu_prog.append("--gpu_kernel")
+            gpu_prog.extend(["--gpu_kernel_size", str(ks[0]), str(ks[1])])
+
+    env = os.environ.copy()
+    env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    env["CUDA_VISIBLE_DEVICES"] = str(device)
+
+    log_debug(f"Running GPU benchmark: {' '.join(gpu_prog)}")
+    subprocess.Popen(gpu_prog, env=env)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -319,7 +337,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
     parser.add_argument("--path-cores", default=None, help="Path to cores file.")
     parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
-    parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
+    parser.add_argument("--gpu-work", type=str, default=None, help="JSON string of GPU benchmark config. Can be a flat dict or nested by task/category.")
     parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete the task (overrides CPU and GPU works).")
     parser.add_argument("--mem", type=float, default=None, help="Max amount (in MB) of memory consumption.")
     parser.add_argument("--output-files", help="output file names with sizes in bytes as a JSON dictionary "
@@ -424,22 +442,33 @@ def main():
         procs.append(io_proc)
 
     if args.gpu_work:
-        log_info(f"Starting GPU Benchmark for {args.name}...")
-        available_gpus = get_available_gpus() #checking for available GPUs
-
-        if not available_gpus:
-            log_error("No GPU available")
+        gpu_work_config = {}
+        try:
+            gpu_work_config = json.loads(args.gpu_work)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to parse --gpu-work JSON: {e}")
             sys.exit(1)
-        else:
-            device = available_gpus[0]
-            log_debug(f"Running on GPU {device}")
+            # Resolve the actual GPU config for this task
+            gpu_params = {}
 
-            if args.time:
-                log_debug(f" Time:{args.time}, Work:{args.gpu_work}, Device:{device}")
-                gpu_benchmark(time=int(args.time), work=int(args.gpu_work), device=device)
+        if isinstance(gpu_work_config, dict):
+            is_flat = all(isinstance(v, (int, float, list, str)) for v in gpu_work_config.values())
+            if is_flat:
+                gpu_params = gpu_work_config # All tasks have same gpu benchmark values
             else:
-                gpu_benchmark(work=int(args.gpu_work), device=device)
-            
+                task_id = args.name
+                gpu_params = gpu_work_config.get(task_id) or {}
+                
+                log_info(f"Starting GPU Benchmark for {args.name}...")
+                available_gpus = get_available_gpus()
+
+                if not available_gpus:
+                    log_error("No GPU available")
+                else:
+                    device = available_gpus[0]
+                    log_debug(f"Running on GPU {device}")
+                    gpu_benchmark(gpu_params, device)
+                        
     if args.cpu_work:
         log_info(f"Starting CPU and Memory Benchmarks for {args.name}...")
         if core:
