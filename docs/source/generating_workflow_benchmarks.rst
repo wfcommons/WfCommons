@@ -88,8 +88,32 @@ description in :ref:`json-format-label`.
     to execute memory-intensive threads. Therefore, it is crucial to ensure that 
     :code:`stress-ng` is installed on all worker nodes.
 
+
+Dask
+++++++++
+`Dask <https://www.dask.org/>`_ is an open-source library for parallel computing
+in Python. It makes it possible to easily implement and execute workflows local machines, HPC cluster schedulers, and cloud-based
+and container-based environments. Below, we provide an example on how to generate
+workflow benchmark for running with Dask::
+
+    import pathlib
+
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, DaskTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    # generate a Dask workflow
+    translator = DaskTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./dask-wf/""))
+
 Nextflow
 ++++++++
+
 `Nextflow <https://www.nextflow.io/>`_ is a workflow management system that enables
 the development of portable and reproducible workflows. It supports deploying workflows
 on a variety of execution platforms including local, HPC schedulers, and cloud-based
@@ -116,30 +140,6 @@ workflow benchmark for running with Nextflow::
     Nextflow's way of defining workflows does not support tasks with iterations i.e. tasks 
     that depend on another instance of the same abstract task. Thus, the translator
     fails when you try to translate a workflow with iterations.
-
-Dask
-++++++++
-`Dask <https://www.dask.org/>`_ is an open-source library for parallel computing
-in Python. It makes it possible to easily implement and execute workflows local machines, HPC cluster schedulers, and cloud-based
-and container-based environments. Below, we provide an example on how to generate
-workflow benchmark for running with Dask::
-
-    import pathlib
-
-    from wfcommons import BlastRecipe
-    from wfcommons.wfbench import WorkflowBenchmark, DaskTranslator
-
-    # create a workflow benchmark object to generate specifications based on a recipe
-    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-
-    # generate a specification based on performance characteristics
-    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
-
-    # generate a Dask workflow
-    translator = DaskTranslator(benchmark.workflow)
-    translator.translate(output_folder=pathlib.Path("./dask-wf/""))
-
-
 
 Pegasus
 +++++++
@@ -174,6 +174,31 @@ for running with Pegasus::
     affinity during benchmark execution. To enable this feature, you need to specify 
     the :code:`lock_files_folder` parameter when using 
     :meth:`~wfcommons.wfbench.bench.WorkflowBenchmark.create_benchmark`.
+
+PyCOMPSs
+++++++++
+
+`PyCOMPSs <https://compss.bsc.es/>`_ is a programming model and runtime that 
+enables the parallel execution of Python applications on distributed computing 
+infrastructures. It allows developers to define tasks using simple Python 
+decorators, automatically handling task scheduling, data dependencies, and 
+resource management.. Below, we provide an example on how to generate workflow 
+benchmark for running with PyCOMPSs::
+
+    import pathlib
+
+    from wfcommons import CyclesRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, PyCompssTranslator
+
+    # create a workflow benchmark object to generate specifications based on a recipe
+    benchmark = WorkflowBenchmark(recipe=CyclesRecipe, num_tasks=200)
+
+    # generate a specification based on performance characteristics
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=500, data=1000, percent_cpu=0.8)
+
+    # generate a PyCOMPSs workflow
+    translator = PyCompssTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./pycompss-wf/"))
 
 Swift/T
 +++++++
