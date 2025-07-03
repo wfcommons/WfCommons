@@ -15,7 +15,6 @@ global const string flowcept =
 """
 import logging
 import pathlib
-import subprocess
 import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
 

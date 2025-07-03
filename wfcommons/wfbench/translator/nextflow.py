@@ -27,7 +27,6 @@ class NextflowTranslator(Translator):
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
-
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
                  logger: Optional[Logger] = None) -> None:
@@ -35,18 +34,7 @@ class NextflowTranslator(Translator):
         super().__init__(workflow, logger)
 
         self.script = ""
-
-        self._usage_string = """
-Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
-
-    Required parameters:
-      --pwd         Working directory (where the workflow.nf file is located)
-
-    Optional parameters:
-      --help        Show this message and exit.
-      --simulate    Use a "sleep 1" for all tasks instead of the WfBench benchmark.
-"""
-
+        self.out_files = set()
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -55,7 +43,6 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
-
         # Create the output folder
         output_folder.mkdir(parents=True)
 
@@ -73,7 +60,8 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
         # Create the Nextflow workflow script and file
         self._create_workflow_script(sorted_tasks)
-        self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
+        run_workflow_code = self._merge_codelines("templates/nextflow_templates/workflow.nf", self.script)
+        self._write_output_file(run_workflow_code, output_folder.joinpath("workflow.nf"))
 
         # Create the README file
         self._write_readme_file(output_folder)
@@ -86,10 +74,10 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
         :param tasks: The (sorted) list of tasks.
         :type tasks: list[Task]
-        """
-
-        # Output the code for command-line argument processing
-        self.script += self._generate_arg_parsing_code()
+        """       
+        # Add Flowcept code if enabled
+        if self.workflow.workflow_id:
+            self.script += self._generate_flowcept_code()
 
         # Output the code for each task
         for task in tasks:
@@ -100,55 +88,21 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
         return
 
-    def _generate_arg_parsing_code(self):
+    def _generate_flowcept_code(self) -> str:
         """
-        Generate the code to parse command-line argument.
-
         :return: The code.
         :rtype: str
         """
-
-        code = r'''
-params.simulate = false
-params.pwd = null
-params.help = null
-pwd = null
-
-def printUsage(error_msg, exit_code) {
-
-    def usage_string = """
-'''
-        code += self._usage_string
-
-        code += r'''
-"""
-    if (error_msg) {
-        def RED = '\u001B[31m'
-        def RESET = '\u001B[0m'
-        System.err.println "${RED}Error: ${RESET}" + error_msg
-    }
-    System.err.println usage_string
-    exit exit_code
-}
-
-def validateParams() {
-    if (params.help) {
-        printUsage(msg = "", exit_code=0)
-    }
-    if (params.pwd == null) {
-        printUsage(msg = "Missing required parameter: --pwd", exit_code=1)
-    }
-    pwd = file(params.pwd).toAbsolutePath().toString()
-    if (!file(pwd).exists()) {
-        printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
-    } 
-}
-
-// Call validation at the start
-validateParams()
-
-'''
-        return code
+        out_files = ", ".join(f"'{item}'" for item in self.out_files)
+        return "process flowcept(){\n" \
+               "    input:\n" \
+               "    output:\n" \
+               "    script:\n" \
+               "        \"\"\"\n" \
+		       "        ${pwd}/bin/flowcept.py " \
+               f"{self.workflow.name} {self.workflow.workflow_id} '\\[{out_files}\\]' \n" \
+		       "        \"\"\"\n" \
+               "}\n\n"                     
 
     def _get_tasks_in_topological_order(self) -> List[Task]:
         """
@@ -168,6 +122,9 @@ validateParams()
             if not all_children:
                 break
             for potential_task in all_children:
+                num_children = len(self.task_children[potential_task.task_id])
+                if not num_children:
+                    self.out_files.add(potential_task.output_files[0])
                 if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
                     tasks_in_current_level.append(potential_task)
             levels[current_level] = tasks_in_current_level
@@ -353,6 +310,3 @@ validateParams()
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
 
             out.write(f"\tnextflow run ./workflow.nf --pwd `pwd`\n")
-            out.write("\n")
-            out.write(self._usage_string)
-
