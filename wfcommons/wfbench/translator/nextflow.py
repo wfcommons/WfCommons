@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
+import shutil
 
 from logging import Logger
 from typing import List, Optional, Union
@@ -16,6 +17,8 @@ from typing import List, Optional, Union
 from .abstract_translator import Translator
 from ...common import Workflow
 from ...common.task import Task
+
+this_dir = pathlib.Path(__file__).resolve().parent
 
 
 class NextflowTranslator(Translator):
@@ -50,6 +53,8 @@ class NextflowTranslator(Translator):
         # Create benchmark files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
+        if self.workflow.workflow_id:
+            shutil.copy(this_dir.joinpath("templates/nextflow/flowcept_agent.py"), output_folder.joinpath("bin"))
 
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
@@ -61,7 +66,7 @@ class NextflowTranslator(Translator):
 
         # Create the Nextflow workflow script and file
         self._create_workflow_script(sorted_tasks)
-        run_workflow_code = self._merge_codelines("templates/nextflow_templates/workflow.nf", self.script)
+        run_workflow_code = self._merge_codelines("templates/nextflow/workflow.nf", self.script)
         self._write_output_file(run_workflow_code, output_folder.joinpath("workflow.nf"))
 
         # Create the README file
@@ -95,14 +100,14 @@ class NextflowTranslator(Translator):
         :return: The code.
         :rtype: str
         """
-        out_files = ", ".join(f"'{item}'" for item in self.out_files)
+        out_files = ", ".join(f"\"{item}\"" for item in self.out_files)
         return "process flowcept(){\n" \
                "    input:\n" \
                "    output:\n" \
                "    script:\n" \
                "        \"\"\"\n" \
-		       "        ${pwd}/bin/flowcept.py " \
-               f"{self.workflow.name} {self.workflow.workflow_id} '\\[{out_files}\\]' \n" \
+		       "        ${pwd}/bin/flowcept_agent.py " \
+               f"{self.workflow.name} {self.workflow.workflow_id} '[{out_files}]' \n" \
 		       "        \"\"\"\n" \
                "}\n\n"                     
 
@@ -253,6 +258,8 @@ class NextflowTranslator(Translator):
 
         # Generate workflow function
         code += "workflow {\n"
+        if self.workflow.workflow_id:
+            code += "\tflowcept()\n"
         code += "\tresults = bootstrap()\n"
         for task in sorted_tasks:
             function_name = task.task_id.replace(".", "_")
