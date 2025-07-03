@@ -44,7 +44,8 @@ class NextflowTranslator(Translator):
         :type output_folder: pathlib.Path
         """
         # Create the output folder
-        output_folder.mkdir(parents=True)
+        self.output_folder = output_folder
+        self.output_folder.mkdir(parents=True)
 
         # Create benchmark files
         self._copy_binary_files(output_folder)
@@ -56,7 +57,7 @@ class NextflowTranslator(Translator):
 
         # Create the bash script for each task
         for task in sorted_tasks:
-            self._create_task_script(output_folder, task)
+            self._create_task_script(task)
 
         # Create the Nextflow workflow script and file
         self._create_workflow_script(sorted_tasks)
@@ -90,6 +91,7 @@ class NextflowTranslator(Translator):
 
     def _generate_flowcept_code(self) -> str:
         """
+
         :return: The code.
         :rtype: str
         """
@@ -108,6 +110,8 @@ class NextflowTranslator(Translator):
         """
         Sort the workflow tasks in topological order.
 
+        :param output_folder: The path to the output folder.
+        :type output_folder: pathlib.Path
         :return: A sorted list of tasks.
         :rtype: List[Task]
         """
@@ -124,7 +128,7 @@ class NextflowTranslator(Translator):
             for potential_task in all_children:
                 num_children = len(self.task_children[potential_task.task_id])
                 if not num_children:
-                    self.out_files.add(potential_task.output_files[0])
+                    self.out_files.add(f"{self.output_folder.absolute()}/{potential_task.output_files[0]}")
                 if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
                     tasks_in_current_level.append(potential_task)
             levels[current_level] = tasks_in_current_level
@@ -132,14 +136,10 @@ class NextflowTranslator(Translator):
             current_level += 1
         return sorted_tasks
 
-
-    @staticmethod
-    def _create_task_script(output_folder: pathlib.Path, task: Task):
+    def _create_task_script(self, task: Task):
         """
         Generate the bash script for invoking a task.
 
-        :param output_folder: The path to the output folder.
-        :type output_folder: pathlib.Path
         :param task: The task.
         :type task: Task
         :return: The code.
@@ -151,16 +151,16 @@ class NextflowTranslator(Translator):
         # Generate input spec
         input_spec = "'\\["
         for f in task.input_files:
-            input_spec += f"\"{output_folder.resolve()}/data/{f.file_id}\","
+            input_spec += f"\"{self.output_folder.resolve()}/data/{f.file_id}\","
         input_spec = input_spec[:-1] + "\\]'"
 
         # Generate output spec
         output_spec = "'\\{"
         for f in task.output_files:
-            output_spec += f"\"{output_folder.resolve()}/data/{f.file_id}\":{str(f.size)},"
+            output_spec += f"\"{self.output_folder.resolve()}/data/{f.file_id}\":{str(f.size)},"
         output_spec = output_spec[:-1] + "\\}'"
 
-        code += f"{output_folder.resolve()}/bin/{task.program} "
+        code += f"{self.output_folder.resolve()}/bin/{task.program} "
 
         for a in task.args:
             if "--output-files" in a:
@@ -171,7 +171,7 @@ class NextflowTranslator(Translator):
                 code += f"{a} "
         code += "\n"
 
-        script_file_path = output_folder.joinpath(f"bin/script_{task.task_id}.sh")
+        script_file_path = self.output_folder.joinpath(f"bin/script_{task.task_id}.sh")
         with open(script_file_path, "w") as out:
             out.write(code)
 
