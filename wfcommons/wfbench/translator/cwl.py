@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 The WfCommons Team.
+# Copyright (c) 2024-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ from .abstract_translator import Translator
 from ...common import Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
+
 
 class CWLTranslator(Translator):
     """
@@ -222,9 +223,9 @@ class CWLTranslator(Translator):
 
         clt_folder = cwl_folder.joinpath("clt")
         clt_folder.mkdir(exist_ok=True)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/wfbench.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/folder.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/shell.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/wfbench.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/folder.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/shell.cwl"), clt_folder)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))

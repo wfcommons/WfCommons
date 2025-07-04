@@ -53,8 +53,9 @@ class NextflowTranslator(Translator):
         # Create benchmark files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
+        
         if self.workflow.workflow_id:
-            shutil.copy(this_dir.joinpath("templates/nextflow/flowcept_agent.py"), output_folder.joinpath("bin"))
+            shutil.copy(this_dir.joinpath("templates/flowcept_agent.py"), output_folder.joinpath("bin"))
 
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
