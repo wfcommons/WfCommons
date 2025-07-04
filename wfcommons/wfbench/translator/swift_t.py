@@ -105,7 +105,7 @@ class SwiftTTranslator(Translator):
             self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", \"{out_files}\");\n" \
                             "python_persist(fc);\n"
 
-        run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
+        run_workflow_code = self._merge_codelines("templates/swift_t/workflow.swift", self.script)
 
         # write benchmark files
         output_folder.mkdir(parents=True)
