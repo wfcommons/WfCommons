@@ -134,7 +134,7 @@ class NextflowTranslator(Translator):
             for potential_task in all_children:
                 num_children = len(self.task_children[potential_task.task_id])
                 if not num_children:
-                    self.out_files.add(f"{self.output_folder.absolute()}/{potential_task.output_files[0]}")
+                    self.out_files.add(f"{self.output_folder.absolute()}/data/{potential_task.output_files[0]}")
                 if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
                     tasks_in_current_level.append(potential_task)
             levels[current_level] = tasks_in_current_level

@@ -49,6 +49,7 @@ while remaining_files:
     
 try:
     flowcept_agent.stop()
+    time.sleep(5)
 except Exception:
     import traceback
     traceback.print_exc()
