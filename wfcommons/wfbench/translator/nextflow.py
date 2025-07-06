@@ -26,16 +26,19 @@ class NextflowTranslator(Translator):
     A WfFormat parser for creating Nextflow workflow applications.
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
-    :type workflow: Union[Workflow, pathlib.Path],
+    :type workflow: Union[Workflow, pathlib.Path]
+    :param slurm: Whether to generate a Slurm template script for workflow submission using :code:`sbatch`.
+    :type slurm: bool
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
+                 slurm: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
-
+        self.slurm = slurm
         self.script = ""
         self.out_files = set()
 
@@ -54,6 +57,9 @@ class NextflowTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
         
+        if self.slurm:
+            shutil.copy(this_dir.joinpath("templates/nextflow/nextflow_hyperqueue_job.sh"), output_folder)
+
         if self.workflow.workflow_id:
             shutil.copy(this_dir.joinpath("templates/flowcept_agent.py"), output_folder.joinpath("bin"))
 

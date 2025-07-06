@@ -141,6 +141,17 @@ workflow benchmark for running with Nextflow::
     that depend on another instance of the same abstract task. Thus, the translator
     fails when you try to translate a workflow with iterations.
 
+.. note::
+    
+    If you plan to run Nextflow on an HPC system using Slurm, we **strongly
+    recommend** using the `HyperQueue <https://github.com/It4innovations/hyperqueue>`_ 
+    executor. HyperQueue efficiently distributes workflow tasks across all allocated 
+    compute nodes, improving scalability and resource utilization.
+
+    The :class:`~wfcommons.wfbench.translator.nextflow.NextflowTranslator`
+    class includes functionality to automatically generate a Slurm script 
+    template for running the workflow on HPC systems.
+
 Pegasus
 +++++++
 
