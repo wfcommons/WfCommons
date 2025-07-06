@@ -62,10 +62,10 @@ class NextflowTranslator(Translator):
 
         if self.workflow.workflow_id:
             shutil.copy(this_dir.joinpath("templates/flowcept_agent.py"), output_folder.joinpath("bin"))
+            self.logger.info(f"Workflow ID: {self.workflow.workflow_id}")
 
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
-        # print([t.task_id for t in sorted_tasks])
 
         # Create the bash script for each task
         for task in sorted_tasks:
