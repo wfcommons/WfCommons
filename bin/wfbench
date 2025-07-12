@@ -341,7 +341,7 @@ def begin_flowcept(args):
                  bundle_exec_id=args.workflow_id,
                  start_persistence=False, save_workflow=False)
     f.start()
-    t = FlowceptTask(task_id=args.name, workflow_id=args.workflow_id, used={**args.__dict__})
+    t = FlowceptTask(task_id=f"{args.workflow_id}_{args.name}", workflow_id=args.workflow_id, used={**args.__dict__})
     return f, t
 
 
