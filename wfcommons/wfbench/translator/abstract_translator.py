@@ -198,7 +198,7 @@ class Translator(ABC):
         """
         code = textwrap.dedent(f"""
         from flowcept.flowcept_api.flowcept_controller import Flowcept
-        flowcept_agent = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}")
+        flowcept_agent = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}", start_persistence=False)
         flowcept_agent.start()
         """)
         return code

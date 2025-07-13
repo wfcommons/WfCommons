@@ -62,6 +62,16 @@ class DaskTranslator(Translator):
         wf_codelines = "\n".join(["%s%s" % (INDENT, codeline) for codeline in noindent_python_codelines])
         run_workflow_code = self._merge_codelines("templates/dask_template.py", wf_codelines)
 
+        # generate Flowcept code
+        if self.workflow.workflow_id is not None:
+            flowcept_init_code = self._flowcept_init_python(self.workflow.workflow_id, self.workflow.name)
+            flowcept_init_code_indented = ""
+            flowcept_init_code_indented += "".join("    " + line + "\n" for line in flowcept_init_code.splitlines())
+
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT",
+                                                          flowcept_init_code_indented)
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", self._flowcept_stop_python())
+
         # write benchmark files
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("dask_workflow.py"), "w") as fp:
