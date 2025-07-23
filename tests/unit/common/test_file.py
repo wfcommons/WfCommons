@@ -22,3 +22,29 @@ class TestFile:
             "id": "file_123",
             "sizeInBytes": 100
         })
+
+    @pytest.mark.unit
+    def test_file_equality(self) -> None:
+        file1 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        file2 = File(file_id="file_1", size=200, link=FileLink.INPUT)
+        file3 = File(file_id="file_2", size=100, link=FileLink.INPUT)
+        file4 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        assert (file1 != file2)
+        assert (file1 != file3)
+        assert (file1 == file4)
+
+    @pytest.mark.unit
+    def test_hash(self) -> None:
+        file1 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        file2 = File(file_id="file_1", size=200, link=FileLink.INPUT)
+        file3 = File(file_id="file_2", size=100, link=FileLink.INPUT)
+        file4 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        assert (hash(file1) != hash(file2))
+        assert (hash(file1) != hash(file2))
+        assert (hash(file1) == hash(file4))
+
+        dict = {file1: "f1", file2: "f2", file3: "f3", file4: "f4"}
+        assert(dict[file1] == "f4")
+        assert(dict[file2] == "f2")
+        assert(dict[file3] == "f3")
+        assert(dict[file4] == "f4")
