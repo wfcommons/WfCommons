@@ -230,7 +230,6 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
             for file in input_files:
-                print(f"DEBUG: {file.file_id} {file.size}\n")
                 org_name = file.file_id
                 if file.file_id in new_file_names:
                     # file is an output file of another task and receives the corresponding name

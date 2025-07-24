@@ -29,6 +29,13 @@ class TestWfBench:
         # create a workflow benchmark object to generate specifications based on a recipe
         benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
 
+        # generate a specification based on performance characteristics
+        dirpath = pathlib.Path("/tmp/benchmark/")
+        if dirpath.exists():
+            shutil.rmtree(dirpath)
+        dirpath.mkdir(parents=True, exist_ok=True)
+        path = benchmark.create_benchmark(dirpath, cpu_work=100, data=10, percent_cpu=0.6)
+
 
     @staticmethod
     def _directory_content_as_expected(dirpath: pathlib.Path,
@@ -94,15 +101,13 @@ class TestWfBench:
                 if f.file_id not in outputfile_set:
                     inputfile_dict[f.file_id] = f.size
 
-        # Open the "to_create.txt" file and go line by line
+        # Open the "to_create.txt" file and go line by line and check names/sizes
         json_path = dirpath / "to_create.txt"
         with json_path.open("r") as f:
             for line in f.readlines():
                 [filename, size] = line.strip().split(" ")
-                print(f"IN TEST: {filename} {size}")
                 assert(filename in inputfile_dict)
                 assert(inputfile_dict[filename] == int(size))
-
 
         return True
 
