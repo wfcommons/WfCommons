@@ -11,6 +11,7 @@
 import pytest
 
 import pathlib
+import shutil
 import json
 
 from wfcommons import BlastRecipe
@@ -98,7 +99,7 @@ class TestWfBench:
         with json_path.open("r") as f:
             for line in f.readlines():
                 [filename, size] = line.strip().split(" ")
-                print(filename, size)
+                print(f"IN TEST: {filename} {size}")
                 assert(filename in inputfile_dict)
                 assert(inputfile_dict[filename] == int(size))
 
@@ -111,6 +112,8 @@ class TestWfBench:
         workflow = BlastRecipe.from_num_tasks(500).build_workflow()
         benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
         dirpath = pathlib.Path("/tmp/benchmark/")
+        if dirpath.exists():
+            shutil.rmtree(dirpath)
         dirpath.mkdir(parents=True, exist_ok=True)
         path = benchmark.create_benchmark_from_synthetic_workflow(dirpath, workflow, cpu_work=100, percent_cpu=0.6)
         assert(self._directory_content_as_expected(dirpath, workflow, 500, 100, 0.6))

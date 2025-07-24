@@ -184,10 +184,6 @@ class WorkflowBenchmark:
             task.args.append(f"--input-files {input_files}")
 
         workflow_input_files: List[File] = self._rename_files_to_wfbench_format()
-        print("WORKFLOW INPUT FILES:")
-        for f in workflow_input_files:
-            print(f"{f.file_id} {f.size}")
-        # print(workflow_input_files)
 
         for i, file in enumerate(workflow_input_files):
             file_path = save_dir.joinpath(file.file_id)
