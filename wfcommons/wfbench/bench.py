@@ -183,7 +183,11 @@ class WorkflowBenchmark:
             input_files = [file.file_id for file in task.input_files]
             task.args.append(f"--input-files {input_files}")
 
-        workflow_input_files: Dict[str, int] = self._rename_files_to_wfbench_format()
+        workflow_input_files: List[File] = self._rename_files_to_wfbench_format()
+        print("WORKFLOW INPUT FILES:")
+        for f in workflow_input_files:
+            print(f"{f.file_id} {f.size}")
+        # print(workflow_input_files)
 
         for i, file in enumerate(workflow_input_files):
             file_path = save_dir.joinpath(file.file_id)
@@ -230,6 +234,7 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
             for file in input_files:
+                print(f"DEBUG: {file.file_id} {file.size}\n")
                 org_name = file.file_id
                 if file.file_id in new_file_names:
                     # file is an output file of another task and receives the corresponding name
