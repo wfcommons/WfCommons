@@ -59,9 +59,9 @@ class TestWfChef:
         assert((dirpath / "recipe_recipes" / "somename" / "recipe.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "microstructures").exists())
 
-
-
-        # TODO: Do more extensive tests (including USING the recipe)
+        # TODO: Do more extensive tests
+        #  - Install/Uninstall the recipe
+        #  - Use the recipe
 
 
 
