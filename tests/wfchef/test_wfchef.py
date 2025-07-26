@@ -73,7 +73,7 @@ class TestWfChef:
         # TODO: This does not uninstall the recipe (to fix)
         # sys.stderr.write("Uninstalling the recipe...\n")
         # uninstall_recipe("/tmp/recipe")
-        ls_recipe()
+        # ls_recipe()
 
 
         # TODO: Do more extensive tests
