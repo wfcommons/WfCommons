@@ -201,7 +201,8 @@ def uninstall_recipe(module_name:str,
 
     dst = f"wfcommons.wfchef.recipe.{savedir.stem}"
     try:
-        subprocess.run(["pip", "uninstall", "-y", dst])
+        print([sys.executable, "-m", "pip", "uninstall", "-y", dst])
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", dst])
         traceback.print_exc()
 
     except Exception as e:
@@ -368,7 +369,7 @@ def main():
             print("\nor, in editable mode:\n")
             print(f"  pip install -e {args.out}")
         else:
-            proc = subprocess.Popen(["pip", "install", str(args.out.resolve())])
+            proc = subprocess.Popen([sys.executable, "-m", "pip", "install", str(args.out.resolve())])
             proc.wait()
 
 

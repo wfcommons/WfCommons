@@ -12,8 +12,12 @@ import pytest
 import pathlib
 import shutil
 import requests
+import subprocess
+import sys
 
 from wfcommons.wfchef.chef import create_recipe
+from wfcommons.wfchef.chef import uninstall_recipe
+from wfcommons.wfchef.chef import ls_recipe
 
 
 class TestWfChef:
@@ -58,6 +62,19 @@ class TestWfChef:
         assert((dirpath / "recipe_recipes" / "somename" / "__init__.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "recipe.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "microstructures").exists())
+
+        ls_recipe()
+
+        # Install the recipe
+        sys.stderr.write("Installing the recipe...\n")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe"])
+
+        # Uninstall the recipe
+        # TODO: This does not uninstall the recipe (to fix)
+        # sys.stderr.write("Uninstalling the recipe...\n")
+        # uninstall_recipe("/tmp/recipe")
+        ls_recipe()
+
 
         # TODO: Do more extensive tests
         #  - Install/Uninstall the recipe
