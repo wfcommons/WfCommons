@@ -10,9 +10,12 @@
 
 import pathlib
 import pytest
+import requests
+import json
 
 from datetime import datetime
 from wfcommons.common import Task, Workflow
+from wfcommons.wfinstances import Instance
 from wfcommons.version import __version__, __schema_version__
 
 
@@ -100,3 +103,40 @@ class TestWorkflow:
                 workflow.add_dependency(previous_task.task_id, task.task_id)
             previous_task = task
         assert(workflow.leaves() == [previous_task.task_id])
+
+    @pytest.mark.unit
+    def test_workflow_json_generation(self):
+
+        # Put a JSON file in /tmp
+        url = "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json"
+        response = requests.get(url)
+        local_file_name = url.split("/")[-1]
+        with open("/tmp/" + local_file_name, 'wb') as f:
+            f.write(response.content)
+
+        # Create an instance from the JSON File and write it back to a JSON
+        instance = Instance(pathlib.Path("/tmp") / local_file_name)
+        instance.workflow.write_json(pathlib.Path("/tmp/written_workflow.json"))
+
+        # Get the two jsons as objects
+        with open("/tmp/" + local_file_name) as f1, open("/tmp/written_workflow.json") as f2:
+            original_json = json.load(f1)
+            written_json = json.load(f2)
+
+        # Fix things that will be always (rightly) different in the written_json
+        written_json["description"] = original_json["description"]
+        written_json["createdAt"] = original_json["createdAt"]
+        written_json["author"] = original_json["author"]
+        written_json["workflow"]["execution"]["executedAt"] = original_json["workflow"]["execution"]["executedAt"]
+
+        original_json["workflow"]["specification"]["files"] = sorted(original_json["workflow"]["specification"]["files"], key=lambda x: x['id'])
+        written_json["workflow"]["specification"]["files"] = sorted(written_json["workflow"]["specification"]["files"], key=lambda x: x['id'])
+
+        # Compare the two jsons!
+        assert(original_json == written_json)
+
+
+
+
+
+
