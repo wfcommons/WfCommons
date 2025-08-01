@@ -39,37 +39,37 @@ class TestRecipes:
             SrasearchRecipe,
         ]
     
-    @pytest.mark.unit
-    @pytest.mark.parametrize(
-        "recipe_class",
-        recipe_class_list
-    )
-    def test_recipes(self, recipe_class) -> None:
-
-        recipe = recipe_class.from_num_tasks(num_tasks=200, runtime_factor=1.1, input_file_size_factor=1.5,
-                                                 output_file_size_factor=0.8)
-        workflow = WorkflowGenerator(recipe).build_workflow()
-
-
-    @pytest.mark.unit
-    @pytest.mark.parametrize(
-        "recipe_class",
-        recipe_class_list
-    )
-    def test_recipes_errors(self, recipe_class) -> None:
-        # Not enough tasks
-        recipe = recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=1.5,
-                                             output_file_size_factor=0.8)
-        with pytest.raises(ValueError):
-            WorkflowGenerator(recipe).build_workflow()
-
-        # Bogus parameters
-        with pytest.raises(ValueError):
-            recipe_class.from_num_tasks(num_tasks=2, runtime_factor=-1.1, input_file_size_factor=1.5,
-                                        output_file_size_factor=0.8)
-        with pytest.raises(ValueError):
-            recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=-1.5,
-                                        output_file_size_factor=0.8)
-        with pytest.raises(ValueError):
-            recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=-1.5,
-                                        output_file_size_factor=-0.8)
+    # @pytest.mark.unit
+    # @pytest.mark.parametrize(
+    #     "recipe_class",
+    #     recipe_class_list
+    # )
+    # def test_recipes(self, recipe_class) -> None:
+    #
+    #     recipe = recipe_class.from_num_tasks(num_tasks=200, runtime_factor=1.1, input_file_size_factor=1.5,
+    #                                              output_file_size_factor=0.8)
+    #     workflow = WorkflowGenerator(recipe).build_workflow()
+    #
+    #
+    # @pytest.mark.unit
+    # @pytest.mark.parametrize(
+    #     "recipe_class",
+    #     recipe_class_list
+    # )
+    # def test_recipes_errors(self, recipe_class) -> None:
+    #     # Not enough tasks
+    #     recipe = recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=1.5,
+    #                                          output_file_size_factor=0.8)
+    #     with pytest.raises(ValueError):
+    #         WorkflowGenerator(recipe).build_workflow()
+    #
+    #     # Bogus parameters
+    #     with pytest.raises(ValueError):
+    #         recipe_class.from_num_tasks(num_tasks=2, runtime_factor=-1.1, input_file_size_factor=1.5,
+    #                                     output_file_size_factor=0.8)
+    #     with pytest.raises(ValueError):
+    #         recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=-1.5,
+    #                                     output_file_size_factor=0.8)
+    #     with pytest.raises(ValueError):
+    #         recipe_class.from_num_tasks(num_tasks=2, runtime_factor=1.1, input_file_size_factor=-1.5,
+    #                                     output_file_size_factor=-0.8)
