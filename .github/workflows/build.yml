@@ -27,12 +27,6 @@ jobs:
         run: |
           pip install -e .
 
-      - name: Scipy version check
-        run: |
-          python --version
-          python -c "import scipy; print(f'SciPy version: {scipy.__version__}')"
-          python -c "import scipy.stats; print('trapz available:', hasattr(scipy.stats, 'trapz'))"
-
       - name: Run tests
         run: pytest -m unit --cov=wfcommons tests/
 
