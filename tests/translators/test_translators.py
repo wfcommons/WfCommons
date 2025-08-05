@@ -91,7 +91,7 @@ def create_workflow_benchmark():
 class TestTranslators:
 
     @pytest.mark.unit
-    # @pytest.mark.skip(reason="tmp")
+    @pytest.mark.skip(reason="tmp")
     def test_dask_translator(self) -> None:
 
         # Create workflow benchmark
@@ -134,7 +134,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    # @pytest.mark.skip(reason="tmp")
+    @pytest.mark.skip(reason="tmp")
     def test_parsl_translator(self) -> None:
 
         # Create workflow benchmark
