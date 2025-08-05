@@ -22,6 +22,10 @@ jobs:
           pip install sphinx_rtd_theme recommonmark pytest pytest-cov
           pip install --upgrade setuptools
 
+      - name: Install utilities for testing
+        run: |
+          pip install docker
+
       - name: Check package install
         run: |
           pip install -e .
