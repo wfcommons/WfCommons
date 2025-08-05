@@ -10,6 +10,7 @@
 
 import logging
 import os
+import sys
 import pathlib
 import shutil
 import textwrap
@@ -90,8 +91,12 @@ class Translator(ABC):
         """
         bin_folder = output_folder.joinpath("bin")
         bin_folder.mkdir(exist_ok=True)
-        shutil.copy(shutil.which("wfbench"), bin_folder)
-        shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
+        # Get the python executable dir
+        python_executable_dir = os.path.dirname(sys.executable)
+        # shutil.copy(shutil.which("wfbench"), bin_folder)
+        shutil.copy(python_executable_dir + "/wfbench", bin_folder)
+        # shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
+        shutil.copy(python_executable_dir + "/cpu-benchmark", bin_folder)
 
     def _generate_input_files(self, output_folder: pathlib.Path) -> None:
         """
