@@ -15,7 +15,7 @@
         "input": {
             ".fits": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -28,7 +28,7 @@
             },
             ".hdr": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -43,7 +43,7 @@
         "output": {
             ".fits": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -72,7 +72,7 @@
         "input": {
             ".fits": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         0.9999999999999999,
                         1.0,
@@ -85,7 +85,7 @@
             },
             ".hdr": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -225,7 +225,7 @@
         "input": {
             ".tbl": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -238,7 +238,7 @@
             },
             ".fits": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -349,7 +349,7 @@
             },
             ".hdr": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,

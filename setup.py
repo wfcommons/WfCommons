@@ -21,7 +21,7 @@ class Build(build_ext):
     def run(self):
         protoc_command = ["make"]
         if subprocess.call(protoc_command) != 0:
-            print("Error: 'make' is not istnalled. Please install 'make' and try again.")
+            print("Error: 'make' is not installed. Please install 'make' and try again.")
             sys.exit(-1) 
         super().run()
 

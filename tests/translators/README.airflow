@@ -1,5 +1,4 @@
-This README file describes steps to install/run Airflow, and then run a
-translated workflow.
+This README file describes steps to install/run Airflow, and then run a translated workflow.
 
 There are three sections:
   - Installing Airflow on bare-metal
@@ -52,7 +51,7 @@ A much simpler alternative is to use Docker.
 
 1. Build the docker image
 
-   docker build -t wfcommons-dev -f Dockerfile_Airflow .
+   docker build -t wfcommons-dev -f Dockerfile.airflow .
 
    (if building on a Mac, add the `--platform linux/amd64` argument after build above)
 
@@ -85,8 +84,7 @@ translator.translate(output_folder=pathlib.Path("/tmp/translated_workflow/"))
 ```
 
 The above will create a JSON worfklow file in /tmp/blast-benchmark-45.json.
-In that file, the workflow name (this is used below) is set to
-"Blast-Benchmark".
+In that file, the workflow name (this is used below) is set to "Blast-Benchmark".
 
 The above will also create the translated workflow the
 /tmp/translated_workflow/ directory. Some directories and files need to be copied/moved as follows:
@@ -96,7 +94,7 @@ The above will also create the translated workflow the
 
 Finally, run the workflow as: 
 
-  airflow dags test Blast-Benchmark    (not the "Blast-Benchmark" workflow name from above)
+  airflow dags test Blast-Benchmark    (note the "Blast-Benchmark" workflow name from above)
 
 
 
