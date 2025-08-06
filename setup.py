@@ -42,24 +42,24 @@ class Build(build_ext):
 
         # Do a by-hand copy of cpu-benchmark to the bin directory, as this is so 
         # hard to do using data_file in the setup() declaration
-        scripts_dir = os.path.join(site.USER_BASE, "bin")
-        if not pathlib.Path(scripts_dir).is_dir():
-            scripts_dir = "/usr/local/bin/"
-
-        if not pathlib.Path(scripts_dir).is_dir() or not is_writable(scripts_dir):
-            sys.stderr.write(f"Error: {scripts_dir} is not writable. Please install as root or use --user.\n")
-            sys.exit(1)
-
-
-        for executable in ["cpu-benchmark", "wfbench"]:
-            source_path = os.path.join("bin", executable)
-            target_path = os.path.join(scripts_dir, executable)
-            # Ensure it's executable (just in case)
-            st = os.stat(source_path)
-            os.chmod(source_path, st.st_mode | stat.S_IEXEC)
-            # Copy to scripts directory
-            shutil.copy2(source_path, target_path)
-            sys.stderr.write(f"Copied {source_path} to {target_path}\n")
+        #scripts_dir = os.path.join(site.USER_BASE, "bin")
+        #if not pathlib.Path(scripts_dir).is_dir():
+        #    scripts_dir = "/usr/local/bin/"
+#
+#        if not pathlib.Path(scripts_dir).is_dir() or not is_writable(scripts_dir):
+#            sys.stderr.write(f"Error: {scripts_dir} is not writable. Please install as root or use --user.\n")
+#            sys.exit(1)
+#
+#
+#        for executable in ["cpu-benchmark", "wfbench"]:
+#            source_path = os.path.join("bin", executable)
+#            target_path = os.path.join(scripts_dir, executable)
+#            # Ensure it's executable (just in case)
+#            st = os.stat(source_path)
+#            os.chmod(source_path, st.st_mode | stat.S_IEXEC)
+#            # Copy to scripts directory
+#            shutil.copy2(source_path, target_path)
+#            sys.stderr.write(f"Copied {source_path} to {target_path}\n")
 
 setup(
     packages=find_packages(),
@@ -71,10 +71,13 @@ setup(
     #data_files=[
     #    (user_bin_dir, ['bin/cpu-benchmark'])
     #],
-    # scripts=['bin/wfbench'],
+    scripts=['wfcommons/bin/wfbench'],
+    #package_data={"wfcommons": ["bin/cpu-benchmark", "bin/wfbench"]
+    #},
     entry_points={
         'console_scripts': [
-            'wfchef=wfcommons.wfchef.chef:main'
+            'wfchef=wfcommons.wfchef.chef:main',
+            'cpu-benchmark=wfcommons.cpu_benchmark_cli:main'
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',
