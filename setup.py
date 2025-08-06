@@ -20,6 +20,16 @@ from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext
 
 
+def is_writable(path):
+    try:
+        test_file = os.path.join(path, '.write_test_tmp')
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+        return True
+    except Exception:
+        return False
+
 class Build(build_ext):
     """Customized setuptools build command - builds protos on build."""
 
@@ -35,6 +45,11 @@ class Build(build_ext):
         scripts_dir = os.path.join(site.USER_BASE, "bin")
         if not pathlib.Path(scripts_dir).is_dir():
             scripts_dir = "/usr/local/bin/"
+
+        if not pathlib.Path(scripts_dir).is_dir() or not is_writable(scripts_dir):
+            sys.stderr.write(f"Error: {scripts_dir} is not writable. Please install as root or use --user.\n")
+            sys.exit(1)
+
 
         for executable in ["cpu-benchmark", "wfbench"]:
             source_path = os.path.join("bin", executable)
