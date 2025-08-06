@@ -92,7 +92,7 @@ def create_workflow_benchmark():
 class TestTranslators:
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_dask_translator(self) -> None:
 
         # Create workflow benchmark
@@ -135,7 +135,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_parsl_translator(self) -> None:
 
         # Create workflow benchmark
@@ -179,7 +179,7 @@ class TestTranslators:
         assert(num_completed_tasks == num_tasks)
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_nextflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -242,11 +242,11 @@ class TestTranslators:
 
         # Starting the Docker container
         container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
-        sys.stderr.write(f"Container status: {container.status}\n")
-        container.reload()
-        sys.stderr.write(f"Container updated status: {container.status}\n")
-        logs = container.logs(stdout=True, stderr=True).decode("utf-8")
-        sys.stderr.write(f"Container logs:\n{logs}\n")
+        # sys.stderr.write(f"Container status: {container.status}\n")
+        # container.reload()
+        # sys.stderr.write(f"Container updated status: {container.status}\n")
+        # logs = container.logs(stdout=True, stderr=True).decode("utf-8")
+        # sys.stderr.write(f"Container logs:\n{logs}\n")
 
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
