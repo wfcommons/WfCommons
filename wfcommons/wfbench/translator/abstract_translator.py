@@ -95,6 +95,8 @@ class Translator(ABC):
         # Get the python executable dir
         # python_executable_dir = os.path.dirname(sys.executable)
         python_executable_dir = os.path.join(site.getuserbase(), 'bin')
+        if not pathlib.Path(python_executable_dir).exists():
+            python_executable_dir = "/usr/local/bin"
         # shutil.copy(shutil.which("wfbench"), bin_folder)
         shutil.copy(python_executable_dir + "/wfbench", bin_folder)
         # shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
