@@ -267,6 +267,7 @@ class TestTranslators:
         # Run the workflow!
         sys.stderr.write("Running the Airflow workflow on the container...\n")
         exit_code, output = container.exec_run(cmd="/bin/bash /run_a_workflow.sh Blast-Benchmark", stdout=True, stderr=True)
+        # print(output)
 
         # Kill the container
         container.remove(force=True)

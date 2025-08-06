@@ -73,4 +73,10 @@ RUN echo '#!/bin/bash' > /run_a_workflow.sh && \
     echo 'airflow dags test $1' >> /run_a_workflow.sh && \
     chmod +x /run_a_workflow.sh
 
+# Create wfcommons user
+RUN useradd -ms /bin/bash wfcommons
+RUN adduser wfcommons sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ENV PATH="$PATH:/home/wfcommons/.local/bin/"
+USER wfcommons
 WORKDIR /home/wfcommons

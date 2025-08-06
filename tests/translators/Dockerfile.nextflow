@@ -38,7 +38,7 @@ RUN apt-get -y install stress-ng
 # Install Java
 RUN apt-get -y install openjdk-21-jdk
 
-# Create wfcomomns user
+# Create wfcommons user
 RUN useradd -ms /bin/bash wfcommons
 RUN adduser wfcommons sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -48,6 +48,4 @@ WORKDIR /home/wfcommons
 
 # Install Nextflow and dependencies
 RUN curl -s https://get.nextflow.io | bash  && sudo mv ./nextflow /usr/local/bin/
-
-# Add wfcommons user
 
