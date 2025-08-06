@@ -31,7 +31,7 @@ jobs:
           pip install -e .
 
       - name: Run tests
-        run: pytest -m unit --cov=wfcommons tests/
+        run: pytest -s -v -m unit --cov=wfcommons tests/
 
       - name: Upload coverage
         if: github.ref == 'refs/heads/main'
