@@ -55,4 +55,8 @@ bin/gpu_benchmark
 /wfcommons/wfc-1.3_to_dask/out
 /wfcommons/wfc-1.3_to_dask/htmlcov
 
+# Coverage stuff
+.coverage
+coverage.xml
+
 test/
