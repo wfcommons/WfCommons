@@ -13,7 +13,7 @@ import os
 import stat
 import shutil
 import site
-import sysconfig
+import pathlib
 import subprocess
 
 from setuptools import setup, find_packages
