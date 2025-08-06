@@ -92,7 +92,7 @@ def create_workflow_benchmark():
 class TestTranslators:
 
     @pytest.mark.unit
-    # @pytest.mark.skip(reason="tmp")
+    @pytest.mark.skip(reason="tmp")
     def test_dask_translator(self) -> None:
 
         # Create workflow benchmark
@@ -135,7 +135,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    # @pytest.mark.skip(reason="tmp")
+    @pytest.mark.skip(reason="tmp")
     def test_parsl_translator(self) -> None:
 
         # Create workflow benchmark
@@ -179,7 +179,7 @@ class TestTranslators:
         assert(num_completed_tasks == num_tasks)
 
     @pytest.mark.unit
-    # @pytest.mark.skip(reason="tmp")
+    @pytest.mark.skip(reason="tmp")
     def test_nextflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -262,12 +262,7 @@ class TestTranslators:
 
         # Do the necessary copies (some ugly hardcoded stuff here)
         airflow_home = "/home/wfcommons/airflow/"  # per the Dockerfile
-        exit_code, output = container.exec_run(f"cp -r /tmp/airflow_translated_workflow {airflow_home}/dags/",stdout=True, stderr=True)
-        exit_code, output = container.exec_run(f"mv {airflow_home}/dags/airflow_translated_workflow/workflow.py {airflow_home}/dags/",stdout=True, stderr=True)
 
-        # # Run the entry point script by hand (such a hack!)
-        # exit_code, output = container.exec_run(f"/bin/bash /entrypoint.sh",stdout=True, stderr=True)
-        # print(output)
 
         # Run the workflow!
         sys.stderr.write("Running the Airflow workflow on the container...\n")

@@ -48,37 +48,29 @@ RUN python3 -m pip install --break-system-packages mysqlclient
 # Setup directory
 RUN mkdir /home/wfcommons
 
-# Create an entrypoint script to start mysqld in the background and setup the Airflow DB
-# This script is then used as the entry points of this Container
-# Create ALSO a script to run a benchmark (only the last line differ), which is used for testing,
-# because using docker-py, things get complicated with different bash sessions!
+# Create an run_a_workflow script to start mysqld in the background and setup the Airflow DB,
+# copy things around, and the run the workflow
 
-RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'mysqld --explicit-defaults-for-timestamp &' >> /entrypoint.sh && \
-    echo 'until mysqladmin ping -h localhost --silent; do' >> /entrypoint.sh && \
-    echo '    echo "Waiting for MySQL to be ready..."' >> /entrypoint.sh && \
-    echo '    sleep 2' >> /entrypoint.sh && \
-    echo 'done' >> /entrypoint.sh && \
-    echo 'echo "MySQL is ready!"' >> /entrypoint.sh && \
-    echo 'echo "Setting up database for Airflow..."' >> /entrypoint.sh && \
-    echo 'mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /entrypoint.sh && \
-    echo "mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /entrypoint.sh && \
-    echo "mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /entrypoint.sh && \
-    echo 'export AIRFLOW_HOME="$(pwd)"/airflow/' >> /entrypoint.sh && \
-    echo "airflow config list 1> /dev/null" >> /entrypoint.sh && \
-    echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /entrypoint.sh && \
-    echo 'airflow db migrate' >> /entrypoint.sh && \
-    echo 'echo "Airflow database setup!"' >> /entrypoint.sh && \
-    echo 'mkdir ./airflow/dags' >> /entrypoint.sh
-
-RUN  cp /entrypoint.sh /run_a_workflow.sh
-
-RUN echo 'exec bash' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
-
-RUN echo 'airflow dags test $1' >> /run_a_workflow.sh && \
+RUN echo '#!/bin/bash' > /run_a_workflow.sh && \
+    echo 'mysqld --explicit-defaults-for-timestamp &' >> /run_a_workflow.sh && \
+    echo 'until mysqladmin ping -h localhost --silent; do' >> /run_a_workflow.sh && \
+    echo '    echo "Waiting for MySQL to be ready..."' >> /run_a_workflow.sh && \
+    echo '    sleep 2' >> /run_a_workflow.sh && \
+    echo 'done' >> /run_a_workflow.sh && \
+    echo 'echo "MySQL is ready!"' >> /run_a_workflow.sh && \
+    echo 'echo "Setting up database for Airflow..."' >> /run_a_workflow.sh && \
+    echo 'mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /run_a_workflow.sh && \
+    echo "mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /run_a_workflow.sh && \
+    echo "mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /run_a_workflow.sh && \
+    echo 'export AIRFLOW_HOME="$(pwd)"/airflow/' >> /run_a_workflow.sh && \
+    echo "airflow config list 1> /dev/null" >> /run_a_workflow.sh && \
+    echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /run_a_workflow.sh && \
+    echo 'airflow db migrate' >> /run_a_workflow.sh && \
+    echo 'echo "Airflow database setup!"' >> /run_a_workflow.sh && \
+    echo 'mkdir ./airflow/dags' >> /run_a_workflow.sh && \
+    echo 'cp -r /tmp/airflow_translated_workflow ./airflow/dags/' >> /run_a_workflow.sh && \
+    echo 'mv ./airflow/dags/airflow_translated_workflow/workflow.py ./airflow/dags/workflow.py' >> /run_a_workflow.sh && \
+    echo 'airflow dags test $1' >> /run_a_workflow.sh && \
     chmod +x /run_a_workflow.sh
 
 WORKDIR /home/wfcommons
-
-ENTRYPOINT ["/entrypoint.sh"]

@@ -51,14 +51,17 @@ A much simpler alternative is to use Docker.
 
 1. Build the docker image
 
-   docker build -t wfcommons-dev -f Dockerfile.airflow .
+   docker build -t wfcommons/wfcommons-testing-airflow -f Dockerfile.airflow .
 
    (if building on a Mac, add the `--platform linux/amd64` argument after build above)
+
+   This dockerfile is meant for testing purposes (so it has some testing specific things in it)
+
 
 2. Run the docker container in the directory to contains the translated
    workflow (see last section below)
 
-   docker run -it --rm -v .:/home/wfcommons/translated_workflow wfcommons-dev /bin/bash
+   docker run -it --rm -v .:/home/wfcommons/translated_workflow wfcommons/wfcommons-testing-airflow /bin/bash
 
 
 Running a translated workflow with Airflow
