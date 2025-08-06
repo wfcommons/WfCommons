@@ -34,14 +34,16 @@ class Build(build_ext):
         # hard to do using data_file in the setup() declaration
         scripts_dir = os.path.join(site.USER_BASE, "bin")
         if not pathlib.Path(scripts_dir).is_dir():
-            scripts_dir = "/usr/local/bin"
-        source_path = os.path.join("bin", "cpu-benchmark")
-        target_path = os.path.join(scripts_dir, "cpu-benchmark")
-        # Ensure it's executable (just in case)
-        st = os.stat(source_path)
-        os.chmod(source_path, st.st_mode | stat.S_IEXEC)
-        # Copy to scripts directory
-        shutil.copy2(source_path, target_path)
+            scripts_dir = "/usr/local/bin/"
+
+        for executable in ["cpu-benchmark", "wfbench"]:
+            source_path = os.path.join("bin", executable)
+            target_path = os.path.join(scripts_dir, executable)
+            # Ensure it's executable (just in case)
+            st = os.stat(source_path)
+            os.chmod(source_path, st.st_mode | stat.S_IEXEC)
+            # Copy to scripts directory
+            shutil.copy2(source_path, target_path)
 
 setup(
     packages=find_packages(),
@@ -53,7 +55,7 @@ setup(
     #data_files=[
     #    (user_bin_dir, ['bin/cpu-benchmark'])
     #],
-    scripts=['bin/wfbench'],
+    # scripts=['bin/wfbench'],
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main'
