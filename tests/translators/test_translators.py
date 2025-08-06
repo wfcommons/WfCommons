@@ -241,18 +241,15 @@ class TestTranslators:
         translator.translate(output_folder=dirpath)
 
         # Starting the Docker container
-        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
+        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/", command=["tail", "-f", "/dev/null"])
         sys.stderr.write(f"Container status: {container.status}\n")
         container.reload()
         sys.stderr.write(f"Container updated status: {container.status}\n")
         logs = container.logs(stdout=True, stderr=True).decode("utf-8")
         sys.stderr.write(f"Container logs:\n{logs}\n")
 
-        # container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
-
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
-
 
         # Copy over the wfbench and cpu-benchmark executables to where they should go
         exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench /usr/local/bin/",
@@ -260,13 +257,9 @@ class TestTranslators:
         exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark /usr/local/bin/",
                                                stdout=True, stderr=True)
 
-        # Do the necessary copies (some ugly hardcoded stuff here)
-        airflow_home = "/home/wfcommons/airflow/"  # per the Dockerfile
-
-
         # Run the workflow!
         sys.stderr.write("Running the Airflow workflow on the container...\n")
-        exit_code, output = container.exec_run(cmd="/bin/bash /run_a_workflow.sh Blast-Benchmark", stdout=True, stderr=True)
+        exit_code, output = container.exec_run(cmd="sudo /bin/bash /run_a_workflow.sh Blast-Benchmark", stdout=True, stderr=True)
         # print(output)
 
         # Kill the container

@@ -1,4 +1,4 @@
-# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile_Dask .
+# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile.dask .
 # docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-dask /bin/bash
 
 FROM amd64/ubuntu:noble

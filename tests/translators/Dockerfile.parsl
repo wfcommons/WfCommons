@@ -1,4 +1,4 @@
-# docker build --platform amd64 -t wfcommons-dev -f Dockerfile_Parsl .
+# docker build --platform amd64 -t wfcommons-dev -f Dockerfile.parsl .
 # docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev /bin/bash
 
 FROM amd64/ubuntu:noble

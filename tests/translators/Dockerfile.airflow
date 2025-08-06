@@ -1,4 +1,4 @@
-# docker build -t wfcommons-dev -f Dockerfile_Airflow .
+# docker build -t wfcommons-dev -f Dockerfile.airflow .
 # docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
 
 FROM ubuntu:noble
@@ -45,9 +45,6 @@ RUN apt-get install -y python3-dev build-essential
 RUN apt-get install -y default-libmysqlclient-dev
 RUN python3 -m pip install --break-system-packages mysqlclient
 
-# Setup directory
-RUN mkdir /home/wfcommons
-
 # Create an run_a_workflow script to start mysqld in the background and setup the Airflow DB,
 # copy things around, and the run the workflow
 
@@ -78,5 +75,6 @@ RUN useradd -ms /bin/bash wfcommons
 RUN adduser wfcommons sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 ENV PATH="$PATH:/home/wfcommons/.local/bin/"
+
 USER wfcommons
 WORKDIR /home/wfcommons
