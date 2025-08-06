@@ -68,16 +68,17 @@ setup(
     cmdclass={
         'build_ext': Build,
     },
-    #data_files=[
-    #    (user_bin_dir, ['bin/cpu-benchmark'])
-    #],
-    scripts=['wfcommons/bin/wfbench'],
+    data_files=[
+        ('bin', ['wfcommons/bin/cpu-benchmark'])
+    ],
+    scripts=[
+        'wfcommons/bin/wfbench'
+    ],
     #package_data={"wfcommons": ["bin/cpu-benchmark", "bin/wfbench"]
     #},
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main',
-            'cpu-benchmark=wfcommons.cpu_benchmark_cli:main'
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',
