@@ -68,13 +68,13 @@ def install_WfCommons_on_container(container):
     container.put_archive(target_path, tar_data)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/wfcommons/bin/cpu-benchmark.o", stdout=True,
                                            stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/wfcommons/bin/cpu-benchmark", stdout=True,
                                            stderr=True)
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
-    exit_code, output = container.exec_run("sudo python3 -m pip install -e . --break-system-packages",
+    exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
 
 def create_workflow_benchmark():
@@ -116,27 +116,27 @@ class TestTranslators:
         install_WfCommons_on_container(container)
 
         # Copy over the wfbench and cpu-benchmark executables to where they should go on the container
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/wfcommons/bin/wfbench " + str_dirpath + "bin/", stdout=True, stderr=True)
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/wfcommons/bin/cpu-benchmark " + str_dirpath + "bin/", stdout=True, stderr=True)
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + str_dirpath + "bin/"], stdout=True, stderr=True)
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + str_dirpath + "bin/"], stdout=True, stderr=True)
 
         # Run the workflow!
         sys.stderr.write("Running the Dask workflow on the container...\n")
         exit_code, output = container.exec_run("python ./dask_workflow.py", stdout=True, stderr=True)
-        print(output)
+        # print(output)
         num_completed_tasks = output.decode().count("completed!")  # TODO: This is pretty lame
 
         # Kill the container
-        # container.remove(force=True)
+        container.remove(force=True)
 
         # Do sanity checks
-        # sys.stderr.write("Checking sanity...\n")
-        # assert(exit_code == 0)
-        # assert(num_completed_tasks == num_tasks)
+        sys.stderr.write("Checking sanity...\n")
+        assert(exit_code == 0)
+        assert(num_completed_tasks == num_tasks)
         # TODO: Look at the (I think) generated run.json file on the container
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_parsl_translator(self) -> None:
 
         # Create workflow benchmark
@@ -160,8 +160,10 @@ class TestTranslators:
         install_WfCommons_on_container(container)
 
         # Copy over the wfbench and cpu-benchmark executables to where they should go
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench " + str_dirpath + "bin/", stdout=True, stderr=True)
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark " + str_dirpath + "bin/", stdout=True, stderr=True)
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + str_dirpath + "bin/"],
+                                               stdout=True, stderr=True)
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + str_dirpath + "bin/"],
+                                               stdout=True, stderr=True)
 
         # Run the workflow!
         sys.stderr.write("Running the Parsl workflow on the container...\n")
@@ -180,7 +182,7 @@ class TestTranslators:
         assert(num_completed_tasks == num_tasks)
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_nextflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -204,9 +206,9 @@ class TestTranslators:
         install_WfCommons_on_container(container)
 
         # Copy over the wfbench and cpu-benchmark executables to where they should go
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench " + str_dirpath + "bin/",
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + str_dirpath + "bin/"],
                                                stdout=True, stderr=True)
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark " + str_dirpath + "bin/",
+        exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + str_dirpath + "bin/"],
                                                stdout=True, stderr=True)
 
         # Run the workflow!
@@ -224,7 +226,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_airflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -253,10 +255,10 @@ class TestTranslators:
         install_WfCommons_on_container(container)
 
         # Copy over the wfbench and cpu-benchmark executables to where they should go
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench /usr/local/bin/",
-                                               stdout=True, stderr=True)
-        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark /usr/local/bin/",
-                                               stdout=True, stderr=True)
+        # exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench /usr/local/bin/",
+        #                                        stdout=True, stderr=True)
+        # exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark /usr/local/bin/",
+        #                                        stdout=True, stderr=True)
 
         # Run the workflow!
         sys.stderr.write("Running the Airflow workflow on the container...\n")

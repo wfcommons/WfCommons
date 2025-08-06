@@ -92,17 +92,20 @@ class Translator(ABC):
         """
         bin_folder = output_folder.joinpath("bin")
         bin_folder.mkdir(exist_ok=True)
+
+        # Previously attempted hack:
         # Get the python executable dir
         # python_executable_dir = os.path.dirname(sys.executable)
         # python_executable_dir = os.path.join(site.getuserbase(), 'bin')
         # if not pathlib.Path(python_executable_dir).exists():
         #     python_executable_dir = "/usr/local/bin"
-        print("WHICH: ", shutil.which("wfbench"))
-        print("WHICH: ", shutil.which("cpu-benchmark"))
-        shutil.copy(shutil.which("wfbench"), bin_folder)
         # shutil.copy(python_executable_dir + "/wfbench", bin_folder)
-        shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
         # shutil.copy(python_executable_dir + "/cpu-benchmark", bin_folder)
+
+        # print("WHICH: ", shutil.which("wfbench"))
+        # print("WHICH: ", shutil.which("cpu-benchmark"))
+        shutil.copy(shutil.which("wfbench"), bin_folder)
+        shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
 
     def _generate_input_files(self, output_folder: pathlib.Path) -> None:
         """
