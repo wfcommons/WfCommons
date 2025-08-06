@@ -34,7 +34,7 @@ class Build(build_ext):
         # hard to do using data_file in the setup() declaration
         scripts_dir = os.path.join(site.USER_BASE, "bin")
         if not pathlib.Path(scripts_dir).is_dir():
-            scripts_dir = "/opt/local/bin"
+            scripts_dir = "/usr/local/bin"
         source_path = os.path.join("bin", "cpu-benchmark")
         target_path = os.path.join(scripts_dir, "cpu-benchmark")
         # Ensure it's executable (just in case)
