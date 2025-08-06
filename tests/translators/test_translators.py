@@ -242,6 +242,12 @@ class TestTranslators:
 
         # Starting the Docker container
         container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
+        sys.stderr.write(f"Container status: {container.status}\n")
+        container.reload()
+        sys.stderr.write(f"Container updated status: {container.status}\n")
+        logs = container.logs(stdout=True, stderr=True).decode("utf-8")
+        sys.stderr.write(f"Container logs:\n{logs}\n")
+
         # container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
 
         # Installing WfCommons on container
