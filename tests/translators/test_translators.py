@@ -241,7 +241,7 @@ class TestTranslators:
         translator.translate(output_folder=dirpath)
 
         # Starting the Docker container
-        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/", command=["tail", "-f", "/dev/null"])
+        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
         sys.stderr.write(f"Container status: {container.status}\n")
         container.reload()
         sys.stderr.write(f"Container updated status: {container.status}\n")

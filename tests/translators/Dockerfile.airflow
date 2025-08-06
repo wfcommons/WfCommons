@@ -1,7 +1,7 @@
 # docker build -t wfcommons-dev -f Dockerfile.airflow .
 # docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
 
-FROM ubuntu:noble
+FROM amd64/ubuntu:noble
 
 LABEL org.containers.image.authors="sukaryor@hawaii.edu"
 
