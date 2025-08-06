@@ -34,7 +34,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN apt-get -y install stress-ng
 
 # WfCommons
-RUN python3 -m pip install --break-system-packages wfcommons
+#RUN python3 -m pip install --break-system-packages wfcommons
 
 # Install Airflow
 RUN python3 -m pip install --break-system-packages apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
@@ -48,8 +48,11 @@ RUN python3 -m pip install --break-system-packages mysqlclient
 # Setup directory
 RUN mkdir /home/wfcommons
 
-# Create an entrypoint script to start mysqld in the background
-# and setup the Airflow DB
+# Create an entrypoint script to start mysqld in the background and setup the Airflow DB
+# This script is then used as the entry points of this Container
+# Create ALSO a script to run a benchmark (only the last line differ), which is used for testing,
+# because using docker-py, things get complicated with different bash sessions!
+
 RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo 'mysqld --explicit-defaults-for-timestamp &' >> /entrypoint.sh && \
     echo 'until mysqladmin ping -h localhost --silent; do' >> /entrypoint.sh && \
@@ -66,9 +69,15 @@ RUN echo '#!/bin/bash' > /entrypoint.sh && \
     echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /entrypoint.sh && \
     echo 'airflow db migrate' >> /entrypoint.sh && \
     echo 'echo "Airflow database setup!"' >> /entrypoint.sh && \
-    echo 'mkdir ./airflow/dags' >> /entrypoint.sh && \
-    echo 'exec bash' >> /entrypoint.sh && \
+    echo 'mkdir ./airflow/dags' >> /entrypoint.sh
+
+RUN  cp /entrypoint.sh /run_a_workflow.sh
+
+RUN echo 'exec bash' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
+
+RUN echo 'airflow dags test $1' >> /run_a_workflow.sh && \
+    chmod +x /run_a_workflow.sh
 
 WORKDIR /home/wfcommons
 

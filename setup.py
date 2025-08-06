@@ -9,6 +9,11 @@
 # (at your option) any later version.
 
 import sys
+import os
+import stat
+import shutil
+import site
+import sysconfig
 import subprocess
 
 from setuptools import setup, find_packages
@@ -25,6 +30,17 @@ class Build(build_ext):
             sys.exit(-1) 
         super().run()
 
+        # Do a by-hand copy of cpu-benchmark to the bin directory, as this is so 
+        # hard to do using data_file in the setup() declaration
+        scripts_dir = os.path.join(site.USER_BASE, "bin")
+        source_path = os.path.join("bin", "cpu-benchmark")
+        target_path = os.path.join(scripts_dir, "cpu-benchmark")
+        # Ensure it's executable (just in case)
+        st = os.stat(source_path)
+        os.chmod(source_path, st.st_mode | stat.S_IEXEC)
+        # Copy to scripts directory
+        shutil.copy2(source_path, target_path)
+
 setup(
     packages=find_packages(),
     include_package_data=True,
@@ -32,9 +48,10 @@ setup(
     cmdclass={
         'build_ext': Build,
     },
-    data_files=[
-        ('bin', ['bin/cpu-benchmark', 'bin/wfbench'])
-    ],
+    #data_files=[
+    #    (user_bin_dir, ['bin/cpu-benchmark'])
+    #],
+    scripts=['bin/wfbench'],
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main'

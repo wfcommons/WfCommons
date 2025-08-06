@@ -26,7 +26,7 @@ from wfcommons.wfbench import NextflowTranslator
 from wfcommons.wfbench import AirflowTranslator
 
 
-def start_docker_container(backend, working_dir):
+def start_docker_container(backend, mounted_dir, working_dir, command = ["sleep", "infinity"]):
     # Pulling the Docker image
     client = docker.from_env()
     sys.stderr.write("Pulling Docker image...\n")
@@ -43,8 +43,8 @@ def start_docker_container(backend, working_dir):
     sys.stderr.write("Starting Docker container...\n")
     container = client.containers.run(
         image_name,
-        "sleep infinity",
-        volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+        command=command,
+        volumes={mounted_dir: {'bind': mounted_dir, 'mode': 'rw'}},
         working_dir=working_dir,
         tty=True,
         detach=True
@@ -91,7 +91,7 @@ def create_workflow_benchmark():
 class TestTranslators:
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_dask_translator(self) -> None:
 
         # Create workflow benchmark
@@ -109,12 +109,12 @@ class TestTranslators:
         translator.translate(output_folder=dirpath)
 
         # Pulling the Docker image
-        container = start_docker_container("dask", str_dirpath)
+        container = start_docker_container("dask", str_dirpath, str_dirpath)
 
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
 
-        # Copy over the wfbench and cpu-benchmark executables to where they should go
+        # Copy over the wfbench and cpu-benchmark executables to where they should go on the container
         exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench " + str_dirpath + "bin/", stdout=True, stderr=True)
         exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark " + str_dirpath + "bin/", stdout=True, stderr=True)
 
@@ -134,7 +134,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_parsl_translator(self) -> None:
 
         # Create workflow benchmark
@@ -151,8 +151,8 @@ class TestTranslators:
         translator = ParslTranslator(benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
-        # Pulling the Docker image
-        container = start_docker_container("parsl", str_dirpath)
+        # Starting the Docker container
+        container = start_docker_container("parsl", str_dirpath, str_dirpath)
 
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
@@ -178,7 +178,7 @@ class TestTranslators:
         assert(num_completed_tasks == num_tasks)
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_nextflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -195,8 +195,8 @@ class TestTranslators:
         translator = NextflowTranslator(benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
-        # Pulling the Docker image
-        container = start_docker_container("nextflow", str_dirpath)
+        # Starting the Docker container
+        container = start_docker_container("nextflow", str_dirpath, str_dirpath)
 
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
@@ -222,7 +222,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_airflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -239,27 +239,37 @@ class TestTranslators:
         translator = AirflowTranslator(benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
-        # Pulling the Docker image
-        container = start_docker_container("airflow", str_dirpath)
+        # Starting the Docker container
+        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/", command=None)
+        # container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
 
         # Installing WfCommons on container
         install_WfCommons_on_container(container)
 
+
         # Copy over the wfbench and cpu-benchmark executables to where they should go
-        # exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench " + str_dirpath + "bin/",
-        #                                        stdout=True, stderr=True)
-        # exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark " + str_dirpath + "bin/",
-        #                                        stdout=True, stderr=True)
-        #
-        # # Run the workflow!
-        # sys.stderr.write("Running the Airflow workflow on the container...\n")
-        # exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", stdout=True, stderr=True)
-        # ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", stdout=True, stderr=True)
-        #
-        # # Kill the container
-        # container.remove(force=True)
-        #
-        # # Do sanity checks
-        # sys.stderr.write("Checking sanity...\n")
-        # assert (exit_code == 0)
-        # assert (task_exit_codes.decode() == num_tasks * "0")
+        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/wfbench /usr/local/bin/",
+                                               stdout=True, stderr=True)
+        exit_code, output = container.exec_run("sudo cp -f /tmp/WfCommons/bin/cpu-benchmark /usr/local/bin/",
+                                               stdout=True, stderr=True)
+
+        # Do the necessary copies (some ugly hardcoded stuff here)
+        airflow_home = "/home/wfcommons/airflow/"  # per the Dockerfile
+        exit_code, output = container.exec_run(f"cp -r /tmp/airflow_translated_workflow {airflow_home}/dags/",stdout=True, stderr=True)
+        exit_code, output = container.exec_run(f"mv {airflow_home}/dags/airflow_translated_workflow/workflow.py {airflow_home}/dags/",stdout=True, stderr=True)
+
+        # # Run the entry point script by hand (such a hack!)
+        # exit_code, output = container.exec_run(f"/bin/bash /entrypoint.sh",stdout=True, stderr=True)
+        # print(output)
+
+        # Run the workflow!
+        sys.stderr.write("Running the Airflow workflow on the container...\n")
+        exit_code, output = container.exec_run(cmd="/bin/bash /run_a_workflow.sh Blast-Benchmark", stdout=True, stderr=True)
+
+        # Kill the container
+        container.remove(force=True)
+
+        # Do sanity checks
+        sys.stderr.write("Checking sanity...\n")
+        assert (exit_code == 0)
+        assert (output.decode().count("completed") == num_tasks * 2)
