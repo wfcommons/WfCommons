@@ -12,6 +12,7 @@ import pathlib
 import pytest
 import shutil
 import docker
+from docker.errors import ImageNotFound
 import io
 import tarfile
 import os
