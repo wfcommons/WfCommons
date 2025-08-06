@@ -44,6 +44,7 @@ class Build(build_ext):
             os.chmod(source_path, st.st_mode | stat.S_IEXEC)
             # Copy to scripts directory
             shutil.copy2(source_path, target_path)
+            sys.stderr.write(f"Copied {source_path} to {target_path}\n")
 
 setup(
     packages=find_packages(),
