@@ -33,6 +33,8 @@ class Build(build_ext):
         # Do a by-hand copy of cpu-benchmark to the bin directory, as this is so 
         # hard to do using data_file in the setup() declaration
         scripts_dir = os.path.join(site.USER_BASE, "bin")
+        if not pathlib.Path(scripts_dir).is_dir():
+            scripts_dir = "/opt/local/bin"
         source_path = os.path.join("bin", "cpu-benchmark")
         target_path = os.path.join(scripts_dir, "cpu-benchmark")
         # Ensure it's executable (just in case)
