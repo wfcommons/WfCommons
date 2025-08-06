@@ -223,7 +223,7 @@ class TestTranslators:
 
 
     @pytest.mark.unit
-    @pytest.mark.skip(reason="tmp")
+    # @pytest.mark.skip(reason="tmp")
     def test_airflow_translator(self) -> None:
 
         # Create workflow benchmark
@@ -241,7 +241,7 @@ class TestTranslators:
         translator.translate(output_folder=dirpath)
 
         # Starting the Docker container
-        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/", command=None)
+        container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
         # container = start_docker_container("airflow", str_dirpath, "/home/wfcommons/")
 
         # Installing WfCommons on container
