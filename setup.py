@@ -32,10 +32,10 @@ setup(
         'build_ext': Build,
     },
     data_files=[
-        ('bin', ['wfcommons/bin/cpu-benchmark'])
+        ('bin', ['bin/cpu-benchmark'])
     ],
     scripts=[
-        'wfcommons/bin/wfbench'
+        'bin/wfbench'
     ],
     entry_points={
         'console_scripts': [

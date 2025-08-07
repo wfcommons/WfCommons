@@ -68,9 +68,9 @@ def install_WfCommons_on_container(container):
     container.put_archive(target_path, tar_data)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/wfcommons/bin/cpu-benchmark.o", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
                                            stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/wfcommons/bin/cpu-benchmark", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", stdout=True,
                                            stderr=True)
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)

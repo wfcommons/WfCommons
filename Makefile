@@ -1,9 +1,9 @@
 # Makefile 
 
-objects = wfcommons/bin/cpu-benchmark.o
+objects = bin/cpu-benchmark.o
 CXX= g++
 CPPFLAGS= -std=c++11
-execname = wfcommons/bin/cpu-benchmark
+execname =bin/cpu-benchmark
 
 # compile
 $(execname): $(objects)
