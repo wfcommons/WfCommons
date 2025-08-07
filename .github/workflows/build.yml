@@ -24,6 +24,7 @@ jobs:
 
       - name: Install utilities for testing
         run: |
+          sudo apt-get install stress-ng
           pip install docker
 
       - name: Check package install
