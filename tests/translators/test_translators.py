@@ -32,14 +32,13 @@ from wfcommons.wfbench import BashTranslator
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir):
     # Pulling the Docker image
     client = docker.from_env()
-    sys.stderr.write("Pulling Docker image...\n")
     image_name = f"wfcommons/wfcommons-testing-{backend}"
 
     try:
         image = client.images.get(image_name)
         sys.stderr.write(f"Image '{image_name}' is available locally\n")
     except ImageNotFound:
-        sys.stderr.write(f"Pulling image '{image_name}'\n")
+        sys.stderr.write(f"Pulling image '{image_name}'...\n")
         client.images.pull(image_name)
 
     # Launch the docker container to actually run the translated workflow
@@ -204,12 +203,16 @@ class TestTranslators:
             shutil.rmtree(dirpath)
 
         # Perform the translation
-        sys.stderr.write("Translating workflow...\n")
+        sys.stderr.write("\nTranslating workflow...\n")
         translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
         # Starting the Docker container (Using the parsl container, which is not necessary)
+        sys.stderr.write("Starting Docker container...\n")
         container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
 
         # Running the workflow
+        sys.stderr.write("Running workflow...\n")
+        start_time = time.time()
         run_workflow_methods[backend](container, num_tasks, str_dirpath)
+        sys.stderr.write("Workflow ran in %.2f seconds\n" % (time.time() - start_time))
