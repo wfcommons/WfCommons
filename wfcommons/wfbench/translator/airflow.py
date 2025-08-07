@@ -88,6 +88,9 @@ with DAG(
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
+        # Create the README file
+        self._write_readme_file(output_folder)
+
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
         """
         Prepares the bash_command strings for the BashOperators.
@@ -127,3 +130,23 @@ with DAG(
 
             self.task_commands[task.task_id] = command_str
 
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"""Assuming that the translated workflow is in the /tmp/translated_workflow/ directory, before 
+running the workflow some directories and files need to be copied/moved as follows:
+
+  cp -r /tmp/translated_workflow/ $AIRFLOW_HOME/dags/
+  mv $AIRFLOW_HOME/dags/translated_workflow/workflow.py $AIRFLOW_HOME/dags/
+
+Now, the workflow can be executed as:  
+
+  airflow dags test Workflow-Name    (where "Workflow-Name" is the workflow name in the WfCommons-generated 
+                                      benchmark JSON file, e.g., "Blast-Benchmark")
+""")

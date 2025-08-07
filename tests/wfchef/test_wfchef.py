@@ -23,7 +23,6 @@ from wfcommons.wfchef.chef import ls_recipe
 class TestWfChef:
 
     @pytest.mark.unit
-    #@pytest.mark.skip(reason="Temporarily disabled due to strange ModuleNotFoundError: No module named 'pkg_resources' error")
     def test_create_recipe(self) -> None:
         """
         Just calling the create_recipe function from chef.py directly (i.e., bypassing main())

@@ -14,14 +14,13 @@ import subprocess
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext
 
-
 class Build(build_ext):
     """Customized setuptools build command - builds protos on build."""
 
     def run(self):
         protoc_command = ["make"]
         if subprocess.call(protoc_command) != 0:
-            print("Error: 'make' is not istnalled. Please install 'make' and try again.")
+            sys.stderr.write("Error: 'make' is not installed. Please install 'make' and try again.\n")
             sys.exit(-1) 
         super().run()
 
@@ -33,11 +32,14 @@ setup(
         'build_ext': Build,
     },
     data_files=[
-        ('bin', ['bin/cpu-benchmark', 'bin/wfbench'])
+        ('bin', ['bin/cpu-benchmark'])
+    ],
+    scripts=[
+        'bin/wfbench'
     ],
     entry_points={
         'console_scripts': [
-            'wfchef=wfcommons.wfchef.chef:main'
+            'wfchef=wfcommons.wfchef.chef:main',
         ],
         'workflow_recipes': [
             'epigenomics_recipe = wfcommons.wfchef.recipes:EpigenomicsRecipe',

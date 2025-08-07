@@ -7,8 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
-#        python-version: [ "3.9", "3.10" ]
+        python-version: [ "3.11", "3.12", "3.13" ]
     steps:
       - uses: actions/checkout@v4
   
@@ -23,12 +22,16 @@ jobs:
           pip install sphinx_rtd_theme recommonmark pytest pytest-cov
           pip install --upgrade setuptools
 
+      - name: Install utilities for testing
+        run: |
+          pip install docker
+
       - name: Check package install
         run: |
-          pip install -e .
+          pip install .
 
       - name: Run tests
-        run: pytest -m unit --cov=wfcommons tests/
+        run: python3 -m pytest -s -v -m unit --cov=wfcommons tests/
 
       - name: Upload coverage
         if: github.ref == 'refs/heads/main'

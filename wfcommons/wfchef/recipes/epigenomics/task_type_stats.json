@@ -74,7 +74,7 @@
             },
             ".fq": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -132,7 +132,7 @@
         "output": {
             ".sfq": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -161,7 +161,7 @@
         "input": {
             ".sfq": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -213,7 +213,7 @@
             },
             ".map": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -285,7 +285,7 @@
         "output": {
             ".map": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,
@@ -393,7 +393,7 @@
         "output": {
             ".fq": {
                 "distribution": {
-                    "name": "trapz",
+                    "name": "trapezoid",
                     "params": [
                         1.0,
                         1.0,

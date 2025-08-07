@@ -163,16 +163,16 @@ class NextflowTranslator(Translator):
         # Generate input spec
         input_spec = "'\\["
         for f in task.input_files:
-            input_spec += f"\"{self.output_folder.resolve()}/data/{f.file_id}\","
+            input_spec += f"\"{self.output_folder}/data/{f.file_id}\","
         input_spec = input_spec[:-1] + "\\]'"
 
         # Generate output spec
         output_spec = "'\\{"
         for f in task.output_files:
-            output_spec += f"\"{self.output_folder.resolve()}/data/{f.file_id}\":{str(f.size)},"
+            output_spec += f"\"{self.output_folder}/data/{f.file_id}\":{str(f.size)},"
         output_spec = output_spec[:-1] + "\\}'"
 
-        code += f"{self.output_folder.resolve()}/bin/{task.program} "
+        code += f"{self.output_folder}/bin/{task.program} "
 
         for a in task.args:
             if "--output-files" in a:
