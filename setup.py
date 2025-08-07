@@ -9,26 +9,10 @@
 # (at your option) any later version.
 
 import sys
-import os
-import stat
-import shutil
-import site
-import pathlib
 import subprocess
 
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext
-
-
-def is_writable(path):
-    try:
-        test_file = os.path.join(path, '.write_test_tmp')
-        with open(test_file, 'w') as f:
-            f.write('test')
-        os.remove(test_file)
-        return True
-    except Exception:
-        return False
 
 class Build(build_ext):
     """Customized setuptools build command - builds protos on build."""
@@ -36,30 +20,9 @@ class Build(build_ext):
     def run(self):
         protoc_command = ["make"]
         if subprocess.call(protoc_command) != 0:
-            print("Error: 'make' is not installed. Please install 'make' and try again.")
+            sys.stderr.write("Error: 'make' is not installed. Please install 'make' and try again.\n")
             sys.exit(-1) 
         super().run()
-
-        # Do a by-hand copy of cpu-benchmark to the bin directory, as this is so 
-        # hard to do using data_file in the setup() declaration
-        #scripts_dir = os.path.join(site.USER_BASE, "bin")
-        #if not pathlib.Path(scripts_dir).is_dir():
-        #    scripts_dir = "/usr/local/bin/"
-#
-#        if not pathlib.Path(scripts_dir).is_dir() or not is_writable(scripts_dir):
-#            sys.stderr.write(f"Error: {scripts_dir} is not writable. Please install as root or use --user.\n")
-#            sys.exit(1)
-#
-#
-#        for executable in ["cpu-benchmark", "wfbench"]:
-#            source_path = os.path.join("bin", executable)
-#            target_path = os.path.join(scripts_dir, executable)
-#            # Ensure it's executable (just in case)
-#            st = os.stat(source_path)
-#            os.chmod(source_path, st.st_mode | stat.S_IEXEC)
-#            # Copy to scripts directory
-#            shutil.copy2(source_path, target_path)
-#            sys.stderr.write(f"Copied {source_path} to {target_path}\n")
 
 setup(
     packages=find_packages(),
@@ -74,8 +37,6 @@ setup(
     scripts=[
         'wfcommons/bin/wfbench'
     ],
-    #package_data={"wfcommons": ["bin/cpu-benchmark", "bin/wfbench"]
-    #},
     entry_points={
         'console_scripts': [
             'wfchef=wfcommons.wfchef.chef:main',
