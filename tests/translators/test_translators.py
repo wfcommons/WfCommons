@@ -21,12 +21,14 @@ import json
 import time
 
 from wfcommons import BlastRecipe
-from wfcommons.wfbench import WorkflowBenchmark, TaskVineTranslator
+from wfcommons.wfbench import WorkflowBenchmark
 from wfcommons.wfbench import DaskTranslator
 from wfcommons.wfbench import ParslTranslator
 from wfcommons.wfbench import NextflowTranslator
 from wfcommons.wfbench import AirflowTranslator
 from wfcommons.wfbench import BashTranslator
+from wfcommons.wfbench import TaskVineTranslator
+from wfcommons.wfbench import CWLTranslator
 
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=["sleep", "infinity"]):
@@ -126,6 +128,7 @@ additional_setup_methods = {
     "airflow": noop,
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
+    "cwl": noop,
 }
 
 #############################################################################
@@ -192,6 +195,19 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
 
+def run_workflow_cwl(container, num_tasks, str_dirpath):
+
+    # Run the workflow!
+    # Note that the input file is hardcoded and Blast-specific
+    exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ", stdout=True, stderr=True)
+    # Kill the container
+    container.remove(force=True)
+    # Check sanity
+    assert (exit_code == 0)
+    # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
+    # and there is a 2* because there is a message for the job and for the step)
+    assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
+
 
 run_workflow_methods = {
     "dask": run_workflow_dask,
@@ -200,6 +216,7 @@ run_workflow_methods = {
     "airflow": run_workflow_airflow,
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
+    "cwl": run_workflow_cwl,
 }
 
 translator_classes = {
@@ -209,6 +226,7 @@ translator_classes = {
     "airflow": AirflowTranslator,
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
+    "cwl": CWLTranslator,
 }
 
 
@@ -223,6 +241,7 @@ class TestTranslators:
             "airflow",
             "bash",
             "taskvine",
+            "cwl",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
