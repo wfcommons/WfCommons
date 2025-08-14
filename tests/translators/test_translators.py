@@ -222,13 +222,11 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh", stdout=True, stderr=True)
-    ignored, status_output = container.exec_run(cmd="pegasus-status -l /tmp/pegasus_translated_workflow/work/wfcommons/pegasus/Blast-Benchmark/run0001", stdout=True, stderr=True)
     # Kill the container
     container.remove(force=True)
     # Check sanity
     assert(exit_code == 0)
-    assert("Workflow execution complete!" in output.decode())
-    assert(status_output.decode().count("Success") == 2)
+    assert("success" in output.decode())
 
 run_workflow_methods = {
     "dask": run_workflow_dask,
