@@ -61,6 +61,7 @@ addopts="""
 --cov-report term-missing \
 --cov ./wfcommons \
 --ignore wfcommons/wfbench/translator/templates \
+--ignore wfcommons/wfinstances/logs/pegasusrec.py \
 --no-cov-on-fail \
 -ra \
 -W ignore"""
