@@ -124,18 +124,28 @@ RUN chmod +x ./start_condor.sh
 
 # Create script to run the Workflow
 RUN echo "#!/bin/bash" >> ./run_workflow.sh && \
-    echo "pegasus-plan --dir work --cleanup none --output-site local --submit \`ls *.yml\`" >> ./run_workflow.sh && \
+    echo "pegasus-plan --dir work --cleanup none --output-site local --submit \"\$(ls *.yml)\"" >> ./run_workflow.sh && \
     echo "sleep 10" >> ./run_workflow.sh && \
-    echo "PID_FILE=\`ls work/wfcommons/pegasus/*/run0001/*.pid\`" >> ./run_workflow.sh && \
     echo "echo \"Waiting for workflow execution to complete...\"" >> ./run_workflow.sh && \
-    echo "while [[ -f \$PID_FILE ]]" >> ./run_workflow.sh && \
-    echo "do" >> ./run_workflow.sh && \
-    echo "  echo \"sleeping 5...\"" >> ./run_workflow.sh && \
-    echo "  sleep 5" >> ./run_workflow.sh && \
-    echo "done" >> ./run_workflow.sh && \
-    echo "# Sleep 10 so that status in database is up to date..." >> ./run_workflow.sh && \
-    echo "sleep 10" >> ./run_workflow.sh && \
-    echo "echo \"Workflow execution complete!\"" >> ./run_workflow.sh
+    echo "while true; do" >> ./run_workflow.sh && \
+    echo "  status_output=\$(pegasus-status -l /tmp/pegasus_translated_workflow/work/wfcommons/pegasus/Blast-Benchmark/run0001)" >> ./run_workflow.sh && \
+    echo "  fail_count=\$(echo \"\$status_output\" | grep -v READY | grep -v Summary | grep Fail | wc -l)" >> ./run_workflow.sh && \
+    echo "  if [ \"\$fail_count\" -eq 1 ]; then" >> ./run_workflow.sh && \
+    echo "    echo \"Workflow execution failure!\"" >> ./run_workflow.sh && \
+    echo "    exit 1" >> ./run_workflow.sh && \
+    echo "  fi" >> ./run_workflow.sh && \
+    echo "  success_count=\$(echo \"\$status_output\" | grep -v READY | grep -v Summary | grep Success | wc -l)" >> ./run_workflow.sh && \
+    echo "  if [ \"\$success_count\" -eq 1 ]; then" >> ./run_workflow.sh && \
+    echo "    echo \"Workflow execution success!\"" >> ./run_workflow.sh && \
+    echo "    exit 0" >> ./run_workflow.sh && \
+    echo "  fi" >> ./run_workflow.sh && \
+    echo "  running_count=\$(echo \"\$status_output\" | grep -v READY | grep -v Summary | grep Running | wc -l)" >> ./run_workflow.sh && \
+    echo "  if [ \"\$running_count\" -eq 1 ]; then" >> ./run_workflow.sh && \
+    echo "    echo \"Workflow execution still running...\"" >> ./run_workflow.sh && \
+    echo "    sleep 5" >> ./run_workflow.sh && \
+    echo "  fi" >> ./run_workflow.sh && \
+    echo "done" >> ./run_workflow.sh 
+
 RUN chmod +x ./run_workflow.sh
 
 ENV CONDOR_HOST localhost
