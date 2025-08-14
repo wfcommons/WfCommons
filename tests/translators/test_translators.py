@@ -29,6 +29,7 @@ from wfcommons.wfbench import AirflowTranslator
 from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import CWLTranslator
+from wfcommons.wfbench import PegasusTranslator
 
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=["sleep", "infinity"]):
@@ -97,7 +98,7 @@ def _create_workflow_benchmark():
     benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
     shutil.rmtree(benchmark_full_path, ignore_errors=True)
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=desired_num_tasks)
-    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=10, data=10, percent_cpu=0.6)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=1, data=1, percent_cpu=0.6)
     with open(f"/tmp/blast-benchmark-{desired_num_tasks}.json", "r") as f:
         generated_json = json.load(f)
         num_tasks = len(generated_json["workflow"]["specification"]["tasks"])
@@ -120,6 +121,16 @@ def _additional_setup_taskvine(container):
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
 
+def _additional_setup_pegasus(container):
+    # Start Condor
+    exit_code, output = container.exec_run(cmd=["bash", "-c",
+                                                "bash /home/wfcommons/start_condor.sh"],
+                                           stdout=True, stderr=True)
+    # Run pegasus script
+    exit_code, output = container.exec_run(cmd=["bash", "-c",
+                                                "python3 ./pegasus_workflow.py"],
+                                           stdout=True, stderr=True)
+
 
 additional_setup_methods = {
     "dask": noop,
@@ -129,6 +140,7 @@ additional_setup_methods = {
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
     "cwl": noop,
+    "pegasus": _additional_setup_pegasus,
 }
 
 #############################################################################
@@ -196,7 +208,6 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_cwl(container, num_tasks, str_dirpath):
-
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ", stdout=True, stderr=True)
@@ -208,6 +219,16 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
 
+def run_workflow_pegasus(container, num_tasks, str_dirpath):
+    # Run the workflow!
+    exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh", stdout=True, stderr=True)
+    ignored, status_output = container.exec_run(cmd="pegasus-status -l /tmp/pegasus_translated_workflow/work/wfcommons/pegasus/Blast-Benchmark/run0001", stdout=True, stderr=True)
+    # Kill the container
+    container.remove(force=True)
+    # Check sanity
+    assert(exit_code == 0)
+    assert("Workflow execution complete!" in output.decode())
+    assert(status_output.decode().count("Success") == 2)
 
 run_workflow_methods = {
     "dask": run_workflow_dask,
@@ -217,6 +238,7 @@ run_workflow_methods = {
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
     "cwl": run_workflow_cwl,
+    "pegasus": run_workflow_pegasus,
 }
 
 translator_classes = {
@@ -227,6 +249,7 @@ translator_classes = {
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
     "cwl": CWLTranslator,
+    "pegasus": PegasusTranslator,
 }
 
 
@@ -242,6 +265,7 @@ class TestTranslators:
             "bash",
             "taskvine",
             "cwl",
+            "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
