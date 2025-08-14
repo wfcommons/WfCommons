@@ -31,6 +31,9 @@ from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import CWLTranslator
 from wfcommons.wfbench import PegasusTranslator
 
+from wfcommons.wfinstances import PegasusLogsParser
+
+
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=["sleep", "infinity"]):
     # Pulling the Docker image
@@ -250,6 +253,10 @@ translator_classes = {
     "pegasus": PegasusTranslator,
 }
 
+logs_parser_classes = {
+    "pegasus": PegasusLogsParser,
+}
+
 
 class TestTranslators:
 
@@ -294,3 +301,12 @@ class TestTranslators:
         start_time = time.time()
         run_workflow_methods[backend](container, num_tasks, str_dirpath)
         sys.stderr.write("Workflow ran in %.2f seconds\n" % (time.time() - start_time))
+
+        # Run the log parser if any
+        if backend in logs_parser_classes:
+            sys.stderr.write("\nParsing the logs...\n")
+            parser = logs_parser_classes[backend](submit_dir=dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001")
+            workflow = parser.build_workflow("reconstructed_workflow")
+            # TODO: test more stuff
+            assert(num_tasks == len(workflow.tasks))
+            pass
