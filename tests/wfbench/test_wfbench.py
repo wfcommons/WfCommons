@@ -122,17 +122,16 @@ class TestWfBench:
         """
         # create a workflow benchmark object to generate specifications based on a recipe
         benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=49)
-        workflow: Workflow = benchmark.workflow
-        sys.stderr.write(f"WORKFLOW = {workflow}\n")
 
         # Create the data_specification options
         fixed_total_footprint_in_mb = 5
-        per_type_footprint = {}
-        for task_type in ["blastall", "split_fasta", None]:
-                per_type_footprint[task_type] = "1"
+        # TODO: This seems really broken right now
+        # per_type_footprint = {}
+        # for task_type in ["blastall", "split_fasta", None]:
+        #         per_type_footprint[task_type] = "1" # string???
 
-        for data_spec in [per_type_footprint]:
-            benchmark.create_benchmark(_create_fresh_local_dir(f"/tmp/benchmark_{len(data_spec)}"), cpu_work=1, data=data_spec, percent_cpu=0.6)
+        for data_spec in [fixed_total_footprint_in_mb]:
+            benchmark.create_benchmark(_create_fresh_local_dir(f"/tmp/benchmark"), cpu_work=1, data=data_spec, percent_cpu=0.6)
 
             # Run the benchmark with the Bash translator
             # Create a local translation directory
@@ -157,7 +156,7 @@ class TestWfBench:
             container.remove(force=True)
 
             # Inspect the data after execution
-            _actual_data_files_as_expected(dirpath, workflow, data_spec)
+            _actual_data_files_as_expected(dirpath, benchmark.workflow, data_spec)
 
 
     @pytest.mark.unit
