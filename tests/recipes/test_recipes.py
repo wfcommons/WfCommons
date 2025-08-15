@@ -28,7 +28,9 @@ from wfcommons import WorkflowGenerator
 
 class TestRecipes:
 
-    recipe_class_list = [SeismologyRecipe,
+    recipe_class_list = [
+            GenomeRecipe,
+            SeismologyRecipe,
             MontageRecipe,
             RnaseqRecipe,
             BwaRecipe,

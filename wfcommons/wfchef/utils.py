@@ -151,7 +151,7 @@ def draw(g: nx.DiGraph,
          linewidths: int = 5,
          subgraph: Set[str] = set()) -> Tuple[plt.Figure, plt.Axes]:
     """
-    Plots a netwrokX DiGraph.
+    Plots a networkX DiGraph.
 
     :param g: graph to be plotted.
     :type g: networkX DiGraph.
