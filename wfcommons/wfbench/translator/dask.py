@@ -142,6 +142,7 @@ class DaskTranslator(Translator):
         :return: The 
         :rtype: list[str]
         """
+        noindent_python_codelines = []
         if task_name not in self.parsed_tasks:
             # check for dependencies
             for parent in self.task_parents[task_name]:

@@ -15,6 +15,7 @@ import requests
 import subprocess
 import sys
 
+from tests.test_helpers import _create_fresh_local_dir
 from wfcommons.wfchef.chef import create_recipe
 from wfcommons.wfchef.chef import uninstall_recipe
 from wfcommons.wfchef.chef import ls_recipe
@@ -28,10 +29,7 @@ class TestWfChef:
         Just calling the create_recipe function from chef.py directly (i.e., bypassing main())
         """
 
-        dirpath = pathlib.Path("/tmp/recipe/")
-        if dirpath.exists():
-            shutil.rmtree(dirpath)
-        dirpath.mkdir(parents=True, exist_ok=True)
+        dirpath = _create_fresh_local_dir("/tmp/recipe/")
 
         # Put a few JSON workflows in /tmp
         urls = ["https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json",

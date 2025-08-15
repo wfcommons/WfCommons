@@ -13,7 +13,7 @@ import itertools
 import math
 import pathlib
 
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 from typing import List, Optional
 
@@ -84,8 +84,8 @@ class MakeflowLogsParser(LogsParser):
         # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
-                                 wms_name=self.wms_name,
-                                 wms_url=self.wms_url)
+                                 runtime_system_name=self.wms_name,
+                                 runtime_system_url=self.wms_url)
 
         # parse workflow file
         self._parse_workflow_file()
@@ -124,6 +124,9 @@ class MakeflowLogsParser(LogsParser):
                     list_files.extend(self._create_files(outputs, FileLink.OUTPUT, task_name))
                     list_files.extend(self._create_files(inputs, FileLink.INPUT, task_name))
 
+                    input_files = [f for f in list_files if f.link == FileLink.INPUT]
+                    output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+
                     # create task
                     args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
                     task = Task(name=task_name,
@@ -134,7 +137,8 @@ class MakeflowLogsParser(LogsParser):
                                 program=prefix,
                                 args=args.split(),
                                 cores=1,
-                                files=list_files,
+                                input_files=input_files,
+                                output_files=output_files,
                                 logger=self.logger)
                     self.workflow.add_node(task_name, task=task)
                     self.args_map[args] = task
@@ -173,11 +177,11 @@ class MakeflowLogsParser(LogsParser):
                 elif file_path.is_file():
                     size = int(math.ceil(file_path.stat().st_size / 1000))  # B to KB
 
-                file_obj_in = File(name=file,
+                file_obj_in = File(file_id=file,
                                    size=size,
                                    link=FileLink.INPUT,
                                    logger=self.logger)
-                file_obj_out = File(name=file,
+                file_obj_out = File(file_id=file,
                                     size=size,
                                     link=FileLink.OUTPUT,
                                     logger=self.logger)
@@ -200,8 +204,9 @@ class MakeflowLogsParser(LogsParser):
             for line in f:
                 if 'STARTED' in line:
                     start_time = int(line.split()[2])
-                    self.workflow.executed_at = datetime.utcfromtimestamp(start_time / 1000000).strftime(
+                    self.workflow.executed_at = datetime.fromtimestamp(start_time / 1000000, tz=timezone.utc).strftime(
                         '%Y-%m-%dT%H:%M:%S+00:00')
+
 
                 elif 'COMPLETED' in line:
                     self.workflow.makespan = float('%.2f' % ((int(line.split()[2]) - start_time) / 1000000))
@@ -228,7 +233,7 @@ class MakeflowLogsParser(LogsParser):
                 task.bytes_written = int(data['bytes_written'][0] * 1000)  # MB to KB
                 task.avg_cpu = float('%.4f' % (float(data['cpu_time'][0]) / float(data['wall_time'][0]) * 100))
                 task.machine = Machine(name=data['host'],
-                                       cpu={'count': int(data['machine_cpus'][0]), 'speed': 0, 'vendor': ''},
+                                       cpu={'coreCount': int(data['machine_cpus'][0]), 'speedInMHz': 0, 'vendor': ''},
                                        logger=self.logger)
 
                 # workflow

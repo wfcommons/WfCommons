@@ -398,6 +398,7 @@ class HierarchicalPegasusLogsParser(LogsParser):
                         self.workflow.add_node(task_name, 
                             task = Task(
                                 name=task_name,
+                                task_id=task_name,
                                 task_type=TaskType.AUXILIARY,
                                 runtime=0,
                                 args=[],

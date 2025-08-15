@@ -90,8 +90,8 @@ def annotate(g: nx.DiGraph) -> None:
     Annotates a networkX DiGraph with metadata such as the tasks top-down type hash, 
     bottom-up type hash, and type-hash.
 
-    :param path: name (for samples available in WfCommons) or the path to graphs JSON.
-    :type path: str or pathlib.Path.
+    :param g: networkX DiGraph.
+    :type g: nx.DiGraph.
     
     :return: annotated graph.
     :rtype: networkX DiGraph.

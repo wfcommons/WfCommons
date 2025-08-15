@@ -25,7 +25,7 @@ from .utils import create_graph, combine_hashes, annotate, draw
 this_dir = pathlib.Path(__file__).resolve().parent
 
 
-def comb(n: int, k: int) -> int:
+def comb(n: int, k: int) -> float:
     """
     Calculates the combination of two integers.
 
@@ -35,7 +35,7 @@ def comb(n: int, k: int) -> int:
     :type k: int.
     
     :return: combination of two integers.
-    :rtype: int.
+    :rtype: float.
     """
     return math.factorial(n) / (math.factorial(k) * math.factorial(n - k))
 
@@ -49,7 +49,7 @@ def get_children(graph: nx.DiGraph, node: str) -> List[str]:
     Gets the children of a node.
 
     :param graph: graph that contains the node.
-    :type graph: netwrokX DiGraph.
+    :type graph: networkX DiGraph.
     :param node: a node.
     :type node: str.
     
@@ -64,7 +64,7 @@ def get_parents(graph: nx.DiGraph, node: str) -> List[str]:
     Gets the parents of a node.
 
     :param graph: graph that contains the node.
-    :type graph: netwrokX DiGraph.
+    :type graph: networkX DiGraph.
     :param node: a node.
     :type node: str.
     
@@ -79,7 +79,7 @@ def get_relatives(graph: nx.DiGraph, node: str) -> Set[str]:
     Gets all node's relatives (children and parents).
 
     :param graph: graph that contains the node.
-    :type graph: netwrokX DiGraph.
+    :type graph: networkX DiGraph.
     :param node: a node.
     :type node: str.
     
@@ -94,11 +94,11 @@ def find_microstructure(graph: nx.DiGraph, n1: str, n2: str):
     Detects a pattern (microstructure).
 
     :param graph: graph.
-    :type graph: netwrokX DiGraph.
+    :type graph: networkX DiGraph.
     :param n1:  a node in graph.
-    :type node: str.
-    :param n1:  a different node in graph.
-    :type node: str.
+    :type n1: str.
+    :param n2:  a different node in graph.
+    :type n2: str.
     
     :return: sets of n1 related nodes, n2 related nodes, the nodes in common between n1 and n2 and 
             all the nodes involved in the process.
@@ -138,9 +138,9 @@ def find_microstructures(graph: nx.DiGraph, verbose: bool = False):
     Detects the patterns (microstructures) that are used for replication and graph expansion.
 
     :param graph: graph.
-    :type graph: netwrokX DiGraph.
+    :type graph: networkX DiGraph.
     :param verbose: if set, prints status messages.
-    :type verbose: netwrokX DiGraph.
+    :type verbose: networkX DiGraph.
 
     :return: patterns (microstructures)
     :rtype: Set[str].
@@ -186,7 +186,7 @@ def sort_graphs(workflow_path: Union[pathlib.Path],
     :param workflow_path: path to the JSON instances.
     :type workflow_path: pathlib.Path.
     :param verbose: if set, prints status messages.
-    :type verbose: netwrokX DiGraph.
+    :type verbose: networkX DiGraph.
 
     :return: sorted graphs
     :rtype: List[networkX.DiGraph].

@@ -96,7 +96,7 @@ class ParslTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
-    def _parsl_wftasks_codelines(self) -> None:
+    def _parsl_wftasks_codelines(self) -> list[str]:
         codelines = ["task_arr = []\n"]
 
         # Parsing each steps by Workflow levels
