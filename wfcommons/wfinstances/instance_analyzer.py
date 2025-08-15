@@ -116,7 +116,7 @@ class InstanceAnalyzer:
                     if extension[1:].isnumeric():
                         extension = path.splitext(infile.file_id.replace(extension, ''))[1]
 
-                    # Check if the file is definetly an input 
+                    # Check if the file is definitely an input
                     assert infile.link == FileLink.INPUT, f"{infile.file_id} is not set as input"
                     _append_file_to_dict(extension, inputs_dict, infile.size)
 
