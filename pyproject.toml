@@ -53,6 +53,12 @@ flowcept = ["flowcept"]
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}
 
+[tool.coverage.run]
+omit = [
+    "wfcommons/wfinstances/logs/pegasusrec.py",
+    "wfcommons/wfbench/translator/templates"
+]
+
 [tool.pytest.ini_options]
 addopts="""
 --cov-context test  \
@@ -60,8 +66,6 @@ addopts="""
 --cov-report xml:coverage.xml \
 --cov-report term-missing \
 --cov ./wfcommons \
---ignore wfcommons/wfbench/translator/templates \
---ignore wfcommons/wfinstances/logs/pegasusrec.py \
 --no-cov-on-fail \
 -ra \
 -W ignore"""
