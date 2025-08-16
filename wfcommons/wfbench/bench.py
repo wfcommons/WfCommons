@@ -52,10 +52,10 @@ class WorkflowBenchmark:
         """Create an object that represents a workflow benchmark generator."""
         self.logger: Logger = logging.getLogger(
             __name__) if logger is None else logger
-        self.recipe = recipe
+        self.recipe: Type[WfChefWorkflowRecipe] = recipe
         self.num_tasks = num_tasks
         self.with_flowcept = with_flowcept
-        self.workflow: Workflow = None
+        self.workflow: [Workflow|None] = None
 
     def create_benchmark_from_input_file(self,
                                          save_dir: pathlib.Path,
@@ -341,7 +341,7 @@ class WorkflowBenchmark:
 
         return json_path
 
-    def _creating_lock_files(self, lock_files_folder: Optional[pathlib.Path]) -> Tuple[pathlib.Path, pathlib.Path]:
+    def _creating_lock_files(self, lock_files_folder: Optional[pathlib.Path]) -> Tuple[pathlib.Path | None, pathlib.Path | None]:
         """
         Creating the lock files
         """
@@ -509,7 +509,7 @@ class WorkflowBenchmark:
     def _calculate_input_files(self):
         """
         Calculate total number of files needed.
-        This mehtod is used if the user provides total datafootprint.
+        This method is used if the user provides total data footprint.
         """
         tasks_need_input = 0
         tasks_dont_need_input = 0
@@ -635,7 +635,7 @@ class WorkflowBenchmark:
         input("Please fill up the input file and press ENTER to continue...")
 
 
-def generate_sys_data(num_files: int, tasks: Dict[str, int], save_dir: pathlib.Path) -> None:
+def generate_sys_data(num_files: int, tasks: Dict[str, int], save_dir: pathlib.Path) -> List[str]:
     """Generate workflow's input data
 
     :param num_files: number of each file to be generated.
@@ -658,12 +658,12 @@ def generate_sys_data(num_files: int, tasks: Dict[str, int], save_dir: pathlib.P
     return names 
 
 
-def assigning_correct_files(task: Dict[str, str]) -> List[str]:
-    files = []
-    for file in task["files"]:
-        if file["link"] == "input":
-            files.append(file["name"])
-    return files
+# def assigning_correct_files(task: Dict[str, str]) -> List[str]:
+#     files = []
+#     for file in task["files"]:
+#         if file["link"] == "input":
+#             files.append(file["name"])
+#     return files
 
 
 def cleanup_sys_files() -> None:

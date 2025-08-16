@@ -88,7 +88,7 @@ class Instance:
         # Global properties
         self.executed_at: datetime = dateutil.parser.parse(
             self.instance["workflow"]["execution"]["executedAt"])
-        self.makespan: int = self.instance["workflow"]["execution"]["makespanInSeconds"]
+        self.makespan: float = self.instance["workflow"]["execution"]["makespanInSeconds"]
 
         # Machines
         if "machines" in self.instance["workflow"]["execution"].keys():

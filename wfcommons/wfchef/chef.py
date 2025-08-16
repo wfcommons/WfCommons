@@ -84,9 +84,9 @@ def find_err(workflow: pathlib.Path,
     :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
     :type workflow: pathlib.Path
     :param err_savepath: path to save the err (rmse) of all instances available into a csv.
-    :type real_graph: Optional[pathlib.Path]
+    :type err_savepath: Optional[pathlib.Path]
     :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
-    :type real_graph: Optional[bool]
+    :type always_update: Optional[bool]
     :param runs: number of times to repeat the err calculation process (due to randomization).
     :type runs: Optional[bool]
 
@@ -154,7 +154,7 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     task_types = set()
 
     for path in path_to_instances.glob("*.json"):
-        instance = Instance(input_instance=str(path))
+        instance = Instance(input_instance=path)
         analyzer.append_instance(instance)
         graph = create_graph(path)
         for node in graph.nodes:

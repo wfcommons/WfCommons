@@ -28,7 +28,9 @@ from wfcommons import WorkflowGenerator
 
 class TestRecipes:
 
-    recipe_class_list = [SeismologyRecipe,
+    recipe_class_list = [
+            GenomeRecipe,
+            SeismologyRecipe,
             MontageRecipe,
             RnaseqRecipe,
             BwaRecipe,
@@ -48,7 +50,9 @@ class TestRecipes:
 
         recipe = recipe_class.from_num_tasks(num_tasks=200, runtime_factor=1.1, input_file_size_factor=1.5,
                                                  output_file_size_factor=0.8)
-        workflow = WorkflowGenerator(recipe).build_workflow()
+        workflows = WorkflowGenerator(recipe).build_workflows(1)
+        assert len(workflows) == 1
+
 
 
     @pytest.mark.unit
