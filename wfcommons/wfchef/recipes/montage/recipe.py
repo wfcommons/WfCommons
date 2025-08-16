@@ -39,7 +39,7 @@ class MontageRecipe(WfChefWorkflowRecipe):
     def __init__(self,
                  data_footprint: Optional[int] = 0,
                  num_tasks: Optional[int] = 3,
-                 exclude_graphs: Set[str] = None,
+                 exclude_graphs: Set[str]|None = None,
                  runtime_factor: Optional[float] = 1.0,
                  input_file_size_factor: Optional[float] = 1.0,
                  output_file_size_factor: Optional[float] = 1.0,

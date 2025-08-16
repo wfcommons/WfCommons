@@ -236,7 +236,14 @@ class Workflow(nx.DiGraph):
             raise ModuleNotFoundError(
                 f"\'pydot\' package not found: call to {type(self).__name__}.read_dot() failed.")
         
-        graph = nx.drawing.nx_pydot.read_dot(dot_file_path)
+        # graph = nx.drawing.nx_pydot.read_dot(str(dot_file_path))
+        graph = nx.nx_agraph.read_dot(str(dot_file_path))
+
+        # clear everything
+        self.tasks.clear()
+        self.tasks_parents.clear()
+        self.tasks_children.clear()
+        self.clear()
 
         tasks_map = {}
         for node in graph.nodes(data=True):

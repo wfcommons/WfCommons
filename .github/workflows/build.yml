@@ -27,7 +27,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install stress-ng
+          sudo apt-get install graphviz libgraphviz-dev
           pip install docker
+          pip install graphviz
 
       - name: Check package install
         run: |
