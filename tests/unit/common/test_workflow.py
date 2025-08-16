@@ -116,6 +116,11 @@ class TestWorkflow:
 
         # Create an instance from the JSON File and write it back to a JSON
         instance = Instance(pathlib.Path("/tmp") / local_file_name)
+
+        # Testing the "iterator" capability
+        assert(len(list(instance)) == len(instance.instance["workflow"]["specification"]["tasks"]))
+
+        # Test writing to JSON
         instance.workflow.write_json(pathlib.Path("/tmp/written_workflow.json"))
 
         # Get the two jsons as objects

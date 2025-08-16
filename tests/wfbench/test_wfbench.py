@@ -116,6 +116,7 @@ def _actual_data_files_as_expected(dirpath: pathlib.Path,
 class TestWfBench:
 
     @pytest.mark.unit
+    # @pytest.mark.skip
     def test_create_from_recipe(self) -> None:
         """
         Very minimal testing here for creating from recipe
