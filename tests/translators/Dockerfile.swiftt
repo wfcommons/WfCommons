@@ -1,0 +1,60 @@
+# docker build --platform amd64 -t wfcommons-dev-swiftt -f Dockerfile.swiftt .
+# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-swiftt /bin/bash
+
+FROM amd64/ubuntu:noble
+
+LABEL org.containers.image.authors="henric@hawaii.edu"
+
+# update repositories
+RUN apt-get update
+
+# set timezone
+RUN echo "America/Los_Angeles" > /etc/timezone && export DEBIAN_FRONTEND=noninteractive && apt-get install -y tzdata
+
+# install useful stuff
+RUN apt-get -y install pkg-config 
+RUN apt-get -y install git
+RUN apt-get -y install wget 
+RUN apt-get -y install make 
+RUN apt-get -y install cmake 
+RUN apt-get -y install cmake-data 
+RUN apt-get -y install sudo 
+RUN apt-get -y install vim --fix-missing
+RUN apt-get -y install gcc 
+RUN apt-get -y install gcc-multilib
+
+# Python stuff
+RUN apt-get -y install python3 python3-pip
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN python3 -m pip install --break-system-packages pathos pandas filelock
+RUN python3 -m pip install --break-system-packages networkx scipy matplotlib
+RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
+RUN python3 -m pip install --break-system-packages --upgrade setuptools
+
+# Stress-ng
+RUN apt-get -y install stress-ng
+
+# Install Swift-t
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
+RUN sh ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
+ENV PATH="/opt/conda/bin:$PATH"
+RUN which conda
+ENV CONDA_ALWAYS_YES=true
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    conda create -n swiftt-env python=3.11 -y
+RUN conda run -n swiftt-env python --version
+RUN conda run -n swiftt-env pip install flowcept
+RUN conda run -n swiftt-env conda install -y -c conda-forge gcc zsh zlib pathos
+RUN conda run -n swiftt-env conda install -y -c swift-t swift-t
+
+
+# Add wfcommons user
+RUN useradd -ms /bin/bash wfcommons
+RUN adduser wfcommons sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ENV PATH="$PATH:/opt/conda/bin/:/home/wfcommons/.local/bin/"
+
+USER wfcommons
+WORKDIR /home/wfcommons
+
