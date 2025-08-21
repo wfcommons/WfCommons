@@ -34,6 +34,16 @@ RUN python3 -m pip install --break-system-packages --upgrade setuptools
 # Stress-ng
 RUN apt-get -y install stress-ng
 
+# REDIS
+RUN apt-get -y install redis
+
+
+# Add wfcommons user
+RUN useradd -ms /bin/bash wfcommons
+RUN adduser wfcommons sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ENV PATH="$PATH:/opt/conda/bin/:/home/wfcommons/.local/bin/"
+
 # Install Swift-t
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
 RUN sh ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
@@ -47,13 +57,10 @@ RUN conda run -n swiftt-env python --version
 RUN conda run -n swiftt-env pip install flowcept
 RUN conda run -n swiftt-env conda install -y -c conda-forge gcc zsh zlib pathos
 RUN conda run -n swiftt-env conda install -y -c swift-t swift-t
+ENV CONDA_PREFIX=/opt/conda/envs/swiftt-env
+ENV CONDA_EXE=/opt/conda/bin/conda
+ENV PATH="/opt/conda/envs/swiftt-env/bin:$PATH"
 
-
-# Add wfcommons user
-RUN useradd -ms /bin/bash wfcommons
-RUN adduser wfcommons sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-ENV PATH="$PATH:/opt/conda/bin/:/home/wfcommons/.local/bin/"
 
 USER wfcommons
 WORKDIR /home/wfcommons
