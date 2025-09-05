@@ -32,14 +32,13 @@ from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
 
-
 def _create_workflow_benchmark():
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
     desired_num_tasks = 45
     benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
     shutil.rmtree(benchmark_full_path, ignore_errors=True)
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=desired_num_tasks)
-    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=1, data=1, percent_cpu=0.6)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=10, data=10, percent_cpu=0.6)
     with open(f"/tmp/blast-benchmark-{desired_num_tasks}.json", "r") as f:
         generated_json = json.load(f)
         num_tasks = len(generated_json["workflow"]["specification"]["tasks"])
@@ -72,6 +71,10 @@ def _additional_setup_pegasus(container):
                                                 "python3 ./pegasus_workflow.py"],
                                            stdout=True, stderr=True)
 
+def _additional_setup_swiftt(container):
+    # Start a redis server in the background
+    exit_code, output = container.exec_run(
+        cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
 
 additional_setup_methods = {
     "dask": noop,
@@ -82,7 +85,7 @@ additional_setup_methods = {
     "taskvine": _additional_setup_taskvine,
     "cwl": noop,
     "pegasus": _additional_setup_pegasus,
-    "swiftt": noop,
+    "swiftt": _additional_setup_swiftt,
 }
 
 #############################################################################
@@ -126,6 +129,7 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
                                            stderr=True)
     # Kill the container
     container.remove(force=True)
+
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks * 2)
@@ -172,12 +176,13 @@ def run_workflow_pegasus(container, num_tasks, str_dirpath):
 
 def run_workflow_swiftt(container, num_tasks, str_dirpath):
     # Run the workflow!
-    # exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh", stdout=True, stderr=True)
-    # # Kill the container
-    # container.remove(force=True)
-    # # Check sanity
-    # assert(exit_code == 0)
-    # assert("success" in output.decode())
+    exit_code, output = container.exec_run(cmd="swift-t workflow.swift", stdout=True, stderr=True)
+    # Kill the container
+    container.remove(force=True)
+    # sys.stderr.write(output.decode())
+    # Check sanity
+    assert(exit_code == 0)
+    assert (output.decode().count("completed!") == num_tasks)
     pass
 
 run_workflow_methods = {
@@ -222,7 +227,7 @@ class TestTranslators:
             "taskvine",
             "cwl",
             "pegasus",
-            # "swiftt",
+            "swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")

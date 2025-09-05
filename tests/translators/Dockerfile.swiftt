@@ -55,6 +55,7 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
     conda create -n swiftt-env python=3.11 -y
 RUN conda run -n swiftt-env python --version
 RUN conda run -n swiftt-env pip install flowcept
+RUN conda run -n swiftt-env pip install py-cpuinfo psutil redis
 RUN conda run -n swiftt-env conda install -y -c conda-forge gcc zsh zlib pathos
 RUN conda run -n swiftt-env conda install -y -c swift-t swift-t
 ENV CONDA_PREFIX=/opt/conda/envs/swiftt-env
