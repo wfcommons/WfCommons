@@ -140,7 +140,37 @@ class TestWorkflow:
         # Compare the two jsons!
         assert(original_json == written_json)
 
+    @pytest.mark.unit
+    def test_workflow_dot_file(self):
 
+        # Put a JSON file in /tmp
+        url = "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json"
+        response = requests.get(url)
+        local_file_name = url.split("/")[-1]
+        with open("/tmp/" + local_file_name, 'wb') as f:
+            f.write(response.content)
+
+        # Create an instance from the JSON File and write it back to a JSON
+        instance = Instance(pathlib.Path("/tmp") / local_file_name)
+
+        # Capture some metrics
+        num_tasks = len(instance.workflow.tasks)
+        num_dependencies = len(instance.workflow.edges)
+
+        # # Create a dot file
+        dot_path = pathlib.Path("/tmp/written_workflow.dot")
+        instance.workflow.write_dot(dot_path)
+        assert dot_path.exists()
+        with open(str(dot_path), "r", encoding="utf-8") as f:
+            content = f.read()
+            assert(num_tasks == content.count("label") - 1)  # Extra "label" in file for \N
+            assert(num_dependencies == content.count("->"))  # Extra "label" in file for \N
+
+        # Read it back
+        instance.workflow.read_dot(dot_path)
+        assert(num_tasks == len(instance.workflow.tasks))
+        assert(num_tasks == len(instance.workflow.nodes))
+        assert(num_dependencies == len(instance.workflow.edges))
 
 
 

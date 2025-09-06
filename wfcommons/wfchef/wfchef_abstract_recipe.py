@@ -58,7 +58,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
     def __init__(self, name: str,
                  data_footprint: Optional[int],
                  num_tasks: Optional[int],
-                 exclude_graphs: Set[str] = None,
+                 exclude_graphs: Set[str]|None = None,
                  runtime_factor: Optional[float] = 1.0,
                  input_file_size_factor: Optional[float] = 1.0,
                  output_file_size_factor: Optional[float] = 1.0,
