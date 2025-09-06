@@ -179,7 +179,7 @@ def run_workflow_swiftt(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="swift-t workflow.swift", stdout=True, stderr=True)
     # Kill the container
     container.remove(force=True)
-    # sys.stderr.write(output.decode())
+    sys.stderr.write(output.decode())
     # Check sanity
     assert(exit_code == 0)
     assert (output.decode().count("completed!") == num_tasks)
