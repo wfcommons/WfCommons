@@ -18,7 +18,7 @@ import textwrap
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
-from ...common import FileLink, Task, Workflow
+from ...common import Task, Workflow
 from ...wfinstances.instance import Instance
 
 
