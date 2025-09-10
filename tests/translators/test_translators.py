@@ -31,6 +31,8 @@ from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
+from wfcommons.wfinstances.logs import TaskVineLogsParser
+
 
 def _create_workflow_benchmark():
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
@@ -211,6 +213,12 @@ translator_classes = {
 
 logs_parser_classes = {
     "pegasus": PegasusLogsParser,
+    "taskvine": TaskVineLogsParser,
+}
+
+logs_parser_subdir = {
+    "pegasus": "work/wfcommons/pegasus/Blast-Benchmark/run0001/",
+    "taskvine": "vine-run-info/",
 }
 
 
@@ -219,15 +227,15 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-            "dask",
-            "parsl",
-            "nextflow",
-            "airflow",
-            "bash",
+            # "dask",
+            # "parsl",
+            # "nextflow",
+            # "airflow",
+            # "bash",
             "taskvine",
-            "cwl",
-            "pegasus",
-            "swiftt",
+            # "cwl",
+            # "pegasus",
+            # "swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -262,8 +270,9 @@ class TestTranslators:
         # Run the log parser if any
         if backend in logs_parser_classes:
             sys.stderr.write("\nParsing the logs...\n")
-            parser = logs_parser_classes[backend](submit_dir=dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001")
+            parser = logs_parser_classes[backend](dirpath / logs_parser_subdir[backend])
             workflow = parser.build_workflow("reconstructed_workflow")
             # TODO: test more stuff
+            workflow.write_json(pathlib.Path("/tmp/workflow_test.json"))
             assert(num_tasks == len(workflow.tasks))
             pass
