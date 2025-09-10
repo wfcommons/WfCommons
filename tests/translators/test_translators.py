@@ -211,16 +211,6 @@ translator_classes = {
     "swiftt": SwiftTTranslator,
 }
 
-logs_parser_classes = {
-    "pegasus": PegasusLogsParser,
-    "taskvine": TaskVineLogsParser,
-}
-
-logs_parser_subdir = {
-    "pegasus": "work/wfcommons/pegasus/Blast-Benchmark/run0001/",
-    "taskvine": "vine-run-info/",
-}
-
 
 class TestTranslators:
 
@@ -268,11 +258,27 @@ class TestTranslators:
         sys.stderr.write("Workflow ran in %.2f seconds\n" % (time.time() - start_time))
 
         # Run the log parser if any
-        if backend in logs_parser_classes:
-            sys.stderr.write("\nParsing the logs...\n")
+        logs_parser_classes = {
+            "pegasus": PegasusLogsParser,
+            "taskvine": TaskVineLogsParser,
+        }
+
+        logs_parser_subdir = {
+            "pegasus": "work/wfcommons/pegasus/Blast-Benchmark/run0001/",
+            "taskvine": "vine-run-info/",
+        }
+
+        if backend == "pegasus":
             parser = logs_parser_classes[backend](dirpath / logs_parser_subdir[backend])
+        elif backend == "taskvine":
+            parser = logs_parser_classes[backend](dirpath / logs_parser_subdir[backend],
+                                                  filenames_to_ignore=["cpu-benchmark","stress-ng"])
+        else:
+            parser = None
+
+        if parser:
+            sys.stderr.write("\nParsing the logs...\n")
             workflow = parser.build_workflow("reconstructed_workflow")
             # TODO: test more stuff
             workflow.write_json(pathlib.Path("/tmp/workflow_test.json"))
             assert(num_tasks == len(workflow.tasks))
-            pass

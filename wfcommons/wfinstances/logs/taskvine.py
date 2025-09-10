@@ -67,6 +67,8 @@ class TaskVineLogsParser(LogsParser):
         self.taskgraph_file: pathlib.Path = taskgraph_file
         self.transactions_file: pathlib.Path = transactions_file
 
+        self.filenames_to_ignore: set[str] = set(filenames_to_ignore) or set({})
+
         self.files_map = {}
         self.task_command_lines = {}
         self.task_runtimes = {}
@@ -91,13 +93,14 @@ class TaskVineLogsParser(LogsParser):
                                  runtime_system_name=self.wms_name,
                                  runtime_system_url=self.wms_url)
 
-        # Construct file map
-        self._construct_file_map()
-        sys.stderr.write(str(self.files_map.keys()) + "\n")
-
         # Construct the task command-line array
         self._construct_task_command_lines()
         # sys.stderr.write(str(self.task_command_lines) + "\n")
+
+        # Construct file map
+        self._construct_file_map()
+        # sys.stderr.write(str(self.files_map.keys()) + "\n")
+
 
         # Construct the task runtimes
         self._construct_task_runtimes()
@@ -111,9 +114,20 @@ class TaskVineLogsParser(LogsParser):
         # Construct the workflow
         self._construct_workflow()
 
-        sys.stderr.write(f"======> {len(self.workflow.tasks)}\n")
-
         return self.workflow
+
+
+    def _construct_task_command_lines(self) -> None:
+        with open(self.debug_file) as f:
+            for line in f:
+                if "state change: READY (1) to RUNNING (2)" in line:
+                    [task_index] = line[line.find("Task ") + len("Task "):].split()[0:1]
+                    command_line = previous_line[previous_line.find("run_in_env ") + len("run_in_env "):-2]
+                    self.task_command_lines[int(task_index)] = command_line
+                    executable = command_line.split()[0]
+                    self.filenames_to_ignore.add(executable)
+                previous_line = line
+
 
     def _construct_file_map(self) -> None:
 
@@ -131,6 +145,8 @@ class TaskVineLogsParser(LogsParser):
                     [file_key, filename] = line[line.find("outfile ") + len("outfile "):].split()[0:2]
                 else:
                     continue
+                if filename in self.filenames_to_ignore:
+                    continue
                 self.files_map[file_key] = {"filename": filename}
                 filename_to_key_map[filename] = file_key
 
@@ -144,7 +160,10 @@ class TaskVineLogsParser(LogsParser):
                 # 2025/09/09 21:12:47.92 vine_manager[239]vine: dab178765b01 (127.0.0.1:34382) sending back file-rnd-jajwzwsrtyzbkfs to data/blastall_00000020_outfile_0020
                 elif "sending back " in line:
                     [file_key, ignore, full_path] = line[line.find("sending back ") + len("sending back "):].split()[0:3]
+                    filename = self.files_map[file_key]["filename"]
                 else:
+                    continue
+                if filename in self.filenames_to_ignore:
                     continue
                 self.files_map[file_key]["path"] = full_path
 
@@ -159,19 +178,12 @@ class TaskVineLogsParser(LogsParser):
                     [file_key, file_size] = line[line.find("TRANSFER OUTPUT ") + len("TRANSFER OUTPUT "):].split()[0:2]
                 else:
                     continue
-                self.files_map[file_key]["size"] = int(file_size)
+                if file_key in self.files_map:
+                    self.files_map[file_key]["size"] = int(file_size)
 
         # print(str(self.files_map))
 
 
-    def _construct_task_command_lines(self) -> None:
-        with open(self.debug_file) as f:
-            for line in f:
-                if "state change: READY (1) to RUNNING (2)" in line:
-                    [task_index] = line[line.find("Task ") + len("Task "):].split()[0:1]
-                    command_line = previous_line[previous_line.find("run_in_env ") + len("run_in_env "):-2]
-                    self.task_command_lines[int(task_index)] = command_line
-                previous_line = line
 
 
     def _construct_task_runtimes(self) -> None:
@@ -215,6 +227,8 @@ class TaskVineLogsParser(LogsParser):
                     if task_id not in self.task_runtimes:
                         continue
                     file_key = destination
+                    if file_key not in self.files_map:
+                        continue
                     output_file = self.files_map[file_key]["filename"]
                     if task_id not in self.task_output_files:
                         self.task_output_files[task_id] = []
@@ -226,6 +240,8 @@ class TaskVineLogsParser(LogsParser):
                     file_key = source
                     if task_id not in self.task_input_files:
                         self.task_input_files[task_id] = []
+                    if file_key not in self.files_map:
+                        continue
                     input_file = self.files_map[file_key]["filename"]
                     self.task_input_files[task_id].append(input_file)
                 else:
