@@ -27,7 +27,11 @@ from ...common.workflow import Workflow
 
 class TaskVineLogsParser(LogsParser):
     """
-    Parse TaskVine logs to generate workflow instance.
+    Parse TaskVine logs to generate workflow instance. This parse has some limitations in that
+    it may miss task input/output items due to them not being files or URLs. More importantly,
+    because in TaskVine different tasks can have the same file names as input/output but those file names
+    actually my correspond to different data sources, the parser will assume that these tasks have
+    the exact same input/output files.  There is likely a way to address this, but it hasn't been done yet.
 
     :param vine_run_info_dir: TaskVine's  vine-run-info directory.
     :type vine_run_info_dir: pathlib.Path
