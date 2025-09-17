@@ -19,7 +19,7 @@ from logging import Logger
 from typing import List, Optional
 
 from .abstract_logs_parser import LogsParser
-from ...common.file import File, FileLink
+from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
@@ -265,7 +265,6 @@ class TaskVineLogsParser(LogsParser):
             # file_path = self.files_map[file_key]["path"]
             file_object_map[filename] = File(file_id=filename,
                                     size=file_size,
-                                    link=FileLink.INPUT, # TODO: REMOVE THAT ONCE NOLINK HAS BEEN MERGED
                                     logger=self.logger)
 
         # Create all tasks
