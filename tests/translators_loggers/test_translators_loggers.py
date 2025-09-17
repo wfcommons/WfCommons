@@ -231,8 +231,8 @@ class TestTranslators:
            "parsl",
            "nextflow",
            "airflow",
-            "bash",
-           #"taskvine",
+           "bash",
+           "taskvine",
            "cwl",
            "pegasus",
            "swiftt",
@@ -270,8 +270,8 @@ class TestTranslators:
         # Run the log parser if any
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
-        elif backend == "taskvine":
-            parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
+        # elif backend == "taskvine":
+        #     parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
         else:
             parser = None
 
