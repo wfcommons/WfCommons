@@ -31,6 +31,8 @@ from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
+from wfcommons.wfinstances.logs import TaskVineLogsParser
+
 
 def _create_workflow_benchmark():
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
@@ -62,8 +64,8 @@ def _additional_setup_taskvine(container):
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
-    if exit_code != 0:
-        raise Exception("Failed to setup TaskVine: cannot start TaskVine worker")
+   # Note that exit_code will always be None because of detach=True. So hopefully this works.
+   # TODO?: check that the vine_worker is running....
 
 def _additional_setup_pegasus(container):
     # Start Condor
@@ -83,8 +85,8 @@ def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
-    if exit_code != 0:
-        raise Exception("Failed to setup SwiftT: cannot start the REDIS server")
+    # Note that exit_code will always be None because of detach=True. So hopefully this works.
+    # TODO?: check that the vine_worker is running....
 
 additional_setup_methods = {
     "dask": noop,
@@ -219,10 +221,6 @@ translator_classes = {
     "swiftt": SwiftTTranslator,
 }
 
-logs_parser_classes = {
-    "pegasus": PegasusLogsParser,
-}
-
 
 class TestTranslators:
 
@@ -270,10 +268,16 @@ class TestTranslators:
         sys.stderr.write("Workflow ran in %.2f seconds\n" % (time.time() - start_time))
 
         # Run the log parser if any
-        if backend in logs_parser_classes:
+        if backend == "pegasus":
+            parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
+        elif backend == "taskvine":
+            parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
+        else:
+            parser = None
+
+        if parser:
             sys.stderr.write("\nParsing the logs...\n")
-            parser = logs_parser_classes[backend](submit_dir=dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001")
             workflow = parser.build_workflow("reconstructed_workflow")
             # TODO: test more stuff
+            workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
             assert(num_tasks == len(workflow.tasks))
-            pass
