@@ -235,7 +235,12 @@ class TaskVineLogsParser(LogsParser):
                     destination = destination[len("file-"):]
 
                 if "task" in source and "file" not in source:
-                    task_id = int(source.split("-")[1])
+
+                    try:
+                        task_id = int(source.split("-")[1])
+                    except ValueError as e:
+                        raise Exception(f"The source was {source} and the split around '-' failed!")
+
                     if task_id not in self.task_runtimes:
                         continue
                     file_key = destination
