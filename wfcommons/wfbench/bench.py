@@ -21,7 +21,7 @@ import sys
 from logging import Logger
 from typing import Dict, Optional, List, Set, Tuple, Type, Union
 
-from ..common import File, FileLink, Task, Workflow
+from ..common import File, Task, Workflow
 
 from ..wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 from ..wfgen import WorkflowGenerator
@@ -536,10 +536,10 @@ class WorkflowBenchmark:
             if isinstance(output_files, Dict):
                 for child, file_size in output_files[task.task_id].items():
                     task.output_files.append(
-                        File(f"{task.task_id}_{child}_output.txt", file_size, FileLink.OUTPUT))
+                        File(f"{task.task_id}_{child}_output.txt", file_size))
             elif isinstance(output_files, int):
                 task.output_files.append(
-                    File(f"{task.task_id}_output.txt", output_files, FileLink.OUTPUT))
+                    File(f"{task.task_id}_output.txt", output_files))
 
     def _add_input_files(self, output_files: Dict[str, Dict[str, str]], data: Union[int, Dict[str, str]]) -> None:
         """
@@ -562,20 +562,19 @@ class WorkflowBenchmark:
                 task.input_files.append(
                     File(f"{task.task_id}_input.txt",
                          data[task.category] if isinstance(
-                             data, Dict) else data,
-                         FileLink.INPUT))
+                             data, Dict) else data))
                 inputs.append(f'{task.task_id}_input.txt')
             else:
                 if isinstance(data, Dict):
                     for parent, file_size in input_files[task.task_id].items():
                         task.input_files.append(
-                            File(f"{parent}_{task.task_id}_output.txt", file_size, FileLink.INPUT))
+                            File(f"{parent}_{task.task_id}_output.txt", file_size))
                         inputs.append(f"{parent}_{task.task_id}_output.txt")
 
                 elif isinstance(data, int):
                     for parent in self.workflow.tasks_parents[task.task_id]:
                         task.input_files.append(
-                            File(f"{parent}_output.txt", data, FileLink.INPUT))
+                            File(f"{parent}_output.txt", data))
                         inputs.append(f"{parent}_output.txt")
 
             task.args.append(f"--input-files {inputs}")
@@ -655,16 +654,7 @@ def generate_sys_data(num_files: int, tasks: Dict[str, int], save_dir: pathlib.P
                 fp.write(os.urandom(size))
             print(f"Created file: {file}")
 
-    return names 
-
-
-# def assigning_correct_files(task: Dict[str, str]) -> List[str]:
-#     files = []
-#     for file in task["files"]:
-#         if file["link"] == "input":
-#             files.append(file["name"])
-#     return files
-
+    return names
 
 def cleanup_sys_files() -> None:
     """Remove files already used"""

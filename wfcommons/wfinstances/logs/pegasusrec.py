@@ -21,7 +21,7 @@ from logging import Logger
 from typing import List, Optional, Dict
 
 from .abstract_logs_parser import LogsParser
-from ...common.file import File, FileLink
+from ...common.file import File
 from ...common.machine import Machine, MachineSystem
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
@@ -233,15 +233,17 @@ class HierarchicalPegasusLogsParser(LogsParser):
 
                     task_name = f"{j['name']}_{j['id']}"
 
-                    list_files = [File(
+                    input_files = [File(
                         file_id=f['lfn'],
                         size=0,
-                        link=FileLink(f['type']),
                         logger=self.logger
-                    ) for f in j['uses']]
+                    ) for f in j['uses'] if f['type'] == "input"]
 
-                    input_files = [f for f in list_files if f.link == FileLink.INPUT]
-                    output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+                    output_files = [File(
+                        file_id=f['lfn'],
+                        size=0,
+                        logger=self.logger
+                    ) for f in j['uses'] if f['type'] == "output"]
 
                     self.workflow.add_node(
                         task_name,
@@ -317,15 +319,17 @@ class HierarchicalPegasusLogsParser(LogsParser):
             for j in e.findall('{http://pegasus.isi.edu/schema/DAX}job'):
                 task_name = str(j.get('name')) + '_' + str(j.get('id'))
 
-                list_files = [File(
+                input_files = [File(
                     file_id=f.get('name') if not f.get('name') is None else f.get('file'),
                     size=0,
-                    link=FileLink(f.get('link')),
                     logger=self.logger
-                ) for f in j.findall('{http://pegasus.isi.edu/schema/DAX}uses')]
+                ) for f in j.findall('{http://pegasus.isi.edu/schema/DAX}uses') if f.get('link') == "input"]
 
-                input_files = [f for f in list_files if f.link == FileLink.INPUT]
-                output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+                output_files = [File(
+                    file_id=f.get('name') if not f.get('name') is None else f.get('file'),
+                    size=0,
+                    logger=self.logger
+                ) for f in j.findall('{http://pegasus.isi.edu/schema/DAX}uses') if f.get('link') == "output"]
 
                 self.workflow.add_node(
                     task_name,

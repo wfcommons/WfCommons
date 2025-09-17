@@ -21,7 +21,7 @@ from logging import Logger
 from typing import Any, Dict, List, Optional
 
 from .schema import SchemaValidator
-from ..common.file import File, FileLink
+from ..common.file import File
 from ..common.machine import Machine, MachineSystem
 from ..common.task import Task, TaskType
 from ..common.workflow import Workflow
@@ -122,13 +122,11 @@ class Instance:
             input_files = [File(
                 file_id=f,
                 size=files_map[f],
-                link=FileLink.INPUT,
                 logger=self.logger
             ) for f in task.get('inputFiles', [])]
             output_files = [File(
                 file_id=f,
                 size=files_map[f],
-                link=FileLink.OUTPUT,
                 logger=self.logger
             ) for f in task.get('outputFiles', [])]
 
