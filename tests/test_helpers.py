@@ -28,12 +28,14 @@ def _make_tarfile_of_wfcommons():
     tar_stream.seek(0)
     return tar_stream
 
+
 def _install_WfCommons_on_container(container):
     # sys.stderr.write("Installing WfCommons on the container...\n")
     # Copy the WfCommons code to it (removing stuff that should be removed)
     target_path = '/tmp/'  # inside container
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
+    # Cleanup files from the host
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
@@ -44,6 +46,8 @@ def _install_WfCommons_on_container(container):
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
     exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
+    if exit_code != 0:
+        raise RuntimeError("Failed to install WfCommons on the container");
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=None):
     if command is None:
@@ -75,10 +79,17 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
 
     # Copy over the wfbench and cpu-benchmark executables to where they should go on the container
     if bin_dir:
+        sys.stderr.write("Copying wfbench and cpu-benchmark...\n")
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + bin_dir],
                                                stdout=True, stderr=True)
+        if exit_code != 0:
+            raise RuntimeError("Failed to copy wfbench script to the bin directory")
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + bin_dir],
                                                stdout=True, stderr=True)
+        if exit_code != 0:
+            raise RuntimeError("Failed to copy cpu-benchmark executable to the bin directory")
+    else:
+        sys.stderr.write("Not Copying wfbench and cpu-benchmark...\n")
 
     return container
 
