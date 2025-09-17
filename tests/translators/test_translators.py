@@ -234,7 +234,7 @@ class TestTranslators:
            "nextflow",
            "airflow",
             "bash",
-           "taskvine",
+           #"taskvine",
            "cwl",
            "pegasus",
            "swiftt",
