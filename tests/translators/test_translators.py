@@ -56,25 +56,35 @@ def _additional_setup_taskvine(container):
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "source ~/conda/etc/profile.d/conda.sh && conda activate && poncho_package_create taskvine_poncho.json taskvine_poncho.tar.gz"],
                                            stdout=True, stderr=True)
+    if exit_code != 0:
+        raise Exception("Failed to setup TaskVine: cannot create poncho package")
     # Start a vine worker in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
+    if exit_code != 0:
+        raise Exception("Failed to setup TaskVine: cannot start TaskVine worker")
 
 def _additional_setup_pegasus(container):
     # Start Condor
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "bash /home/wfcommons/start_condor.sh"],
                                            stdout=True, stderr=True)
+    if exit_code != 0:
+        raise Exception("Failed to setup Pegasus: cannot start HTCondor")
     # Run pegasus script
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "python3 ./pegasus_workflow.py"],
                                            stdout=True, stderr=True)
+    if exit_code != 0:
+        raise Exception("Failed to setup Pegasus: error while running the pegasus_workflow.py script")
 
 def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
+    if exit_code != 0:
+        raise Exception("Failed to setup SwiftT: cannot start the REDIS server")
 
 additional_setup_methods = {
     "dask": noop,
@@ -219,15 +229,15 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-            "dask",
-            "parsl",
-            "nextflow",
-            "airflow",
+           "dask",
+           "parsl",
+           "nextflow",
+           "airflow",
             "bash",
-            "taskvine",
-            "cwl",
-            "pegasus",
-            "swiftt",
+           "taskvine",
+           "cwl",
+           "pegasus",
+           "swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
