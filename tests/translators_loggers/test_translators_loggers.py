@@ -231,11 +231,8 @@ class TestTranslators:
            "parsl",
            "nextflow",
            "airflow",
-<<<<<<< HEAD
            "bash",
-=======
             "bash",
->>>>>>> taskvine_logger
            "taskvine",
            "cwl",
            "pegasus",
