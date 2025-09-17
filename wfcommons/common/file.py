@@ -16,12 +16,6 @@ from typing import Dict, Optional, Union
 from ..utils import NoValue
 
 
-class FileLink(NoValue):
-    """Type of file link."""
-    INPUT = "input"
-    OUTPUT = "output"
-
-
 class File:
     """Representation of a file.
 
@@ -29,28 +23,24 @@ class File:
     :type file_id: str
     :param size: File size in bytes.
     :type size: int
-    :param link: Type of file link.
-    :type link: FileLink
     :param logger: The logger where to log information/warning or errors.
     :type logger: Optional[Logger]
     """
 
     def __init__(self, file_id: str, 
                  size: int, 
-                 link: FileLink, 
                  logger: Optional[Logger] = None) -> None:
         """A file used by tasks."""
         self.logger: Logger = logger if logger else logging.getLogger(__name__)
 
         self.file_id: str = file_id
         self.size: int = size
-        self.link: FileLink = link
 
-    def as_dict(self) -> Dict[str, Union[str, int, FileLink]]:
+    def as_dict(self) -> Dict[str, Union[str, int]]:
         """A JSON representation of the file.
 
         :return: A JSON object representation of the file.
-        :rtype: Dict[str, Union[str, int, FileLink]]
+        :rtype: Dict[str, Union[str, int]]
         """
         return {
             'id': self.file_id,

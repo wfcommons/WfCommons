@@ -10,14 +10,14 @@
 
 import pytest
 
-from wfcommons.common import File, FileLink
+from wfcommons.common import File
 
 
 class TestFile:
    
     @pytest.mark.unit
     def test_file_creation(self) -> None:
-        file = File(file_id="file_123", size=100, link=FileLink.INPUT)
+        file = File(file_id="file_123", size=100)
         assert(file.as_dict() == {
             "id": "file_123",
             "sizeInBytes": 100
@@ -25,20 +25,20 @@ class TestFile:
 
     @pytest.mark.unit
     def test_file_equality(self) -> None:
-        file1 = File(file_id="file_1", size=100, link=FileLink.INPUT)
-        file2 = File(file_id="file_1", size=200, link=FileLink.INPUT)
-        file3 = File(file_id="file_2", size=100, link=FileLink.INPUT)
-        file4 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        file1 = File(file_id="file_1", size=100)
+        file2 = File(file_id="file_1", size=200)
+        file3 = File(file_id="file_2", size=100)
+        file4 = File(file_id="file_1", size=100)
         assert (file1 != file2)
         assert (file1 != file3)
         assert (file1 == file4)
 
     @pytest.mark.unit
     def test_hash(self) -> None:
-        file1 = File(file_id="file_1", size=100, link=FileLink.INPUT)
-        file2 = File(file_id="file_1", size=200, link=FileLink.INPUT)
-        file3 = File(file_id="file_2", size=100, link=FileLink.INPUT)
-        file4 = File(file_id="file_1", size=100, link=FileLink.INPUT)
+        file1 = File(file_id="file_1", size=100)
+        file2 = File(file_id="file_1", size=200)
+        file3 = File(file_id="file_2", size=100)
+        file4 = File(file_id="file_1", size=100)
         assert (hash(file1) != hash(file2))
         assert (hash(file1) != hash(file2))
         assert (hash(file1) == hash(file4))

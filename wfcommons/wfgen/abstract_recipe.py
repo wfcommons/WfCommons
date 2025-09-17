@@ -16,7 +16,7 @@ from os import path
 from logging import Logger
 from typing import Any, Dict, List, Optional
 
-from wfcommons.common.file import File, FileLink
+from wfcommons.common.file import File
 from wfcommons.common.task import Task, TaskType
 from wfcommons.common.workflow import Workflow
 from wfcommons.utils import generate_rvs
@@ -66,13 +66,15 @@ class WorkflowRecipe(ABC):
         self.input_file_size_factor: Optional[float] = input_file_size_factor
         self.output_file_size_factor: Optional[float] = output_file_size_factor
         self.workflow_recipe = None
-        self.tasks_files: Dict[str, List[File]] = {}
-        self.tasks_files_names: Dict[str, List[str]] = {}
         self.task_id_counter: int = 1
         self.tasks_map = {}
         self.tasks_children = {}
         self.tasks_parents = {}
-        self.tasks_output_files = {}
+
+        self.tasks_input_files: Dict[str, List[File]] = {}
+        self.tasks_input_files_names: Dict[str, List[str]] = {}
+        self.tasks_output_files: Dict[str, List[File]] = {}
+        self.tasks_output_files_names: Dict[str, List[str]] = {}
 
     @abstractmethod
     def _workflow_recipe(self) -> Dict[str, Any]:
@@ -127,7 +129,7 @@ class WorkflowRecipe(ABC):
 
     def _generate_task(self, task_name: str, task_id: str) -> Task:
         """
-        Generate a synthetic task.
+        Generate a synthetic task (mostly blank)
 
         :param task_name: task name.
         :type task_name: str
@@ -144,9 +146,9 @@ class WorkflowRecipe(ABC):
                                                task_recipe['runtime']['min'],
                                                task_recipe['runtime']['max']), '.3f'))
 
-        # # linking previous generated output files as input files
-        self.tasks_files[task_id] = []
-        self.tasks_files_names[task_id] = []
+        # linking previous generated output files as input files
+        self.tasks_input_files[task_id] = []
+        self.tasks_input_files_names[task_id] = []
         task = Task(
             name=task_name,
             # task_id='0{}'.format(task_id.split('_0')[1]),
@@ -188,7 +190,8 @@ class WorkflowRecipe(ABC):
 
     def _generate_task_files(self, task: Task) -> List[File]:
         """
-        Generate input and output files for a task.
+        Generate input and output files for a task. This method is recursive, and is initially called
+        for each leaf (i.e., exit) tasks of the workflow.
 
         :param task: task object.
         :type task: Task
@@ -196,13 +199,16 @@ class WorkflowRecipe(ABC):
         :return: List of files output files.
         :rtype: List[File]
         """
+
+        # Perhaps we already dit this recursively
         if task.task_id in self.tasks_output_files.keys():
             return self.tasks_output_files[task.task_id]
 
+        # Get the recipe for the task
         task_recipe = self._workflow_recipe()[task.name]
 
-        # generate output files
-        output_files_list = self._generate_files(task.task_id, task_recipe['output'], FileLink.OUTPUT)
+        # generate the task's output files
+        output_files_list = self._generate_files(task.task_id, task_recipe['output'], "output")
         task.output_files = output_files_list
 
         # obtain input files from parents
@@ -216,20 +222,19 @@ class WorkflowRecipe(ABC):
                 input_files.extend(output_files)
 
         for input_file in input_files:
-            if input_file.file_id not in self.tasks_files_names[task.task_id]:
-                self.tasks_files[task.task_id].append(File(file_id=input_file.file_id,
-                                                           link=FileLink.INPUT,
+            if input_file.file_id not in self.tasks_input_files_names[task.task_id]:
+                self.tasks_input_files[task.task_id].append(File(file_id=input_file.file_id,
                                                            size=input_file.size))
-                self.tasks_files_names[task.task_id].append(input_file.file_id)
+                self.tasks_input_files_names[task.task_id].append(input_file.file_id)
 
-        # generate additional input files
-        self._generate_files(task.task_id, task_recipe['input'], FileLink.INPUT)
-        task.input_files = [ifile for ifile in self.tasks_files[task.task_id] if ifile.link == FileLink.INPUT]
+        # generate additional input files (i.e., not coming from parents...)
+        self._generate_files(task.task_id, task_recipe['input'], "input")
+        task.input_files = [ifile for ifile in self.tasks_input_files[task.task_id]]
 
 
         return output_files_list
 
-    def _generate_files(self, task_id: str, recipe: Dict[str, Any], link: FileLink) -> List[File]:
+    def _generate_files(self, task_id: str, recipe: Dict[str, Any], input_or_output: str) -> List[File]:
         """
         Generate files for a specific task ID.
 
@@ -237,29 +242,46 @@ class WorkflowRecipe(ABC):
         :type task_id: str
         :param recipe: Recipe for generating the task.
         :type recipe: Dict[str, Any]
-        :param link: Type of file link.
-        :type link: FileLink
+        :param input_of_output: Whether the file is output or input.
+        :type input_of_output: str
 
         :return: List of files.
         :rtype: List[File]
         """
+
+        # Early return due to recursive behavior
+        if (input_or_output == "output") and (task_id not in self.tasks_output_files):
+            return []
+
         files_list = []
         extension_list: List[str] = []
-        for f in self.tasks_files[task_id]:
-            if f.link == link:
-                extension_list.append(path.splitext(f.file_id)[1] if '.' in f.file_id else f.file_id)
-                files_list.append(f)
-            
+
+        # Setup of references to relevant maps based in input/output
+        if input_or_output == "input":
+            task_files = self.tasks_input_files[task_id]
+            task_files_names = self.tasks_input_files_names[task_id]
+        elif input_or_output == "output":
+            task_files = self.tasks_output_files[task_id]
+            task_files_names = self.tasks_output_files_names[task_id]
+        else:
+            raise ValueError(f"Invalid input_or_output value: {input_or_output}")
+
+        # Process existing files
+        for f in task_files:
+            extension_list.append(path.splitext(f.file_id)[1] if '.' in f.file_id else f.file_id)
+            files_list.append(f)
+
+        # Generate additional files from recipe
         for extension in recipe:
             if extension not in extension_list:
-                file = self._generate_file(extension, recipe, link)
+                file = self._generate_file(extension, recipe, input_or_output)
                 files_list.append(file)
-                self.tasks_files[task_id].append(file)
-                self.tasks_files_names[task_id].append(file.file_id)
+                task_files.append(file)
+                task_files_names.append(file.file_id)
 
         return files_list
 
-    def _generate_file(self, extension: str, recipe: Dict[str, Any], link: FileLink) -> File:
+    def _generate_file(self, extension: str, recipe: Dict[str, Any], input_of_output: str) -> File:
         """
         Generate a file according to a file recipe.
 
@@ -267,36 +289,17 @@ class WorkflowRecipe(ABC):
         :type extension: str
         :param recipe: Recipe for generating the file.
         :type recipe: Dict[str, Any]
-        :param link: Type of file link.
-        :type link: FileLink
+        :param input_of_output: Whether the file is output or input.
+        :type input_of_output: str
 
         :return: The generated file.
         :rtype: File
         """
-        size = int((self.input_file_size_factor if link == FileLink.INPUT
+        size = int((self.input_file_size_factor if input_of_output == "input"
                     else self.output_file_size_factor) * generate_rvs(recipe[extension]['distribution'],
                                                                       recipe[extension]['min'],
                                                                       recipe[extension]['max']))
-        
+
         return File(file_id=str(uuid.uuid4()) + extension,
-                    link=link,
                     size=size)
 
-
-    def _get_files_by_task_and_link(self, task_id: str, link: FileLink) -> List[File]:
-        """
-        Get the list of files for a task ID and link type.
-
-        :param task_id: task ID.
-        :type task_id: str
-        :param link: Type of file link.
-        :type link: FileLink
-
-        :return: List of files for a task ID and link type.
-        :rtype: List[File]
-        """
-        files_list: List[File] = []
-        for f in self.tasks_files[task_id]:
-            if f.link == link:
-                files_list.append(f)
-        return files_list

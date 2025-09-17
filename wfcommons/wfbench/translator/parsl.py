@@ -121,10 +121,6 @@ class ParslTranslator(Translator):
 
                 args = " ".join(args)
 
-                # if hasattr(task, "files"):
-                #     input_files = [f"{i.file_id}" for i in task.files if i.link == FileLink.INPUT]
-                #     output_files = [f"{o.file_id}" for o in task.files if o.link == FileLink.OUTPUT]
-                # else:
                 input_files = [f"{i.file_id}" for i in task.input_files]
                 dependency = [f"{p}.outputs" for p in self.task_parents[task.task_id]]
                 if len(dependency) == 0:

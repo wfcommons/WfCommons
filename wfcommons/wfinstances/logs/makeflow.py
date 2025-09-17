@@ -18,7 +18,7 @@ from logging import Logger
 from typing import List, Optional
 
 from .abstract_logs_parser import LogsParser
-from ...common.file import File, FileLink
+from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
@@ -121,11 +121,8 @@ class MakeflowLogsParser(LogsParser):
 
                     # create list of task files
                     list_files = []
-                    list_files.extend(self._create_files(outputs, FileLink.OUTPUT, task_name))
-                    list_files.extend(self._create_files(inputs, FileLink.INPUT, task_name))
-
-                    input_files = [f for f in list_files if f.link == FileLink.INPUT]
-                    output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+                    output_files = self._create_files(outputs, "output", task_name)
+                    input_files = self._create_files(inputs, "input", task_name)
 
                     # create task
                     args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
@@ -150,14 +147,14 @@ class MakeflowLogsParser(LogsParser):
                 if self.files_map[file]['task_name']:
                     self.workflow.add_edge(self.files_map[file]['task_name'], child)
 
-    def _create_files(self, files_list: List[str], link: FileLink, task_name: str) -> List[File]:
+    def _create_files(self, files_list: List[str], input_or_output: str, task_name: str) -> List[File]:
         """
         Create a list of files objects.
 
         :param files_list: list of file names.
         :rtype files_list: List[str]
-        :param link: Link type for the files in the list.
-        :rtype link: FileLink
+        :param input_or_output: Whether the files in the list are input or output.
+        :rtype link: stc
         :param task_name: Task name.
         :rtype task_name: str
 
@@ -168,7 +165,7 @@ class MakeflowLogsParser(LogsParser):
         for file in files_list:
             if self.files_map[file]['file']:
                 list_files.append(
-                    self.files_map[file]['file'][0] if link == FileLink.INPUT else self.files_map[file]['file'][1])
+                    self.files_map[file]['file'][0] if input_or_output == "input" else self.files_map[file]['file'][1])
             else:
                 size = 0
                 file_path = self.execution_dir.joinpath(file)
@@ -179,17 +176,15 @@ class MakeflowLogsParser(LogsParser):
 
                 file_obj_in = File(file_id=file,
                                    size=size,
-                                   link=FileLink.INPUT,
                                    logger=self.logger)
                 file_obj_out = File(file_id=file,
                                     size=size,
-                                    link=FileLink.OUTPUT,
                                     logger=self.logger)
-                list_files.append(file_obj_in if link == FileLink.INPUT else file_obj_out)
+                list_files.append(file_obj_in if input_or_output == "input" else file_obj_out)
                 self.files_map[file]['file'].extend([file_obj_in, file_obj_out])
 
             # files dependencies
-            if link == FileLink.INPUT:
+            if input_or_output == "input":
                 self.files_map[file]['children'].append(task_name)
             else:
                 self.files_map[file]['task_name'] = task_name
