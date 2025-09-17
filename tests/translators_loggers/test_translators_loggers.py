@@ -64,9 +64,8 @@ def _additional_setup_taskvine(container):
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
-    if exit_code != 0:
-        sys.stderr.write(output)
-        raise Exception("Failed to setup TaskVine: cannot start TaskVine worker")
+   # Note that exit_code will always be None because of detach=True. So hopefully this works.
+   # TODO?: check that the vine_worker is running....
 
 def _additional_setup_pegasus(container):
     # Start Condor
@@ -86,8 +85,8 @@ def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
-    if exit_code != 0:
-        raise Exception("Failed to setup SwiftT: cannot start the REDIS server")
+    # Note that exit_code will always be None because of detach=True. So hopefully this works.
+    # TODO?: check that the vine_worker is running....
 
 additional_setup_methods = {
     "dask": noop,
