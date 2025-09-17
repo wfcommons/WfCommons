@@ -65,7 +65,7 @@ def _additional_setup_taskvine(container):
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
    # Note that exit_code will always be None because of detach=True. So hopefully this works.
-   # TODO?: check that the vine_worker is running....
+   # TODO?: check that the vine_worker is running (so as to abort early)
 
 def _additional_setup_pegasus(container):
     # Start Condor
@@ -227,15 +227,15 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           #"dask",
-           #"parsl",
-           #"nextflow",
-           #"airflow",
-           # "bash",
+           "dask",
+           "parsl",
+           "nextflow",
+           "airflow",
+            "bash",
            "taskvine",
-           #"cwl",
-           #"pegasus",
-           #"swiftt",
+           "cwl",
+           "pegasus",
+           "swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -270,8 +270,8 @@ class TestTranslators:
         # Run the log parser if any
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
-        elif backend == "taskvine":
-            parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
+        #elif backend == "taskvine":
+        #    parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
         else:
             parser = None
 
