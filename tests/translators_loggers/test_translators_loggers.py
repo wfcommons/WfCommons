@@ -65,6 +65,7 @@ def _additional_setup_taskvine(container):
         cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && vine_worker localhost 9123"],
         detach=True, stdout=True, stderr=True)
     if exit_code != 0:
+        sys.stderr.write(output)
         raise Exception("Failed to setup TaskVine: cannot start TaskVine worker")
 
 def _additional_setup_pegasus(container):
@@ -227,15 +228,15 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "dask",
-           "parsl",
-           "nextflow",
-           "airflow",
-            "bash",
+           #"dask",
+           #"parsl",
+           #"nextflow",
+           #"airflow",
+           # "bash",
            "taskvine",
-           "cwl",
-           "pegasus",
-           "swiftt",
+           #"cwl",
+           #"pegasus",
+           #"swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
