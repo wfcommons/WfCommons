@@ -223,22 +223,21 @@ class TaskVineLogsParser(LogsParser):
                 if "file-task" in line:  # Ignoring what I think are taskvine internal/specific things
                     continue
                 line = line[:-1]
-                print(f"LINE: {line}")
+                # print(f"LINE: {line}")
                 [source, ignore, destination] = line.split()
                 # Remove quotes
                 source = source [1:-1]
                 destination = destination [1:-2]
-                print(f"source: {source}  destination: {destination}")
                 # Remove weird file- prefix
                 source = source.replace("--", "-")  # Sometimes there is an unexpected "--"!!
                 destination = destination.replace("--", "-")  # Sometimes there is an unexpected "--"!!
+                # print(f"source: {source}  destination: {destination}")
                 if source.startswith("file-"):
                     source = source[len("file-"):]
                 if destination.startswith("file-"):
                     destination = destination[len("file-"):]
 
                 if "task" in source and "file" not in source:
-
                     try:
                         task_id = int(source.split("-")[1])
                     except ValueError as e:
