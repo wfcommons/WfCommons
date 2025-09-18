@@ -13,14 +13,19 @@ import pytest
 import pathlib
 import sys
 import json
+import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _start_docker_container
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _get_total_size_of_directory
+from tests.test_helpers import _compare_workflows
+
 from wfcommons import BlastRecipe
 from wfcommons.common import Workflow
 from wfcommons.wfbench import WorkflowBenchmark, BashTranslator
+from wfcommons.wfinstances import Instance
+
 
 def _directory_content_as_expected(dirpath: pathlib.Path,
                                    workflow: Workflow,
@@ -38,10 +43,15 @@ def _workflow_as_expected(dirpath: pathlib.Path,
                           num_tasks: int,
                           cpu_work: int,
                           percent_cpu: float):
+
+    # Some checks based on the generated JSON
+    #########################################
+
     # Get the generated JSON
     json_path = dirpath / f"{workflow.name.lower()}-{num_tasks}.json"
     with json_path.open("r") as f:
         generated_json = json.load(f)
+
 
     # Check the number of tasks
     assert(len(workflow.tasks) == len(generated_json['workflow']['specification']['tasks']))
@@ -59,7 +69,13 @@ def _workflow_as_expected(dirpath: pathlib.Path,
         for file in workflow_task.input_files:
             assert(file.file_id in generated_task['inputFiles'])
 
-    # TODO: Implement more sanity checks
+    # Some checks based on an Instance generated from the JSON
+    ##########################################################
+
+    # Get the generated Workflow via an Instance
+    reconstructed_workflow = Instance(json_path).workflow
+
+    _compare_workflows(workflow, reconstructed_workflow)
 
     return True
 

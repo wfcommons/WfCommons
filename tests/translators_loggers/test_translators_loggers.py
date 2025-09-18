@@ -19,6 +19,8 @@ import networkx
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
+from tests.test_helpers import _compare_workflows
+
 from wfcommons import BlastRecipe
 from wfcommons.common import Workflow, Task
 from wfcommons.wfbench import WorkflowBenchmark
@@ -31,8 +33,6 @@ from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import CWLTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
-
-from wfcommons.wfinstances import Instance
 
 from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
@@ -89,8 +89,9 @@ def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
-    # Note that exit_code will always be None because of detach=True. So hopefully this works.
-    # TODO?: check that the redis-server is running (so as to abort early?)
+    # Note that exit_code will always be None because of detach=True.
+
+    # Check that the redis-server is up
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-cli ping"], stdout=True, stderr=True)
     if output.decode().strip() != 'PONG':
@@ -288,32 +289,7 @@ class TestTranslators:
             reconstructed_workflow : Workflow = parser.build_workflow("reconstructed_workflow")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
 
-            # Create an instance from the JSON File and write it back to a JSON
             original_workflow : Workflow = benchmark.workflow
 
-            # TODO: test more stuff
-            # Test the number of tasks
-            assert(len(original_workflow.tasks) == len(reconstructed_workflow.tasks))
-            # Test the task graph topology
-            assert(networkx.is_isomorphic(original_workflow, reconstructed_workflow))
-            # Test the total file size sum
-            original_input_bytes, reconstructed_input_bytes = 0, 0
-            original_output_bytes, reconstructed_output_bytes = 0, 0
-            for original_task, reconstructed_task in zip(original_workflow.tasks.values(), reconstructed_workflow.tasks.values()):
-                # sys.stderr.write(f"ORIGINAL TASK: {original_task.task_id}  RECONSTRUCTED TASK: {reconstructed_task.task_id}\n")
-                for input_file in original_task.input_files:
-                    # sys.stderr.write(f"ORIGINAL INPUT FILE: {input_file.file_id} {input_file.size}\n")
-                    original_input_bytes += input_file.size
-                for input_file in reconstructed_task.input_files:
-                    # sys.stderr.write(f"RECONSTRUCTED INPUT FILE: {input_file.file_id} {input_file.size}\n")
-                    reconstructed_input_bytes += input_file.size
-                for output_file in original_task.output_files:
-                    # sys.stderr.write(f"ORIGINAL OUTPUT FILE: {output_file.file_id} {output_file.size}\n")
-                    original_output_bytes += output_file.size
-                for output_file in reconstructed_task.output_files:
-                    # sys.stderr.write(f"RECONSTRUCTED OUTPUT FILE: {output_file.file_id} {output_file.size}\n")
-                    reconstructed_output_bytes += output_file.size
-            assert(original_input_bytes == reconstructed_input_bytes)
-            assert(original_output_bytes == reconstructed_output_bytes)
-
+            _compare_workflows(original_workflow, reconstructed_workflow)
 
