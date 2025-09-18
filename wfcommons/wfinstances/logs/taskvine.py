@@ -36,10 +36,11 @@ class TaskVineLogsParser(LogsParser):
 
     :param vine_run_info_dir: TaskVine's  vine-run-info directory.
     :type vine_run_info_dir: pathlib.Path
-    :param filenames_to_ignore: TaskVine considers that executables and package files (e.g., poncho package.tgz)
+    :param filenames_to_ignore: TaskVine sometimes considers that executables and package files
                                 are input to tasks. This argument is the list of names of files that should be
                                 ignored in the reconstructed instances, which typically do not include such
-                                files at task input.
+                                files at task input. For instance, if reconstructing a workflow from an execution
+                                of a WfBench-generated benchmark, one could pass ["wfbench", "cpu-benchmark", "stress-ng"]
     :type filenames_to_ignore: List[str]
     :param description: Workflow instance description.
     :type description: Optional[str]
