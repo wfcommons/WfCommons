@@ -14,11 +14,15 @@ import shutil
 import sys
 import json
 import time
+import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
+from tests.test_helpers import _compare_workflows
+
 from wfcommons import BlastRecipe
+from wfcommons.common import Workflow, Task
 from wfcommons.wfbench import WorkflowBenchmark
 from wfcommons.wfbench import DaskTranslator
 from wfcommons.wfbench import ParslTranslator
@@ -34,7 +38,7 @@ from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 
 
-def _create_workflow_benchmark():
+def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
     desired_num_tasks = 45
     benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
@@ -85,8 +89,13 @@ def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
-    # Note that exit_code will always be None because of detach=True. So hopefully this works.
-    # TODO?: check that the vine_worker is running....
+    # Note that exit_code will always be None because of detach=True.
+
+    # Check that the redis-server is up
+    exit_code, output = container.exec_run(
+        cmd=["bash", "-c", "redis-cli ping"], stdout=True, stderr=True)
+    if output.decode().strip() != 'PONG':
+        raise Exception("Failed to start redis-server...")
 
 additional_setup_methods = {
     "dask": noop,
@@ -242,6 +251,7 @@ class TestTranslators:
         # Create workflow benchmark
         benchmark, num_tasks = _create_workflow_benchmark()
 
+
         # Create a local translation directory
         str_dirpath = "/tmp/" + backend + "_translated_workflow/"
         dirpath = pathlib.Path(str_dirpath)
@@ -270,13 +280,16 @@ class TestTranslators:
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
-            parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng"])
+            parser = TaskVineLogsParser(dirpath / "vine-run-info/", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
         else:
             parser = None
 
         if parser:
             sys.stderr.write("\nParsing the logs...\n")
-            workflow = parser.build_workflow("reconstructed_workflow")
-            # TODO: test more stuff
-            workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
-            assert(num_tasks == len(workflow.tasks))
+            reconstructed_workflow : Workflow = parser.build_workflow("reconstructed_workflow")
+            reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
+
+            original_workflow : Workflow = benchmark.workflow
+
+            _compare_workflows(original_workflow, reconstructed_workflow)
+

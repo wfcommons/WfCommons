@@ -5,7 +5,11 @@ import os
 import io
 import sys
 import docker
+import networkx
 from docker.errors import ImageNotFound
+
+from wfcommons.common import Workflow
+
 
 def _create_fresh_local_dir(path: str) -> pathlib.Path:
     dirpath = pathlib.Path(path)
@@ -100,3 +104,29 @@ def _get_total_size_of_directory(directory_path: str):
             filepath = os.path.join(dirpath, filename)
             total_size += os.path.getsize(filepath)
     return total_size
+
+def _compare_workflows(workflow1: Workflow, workflow_2: Workflow):
+    
+    # Test the number of tasks
+    assert (len(workflow1.tasks) == len(workflow_2.tasks))
+    # Test the task graph topology
+    assert (networkx.is_isomorphic(workflow1, workflow_2))
+    # Test the total file size sum
+    workflow1_input_bytes, workflow2_input_bytes = 0, 0
+    workflow1_output_bytes, workflow2_output_bytes = 0, 0
+    for workflow1_task, workflow2_task in zip(workflow1.tasks.values(), workflow_2.tasks.values()):
+        # sys.stderr.write(f"WORKFLOW1: {workflow1_task.task_id}  WORKFLOW2 TASK: {workflow2_task.task_id}\n")
+        for input_file in workflow1_task.input_files:
+            # sys.stderr.write(f"WORKFLOW1 INPUT FILE: {input_file.file_id} {input_file.size}\n")
+            workflow1_input_bytes += input_file.size
+        for input_file in workflow2_task.input_files:
+            # sys.stderr.write(f"WORKFLOW2 INPUT FILE: {input_file.file_id} {input_file.size}\n")
+            workflow2_input_bytes += input_file.size
+        for output_file in workflow1_task.output_files:
+            # sys.stderr.write(f"WORKFLOW1 OUTPUT FILE: {output_file.file_id} {output_file.size}\n")
+            workflow1_output_bytes += output_file.size
+        for output_file in workflow2_task.output_files:
+            # sys.stderr.write(f"WORKFLOW2 OUTPUT FILE: {output_file.file_id} {output_file.size}\n")
+            workflow2_output_bytes += output_file.size
+    assert (workflow1_input_bytes == workflow2_input_bytes)
+    assert (workflow1_output_bytes == workflow2_output_bytes)
