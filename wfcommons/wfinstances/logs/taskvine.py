@@ -230,12 +230,12 @@ class TaskVineLogsParser(LogsParser):
                 destination = destination [1:-2]
                 print(f"source: {source}  destination: {destination}")
                 # Remove weird file- prefix
+                source.replace("--", "-")  # Sometimes there is an unexpected "--"!!
+                destination.replace("--", "-")  # Sometimes there is an unexpected "--"!!
                 if source.startswith("file-"):
                     source = source[len("file-"):]
-                    source.replace("--", "-")  # Sometimes there is an unexpected "--"!!
                 if destination.startswith("file-"):
                     destination = destination[len("file-"):]
-                    destination.replace("--", "-")  # Sometimes there is an unexpected "--"!!
 
                 if "task" in source and "file" not in source:
 
