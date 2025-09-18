@@ -229,13 +229,20 @@ class TaskVineLogsParser(LogsParser):
                 source = source [1:-1]
                 destination = destination [1:-2]
                 # Remove weird file- prefix
+                source = source.replace("--", "-")  # Sometimes there is an unexpected "--"!!
+                destination = destination.replace("--", "-")  # Sometimes there is an unexpected "--"!!
+                # print(f"source: {source}  destination: {destination}")
                 if source.startswith("file-"):
                     source = source[len("file-"):]
                 if destination.startswith("file-"):
                     destination = destination[len("file-"):]
 
                 if "task" in source and "file" not in source:
-                    task_id = int(source.split("-")[1])
+                    try:
+                        task_id = int(source.split("-")[1])
+                    except ValueError as e:
+                        raise Exception(f"The source was {source} and the split around '-' failed!")
+
                     if task_id not in self.task_runtimes:
                         continue
                     file_key = destination
@@ -244,7 +251,10 @@ class TaskVineLogsParser(LogsParser):
                     output_file = self.files_map[file_key]["filename"]
                     self.task_output_files[task_id].append(output_file)
                 elif "task" in destination and "file" not in destination:
-                    task_id = int(destination.split("-")[1])
+                    try:
+                        task_id = int(destination.split("-")[1])
+                    except ValueError as e:
+                        raise Exception(f"The destination was {destination} and the split around '-' failed!")
                     if task_id not in self.task_runtimes:
                         continue
                     file_key = source
