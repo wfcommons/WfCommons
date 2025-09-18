@@ -156,7 +156,6 @@ def run_workflow_bash(container, num_tasks, str_dirpath):
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
-
     # Run the workflow!
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"], stdout=True, stderr=True)
     # Kill the container
