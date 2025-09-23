@@ -133,9 +133,9 @@ class PegasusLogsParser(LogsParser):
         # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
-                                 wms_name=self.wms_name,
-                                 wms_version=wms_version,
-                                 wms_url=self.wms_url,
+                                 runtime_system_name=self.wms_name,
+                                 runtime_system_version=wms_version,
+                                 runtime_system_url=self.wms_url,
                                  executed_at=executed_at)
 
     def _parse_workflow(self):
@@ -154,9 +154,9 @@ class PegasusLogsParser(LogsParser):
             # create base workflow instance object
             self.workflow = Workflow(name=self.workflow_name,
                                      description=self.description,
-                                     wms_name=self.wms_name,
-                                     wms_version=data['pegasus'],
-                                     wms_url=self.wms_url,
+                                     runtime_system_name=self.wms_name,
+                                     runtime_system_version=data['pegasus'],
+                                     runtime_system_url=self.wms_url,
                                      executed_at=data['x-pegasus']['createdOn'])
 
             for j in data['jobs']:
@@ -165,23 +165,26 @@ class PegasusLogsParser(LogsParser):
                     task_name = f"{j['name']}_{j['id']}"
 
                     list_files = [File(
-                        name=f['lfn'],
+                        file_id=f['lfn'],
                         size=0,
                         link=FileLink(f['type']),
                         logger=self.logger
                     ) for f in j['uses']]
 
-                    self.workflow.add_node(
-                        task_name,
-                        task=Task(
+                    input_files = [f for f in list_files if f.link == FileLink.INPUT]
+                    output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+
+                    self.workflow.add_task(
+                        Task(
                             name=task_name,
-                            task_id=j['id'],
+                            task_id=task_name,
                             category=j['name'],
                             task_type=TaskType.COMPUTE,
                             runtime=0,
                             args=j['arguments'],
                             cores=0,
-                            files=list_files,
+                            input_files=input_files,
+                            output_files=output_files,
                             logger=self.logger
                         )
                     )
@@ -227,23 +230,26 @@ class PegasusLogsParser(LogsParser):
                 task_name = str(j.get('name')) + '_' + str(j.get('id'))
 
                 list_files = [File(
-                    name=f.get('name') if not f.get('name') is None else f.get('file'),
+                    file_id=f.get('name') if not f.get('name') is None else f.get('file'),
                     size=0,
                     link=FileLink(f.get('link')),
                     logger=self.logger
                 ) for f in j.findall('{http://pegasus.isi.edu/schema/DAX}uses')]
 
-                self.workflow.add_node(
-                    task_name,
-                    task=Task(
+                input_files = [f for f in list_files if f.link == FileLink.INPUT]
+                output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
+
+                self.workflow.add_task(
+                    Task(
                         name=task_name,
-                        task_id=str(j.get('id')),
+                        task_id=task_name,
                         category=str(j.get('name')),
                         task_type=TaskType.COMPUTE,
                         runtime=0,
                         args=[],
                         cores=0,
-                        files=list_files,
+                        input_files=input_files,
+                        output_files=output_files,
                         logger=self.logger
                     )
                 )
@@ -286,6 +292,7 @@ class PegasusLogsParser(LogsParser):
         num_tasks = 0
         tasks_set = set()
 
+        # Parse DAG File for tasks
         with open(dag_file) as f:
             for line in f:
                 if line.startswith('JOB'):
@@ -302,17 +309,16 @@ class PegasusLogsParser(LogsParser):
                     if not task and not self.ignore_auxiliary:
                         task=Task(
                                 name=task_name,
+                                task_id=task_name,
                                 task_type=TaskType.AUXILIARY,
                                 runtime=0,
                                 args=[],
                                 cores=0,
-                                files=[],
+                                input_files=[],
+                                output_files=[],
                                 logger=self.logger
                             )
-                        self.workflow.add_node(
-                            task_name,
-                            task=task
-                        )
+                        self.workflow.add_task(task)
                     self._parse_meta_file(task_name)
 
                     # Parsing job stdout file
@@ -320,7 +326,10 @@ class PegasusLogsParser(LogsParser):
                         tasks_set.add(task.name)
                         self._parse_job_output(task)
 
-                elif line.startswith('PARENT'):
+        # Parse DAG file for dependencies
+        with open(dag_file) as f:
+            for line in f:
+                if line.startswith('PARENT'):
                     # Typically, parent/child references are at the end of the DAG file
                     s = line.split()
                     parent = s[1]
@@ -328,15 +337,18 @@ class PegasusLogsParser(LogsParser):
                     for node in self.workflow.nodes.data():
                         if node[0].lower() == child.lower() and parent in tasks_set:
                             task = node[1]['task']
-                            self.workflow.add_edge(parent, task.name, weight=0)
+                            self.workflow.add_dependency(parent, task.name)
                             break
 
-        # parse workflow files
+        # Parse workflow files
         for node in self.workflow.nodes.data():
             task = node[1]['task']
-            for f in task.files:
-                if f.name in self.files_map:
-                    f.size = int(self.files_map[f.name])
+            for f in task.input_files:
+                if f.file_id in self.files_map:
+                    f.size = int(self.files_map[f.file_id])
+            for f in task.output_files:
+                if f.file_id in self.files_map:
+                    f.size = int(self.files_map[f.file_id])
 
         # parse workflow makespan
         #TODO: can be replaced with .append_suffix('.dagman.out') in python 3.10
@@ -473,8 +485,8 @@ class PegasusLogsParser(LogsParser):
             task.machine = Machine(
                 name=data['machine']['uname_nodename'],
                 cpu={
-                    'count': data['machine']['cpu_count'],
-                    'speed': data['machine']['cpu_speed'],
+                    'coreCount': data['machine']['cpu_count'],
+                    'speedInMHz': data['machine']['cpu_speed'],
                     'vendor': data['machine']['cpu_vendor']
                 },
                 system=MachineSystem(data['machine']['uname_system']),

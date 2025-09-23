@@ -58,7 +58,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
     def __init__(self, name: str,
                  data_footprint: Optional[int],
                  num_tasks: Optional[int],
-                 exclude_graphs: Set[str] = set(),
+                 exclude_graphs: Set[str] = None,
                  runtime_factor: Optional[float] = 1.0,
                  input_file_size_factor: Optional[float] = 1.0,
                  output_file_size_factor: Optional[float] = 1.0,
@@ -66,6 +66,8 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
                  this_dir: Union[str, pathlib.Path] = None,
                  base_method: Optional[Enum] = BaseMethod.ERROR_TABLE) -> None:
         """Create an object of the workflow recipe."""
+        if exclude_graphs is None:
+            exclude_graphs = set()
         super().__init__(
             name=name,
             data_footprint=data_footprint,
@@ -174,39 +176,39 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name,
-                            makespan=0)
+                            makespan=0.0)
         graph = self.generate_nx_graph()
 
-        task_names = {}
+        task_ids = {}
         for node in graph.nodes:
             if node in ["SRC", "DST"]:
                 continue
             node_type = graph.nodes[node]["type"]
-            task_name = self._generate_task_name(node_type)
-            task = self._generate_task(node_type, task_name)
+            task_id = self._generate_task_name(node_type)
+            task = self._generate_task(node_type, task_id)
             workflow.add_task(task)
 
-            task_names[node] = task_name
+            task_ids[node] = task_id
 
         # tasks dependencies
         for (src, dst) in graph.edges:
             if src in ["SRC", "DST"] or dst in ["SRC", "DST"]:
                 continue
-            workflow.add_dependency(task_names[src], task_names[dst])
+            workflow.add_dependency(task_ids[src], task_ids[dst])
 
-            if task_names[src] not in self.tasks_children:
-                self.tasks_children[task_names[src]] = []
-            if task_names[dst] not in self.tasks_parents:
-                self.tasks_parents[task_names[dst]] = []
+            if task_ids[src] not in self.tasks_children:
+                self.tasks_children[task_ids[src]] = []
+            if task_ids[dst] not in self.tasks_parents:
+                self.tasks_parents[task_ids[dst]] = []
 
-            self.tasks_children[task_names[src]].append(task_names[dst])
-            self.tasks_parents[task_names[dst]].append(task_names[src])
+            self.tasks_children[task_ids[src]].append(task_ids[dst])
+            self.tasks_parents[task_ids[dst]].append(task_ids[src])
 
         # find leaf tasks
         leaf_tasks = []
         for node_name in workflow.nodes:
             task: Task = workflow.nodes[node_name]['task']
-            if task.name not in self.tasks_children:
+            if task.task_id not in self.tasks_children:
                 leaf_tasks.append(task)
 
         for task in leaf_tasks:

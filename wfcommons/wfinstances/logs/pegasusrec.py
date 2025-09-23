@@ -30,9 +30,11 @@ import networkx as nx
 
 class HierarchicalPegasusLogsParser(LogsParser):
     """
-    Parse Pegasus submit directory to generate workflow instance. 
-    This specific parser targets Pegasus submit dir with Hierachical workflows
-    Which means that some jobs are sub-workflows and must be parse as well.
+    [OUT OF DATE AND NO LONGER FUNCTIONING]
+    [LIKELY TO BE DEPRECATED/REMOVED AT SOME POINT ANYWAY]
+    Parse Pegasus submit directory to generate workflow instance.
+    This specific parser targets Pegasus submit dir with Hierarchical workflows
+    Which means that some jobs are sub-workflows and must be parsed as well.
     This parser recursively parse each sub workflow and rebuild a coherent workflow.
 
     WARNING: one level of recursion for now (i.e., sub-workflow cannot have sub-workflow)
@@ -204,9 +206,9 @@ class HierarchicalPegasusLogsParser(LogsParser):
         # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
-                                 wms_name=self.wms_name,
-                                 wms_version=wms_version,
-                                 wms_url=self.wms_url,
+                                 runtime_system_name=self.wms_name,
+                                 runtime_system_version=wms_version,
+                                 runtime_system_url=self.wms_url,
                                  executed_at=executed_at)
 
     def _parse_workflow(self):
@@ -232,11 +234,14 @@ class HierarchicalPegasusLogsParser(LogsParser):
                     task_name = f"{j['name']}_{j['id']}"
 
                     list_files = [File(
-                        name=f['lfn'],
+                        file_id=f['lfn'],
                         size=0,
                         link=FileLink(f['type']),
                         logger=self.logger
                     ) for f in j['uses']]
+
+                    input_files = [f for f in list_files if f.link == FileLink.INPUT]
+                    output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
 
                     self.workflow.add_node(
                         task_name,
@@ -248,7 +253,8 @@ class HierarchicalPegasusLogsParser(LogsParser):
                             runtime=0,
                             args=j['arguments'],
                             cores=0,
-                            files=list_files,
+                            input_files=input_files,
+                            output_files=output_files,
                             logger=self.logger
                         )
                     )
@@ -267,7 +273,8 @@ class HierarchicalPegasusLogsParser(LogsParser):
                             runtime=0,
                             args=j['arguments'],
                             cores=0,
-                            files=list_files,
+                            input_files=input_files,
+                            output_files=output_files,
                             logger=self.logger
                         )
                     )
@@ -311,11 +318,14 @@ class HierarchicalPegasusLogsParser(LogsParser):
                 task_name = str(j.get('name')) + '_' + str(j.get('id'))
 
                 list_files = [File(
-                    name=f.get('name') if not f.get('name') is None else f.get('file'),
+                    file_id=f.get('name') if not f.get('name') is None else f.get('file'),
                     size=0,
                     link=FileLink(f.get('link')),
                     logger=self.logger
                 ) for f in j.findall('{http://pegasus.isi.edu/schema/DAX}uses')]
+
+                input_files = [f for f in list_files if f.link == FileLink.INPUT]
+                output_files = [f for f in list_files if f.link == FileLink.OUTPUT]
 
                 self.workflow.add_node(
                     task_name,
@@ -327,7 +337,8 @@ class HierarchicalPegasusLogsParser(LogsParser):
                         runtime=0,
                         args=[],
                         cores=0,
-                        files=list_files,
+                        input_files=input_files,
+                        output_files=output_files,
                         logger=self.logger
                     )
                 )
@@ -387,11 +398,13 @@ class HierarchicalPegasusLogsParser(LogsParser):
                         self.workflow.add_node(task_name, 
                             task = Task(
                                 name=task_name,
+                                task_id=task_name,
                                 task_type=TaskType.AUXILIARY,
                                 runtime=0,
                                 args=[],
                                 cores=0,
-                                files=[],
+                                input_files=[],
+                                output_files=[],
                                 logger=self.logger
                             )
                         )
@@ -646,15 +659,15 @@ class HierarchicalPegasusLogsParser(LogsParser):
                             machine['memory'] = int(r.get('total'))
                         for c in u.findall('{http://pegasus.isi.edu/schema/invocation}cpu'):
                             machine['cpu'] = {
-                                'count': int(c.get('count')),
-                                'speed': int(c.get('speed')),
+                                'coreCount': int(c.get('count')),
+                                'speedInMHz': int(c.get('speed')),
                                 'vendor': c.get('vendor')
                             }
                     task.machine = Machine(
                         name=machine['nodeName'],
                         cpu={
-                            'count': machine['cpu']['count'],
-                            'speed': machine['cpu']['speed'],
+                            'coreCount': machine['cpu']['count'],
+                            'speedInMHz': machine['cpu']['speed'],
                             'vendor': machine['cpu']['vendor']
                         },
                         system=machine['system'],

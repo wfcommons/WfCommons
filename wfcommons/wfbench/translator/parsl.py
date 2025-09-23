@@ -80,7 +80,14 @@ class ParslTranslator(Translator):
             run_workflow_code = fp.read()
         run_workflow_code = run_workflow_code.replace("# Generated code goes here", wf_codelines)
 
-         # Writing the generated parsl code to a file
+        # generate Flowcept code
+        if self.workflow.workflow_id is not None:
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT",
+                                                          self._flowcept_init_python(self.workflow.workflow_id,
+                                                                                     self.workflow.name))
+            run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", self._flowcept_stop_python())
+
+        # Writing the generated parsl code to a file
         output_folder.mkdir(parents=True)
         with open(output_folder.joinpath("parsl_workflow.py"), "w", encoding="utf-8") as fp:
             fp.write(run_workflow_code)
@@ -89,7 +96,7 @@ class ParslTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
-    def _parsl_wftasks_codelines(self) -> None:
+    def _parsl_wftasks_codelines(self) -> list[str]:
         codelines = ["task_arr = []\n"]
 
         # Parsing each steps by Workflow levels
@@ -138,6 +145,7 @@ class ParslTranslator(Translator):
                 codelines.extend(code)
 
         cleanup_code = [
+            "# FLOWCEPT_INIT",
             "try:",
             "    for task in task_arr:",
             "        task.result()",
@@ -151,6 +159,7 @@ class ParslTranslator(Translator):
             "    # Releasing all resources, and shutting down all executors and workers",
             "    parsl.dfk().cleanup()",
             "    parsl.clear()",
+            "    # FLOWCEPT_END",
         ]
 
         codelines.extend(cleanup_code)

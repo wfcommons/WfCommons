@@ -39,18 +39,17 @@ class SwiftTTranslator(Translator):
         self.stress_path = stress_path
         self.categories_list = []
         self.categories_input = {}
-        self.parsed_tasks = []
+        self.parsed_tasks = set()
         self.files_map = {}
         self.tasks_map = {}
         self.cmd_counter = 1
+        self.out_files = set()
 
         # find applications
-        self.apps = []
+        self.apps = set()
         for task in self.tasks.values():
             self.tasks_map[task.task_id] = task.name
-
-            if task.name not in self.apps:
-                self.apps.append(task.name)
+            self.apps.add(task.name)
             
             out_count = 0
             for file in task.output_files:
@@ -76,7 +75,7 @@ class SwiftTTranslator(Translator):
         in_count = 0
         self.output_folder = output_folder
         self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
-        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
+        self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
         self.script += "string root_in_files[];\n"
 
         for task_name in self.root_task_names:
@@ -100,11 +99,13 @@ class SwiftTTranslator(Translator):
         for category in self.categories_list:
             self._add_tasks(category)
 
-        # flowcept stop
-        # if self.workflow.workflow_id:
-        #     self.script += "string fss = sprintf(flowcept_stop);\npython_persist(fss);"
+        # flowcept end
+        if self.workflow.workflow_id:
+            out_files = ", ".join(f"'{item}'" for item in self.out_files)
+            self.script += f"string fc = sprintf(flowcept, \"{self.workflow.workflow_id}\", \"{self.workflow.name}\", \"{out_files}\");\n" \
+                            "python_persist(fc);\n"
 
-        run_workflow_code = self._merge_codelines("templates/swift_t_templates/workflow.swift", self.script)
+        run_workflow_code = self._merge_codelines("templates/swift_t/workflow.swift", self.script)
 
         # write benchmark files
         output_folder.mkdir(parents=True)
@@ -134,7 +135,7 @@ class SwiftTTranslator(Translator):
             if parent_task.name not in self.categories_list:
                 return
 
-        self.parsed_tasks.append(task_name)
+        self.parsed_tasks.add(task_name)
         category = self.tasks_map[task_name]
         if category not in self.categories_list:
             self.categories_list.append(category)
@@ -153,20 +154,19 @@ class SwiftTTranslator(Translator):
         :type category: str
         """
         num_tasks = 0
+        num_children = 0
         input_files_cat = {}
-        parsed_input_files = []
+        parsed_input_files = set()
         self.script += f"int {category}__out[];\n"
 
-        for task_name in self.tasks:
-            task = self.tasks[task_name]
-
+        for task in self.tasks.values():
             if task.name == category:
                 # in/output files
-                input_files = []
+                num_children = len(self.task_children[task.task_id])
+                input_files = set()
                 prefix = ""
 
                 for file in task.output_files:
-                    out_file = file.file_id
                     file_size = file.size
                 
                 for file in task.input_files:
@@ -174,8 +174,8 @@ class SwiftTTranslator(Translator):
                     if file.file_id not in parsed_input_files:
                         input_files_cat.setdefault(cat_prefix, 0)
                         input_files_cat[cat_prefix] += 1
-                        parsed_input_files.append(file.file_id)
-                    input_files.append(self.files_map[file.file_id])
+                        parsed_input_files.add(file.file_id)
+                    input_files.add(self.files_map[file.file_id])
                     if not prefix:
                         prefix = cat_prefix
 
@@ -217,16 +217,22 @@ class SwiftTTranslator(Translator):
         if num_tasks > 1:
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{self.output_folder.absolute()}/data/{category}_%i_output.txt\", i);\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
+                f"  string task_id = \"{category}_\" + i;\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", task_id, {args});\n" \
                 f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
                 "}\n\n"
-            
+            if not num_children:
+                for i in range(num_tasks):
+                    self.out_files.add(f"{self.output_folder.absolute()}/data/{category}_{i}_output.txt")
         else:
+            out_file = f"{self.output_folder.absolute()}/data/{category}_0_output.txt"
+            if not num_children:
+                self.out_files.add(out_file)
             args = args.replace(
-                ", of", f", \"{self.output_folder.absolute()}/data/{category}_0_output.txt\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}\", {args});\n" \
+                ", of", f", \"{out_file}\"").replace("[i]", "[0]")
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}_{self.cmd_counter}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"

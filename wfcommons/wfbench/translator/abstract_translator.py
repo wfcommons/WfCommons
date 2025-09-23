@@ -10,6 +10,8 @@
 
 import logging
 import os
+import sys
+import site
 import pathlib
 import shutil
 import textwrap
@@ -90,6 +92,7 @@ class Translator(ABC):
         """
         bin_folder = output_folder.joinpath("bin")
         bin_folder.mkdir(exist_ok=True)
+
         shutil.copy(shutil.which("wfbench"), bin_folder)
         shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
 
@@ -198,7 +201,7 @@ class Translator(ABC):
         """
         code = textwrap.dedent(f"""
         from flowcept.flowcept_api.flowcept_controller import Flowcept
-        flowcept_agent = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}")
+        flowcept_agent = Flowcept(workflow_id="{workflow_id}", workflow_name="{workflow_name}", bundle_exec_id="{workflow_id}", start_persistence=False)
         flowcept_agent.start()
         """)
         return code

@@ -1,4 +1,4 @@
-# docker build --platform amd64 -t wfcommons-dev -f Dockerfile_Parsl .
+# docker build --platform amd64 -t wfcommons-dev -f Dockerfile.parsl .
 # docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev /bin/bash
 
 FROM amd64/ubuntu:noble
@@ -29,6 +29,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN python3 -m pip install --break-system-packages pathos pandas filelock
 RUN python3 -m pip install --break-system-packages networkx scipy matplotlib
 RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
+RUN python3 -m pip install --break-system-packages --upgrade setuptools
 
 # Stress-ng
 RUN apt-get -y install stress-ng

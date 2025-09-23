@@ -7,13 +7,10 @@ name = "wfcommons"
 authors = [{name = "WfCommons team", email = "support@wfcommons.org"}]
 description = "A Framework for Enabling Scientific Workflow Research and Education"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -33,7 +30,7 @@ dependencies = [
     "pandas",
     "python-dateutil",
     "requests",
-    "scipy",
+    "scipy>=1.16.1",
     "pyyaml",
     "pandas",
     "shortuuid",
@@ -56,6 +53,12 @@ flowcept = ["flowcept"]
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}
 
+[tool.coverage.run]
+omit = [
+    "wfcommons/wfinstances/logs/pegasusrec.py",
+    "wfcommons/wfbench/translator/templates"
+]
+
 [tool.pytest.ini_options]
 addopts="""
 --cov-context test  \
@@ -63,7 +66,6 @@ addopts="""
 --cov-report xml:coverage.xml \
 --cov-report term-missing \
 --cov ./wfcommons \
---ignore wfcommons/wfbench/translator/templates \
 --no-cov-on-fail \
 -ra \
 -W ignore"""

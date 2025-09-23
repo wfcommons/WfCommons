@@ -15,7 +15,7 @@ wfcommons.wfbench.bench
    :noindex:
  
 wfcommons.wfbench.translator.nextflow
-------------------------------------
+-------------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.nextflow
    :members:

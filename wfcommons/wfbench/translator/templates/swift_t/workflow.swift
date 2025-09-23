@@ -4,17 +4,59 @@ import python;
 import string;
 import unix;
 
-global const string flowcept_start = 
+global const string flowcept_start =
 """
+import time
 workflow_id = "%s"
+time.sleep(30)
+""";
+
+global const string flowcept =
+"""
+import logging
+import pathlib
+import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name="%s", bundle_exec_id=workflow_id)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[WfBench][%%(asctime)s][%%(levelname)s] %%(message)s",
+    datefmt="%%H:%%M:%%S",
+    handlers=[logging.StreamHandler()]
+)
+
+workflow_id = "%s"  
+workflow_name = "%s"
+out_files = [%s]
+
+logging.info("Flowcept Starting")
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id, start_persistence=False, save_workflow=True)
 
 try:
     flowcept_agent.start()
 except Exception:
     import traceback
     traceback.print_exc()
+
+remaining_files = set(out_files)
+
+while remaining_files:
+    found_files = set()
+    for f in remaining_files:
+        if pathlib.Path(f).exists():
+            found_files.add(f)
+    remaining_files -= found_files
+    if not remaining_files:
+        break
+    time.sleep(1)
+    
+try:
+    flowcept_agent.stop()
+except Exception:
+    import traceback
+    traceback.print_exc()
+
+logging.info("Flowcept Completed")
 """;
 
 string command = 
@@ -40,10 +82,12 @@ task_name = "%s"
 files_list = ["%s"]
 gpu_work = int(%i)
 cpu_work = int(%i)
-cpu_threads = int(10 * %f)
+percent_cpu = %f
+cpu_threads = int(10 * percent_cpu)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
+task_id = f"{workflow_id}_{task_name}"
 
 if 'workflow_id':
     logging.info("Running with Flowcept.")
@@ -52,8 +96,12 @@ if 'workflow_id':
                 bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=workflow_id, used={
-      'workflow_id': workflow_id
+    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_id, used={
+      'workflow_id': workflow_id,
+      'name': task_name,
+      'percent-cpu': percent_cpu,
+      'cpu-work': cpu_work,
+      'gpu-work': gpu_work
     })
 
 logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
@@ -188,7 +236,6 @@ logging.info(f"Benchmark {task_name} completed!")
 if 'workflow_id':
     fc_task.end()
     fc.stop()
-    time.sleep(1)
 """;
 
 # Generated code goes here

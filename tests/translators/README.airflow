@@ -1,5 +1,4 @@
-This README file describes steps to install/run Airflow, and then run a
-translated workflow.
+This README file describes steps to install/run Airflow, and then run a translated workflow.
 
 There are three sections:
   - Installing Airflow on bare-metal
@@ -52,14 +51,17 @@ A much simpler alternative is to use Docker.
 
 1. Build the docker image
 
-   docker build -t wfcommons-dev -f Dockerfile_Airflow .
+   docker build -t wfcommons/wfcommons-testing-airflow -f Dockerfile.airflow .
 
    (if building on a Mac, add the `--platform linux/amd64` argument after build above)
+
+   This dockerfile is meant for testing purposes (so it has some testing specific things in it)
+
 
 2. Run the docker container in the directory to contains the translated
    workflow (see last section below)
 
-   docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
+   docker run -it --rm -v .:/home/wfcommons/translated_workflow wfcommons/wfcommons-testing-airflow /bin/bash
 
 
 Running a translated workflow with Airflow
@@ -84,19 +86,21 @@ translator = AirflowTranslator(benchmark.workflow)
 translator.translate(output_folder=pathlib.Path("/tmp/translated_workflow/"))
 ```
 
-The above will create a JSON worfklow file in /tmp/blast-benchmark-45.json.
-In that file, the workflow name (this is used below) is set to
-"Blast-Benchmark".
+The above will create a JSON workflow file in /tmp/blast-benchmark-45.json.
+In that file, the workflow name (this is used below) is set to "Blast-Benchmark".
 
 The above will also create the translated workflow the
-/tmp/translated_workflow/ directory. Some directories and files need to be copied/moved as follows:
+/tmp/translated_workflow/ directory. Some directories and files need to be copied/moved as follows.
+As
 
   cp -r /tmp/translated_workflow/ $AIRFLOW_HOME/dags/
   mv $AIRFLOW_HOME/dags/translated_workflow/workflow.py $AIRFLOW_HOME/dags/
 
 Finally, run the workflow as: 
 
-  airflow dags test Blast-Benchmark    (not the "Blast-Benchmark" workflow name from above)
+  airflow dags test Blast-Benchmark    (note the "Blast-Benchmark" workflow name from above)
 
 
+Note that if you're using docker, the above two commands need to be done on the container,
+with the right paths (i.e., /home/wfcommons/translated_workflow instead of /tmp/translated_workflow/)
 

@@ -14,7 +14,7 @@ integrates the four major components WfCommons: (i) workflow execution instances
 (**WfGen**), and (iv) workflow simulator (**WfSim**).
 
 .. figure::  images/wfcommons.png
-   :scale:   80 %
+   :scale:   70 %
    :align:   center
 
    The WfCommons conceptual architecture.

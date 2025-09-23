@@ -155,7 +155,7 @@ class PyCompssTranslator(Translator):
                         all_task_args += "} "
                     elif task_arg.startswith("--input-files"):
                         all_task_args += "--input-files "
-                        all_task_args += "["
+                        all_task_args += "\\\'["
                         i = 0
                         for input_param in function_parameter_names_file_in.replace(' ', '').split(','):
                             if i == 0:
@@ -163,7 +163,7 @@ class PyCompssTranslator(Translator):
                             else:
                                 all_task_args += ", \\\\\\\"" + "{{" + input_param + "}}" + "\\\\\\\""
                             i += 1
-                        all_task_args += "] "
+                        all_task_args += "]\\\' "
                     else:
                         all_task_args += f"{task_arg} "
                 self.script += f", args='{all_task_args}'"
