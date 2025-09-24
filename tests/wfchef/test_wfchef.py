@@ -60,17 +60,23 @@ class TestWfChef:
         assert((dirpath / "recipe_recipes" / "somename" / "recipe.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "microstructures").exists())
 
+        sys.stderr.write("1. CALLING LS_RECIPE()\n")
         ls_recipe()
 
         # Install the recipe
         sys.stderr.write("Installing the recipe...\n")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe/recipe_recipe"])
+
+        sys.stderr.write("2. CALLING LS_RECIPE()\n")
+        ls_recipe()
 
         # Uninstall the recipe
         # TODO: This does not uninstall the recipe (to fix)
-        # sys.stderr.write("Uninstalling the recipe...\n")
-        # uninstall_recipe("/tmp/recipe")
-        # ls_recipe()
+        sys.stderr.write("Uninstalling the recipe...\n")
+        uninstall_recipe("recipe_recipes.somename", dirpath)
+        sys.stderr.write("3. CALLING LS_RECIPE()\n")
+
+        ls_recipe()
 
 
         # TODO: Do more extensive tests
