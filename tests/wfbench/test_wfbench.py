@@ -142,10 +142,6 @@ class TestWfBench:
 
         # Create the data_specification options
         fixed_total_footprint_in_mb = 5
-        # TODO: This seems really broken right now
-        # per_type_footprint = {}
-        # for task_type in ["blastall", "split_fasta", None]:
-        #         per_type_footprint[task_type] = "1" # string???
 
         for data_spec in [fixed_total_footprint_in_mb]:
             benchmark.create_benchmark(_create_fresh_local_dir(f"/tmp/benchmark"), cpu_work=1, data=data_spec, percent_cpu=0.6)
