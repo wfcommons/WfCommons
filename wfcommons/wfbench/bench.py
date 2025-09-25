@@ -317,7 +317,7 @@ class WorkflowBenchmark:
             task.input_files = []
             task.output_files = []
         
-        self._create_data_footprint(data, save_dir)
+        self._create_data_footprint(data)
         
         # TODO: add a flag to allow the file names to be changed 
         workflow_input_files: List[File] = self._rename_files_to_wfbench_format()
@@ -439,48 +439,51 @@ class WorkflowBenchmark:
 
         return [f"--gpu-work {_gpu_work}"]
 
-    def _create_data_footprint(self, data: Optional[Union[int, Dict[str, str]]], save_dir: pathlib.Path) -> None:
+    def _create_data_footprint(self, data: Optional[Union[int, Dict[str, str]]]) -> None:
         """
-        task's data footprint provided as individual data input size (JSON file)
+        task's data footprint provided as an int or individual file sizes
         """
         if isinstance(data, dict):
-            outputs = self._output_files(data)
-            for task in self.workflow.tasks.values():
-                outputs_file_size = {}
-                for child, data_size in outputs[task.task_id].items():
-                    outputs_file_size[f"{task.task_id}_{child}_output.txt"] = data_size
-
-                task.args.extend([f"--output-files {outputs_file_size}"])
-
-            self._add_output_files(outputs)
-            self._add_input_files(outputs, data)
-            self.logger.debug("Generating system files.")
-            # self._generate_data_for_root_nodes(save_dir, data)
-
-        # data footprint provided as an integer
+            self._create_data_footprint_dict(data)
         elif isinstance(data, int):
-            num_sys_files, num_total_files = self._calculate_input_files()
-            self.logger.debug(
-                f"Number of input files to be created by the system: {num_sys_files}")
-            self.logger.debug(
-                f"Total number of files used by the workflow: {num_total_files}")
-            file_size = round(data * 1000000 / num_total_files)  # MB to B
-            self.logger.debug(
-                f"Every input/output file is of size: {file_size}")
+            self._create_data_footprint_int(data)
+        else:
+            raise NotImplementedError("Internal error: invalid type for argument to _create_data_footprint() method")
 
-            for task in self.workflow.tasks.values():
-                output = {f"{task.task_id}_output.txt": file_size}
-                task.args.extend([f"--output-files {output}"])
-                outputs = {}
-                if self.workflow.tasks_children[task.task_id]:
-                    outputs.setdefault(task.task_id, {})
-                    for child in self.workflow.tasks_children[task.task_id]:
-                        outputs[task.task_id][child] = file_size
+    def _create_data_footprint_dict(self, data: Dict[str, str]) -> None:
+        raise NotImplementedError("Creating data footprint based on individual file sizes is still work in progress")
+        # TODO: This needs to be fixed one day...the notion of task types is weird anyway
+        # outputs = self._output_files(data)
+        # for task in self.workflow.tasks.values():
+        #     outputs_file_size = {}
+        #     for child, data_size in outputs[task.task_id].items():
+        #         outputs_file_size[f"{task.task_id}_{child}_output.txt"] = data_size
+        #
+        #     task.args.extend([f"--output-files {outputs_file_size}"])
+        # self._add_output_files(outputs)
+        # # TODO: THIS IS CLEARLY A BUG!!!
+        # self._add_input_files(outputs, data)
+        # self.logger.debug("Generating system files.")
+        # # self._generate_data_for_root_nodes(save_dir, data)
 
-            self._add_output_files(file_size)
-            self._add_input_files(outputs, file_size)
-            self.logger.debug("Generating system files.")
-            # self._generate_data_for_root_nodes(save_dir, file_size)
+    def _create_data_footprint_int(self, data: int) -> None:
+        num_sys_files, num_total_files = self._calculate_input_files()
+        self.logger.debug(
+            f"Number of input files to be created by the system: {num_sys_files}")
+        self.logger.debug(
+            f"Total number of files used by the workflow: {num_total_files}")
+        file_size = round(data * 1000000 / num_total_files)  # MB to B
+        self.logger.debug(
+            f"Every input/output file is of size: {file_size}")
+
+        for task in self.workflow.tasks.values():
+            output = {f"{task.task_id}_output.txt": file_size}
+            task.args.extend([f"--output-files {output}"])
+
+        self._add_output_files(file_size)
+        self._add_input_files({}, file_size)
+
+        # self._generate_data_for_root_nodes(save_dir, file_size)
 
     def _output_files(self, data: Dict[str, str]) -> Dict[str, Dict[str, int]]:
         """
@@ -538,6 +541,7 @@ class WorkflowBenchmark:
                     task.output_files.append(
                         File(f"{task.task_id}_{child}_output.txt", file_size))
             elif isinstance(output_files, int):
+                sys.stderr.write(f"Adding output file {task.task_id}_output.txt to task {task.task_id}\n")
                 task.output_files.append(
                     File(f"{task.task_id}_output.txt", output_files))
 
@@ -545,20 +549,17 @@ class WorkflowBenchmark:
         """
         Add input files when input data was offered by the user.
 
-        :param output_files:
+        :param output_files: specification of individual output files, or {} if a single size is specified
         :type wf: Dict[str, Dict[str, str]]
-        :param data:
+        :param data: Either a single size or a specification on specific files
         :type data: Union[int, Dict[str, str]]
         """
-        input_files = {}
-        for parent, children in output_files.items():
-            for child, file_size in children.items():
-                input_files.setdefault(child, {})
-                input_files[child][parent] = file_size
+        sys.stderr.write(f"IN _add_input_files(): len(output_files)={len(output_files)}\n")
 
         for task in self.workflow.tasks.values():
             inputs = []
             if not self.workflow.tasks_parents[task.task_id]:
+                sys.stderr.write(f"Adding input file {task.task_id}_input.txt to task {task.task_id}\n")
                 task.input_files.append(
                     File(f"{task.task_id}_input.txt",
                          data[task.category] if isinstance(
@@ -566,13 +567,22 @@ class WorkflowBenchmark:
                 inputs.append(f'{task.task_id}_input.txt')
             else:
                 if isinstance(data, Dict):
-                    for parent, file_size in input_files[task.task_id].items():
-                        task.input_files.append(
-                            File(f"{parent}_{task.task_id}_output.txt", file_size))
-                        inputs.append(f"{parent}_{task.task_id}_output.txt")
+                    NotImplementedError("Creating data footprint based on individual file sizes is still work in progress")
+                    # TODO: See previous bug in _create_data_footprint_dict()
+                    # input_files = {}
+                    # for parent, children in output_files.items():
+                    #     for child, file_size in children.items():
+                    #         input_files.setdefault(child, {})
+                    #         input_files[child][parent] = file_size
+                    #
+                    # for parent, file_size in input_files[task.task_id].items():
+                    #     task.input_files.append(
+                    #         File(f"{parent}_{task.task_id}_output.txt", file_size))
+                    #     inputs.append(f"{parent}_{task.task_id}_output.txt")
 
                 elif isinstance(data, int):
                     for parent in self.workflow.tasks_parents[task.task_id]:
+                        sys.stderr.write(f"Adding input file {parent}_output.txt to task {task.task_id}\n")
                         task.input_files.append(
                             File(f"{parent}_output.txt", data))
                         inputs.append(f"{parent}_output.txt")
