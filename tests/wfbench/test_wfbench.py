@@ -148,7 +148,6 @@ class TestWfBench:
         #         per_type_footprint[task_type] = "1" # string???
 
         for data_spec in [fixed_total_footprint_in_mb]:
-            sys.stderr.write(f"TESTING create_benchmark\n")
             benchmark.create_benchmark(_create_fresh_local_dir(f"/tmp/benchmark"), cpu_work=1, data=data_spec, percent_cpu=0.6)
 
             # Run the benchmark with the Bash translator
