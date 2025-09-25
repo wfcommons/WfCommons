@@ -541,7 +541,6 @@ class WorkflowBenchmark:
                     task.output_files.append(
                         File(f"{task.task_id}_{child}_output.txt", file_size))
             elif isinstance(output_files, int):
-                sys.stderr.write(f"Adding output file {task.task_id}_output.txt to task {task.task_id}\n")
                 task.output_files.append(
                     File(f"{task.task_id}_output.txt", output_files))
 
@@ -554,12 +553,9 @@ class WorkflowBenchmark:
         :param data: Either a single size or a specification on specific files
         :type data: Union[int, Dict[str, str]]
         """
-        sys.stderr.write(f"IN _add_input_files(): len(output_files)={len(output_files)}\n")
-
         for task in self.workflow.tasks.values():
             inputs = []
             if not self.workflow.tasks_parents[task.task_id]:
-                sys.stderr.write(f"Adding input file {task.task_id}_input.txt to task {task.task_id}\n")
                 task.input_files.append(
                     File(f"{task.task_id}_input.txt",
                          data[task.category] if isinstance(
@@ -582,7 +578,6 @@ class WorkflowBenchmark:
 
                 elif isinstance(data, int):
                     for parent in self.workflow.tasks_parents[task.task_id]:
-                        sys.stderr.write(f"Adding input file {parent}_output.txt to task {task.task_id}\n")
                         task.input_files.append(
                             File(f"{parent}_output.txt", data))
                         inputs.append(f"{parent}_output.txt")
