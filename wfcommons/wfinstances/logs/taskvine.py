@@ -24,6 +24,11 @@ from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
 
+####
+## Example logs
+##
+## https://github.com/cooperative-computing-lab/taskvine-example-logs?tab=readme-ov-file
+###
 
 class TaskVineLogsParser(LogsParser):
     """
