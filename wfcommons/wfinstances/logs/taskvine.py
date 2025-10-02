@@ -34,8 +34,8 @@ class TaskVineLogsParser(LogsParser):
     the exact same input/output files.  There is likely a way to address this, but it hasn't been done yet.
     For instance, the Gutenberg TaskVine example isn't parsed correctly by this parser due to the above feature.
 
-    :param vine_run_info_dir: TaskVine's  vine-run-info directory.
-    :type vine_run_info_dir: pathlib.Path
+    :param vine_logs_dir: TaskVine's vine-logs directory
+    :type vine_logs_dir: pathlib.Path
     :param filenames_to_ignore: TaskVine sometimes considers that executables and package files
                                 are input to tasks. This argument is the list of names of files that should be
                                 ignored in the reconstructed instances, which typically do not include such
@@ -48,7 +48,7 @@ class TaskVineLogsParser(LogsParser):
     :type logger: Optional[Logger]
     """
     def __init__(self,
-                 vine_run_info_dir: pathlib.Path,
+                 vine_logs_dir: pathlib.Path,
                  filenames_to_ignore: Optional[List[str]] = None,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
@@ -56,16 +56,16 @@ class TaskVineLogsParser(LogsParser):
         super().__init__('TaskVine', 'http://https://ccl.cse.nd.edu/software/taskvine/', description, logger)
 
         # Sanity check
-        if not vine_run_info_dir.is_dir():
-            raise OSError(f'The provided path does not exist or is not a folder: {vine_run_info_dir}')
+        if not vine_logs_dir.is_dir():
+            raise OSError(f'The provided path does not exist or is not a folder: {vine_logs_dir}')
 
-        debug_file:  pathlib.Path = vine_run_info_dir / "most-recent/vine-logs/debug"
+        debug_file:  pathlib.Path = vine_logs_dir / "debug"
         if not debug_file.is_file():
             raise OSError(f'Cannot find file: {debug_file}')
-        taskgraph_file: pathlib.Path = vine_run_info_dir / "most-recent/vine-logs/taskgraph"
+        taskgraph_file: pathlib.Path = vine_logs_dir / "taskgraph"
         if not taskgraph_file.is_file():
             raise OSError(f'Cannot find file: {taskgraph_file}')
-        transactions_file: pathlib.Path = vine_run_info_dir / "most-recent/vine-logs/transactions"
+        transactions_file: pathlib.Path = vine_logs_dir / "transactions"
         if not transactions_file.is_file():
             raise OSError(f'Cannot find file: {transactions_file}')
 
