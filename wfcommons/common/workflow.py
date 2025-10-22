@@ -41,7 +41,7 @@ class Workflow(nx.DiGraph):
     :param executed_at: Workflow start timestamp in the ISO 8601 format.
     :type executed_at: Optional[str]
     :param makespan: Workflow makespan in seconds.
-    :type makespan: Optional[int]
+    :type makespan: Optional[float]
     :param author_name: Author name.
     :type author_name: Optional[str]
     :param author_email: Author email.
@@ -59,7 +59,7 @@ class Workflow(nx.DiGraph):
                  runtime_system_version: Optional[str] = None,
                  runtime_system_url: Optional[str] = None,
                  executed_at: Optional[str] = None,
-                 makespan: Optional[int] = 0.0,
+                 makespan: Optional[float] = 0.0,
                  author_name: Optional[str] = None,
                  author_email: Optional[str] = None,
                  author_institution: Optional[str] = None,
@@ -74,17 +74,17 @@ class Workflow(nx.DiGraph):
         self.runtime_system_version: Optional[str] = str(__version__) if not runtime_system_version else runtime_system_version
         self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
         self.executed_at: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
-        self.makespan: Optional[int] = makespan
+        self.makespan: Optional[float] = makespan
         self.author_name: Optional[str] = author_name if author_name else str(getpass.getuser())
         self.author_email: Optional[str] = author_email if author_email else "support@wfcommons.org"
         self.author_institution: Optional[str] = None
         self.author_country: Optional[str] = None
-        self.tasks: Task = {}
+        self.tasks: dict[str, Task] = {}
         self.tasks_parents = {}
         self.tasks_children = {}
-        self.workflow_id: str = None
+        self.workflow_id: str|None = None
         self.workflow_json = {}
-        super().__init__(name=name, makespan=self.makespan, executedat=self.executed_at)
+        super().__init__(name=name, makespan=self.makespan, executed_at=self.executed_at)
 
     def add_task(self, task: Task) -> None:
         """
@@ -127,7 +127,7 @@ class Workflow(nx.DiGraph):
         with open(json_file_path, "w") as outfile:
             outfile.write(json.dumps(self.workflow_json, indent=4))
 
-    def generate_json(self) -> dict:
+    def generate_json(self) -> None:
         """
         Generate a JSON representation of the workflow instance.
 
@@ -219,7 +219,7 @@ class Workflow(nx.DiGraph):
         """
         if not dot_file_path:
             dot_file_path = pathlib.Path(f"{self.name.lower()}.dot")
-        nx.nx_agraph.write_dot(self, dot_file_path)
+        nx.nx_agraph.write_dot(self, str(dot_file_path))
 
     def read_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:
         """
@@ -236,7 +236,14 @@ class Workflow(nx.DiGraph):
             raise ModuleNotFoundError(
                 f"\'pydot\' package not found: call to {type(self).__name__}.read_dot() failed.")
         
-        graph = nx.drawing.nx_pydot.read_dot(dot_file_path)
+        # graph = nx.drawing.nx_pydot.read_dot(str(dot_file_path))
+        graph = nx.nx_agraph.read_dot(str(dot_file_path))
+
+        # clear everything
+        self.tasks.clear()
+        self.tasks_parents.clear()
+        self.tasks_children.clear()
+        self.clear()
 
         tasks_map = {}
         for node in graph.nodes(data=True):

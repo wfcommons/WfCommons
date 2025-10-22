@@ -14,7 +14,7 @@ from logging import Logger
 from typing import Dict, Optional, Union
 
 from .abstract_translator import Translator
-from ...common import FileLink, Workflow
+from ...common import Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -123,10 +123,10 @@ class PegasusTranslator(Translator):
             children = self.task_children[task_name]
 
             # Generate input spec
-            input_spec = "["
+            input_spec = "\"["
             for f in task.input_files:
-                input_spec += f"\"{f.file_id}\","
-            input_spec = input_spec[:-1] + "]"
+                input_spec += f"\\\\\"{f.file_id}\\\\\","
+            input_spec = input_spec[:-1] + "]\""
 
             # output files
             output_spec = "\"{"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 The WfCommons Team.
+# Copyright (c) 2024-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -10,13 +10,13 @@
 
 import pytest
 
-from wfcommons.common import Task, TaskType, File, FileLink, Machine, MachineSystem
+from wfcommons.common import Task, TaskType, File, Machine, MachineSystem
 
 
 task_name = "Task Test"
 task_id = "task_test_1"
-input_files = [File(file_id="file_in_1", size=10, link=FileLink.INPUT), File(file_id="file_in_2", size=20, link=FileLink.INPUT)]
-output_files = [File(file_id="file_out_1", size=30, link=FileLink.OUTPUT), File(file_id="file_out_2", size=40, link=FileLink.OUTPUT)]
+input_files = [File(file_id="file_in_1", size=10), File(file_id="file_in_2", size=20)]
+output_files = [File(file_id="file_out_1", size=30), File(file_id="file_out_2", size=40)]
 
 
 class TestTask:
@@ -41,7 +41,7 @@ class TestTask:
             energy=100,
             avg_power=1.0,
             priority=100,
-            executedAt="2024-09-15T08:59:33.699321-04:00",
+            executed_at="2024-09-15T08:59:33.699321-04:00",
             task_type=TaskType.COMPUTE,
             launch_dir="/tmp",
         )

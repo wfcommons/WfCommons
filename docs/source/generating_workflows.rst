@@ -25,6 +25,7 @@ synthetic workflow instances. The current list of available workflow recipes inc
 - :class:`~wfcommons.wfchef.recipes.epigenomics.recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
 - :class:`~wfcommons.wfchef.recipes.genome.recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
 - :class:`~wfcommons.wfchef.recipes.montage.recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
+- :class:`~wfcommons.wfchef.recipes.rnaseq.recipe.RnaseqRecipe`: :code:`from wfcommons.wfchef.recipes import RnaseqRecipe`
 - :class:`~wfcommons.wfchef.recipes.seismology.recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
 - :class:`~wfcommons.wfchef.recipes.soykb.recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
 - :class:`~wfcommons.wfchef.recipes.srasearch.recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`

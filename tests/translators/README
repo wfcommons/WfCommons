@@ -1,1 +1,0 @@
-For now these are individual Dockerfiles for each workflow system, which can be used for local testing/development. The idea is to eventually merge them all (if possible), and create a Github action for testing all translators. 

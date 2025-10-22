@@ -19,9 +19,10 @@ from typing import Optional, Union
 from .abstract_translator import Translator
 from ...common import Workflow
 
+
 class AirflowTranslator(Translator):
     """
-    A WfFormat parser for creating Nextflow workflow applications.
+    A WfFormat parser for creating Airflow workflow applications.
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path],
@@ -43,8 +44,23 @@ from datetime import datetime
 from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 
+"""
+
+    def translate(self, output_folder: pathlib.Path, name: Optional[str] = None) -> None:
+        """
+        Translate a workflow benchmark description(WfFormat) into an Airflow workflow application.
+
+        :param output_folder: The name of the output folder.
+        :type output_folder: pathlib.Path
+        :param name: The name of the workflow in the DAG
+        :type name: str
+        """
+
+        if name is None: name = self.workflow.name
+
+        self.script += f"""
 with DAG(
-    "{self.workflow.name}",
+    "{name}",
     description="airflow translation of a wfcommons instance",
     schedule="0 0 * * *",
     start_date=datetime(2021, 1, 1),
@@ -52,14 +68,6 @@ with DAG(
     tags=["wfcommons"],
 ) as dag:
 """
-
-    def translate(self, output_folder: pathlib.Path) -> None:
-        """
-        Translate a workflow benchmark description(WfFormat) into an Airflow workflow application.
-
-        :param output_folder: The name of the output folder.
-        :type output_folder: pathlib.Path
-        """
 
         self._prep_commands(output_folder)
 
@@ -88,6 +96,9 @@ with DAG(
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
+        # Create the README file
+        self._write_readme_file(output_folder)
+
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
         """
         Prepares the bash_command strings for the BashOperators.
@@ -103,11 +114,13 @@ with DAG(
             for a in task.args:
                 if "--output-files" in a:
                     flag, output_files_dict = a.split(" ", 1)
-                    output_files_dict = {str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{key}"): value for key, value in ast.literal_eval(output_files_dict).items()}
+                    output_files_dict = {str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{key}"): value for
+                                         key, value in ast.literal_eval(output_files_dict).items()}
                     a = f"{flag} {json.dumps(output_files_dict)}"
                 elif "--input-files" in a:
                     flag, input_files_arr = a.split(" ", 1)
-                    input_files_arr = [str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{file}") for file in ast.literal_eval(input_files_arr)]
+                    input_files_arr = [str(f"${{AIRFLOW_HOME}}/dags/{output_folder.name}/data/{file}") for file in
+                                       ast.literal_eval(input_files_arr)]
                     a = f"{flag} {json.dumps(input_files_arr)}"
                 else:
                     a = a.replace("'", "\"")
@@ -127,3 +140,23 @@ with DAG(
 
             self.task_commands[task.task_id] = command_str
 
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"""Assuming that the translated workflow is in the /tmp/translated_workflow/ directory, before 
+running the workflow some directories and files need to be copied/moved as follows:
+
+  cp -r /tmp/translated_workflow/ $AIRFLOW_HOME/dags/
+  mv $AIRFLOW_HOME/dags/translated_workflow/workflow.py $AIRFLOW_HOME/dags/
+
+Now, the workflow can be executed as:  
+
+  airflow dags test Workflow-Name    (where "Workflow-Name" is the workflow name in the WfCommons-generated 
+                                      benchmark JSON file, e.g., "Blast-Benchmark")
+""")

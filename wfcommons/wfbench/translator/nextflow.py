@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
+import shutil
 
 from logging import Logger
 from typing import List, Optional, Union
@@ -17,36 +18,29 @@ from .abstract_translator import Translator
 from ...common import Workflow
 from ...common.task import Task
 
+this_dir = pathlib.Path(__file__).resolve().parent
+
 
 class NextflowTranslator(Translator):
     """
     A WfFormat parser for creating Nextflow workflow applications.
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
-    :type workflow: Union[Workflow, pathlib.Path],
+    :type workflow: Union[Workflow, pathlib.Path]
+    :param slurm: Whether to generate a Slurm template script for workflow submission using :code:`sbatch`.
+    :type slurm: bool
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
-
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
+                 slurm: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
-
+        self.slurm = slurm
         self.script = ""
-
-        self._usage_string = """
-Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
-
-    Required parameters:
-      --pwd         Working directory (where the workflow.nf file is located)
-
-    Optional parameters:
-      --help        Show this message and exit.
-      --simulate    Use a "sleep 1" for all tasks instead of the WfBench benchmark.
-"""
-
+        self.out_files = set()
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -55,25 +49,32 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
-
         # Create the output folder
-        output_folder.mkdir(parents=True)
+        self.output_folder = output_folder
+        self.output_folder.mkdir(parents=True)
 
         # Create benchmark files
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
+        
+        if self.slurm:
+            shutil.copy(this_dir.joinpath("templates/nextflow/nextflow_hyperqueue_job.sh"), output_folder)
+
+        if self.workflow.workflow_id:
+            shutil.copy(this_dir.joinpath("templates/flowcept_agent.py"), output_folder.joinpath("bin"))
+            self.logger.info(f"Workflow ID: {self.workflow.workflow_id}")
 
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
-        # print([t.task_id for t in sorted_tasks])
 
         # Create the bash script for each task
         for task in sorted_tasks:
-            self._create_task_script(output_folder, task)
+            self._create_task_script(task)
 
         # Create the Nextflow workflow script and file
         self._create_workflow_script(sorted_tasks)
-        self._write_output_file(self.script, output_folder.joinpath("workflow.nf"))
+        run_workflow_code = self._merge_codelines("templates/nextflow/workflow.nf", self.script)
+        self._write_output_file(run_workflow_code, output_folder.joinpath("workflow.nf"))
 
         # Create the README file
         self._write_readme_file(output_folder)
@@ -86,10 +87,10 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
         :param tasks: The (sorted) list of tasks.
         :type tasks: list[Task]
-        """
-
-        # Output the code for command-line argument processing
-        self.script += self._generate_arg_parsing_code()
+        """       
+        # Add Flowcept code if enabled
+        if self.workflow.workflow_id:
+            self.script += self._generate_flowcept_code()
 
         # Output the code for each task
         for task in tasks:
@@ -100,60 +101,29 @@ Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
 
         return
 
-    def _generate_arg_parsing_code(self):
+    def _generate_flowcept_code(self) -> str:
         """
-        Generate the code to parse command-line argument.
 
         :return: The code.
         :rtype: str
         """
-
-        code = r'''
-params.simulate = false
-params.pwd = null
-params.help = null
-pwd = null
-
-def printUsage(error_msg, exit_code) {
-
-    def usage_string = """
-'''
-        code += self._usage_string
-
-        code += r'''
-"""
-    if (error_msg) {
-        def RED = '\u001B[31m'
-        def RESET = '\u001B[0m'
-        System.err.println "${RED}Error: ${RESET}" + error_msg
-    }
-    System.err.println usage_string
-    exit exit_code
-}
-
-def validateParams() {
-    if (params.help) {
-        printUsage(msg = "", exit_code=0)
-    }
-    if (params.pwd == null) {
-        printUsage(msg = "Missing required parameter: --pwd", exit_code=1)
-    }
-    pwd = file(params.pwd).toAbsolutePath().toString()
-    if (!file(pwd).exists()) {
-        printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
-    } 
-}
-
-// Call validation at the start
-validateParams()
-
-'''
-        return code
+        out_files = ", ".join(f"\"{item}\"" for item in self.out_files)
+        return "process flowcept(){\n" \
+               "    input:\n" \
+               "    output:\n" \
+               "    script:\n" \
+               "        \"\"\"\n" \
+		       "        ${pwd}/bin/flowcept_agent.py " \
+               f"{self.workflow.name} {self.workflow.workflow_id} '[{out_files}]' \n" \
+		       "        \"\"\"\n" \
+               "}\n\n"                     
 
     def _get_tasks_in_topological_order(self) -> List[Task]:
         """
         Sort the workflow tasks in topological order.
 
+        :param output_folder: The path to the output folder.
+        :type output_folder: pathlib.Path
         :return: A sorted list of tasks.
         :rtype: List[Task]
         """
@@ -168,6 +138,9 @@ validateParams()
             if not all_children:
                 break
             for potential_task in all_children:
+                num_children = len(self.task_children[potential_task.task_id])
+                if not num_children:
+                    self.out_files.add(f"{self.output_folder.absolute()}/data/{potential_task.output_files[0]}")
                 if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
                     tasks_in_current_level.append(potential_task)
             levels[current_level] = tasks_in_current_level
@@ -175,14 +148,10 @@ validateParams()
             current_level += 1
         return sorted_tasks
 
-
-    @staticmethod
-    def _create_task_script(output_folder: pathlib.Path, task: Task):
+    def _create_task_script(self, task: Task):
         """
         Generate the bash script for invoking a task.
 
-        :param output_folder: The path to the output folder.
-        :type output_folder: pathlib.Path
         :param task: The task.
         :type task: Task
         :return: The code.
@@ -194,16 +163,16 @@ validateParams()
         # Generate input spec
         input_spec = "'\\["
         for f in task.input_files:
-            input_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\","
+            input_spec += f"\"{self.output_folder}/data/{f.file_id}\","
         input_spec = input_spec[:-1] + "\\]'"
 
         # Generate output spec
         output_spec = "'\\{"
         for f in task.output_files:
-            output_spec += "\"" + str(output_folder.joinpath(f"data/{f.file_id}")) + "\":" + str(f.size)+ ","
+            output_spec += f"\"{self.output_folder}/data/{f.file_id}\":{str(f.size)},"
         output_spec = output_spec[:-1] + "\\}'"
 
-        code += str(output_folder.joinpath(f"bin/{task.program} "))
+        code += f"{self.output_folder}/bin/{task.program} "
 
         for a in task.args:
             if "--output-files" in a:
@@ -214,7 +183,7 @@ validateParams()
                 code += f"{a} "
         code += "\n"
 
-        script_file_path = output_folder.joinpath(f"bin/script_{task.task_id}.sh")
+        script_file_path = self.output_folder.joinpath(f"bin/script_{task.task_id}.sh")
         with open(script_file_path, "w") as out:
             out.write(code)
 
@@ -227,8 +196,8 @@ validateParams()
         :return: The code.
         :rtype: str
         """
-
-        code = f"process {task.task_id}()" + "{\n"
+        function_name = task.task_id.replace(".", "_")
+        code = f"process {function_name}()" + "{\n"
 
         # File variables
         if self._find_children(task.task_id):
@@ -296,9 +265,12 @@ validateParams()
 
         # Generate workflow function
         code += "workflow {\n"
+        if self.workflow.workflow_id:
+            code += "\tflowcept()\n"
         code += "\tresults = bootstrap()\n"
         for task in sorted_tasks:
-            code += f"\tresults = function_{task.task_id}(results)\n"
+            function_name = task.task_id.replace(".", "_")
+            code += f"\tresults = function_{function_name}(results)\n"
         code += "}\n"
         return code
 
@@ -312,18 +284,19 @@ validateParams()
         :rtype: str
         """
         code = f"// Function to call task {task.task_id}\n"
-        code += f"def function_{task.task_id}(Map inputs) " + "{\n"
+        function_name = task.task_id.replace(".", "_")
+        code += f"def function_{function_name}(Map inputs) " + "{\n"
 
         if self._find_parents(task.task_id):
             # Input channel mixing and then call
-            code += f"\tdef {task.task_id}_necessary_input = Channel.empty()\n"
+            code += f"\tdef {function_name}_necessary_input = Channel.empty()\n"
             for f in task.input_files:
-                code += f"\t{task.task_id}_necessary_input = {task.task_id}_necessary_input.mix(inputs.{f.file_id})\n"
-            code += f"\tdef {task.task_id}_necessary_input_future = {task.task_id}_necessary_input.collect()\n"
-            code += f"\tdef {task.task_id}_produced_output = {task.task_id}({task.task_id}_necessary_input_future)\n"
+                code += f"\t{function_name}_necessary_input = {function_name}_necessary_input.mix(inputs.{f.file_id})\n"
+            code += f"\tdef {function_name}_necessary_input_future = {function_name}_necessary_input.collect()\n"
+            code += f"\tdef {function_name}_produced_output = {function_name}({function_name}_necessary_input_future)\n"
         else:
             # Simple call
-            code += f"\tdef {task.task_id}_produced_output = {task.task_id}()\n"
+            code += f"\tdef {function_name}_produced_output = {function_name}()\n"
 
         # Pass on the outputs
         code += "\n"
@@ -331,7 +304,7 @@ validateParams()
         if self._find_children(task.task_id):
             counter = 0
             for f in task.output_files:
-                code += f"\toutputs.{f.file_id} = {task.task_id}_produced_output.map" + "{it[" + str(counter) + "]}\n"
+                code += f"\toutputs.{f.file_id} = {function_name}_produced_output.map" + "{it[" + str(counter) + "]}\n"
                 counter += 1
         code += "\treturn outputs\n"
         code += "}\n\n"
@@ -351,6 +324,3 @@ validateParams()
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
 
             out.write(f"\tnextflow run ./workflow.nf --pwd `pwd`\n")
-            out.write("\n")
-            out.write(self._usage_string)
-

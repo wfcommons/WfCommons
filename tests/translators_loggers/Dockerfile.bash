@@ -1,5 +1,5 @@
-# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile_Dask .
-# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-dask /bin/bash
+# docker build --platform amd64 -t wfcommons-dev-dask -f Dockerfile.bash .
+# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-bash /bin/bash
 
 FROM amd64/ubuntu:noble
 
@@ -29,13 +29,10 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN python3 -m pip install --break-system-packages pathos pandas filelock
 RUN python3 -m pip install --break-system-packages networkx scipy matplotlib
 RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
+RUN python3 -m pip install --break-system-packages --upgrade setuptools
 
 # Stress-ng
 RUN apt-get -y install stress-ng
-
-# Install Dask
-RUN python3 -m pip install --break-system-packages  "dask[complete]"
-RUN python3 -m pip install --break-system-packages "dask[distributed]"
 
 # Add wfcommons user
 RUN useradd -ms /bin/bash wfcommons

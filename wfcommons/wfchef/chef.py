@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 The WfCommons Team.
+# Copyright (c) 2021-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,9 +84,9 @@ def find_err(workflow: pathlib.Path,
     :param workflow: name (for samples available in WfCommons) or path to the real workflow instances.
     :type workflow: pathlib.Path
     :param err_savepath: path to save the err (rmse) of all instances available into a csv.
-    :type real_graph: Optional[pathlib.Path]
+    :type err_savepath: Optional[pathlib.Path]
     :param always_update: flag to set if the err needs to be updated or not (True: if new instances are added, False: otherwise).
-    :type real_graph: Optional[bool]
+    :type always_update: Optional[bool]
     :param runs: number of times to repeat the err calculation process (due to randomization).
     :type runs: Optional[bool]
 
@@ -154,7 +154,7 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     task_types = set()
 
     for path in path_to_instances.glob("*.json"):
-        instance = Instance(input_instance=str(path))
+        instance = Instance(input_instance=path)
         analyzer.append_instance(instance)
         graph = create_graph(path)
         for node in graph.nodes:
@@ -201,7 +201,8 @@ def uninstall_recipe(module_name:str,
 
     dst = f"wfcommons.wfchef.recipe.{savedir.stem}"
     try:
-        subprocess.run(["pip", "uninstall", "-y", dst])
+        print([sys.executable, "-m", "pip", "uninstall", "-y", dst])
+        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", dst])
         traceback.print_exc()
 
     except Exception as e:
@@ -230,7 +231,7 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     :param verbose: when set, prints status messages.
     :type cutoff: bool
     :param verbose: number of times to repeat the err calculation process (due to randomization).
-    :type runs:bool
+    :type runs: bool
     """
     camelname = capitalcase(wf_name)
     savedir.mkdir(exist_ok=True, parents=True)
@@ -368,7 +369,7 @@ def main():
             print("\nor, in editable mode:\n")
             print(f"  pip install -e {args.out}")
         else:
-            proc = subprocess.Popen(["pip", "install", str(args.out.resolve())])
+            proc = subprocess.Popen([sys.executable, "-m", "pip", "install", str(args.out.resolve())])
             proc.wait()
 
 

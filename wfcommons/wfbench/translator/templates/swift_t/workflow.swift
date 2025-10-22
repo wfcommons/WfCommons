@@ -15,7 +15,6 @@ global const string flowcept =
 """
 import logging
 import pathlib
-import subprocess
 import time
 from flowcept.flowcept_api.flowcept_controller import Flowcept
 
@@ -30,8 +29,8 @@ workflow_id = "%s"
 workflow_name = "%s"
 out_files = [%s]
 
-logging.info("Flowcept Starting")
-flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id)
+__import__("logging").info("Flowcept Starting")
+flowcept_agent = Flowcept(workflow_id=workflow_id, workflow_name=workflow_name, bundle_exec_id=workflow_id, start_persistence=False, save_workflow=True)
 
 try:
     flowcept_agent.start()
@@ -51,15 +50,13 @@ while remaining_files:
         break
     time.sleep(1)
     
-time.sleep(180)
 try:
     flowcept_agent.stop()
-    time.sleep(120)
 except Exception:
     import traceback
     traceback.print_exc()
 
-logging.info("Flowcept Completed")
+__import__("logging").info("Flowcept Completed")
 """;
 
 string command = 
@@ -73,7 +70,7 @@ import subprocess
 import time
 from pathos.helpers import mp as multiprocessing
 
-logging.basicConfig(
+__import__("logging").basicConfig(
     level=logging.INFO,
     format="[WfBench][%%(asctime)s][%%(levelname)s] %%(message)s",
     datefmt="%%H:%%M:%%S",
@@ -85,29 +82,35 @@ task_name = "%s"
 files_list = ["%s"]
 gpu_work = int(%i)
 cpu_work = int(%i)
-cpu_threads = int(10 * %f)
+percent_cpu = %f
+cpu_threads = int(10 * percent_cpu)
 output_data = {"%s": int(%i)}
 dep = %i
 workflow_id = "%s"
+task_id = f"{workflow_id}_{task_name}"
 
 if 'workflow_id':
-    logging.info("Running with Flowcept.")
+    __import__("logging").info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     fc = Flowcept(workflow_id=workflow_id,
                 bundle_exec_id=workflow_id,
                 start_persistence=False, save_workflow=False)
     fc.start()
-    fc_task = FlowceptTask(workflow_id=workflow_id, used={
-      'workflow_id': workflow_id
+    fc_task = FlowceptTask(workflow_id=workflow_id, task_id=task_id, used={
+      'workflow_id': workflow_id,
+      'name': task_name,
+      'percent-cpu': percent_cpu,
+      'cpu-work': cpu_work,
+      'gpu-work': gpu_work
     })
 
-logging.info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
+__import__("logging").info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
 procs = []
 cpu_queue = multiprocessing.Queue()
-logging.debug(f"Working directory: {os.getcwd()}")
+__import__("logging").debug(f"Working directory: {os.getcwd()}")
 
-logging.debug("Starting IO benchmark...")
+__import__("logging").debug("Starting IO benchmark...")
 io_proc = None
 termination_event = multiprocessing.Event()
 
@@ -150,14 +153,14 @@ io_proc = multiprocessing.Process(
                         name: max(0, int(size * (cpu_percent / 100) - bytes_written[name]))
                         for name, size in outputs.items()
                     },
-                    logging.debug("Starting IO Read Benchmark..."),
+                    __import__("logging").debug("Starting IO Read Benchmark..."),
                     in_file := list(bytes_to_read.keys())[0],
                     in_size := list(bytes_to_read.values())[0],
                     open(in_file, "rb").read(int(in_size)),
-                    logging.debug("Completed IO Read Benchmark!"),
-                    out_file := list(output_data.keys())[0],
-                    out_size := list(output_data.values())[0],
-                    logging.debug(f"Writing output file '{out_file}'"),
+                    __import__("logging").debug("Completed IO Read Benchmark!"),
+                    out_file := list(outputs.keys())[0],
+                    out_size := list(outputs.values())[0],
+                    __import__("logging").debug(f"Writing output file '{out_file}'"),
                     open(out_file, "ab").write(__import__("os").urandom(int(out_size))),
                     bytes_read.update({
                         name: bytes_read[name] + bytes_to_read[name]
@@ -168,8 +171,8 @@ io_proc = multiprocessing.Process(
                         for name in bytes_to_write
                     }),
                     
-                    logging.debug(f"Bytes Read: {bytes_read}"),
-                    logging.debug(f"Bytes Written: {bytes_written}"),
+                    __import__("logging").debug(f"Bytes Read: {bytes_read}"),
+                    __import__("logging").debug(f"Bytes Written: {bytes_written}"),
                     io_completed := cpu_percent,
                 ) if cpu_percent is not None else time.sleep(0.1),
                 not (should_exit or io_completed >= 100)
@@ -177,14 +180,14 @@ io_proc = multiprocessing.Process(
             for _ in range(1000000)
             if not (io_completed >= 100 or termination_event.is_set())
         ],
-        logging.info("IO benchmark completed")
+        __import__("logging").info("IO benchmark completed")
     )
 )
 io_proc.start()
 procs.append(io_proc)
 
 if cpu_work > 0:
-    logging.info(f"Starting CPU and Memory Benchmarks for {task_name}...")
+    __import__("logging").info(f"Starting CPU and Memory Benchmarks for {task_name}...")
 
     mem_threads = 10 - cpu_threads
     cpu_work_per_thread = int(cpu_work / cpu_threads)
@@ -223,12 +226,12 @@ if cpu_work > 0:
         try:
             os.kill(mem_proc.pid, signal.SIGKILL)
         except subprocess.TimeoutExpired:
-            logging.debug("Memory process did not terminate; force-killing.")
+            __import__("logging").debug("Memory process did not terminate; force-killing.")
     subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
 
-    logging.debug("Completed CPU and Memory Benchmarks!")
+    __import__("logging").info("Completed CPU and Memory Benchmarks!")
     
-logging.info(f"Benchmark {task_name} completed!")
+__import__("logging").info(f"Benchmark {task_name} completed!")
 
 if 'workflow_id':
     fc_task.end()
