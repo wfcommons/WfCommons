@@ -223,10 +223,10 @@ class StreamFlowTranslator(Translator):
 
         clt_folder = cwl_folder.joinpath("clt")
         clt_folder.mkdir(exist_ok=True)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/wfbench.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/folder.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl_templates/shell.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/streamflow_templates/streamflow.yml"), output_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/wfbench.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/folder.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/cwl/shell.cwl"), clt_folder)
+        shutil.copy(this_dir.joinpath("templates/streamflow/streamflow.yml"), output_folder)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))
