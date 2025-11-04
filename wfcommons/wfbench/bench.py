@@ -232,8 +232,8 @@ class WorkflowBenchmark:
                         for key in list(output_files_dict.keys()):
                             if file.file_id == key:
                                 output_files_dict[new_name] = output_files_dict.pop(key)
-                        output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
-                        task.args[i] = f"{flag} '{output_files_dict}'"
+                        output_files_dict = json.dumps(output_files_dict)
+                        task.args[i] = f"{flag} {output_files_dict}"
 
                     if item.startswith("--input-files"):
                         flag, input_files_arr = item.split(" ", 1)
@@ -241,8 +241,8 @@ class WorkflowBenchmark:
                         for j, input_file in enumerate(input_files_arr):
                             if file.file_id == input_file:
                                 input_files_arr[j] = new_name
-                        input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
-                        task.args[i] = f"{flag} '{input_files_arr}'"
+                        input_files_arr = json.dumps(input_files_arr)
+                        task.args[i] = f"{flag} {input_files_arr}"
 
                 file.file_id = new_name
 
@@ -269,8 +269,8 @@ class WorkflowBenchmark:
                         for key in output_files_dict:
                             if org_name == key:
                                 output_files_dict[new_name] = output_files_dict.pop(key)
-                        output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
-                        task.args[i] = f"{flag} '{output_files_dict}'"
+                        output_files_dict = json.dumps(output_files_dict)
+                        task.args[i] = f"{flag} {output_files_dict}"
 
                     if item.startswith("--input-files"):
                         flag, input_files_arr = item.split(" ", 1)
@@ -278,8 +278,8 @@ class WorkflowBenchmark:
                         for j, input_file in enumerate(input_files_arr):
                             if org_name == input_file:
                                 input_files_arr[j] = new_name
-                        input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
-                        task.args[i] = f"{flag} '{input_files_arr}'"
+                        input_files_arr = json.dumps(input_files_arr)
+                        task.args[i] = f"{flag} {input_files_arr}"
 
         return workflow_inputs
 
