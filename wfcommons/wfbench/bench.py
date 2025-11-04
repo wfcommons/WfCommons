@@ -17,6 +17,7 @@ import subprocess
 import time
 import shortuuid
 import sys
+import ast
 
 from logging import Logger
 from typing import Dict, Optional, List, Set, Tuple, Type, Union
@@ -211,9 +212,9 @@ class WorkflowBenchmark:
         new_file_names: Dict = {}
         task_output_counter = 0
         workflow_inputs: List[File] = []
-    
+
         for task in self.workflow.tasks.values():
-            output_files = sorted(task.output_files, key=lambda x: -len(x.file_id))
+            output_files = task.output_files
             for file in output_files:
                 if file.file_id in new_file_names:
                     raise ValueError(f"File name {file.file_id} already exists")
@@ -222,13 +223,31 @@ class WorkflowBenchmark:
                 # extension = ''.join(pathlib.Path(file.file_id).suffixes)
                 new_name = f"{task.task_id}_outfile_{task_output_counter:04d}" #{extension}
                 new_file_names[file.file_id] = new_name
+
                 for i, item in enumerate(task.args):
-                    if file.file_id in item:
-                        task.args[i] = task.args[i].replace(file.file_id, new_name)
+                    # Only need to replace names --input and --output json
+                    if item.startswith("--output-files"):
+                        flag, output_files_dict = item.split(" ", 1)
+                        output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
+                        for key in output_files_dict:
+                            if file.file_id == key:
+                                output_files_dict[new_name] = output_files_dict.pop(key)
+                        output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
+                        task.args[i] = f"{flag} '{output_files_dict}'"
+
+                    if item.startswith("--input-files"):
+                        flag, input_files_arr = item.split(" ", 1)
+                        input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
+                        for j, input_file in enumerate(input_files_arr):
+                            if file.file_id == input_file:
+                                input_files_arr[j] = new_name
+                        input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
+                        task.args[i] = f"{flag} '{input_files_arr}'"
+
                 file.file_id = new_name
 
         for task in self.workflow.tasks.values():
-            input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
+            input_files = task.input_files
             for file in input_files:
                 org_name = file.file_id
                 if file.file_id in new_file_names:
@@ -241,10 +260,27 @@ class WorkflowBenchmark:
                     new_name = f"workflow_infile_{len(workflow_inputs):04d}"#{extension}
                     new_file_names[file.file_id] = new_name
                     file.file_id = new_name
+                
                 for i, item in enumerate(task.args):
-                    if org_name in item:
-                        task.args[i] = task.args[i].replace(org_name, file.file_id)
-    
+                    # Only need to replace names --input and --output json
+                    if item.startswith("--output-files"):
+                        flag, output_files_dict = item.split(" ", 1)
+                        output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
+                        for key in output_files_dict:
+                            if org_name == key:
+                                output_files_dict[new_name] = output_files_dict.pop(key)
+                        output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
+                        task.args[i] = f"{flag} '{output_files_dict}'"
+
+                    if item.startswith("--input-files"):
+                        flag, input_files_arr = item.split(" ", 1)
+                        input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
+                        for j, input_file in enumerate(input_files_arr):
+                            if org_name == input_file:
+                                input_files_arr[j] = new_name
+                        input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
+                        task.args[i] = f"{flag} '{input_files_arr}'"
+
         return workflow_inputs
 
     def create_benchmark(self,
