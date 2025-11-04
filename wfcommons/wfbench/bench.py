@@ -266,9 +266,9 @@ class WorkflowBenchmark:
                     if item.startswith("--output-files"):
                         flag, output_files_dict = item.split(" ", 1)
                         output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
-                        for key in output_files_dict:
+                        for key in list(output_files_dict.keys()):
                             if org_name == key:
-                                output_files_dict[new_name] = output_files_dict.pop(key)
+                                output_files_dict[file.file_id] = output_files_dict.pop(key)
                         output_files_dict = json.dumps(output_files_dict)
                         task.args[i] = f"{flag} {output_files_dict}"
 
@@ -277,7 +277,7 @@ class WorkflowBenchmark:
                         input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
                         for j, input_file in enumerate(input_files_arr):
                             if org_name == input_file:
-                                input_files_arr[j] = new_name
+                                input_files_arr[j] = file.file_id
                         input_files_arr = json.dumps(input_files_arr)
                         task.args[i] = f"{flag} {input_files_arr}"
 
