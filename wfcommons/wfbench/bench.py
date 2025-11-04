@@ -229,7 +229,7 @@ class WorkflowBenchmark:
                     if item.startswith("--output-files"):
                         flag, output_files_dict = item.split(" ", 1)
                         output_files_dict = {f"{key}": value for key, value in ast.literal_eval(output_files_dict).items()}
-                        for key in output_files_dict:
+                        for key in list(output_files_dict.keys()):
                             if file.file_id == key:
                                 output_files_dict[new_name] = output_files_dict.pop(key)
                         output_files_dict = json.dumps(output_files_dict).replace('"', '\\"')
