@@ -36,6 +36,8 @@ class AirflowTranslator(Translator):
         """Create an object of the translator."""
         super().__init__(workflow, logger)
 
+        self.sanitized_names = {}
+        self.seq_num = 0
         self.script = f"""
 from __future__ import annotations
 
@@ -73,7 +75,7 @@ with DAG(
 
         for task in self.tasks.values():
             self.script += f"""
-    {task.task_id} = BashOperator(
+    {self._sanitize_varname(task.task_id)} = BashOperator(
         task_id="{task.task_id}",
         depends_on_past=False,
         bash_command='{self.task_commands[task.task_id]}',
@@ -82,10 +84,11 @@ with DAG(
         )
 """
         for task in self.tasks.values():
-            parents = ", ".join(self.task_parents[task.task_id])
+            # Comma-separated list of the task's parents
+            parents = ", ".join(map(self._sanitize_varname, self.task_parents[task.task_id]))
             if parents:
                 self.script += f"""
-    [{parents}] >> {task.task_id}
+    [{parents}] >> {self._sanitize_varname(task.task_id)}
 """
         # write benchmark files
         output_folder.mkdir(parents=True)
@@ -98,6 +101,20 @@ with DAG(
 
         # Create the README file
         self._write_readme_file(output_folder)
+
+    def _sanitize_varname(self, name: str) -> str:
+        """
+        Sanitizes string into a valid variable name.
+
+        :param name: The name to sanitize.
+        :type name: str
+        """
+        if name not in self.sanitized_names:
+            sanitized_name = '_' + re.sub(r'[^\w]', '_', name) + str(self.seq_num)
+            self.seq_num += 1
+            self.sanitized_names[name] = sanitized_name
+
+        return self.sanitized_names[name]
 
     def _prep_commands(self, output_folder: pathlib.Path) -> None:
         """
