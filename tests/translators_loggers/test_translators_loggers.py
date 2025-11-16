@@ -235,14 +235,14 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           #"dask",
-           #"parsl",
-           #"nextflow",
-           #"airflow",
+           "dask",
+           "parsl",
+           "nextflow",
+           "airflow",
            "bash",
-           #"taskvine",
-           #"cwl",
-           #"pegasus",
+           "taskvine",
+           "cwl",
+           "pegasus",
            "swiftt",
         ])
     @pytest.mark.unit
