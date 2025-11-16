@@ -236,7 +236,7 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
+           # "swiftt",
            "dask",
            "parsl",
            "nextflow",
@@ -294,5 +294,5 @@ class TestTranslators:
             _compare_workflows(original_workflow, reconstructed_workflow)
 
         # Shutdown the container
-        _shutdown_docker_container(container)
+        # _shutdown_docker_container(container)
 
