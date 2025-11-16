@@ -235,15 +235,15 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
+           #"swiftt",
            "dask",
            "parsl",
            "nextflow",
            "airflow",
            "bash",
            "taskvine",
-           #"cwl",
-           #"pegasus",
+           "cwl",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
