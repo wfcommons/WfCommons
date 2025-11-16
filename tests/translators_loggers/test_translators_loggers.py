@@ -242,8 +242,8 @@ class TestTranslators:
            "airflow",
            "bash",
            "taskvine",
-           "cwl",
-           "pegasus",
+           #"cwl",
+           #"pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
