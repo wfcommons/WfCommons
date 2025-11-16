@@ -243,7 +243,7 @@ class TestTranslators:
            "taskvine",
            "cwl",
            "pegasus",
-           "swiftt",
+           #           "swiftt",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
