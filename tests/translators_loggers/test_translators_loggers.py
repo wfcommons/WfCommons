@@ -19,6 +19,7 @@ import networkx
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
+from tests.test_helpers import _shutdown_docker_container
 from tests.test_helpers import _compare_workflows
 
 from wfcommons import BlastRecipe
@@ -235,7 +236,7 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           #"swiftt",
+           "swiftt",
            "dask",
            "parsl",
            "nextflow",
@@ -250,7 +251,6 @@ class TestTranslators:
     def test_translator(self, backend) -> None:
         # Create workflow benchmark
         benchmark, num_tasks = _create_workflow_benchmark()
-
 
         # Create a local translation directory
         str_dirpath = "/tmp/" + backend + "_translated_workflow/"
@@ -292,4 +292,7 @@ class TestTranslators:
             original_workflow : Workflow = benchmark.workflow
 
             _compare_workflows(original_workflow, reconstructed_workflow)
+
+        # Shutdown the container
+        _shutdown_docker_container(container)
 

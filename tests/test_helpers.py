@@ -97,6 +97,10 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
 
     return container
 
+def _shutdown_docker_container(container):
+    container.stop()
+    container.remove()
+
 def _get_total_size_of_directory(directory_path: str):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(directory_path):
