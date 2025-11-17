@@ -19,7 +19,7 @@ import networkx
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
-from tests.test_helpers import _shutdown_docker_container
+from tests.test_helpers import _shutdown_docker_container_and_remove_image
 from tests.test_helpers import _compare_workflows
 
 from wfcommons import BlastRecipe
@@ -116,8 +116,6 @@ additional_setup_methods = {
 
 def run_workflow_dask(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./dask_workflow.py", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed!")  == num_tasks)
@@ -126,8 +124,6 @@ def run_workflow_dask(container, num_tasks, str_dirpath):
 def run_workflow_parsl(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./parsl_workflow.py", stdout=True, stderr=True)
     ignored, output = container.exec_run(f"cat {str_dirpath}/runinfo/000/parsl.log", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert (exit_code == 0)
     assert ("completed" in output.decode())
@@ -137,8 +133,6 @@ def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert (exit_code == 0)
     assert (task_exit_codes.decode() == num_tasks * "0")
@@ -149,9 +143,6 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["sh", "-c", "cd /home/wfcommons/ && sudo /bin/bash /run_a_workflow.sh Blast-Benchmark"],
                                            stdout=True,
                                            stderr=True)
-    # Kill the container
-    container.remove(force=True)
-
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks * 2)
@@ -159,8 +150,6 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
 def run_workflow_bash(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
@@ -168,9 +157,7 @@ def run_workflow_bash(container, num_tasks, str_dirpath):
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"], stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
-    # # Check sanity
+    # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
 
@@ -178,8 +165,6 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert (exit_code == 0)
     # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
@@ -189,8 +174,6 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # Check sanity
     assert(exit_code == 0)
     assert("success" in output.decode())
@@ -198,8 +181,6 @@ def run_workflow_pegasus(container, num_tasks, str_dirpath):
 def run_workflow_swiftt(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="swift-t workflow.swift", stdout=True, stderr=True)
-    # Kill the container
-    container.remove(force=True)
     # sys.stderr.write(output.decode())
     # Check sanity
     assert(exit_code == 0)
@@ -236,7 +217,7 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           # "swiftt",
+           "swiftt",
            "dask",
            "parsl",
            "nextflow",
@@ -259,22 +240,21 @@ class TestTranslators:
         _remove_local_dir_if_it_exists(str_dirpath)
 
         # Perform the translation
-        sys.stderr.write("\nTranslating workflow...\n")
+        sys.stderr.write(f"\n[{backend}] Translating workflow...\n")
         translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
         # Start the Docker container
-        sys.stderr.write("Starting Docker container...\n")
         container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
 
         # Do whatever necessary setup
         additional_setup_methods[backend](container)
 
         # Run the workflow
-        sys.stderr.write("Running workflow...\n")
+        sys.stderr.write(f"[{backend}] Running workflow...\n")
         start_time = time.time()
         run_workflow_methods[backend](container, num_tasks, str_dirpath)
-        sys.stderr.write("Workflow ran in %.2f seconds\n" % (time.time() - start_time))
+        sys.stderr.write(f"[{backend}] Workflow ran in %.2f seconds\n" % (time.time() - start_time))
 
         # Run the log parser if any
         if backend == "pegasus":
@@ -285,7 +265,7 @@ class TestTranslators:
             parser = None
 
         if parser:
-            sys.stderr.write("\nParsing the logs...\n")
+            sys.stderr.write(f"\n[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow("reconstructed_workflow")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
 
@@ -293,6 +273,6 @@ class TestTranslators:
 
             _compare_workflows(original_workflow, reconstructed_workflow)
 
-        # Shutdown the container
-        # _shutdown_docker_container(container)
+        # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
+        _shutdown_docker_container_and_remove_image(container)
 
