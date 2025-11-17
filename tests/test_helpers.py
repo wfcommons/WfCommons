@@ -101,18 +101,19 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
 def _shutdown_docker_container_and_remove_image(container):
     image = container.image
     sys.stderr.write(f"[{container.backend}] Terminating container if need be...\n")
-    sys.stderr.write("CONTAINER IS = " + str(container.id) + "\n")
     try:
         container.stop()
         container.remove()
     except Exception as e:
-        sys.stderr.write("GOT AN EXCEPTION FOR CONTAINER STOP/REMOVE... WHATEVER\n")
+        pass
 
-    sys.stderr.write(f"[{container.backend}] Removing Docker image...\n")
-    try:
-        image.remove(force=True)
-    except Exception as e:
-        sys.stderr.write(f"[{container.backend}] Warning: Error while removing image: {e}\n")
+    # Remove the images as we go, if running on GitHub
+    if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+        sys.stderr.write(f"[{container.backend}] Removing Docker image...\n")
+        try:
+            image.remove(force=True)
+        except Exception as e:
+            sys.stderr.write(f"[{container.backend}] Warning: Error while removing image: {e}\n")
 
 def _get_total_size_of_directory(directory_path: str):
     total_size = 0
