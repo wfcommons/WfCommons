@@ -17,6 +17,7 @@ import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _start_docker_container
+from tests.test_helpers import _shutdown_docker_container_and_remove_image
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _get_total_size_of_directory
 from tests.test_helpers import _compare_workflows
@@ -166,7 +167,7 @@ class TestWfBench:
             exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
 
             # Kill the container
-            container.remove(force=True)
+            _shutdown_docker_container_and_remove_image(container)
 
             # Inspect the data after execution
             _actual_data_files_as_expected(dirpath, benchmark.workflow, data_spec)
