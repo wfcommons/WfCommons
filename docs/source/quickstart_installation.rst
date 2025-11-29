@@ -2,7 +2,7 @@ Installation
 ============
 
 WfCommons is available on `PyPI <https://pypi.org/project/wfcommons>`_.
-WfCommons requires Python3.9+ and has been tested on Linux and macOS.
+WfCommons requires Python3.10+ and has been tested on Linux and macOS.
 
 Installation using pip
 ----------------------
