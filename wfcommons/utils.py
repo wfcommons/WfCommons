@@ -78,7 +78,7 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
     distribution_names: List[str] = [
         'alpha', 'arcsine', 'argus', 'beta', 'chi', 'chi2', 'dgamma', 'dweibull',
         'expon', 'fisk', 'gamma', 'gausshyper', 'levy', 'norm', 'pareto', 'rayleigh',
-        'rdist', 'skewnorm', 'trapz', 'triang', 'uniform', 'wald'
+        'rdist', 'skewnorm', 'trapezoid', 'triang', 'uniform', 'wald'
     ]
 
     for dist_name in distribution_names:

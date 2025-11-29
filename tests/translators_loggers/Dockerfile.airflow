@@ -1,0 +1,80 @@
+# docker build -t wfcommons-dev -f Dockerfile.airflow .
+# docker run -it --rm -v .:/home/wfcommons/mount wfcommons-dev /bin/bash
+
+FROM amd64/ubuntu:noble
+
+LABEL org.containers.image.authors="sukaryor@hawaii.edu"
+
+# update repositories
+RUN apt-get update
+
+# set timezone
+RUN echo "America/Los_Angeles" > /etc/timezone && export DEBIAN_FRONTEND=noninteractive && apt-get install -y tzdata
+
+# install useful stuff
+RUN apt-get -y install pkg-config 
+RUN apt-get -y install git
+RUN apt-get -y install wget 
+RUN apt-get -y install make 
+RUN apt-get -y install cmake 
+RUN apt-get -y install cmake-data 
+RUN apt-get -y install sudo 
+RUN apt-get -y install vim --fix-missing
+RUN apt-get -y install gcc 
+#RUN apt-get -y install gcc-multilib
+
+# Python stuff
+RUN apt-get -y install python3 python3-pip
+RUN python3 -m pip install --break-system-packages pathos pandas filelock
+RUN python3 -m pip install --break-system-packages networkx scipy matplotlib
+RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# Stress-ng
+RUN apt-get -y install stress-ng
+
+# WfCommons
+#RUN python3 -m pip install --break-system-packages wfcommons
+
+# Install Airflow
+RUN python3 -m pip install --break-system-packages apache-airflow==2.10.2 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.12.txt"
+
+# Install MySQL/MyClient
+RUN apt-get install -y mysql-server
+RUN apt-get install -y python3-dev build-essential
+RUN apt-get install -y default-libmysqlclient-dev
+RUN python3 -m pip install --break-system-packages mysqlclient
+
+# Create an run_a_workflow script to start mysqld in the background and setup the Airflow DB,
+# copy things around, and the run the workflow
+
+RUN echo '#!/bin/bash' > /run_a_workflow.sh && \
+    echo 'mysqld --explicit-defaults-for-timestamp &' >> /run_a_workflow.sh && \
+    echo 'until mysqladmin ping -h localhost --silent; do' >> /run_a_workflow.sh && \
+    echo '    echo "Waiting for MySQL to be ready..."' >> /run_a_workflow.sh && \
+    echo '    sleep 2' >> /run_a_workflow.sh && \
+    echo 'done' >> /run_a_workflow.sh && \
+    echo 'echo "MySQL is ready!"' >> /run_a_workflow.sh && \
+    echo 'echo "Setting up database for Airflow..."' >> /run_a_workflow.sh && \
+    echo 'mysql -u root -e "CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";' >> /run_a_workflow.sh && \
+    echo "mysql -u root -e \"CREATE USER 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass';\"" >> /run_a_workflow.sh && \
+    echo "mysql -u root -e \"GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user';\"" >> /run_a_workflow.sh && \
+    echo 'export AIRFLOW_HOME="$(pwd)"/airflow/' >> /run_a_workflow.sh && \
+    echo "airflow config list 1> /dev/null" >> /run_a_workflow.sh && \
+    echo "sed -i ./airflow/airflow.cfg -e 's/sqlite:.*/mysql+mysqldb:\/\/airflow_user:airflow_pass@localhost:3306\/airflow_db/'" >> /run_a_workflow.sh && \
+    echo 'airflow db migrate' >> /run_a_workflow.sh && \
+    echo 'echo "Airflow database setup!"' >> /run_a_workflow.sh && \
+    echo 'mkdir ./airflow/dags' >> /run_a_workflow.sh && \
+    echo 'cp -r /tmp/airflow_translated_workflow ./airflow/dags/' >> /run_a_workflow.sh && \
+    echo 'mv ./airflow/dags/airflow_translated_workflow/workflow.py ./airflow/dags/workflow.py' >> /run_a_workflow.sh && \
+    echo 'airflow dags test $1' >> /run_a_workflow.sh && \
+    chmod +x /run_a_workflow.sh
+
+# Create wfcommons user
+RUN useradd -ms /bin/bash wfcommons
+RUN adduser wfcommons sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ENV PATH="$PATH:/home/wfcommons/.local/bin/"
+
+USER wfcommons
+WORKDIR /home/wfcommons

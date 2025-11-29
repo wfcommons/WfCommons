@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .instance import Instance
 from ..common.task import Task
-from ..common.file import FileLink
 from ..utils import best_fit_distribution, NoValue
 
 
@@ -116,8 +115,6 @@ class InstanceAnalyzer:
                     if extension[1:].isnumeric():
                         extension = path.splitext(infile.file_id.replace(extension, ''))[1]
 
-                    # Check if the file is definetly an input 
-                    assert infile.link == FileLink.INPUT, f"{infile.file_id} is not set as input"
                     _append_file_to_dict(extension, inputs_dict, infile.size)
 
                 
@@ -127,9 +124,7 @@ class InstanceAnalyzer:
                     if extension[1:].isnumeric():
                         extension = path.splitext(outfile.file_id.replace(extension, ''))[1]
 
-                    # Check if the file is definetly an output
-                    assert outfile.link == FileLink.OUTPUT, f"{outfile.file_id} is not set as output"
-                    _append_file_to_dict(extension, outputs_dict, outfile.size) 
+                    _append_file_to_dict(extension, outputs_dict, outfile.size)
 
             
             # Find the best fit distribution for each file type

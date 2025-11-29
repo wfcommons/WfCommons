@@ -13,12 +13,12 @@ import itertools
 import math
 import pathlib
 
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 from typing import List, Optional
 
 from .abstract_logs_parser import LogsParser
-from ...common.file import File, FileLink
+from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
@@ -84,8 +84,8 @@ class MakeflowLogsParser(LogsParser):
         # create base workflow instance object
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
-                                 wms_name=self.wms_name,
-                                 wms_url=self.wms_url)
+                                 runtime_system_name=self.wms_name,
+                                 runtime_system_url=self.wms_url)
 
         # parse workflow file
         self._parse_workflow_file()
@@ -121,8 +121,8 @@ class MakeflowLogsParser(LogsParser):
 
                     # create list of task files
                     list_files = []
-                    list_files.extend(self._create_files(outputs, FileLink.OUTPUT, task_name))
-                    list_files.extend(self._create_files(inputs, FileLink.INPUT, task_name))
+                    output_files = self._create_files(outputs, "output", task_name)
+                    input_files = self._create_files(inputs, "input", task_name)
 
                     # create task
                     args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
@@ -134,7 +134,8 @@ class MakeflowLogsParser(LogsParser):
                                 program=prefix,
                                 args=args.split(),
                                 cores=1,
-                                files=list_files,
+                                input_files=input_files,
+                                output_files=output_files,
                                 logger=self.logger)
                     self.workflow.add_node(task_name, task=task)
                     self.args_map[args] = task
@@ -146,14 +147,14 @@ class MakeflowLogsParser(LogsParser):
                 if self.files_map[file]['task_name']:
                     self.workflow.add_edge(self.files_map[file]['task_name'], child)
 
-    def _create_files(self, files_list: List[str], link: FileLink, task_name: str) -> List[File]:
+    def _create_files(self, files_list: List[str], input_or_output: str, task_name: str) -> List[File]:
         """
         Create a list of files objects.
 
         :param files_list: list of file names.
         :rtype files_list: List[str]
-        :param link: Link type for the files in the list.
-        :rtype link: FileLink
+        :param input_or_output: Whether the files in the list are input or output.
+        :rtype link: stc
         :param task_name: Task name.
         :rtype task_name: str
 
@@ -164,7 +165,7 @@ class MakeflowLogsParser(LogsParser):
         for file in files_list:
             if self.files_map[file]['file']:
                 list_files.append(
-                    self.files_map[file]['file'][0] if link == FileLink.INPUT else self.files_map[file]['file'][1])
+                    self.files_map[file]['file'][0] if input_or_output == "input" else self.files_map[file]['file'][1])
             else:
                 size = 0
                 file_path = self.execution_dir.joinpath(file)
@@ -173,19 +174,17 @@ class MakeflowLogsParser(LogsParser):
                 elif file_path.is_file():
                     size = int(math.ceil(file_path.stat().st_size / 1000))  # B to KB
 
-                file_obj_in = File(name=file,
+                file_obj_in = File(file_id=file,
                                    size=size,
-                                   link=FileLink.INPUT,
                                    logger=self.logger)
-                file_obj_out = File(name=file,
+                file_obj_out = File(file_id=file,
                                     size=size,
-                                    link=FileLink.OUTPUT,
                                     logger=self.logger)
-                list_files.append(file_obj_in if link == FileLink.INPUT else file_obj_out)
+                list_files.append(file_obj_in if input_or_output == "input" else file_obj_out)
                 self.files_map[file]['file'].extend([file_obj_in, file_obj_out])
 
             # files dependencies
-            if link == FileLink.INPUT:
+            if input_or_output == "input":
                 self.files_map[file]['children'].append(task_name)
             else:
                 self.files_map[file]['task_name'] = task_name
@@ -200,8 +199,9 @@ class MakeflowLogsParser(LogsParser):
             for line in f:
                 if 'STARTED' in line:
                     start_time = int(line.split()[2])
-                    self.workflow.executed_at = datetime.utcfromtimestamp(start_time / 1000000).strftime(
+                    self.workflow.executed_at = datetime.fromtimestamp(start_time / 1000000, tz=timezone.utc).strftime(
                         '%Y-%m-%dT%H:%M:%S+00:00')
+
 
                 elif 'COMPLETED' in line:
                     self.workflow.makespan = float('%.2f' % ((int(line.split()[2]) - start_time) / 1000000))
@@ -228,7 +228,7 @@ class MakeflowLogsParser(LogsParser):
                 task.bytes_written = int(data['bytes_written'][0] * 1000)  # MB to KB
                 task.avg_cpu = float('%.4f' % (float(data['cpu_time'][0]) / float(data['wall_time'][0]) * 100))
                 task.machine = Machine(name=data['host'],
-                                       cpu={'count': int(data['machine_cpus'][0]), 'speed': 0, 'vendor': ''},
+                                       cpu={'coreCount': int(data['machine_cpus'][0]), 'speedInMHz': 0, 'vendor': ''},
                                        logger=self.logger)
 
                 # workflow

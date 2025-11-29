@@ -18,15 +18,26 @@ jobs:
   
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install -y python3-sphinx sphinx-rtd-theme-common
           pip install sphinx_rtd_theme recommonmark pytest pytest-cov
+          pip install --upgrade setuptools
+
+      - name: Install utilities for testing
+        run: |
+          sudo apt-get update
+          sudo apt-get install stress-ng
+          sudo apt-get install graphviz libgraphviz-dev
+          pip install docker
+          pip install pygraphviz
+          pip install pydot
 
       - name: Check package install
         run: |
-          pip install -e .
+          pip install .
 
       - name: Run tests
-        run: pytest -m unit --cov=wfcommons tests/
+        run: python3 -m pytest -s -v -m unit --cov=wfcommons tests/
 
       - name: Upload coverage
         if: github.ref == 'refs/heads/main'

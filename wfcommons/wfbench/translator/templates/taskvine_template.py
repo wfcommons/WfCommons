@@ -23,9 +23,9 @@ print(f"listening on port {m.port}")
 def process_result(t):
     if t:
         if t.successful():
-            print(f"task {t.id} done: {t.command}")
+            print(f"task {t.id} completed: {t.command}")
         elif t.completed():
-            print(f"task {t.id} completed with an execution error, exit code {t.exit_code}")
+            print(f"task {t.id} terminated with an execution error, exit code {t.exit_code}")
         else:
             print(f"task {t.id} failed with status {t.result}")
 
@@ -36,11 +36,12 @@ def wait_for_tasks_completion():
         t = m.wait(2)
         if t:
             process_result(t)
-    print("all tasks complete!")
+
 
 
 # declare the package and its input file
-poncho_file = m.declare_file("task_vine_poncho.tar.gz", cache="workflow")
+# Build the poncho package: poncho_package_create taskvine_poncho.json taskvine_poncho.tar.gz
+poncho_file = m.declare_file("taskvine_poncho.tar.gz", cache="workflow")
 poncho_pkg = m.declare_poncho(poncho_file, cache="workflow")
 
 # wfbench executable files

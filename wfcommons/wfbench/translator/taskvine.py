@@ -60,7 +60,7 @@ class TaskVineTranslator(Translator):
         if self.workflow.workflow_id is not None:
             run_workflow_code = run_workflow_code.replace("# FLOWCEPT_INIT",
                                                           self._flowcept_init_python(self.workflow.workflow_id,
-                                                                            self.workflow.name))
+                                                                                     self.workflow.name))
             run_workflow_code = run_workflow_code.replace("# FLOWCEPT_END", self._flowcept_stop_python())
 
         # write benchmark files
@@ -72,7 +72,10 @@ class TaskVineTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
         shutil.copy(this_dir.joinpath("templates/taskvine_poncho.json"), output_folder)
-        
+
+        # README file
+        self._write_readme_file(output_folder)
+
     def _add_level_tasks(self, tasks_list: list[str]) -> list[str]:
         """
         Add all tasks from a level in the workflow.
@@ -91,7 +94,7 @@ class TaskVineTranslator(Translator):
                 level_parsed_tasks.add(task_name)
             else:
                 next_level.add(task_name)
-        
+
         self.parsed_tasks.extend(list(level_parsed_tasks))
         return list(next_level)
 
@@ -113,34 +116,33 @@ class TaskVineTranslator(Translator):
             # input files
             f_counter = 1
             task_script = f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
-                           f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
-                           f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
-                           f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
-            input_spec = "["
+                          f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
+                          f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
+                          f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
+            input_spec = "\"["
             for file in task.input_files:
                 if file.file_id in self.output_files_map.keys():
                     task_script += f"t_{self.task_counter}.add_input({self.output_files_map[file.file_id]}, '{file}')\n"
                 else:
                     task_script += f"in_{self.task_counter}_f_{f_counter} = m.declare_file('data/{file}')\n" \
-                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{file}')\n"
+                                   f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{file}')\n"
                 f_counter += 1
-                input_spec += f"\"{file.file_id}\","
-            input_spec = input_spec[:-1] + "]"
+                input_spec += f"\\\\\"{file.file_id}\\\\\","
+            input_spec = input_spec[:-1] + "]\""
 
             # output files
             f_counter = 1
             output_spec = "\"{"
             for file in task.output_files:
                 output_spec += f"\\\\\"{file.file_id}\\\\\":{str(file.size)},"
-                task_script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('outputs/{file}')\n" \
-                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{file}')\n"
+                task_script += f"out_{self.task_counter}_f_{f_counter} = m.declare_file('data/{file}')\n" \
+                               f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{file}')\n"
                 self.output_files_map[file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
                 f_counter += 1
             output_spec = output_spec[:-1] + "}\""
 
             task_script += f"m.submit(t_{self.task_counter})\n" \
-                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
-            self.task_counter += 1
+                           f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
 
             # arguments
             args = []
@@ -155,8 +157,26 @@ class TaskVineTranslator(Translator):
 
             # write task
             self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
-                f"t_{self.task_counter}.set_cores(1)\n{task_script}"
-            
+                           f"t_{self.task_counter}.set_cores(1)\n{task_script}"
+
+            self.task_counter += 1
             return self.task_children[task_name]
-        
+
         return []
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"In directory {str(output_folder)}:\n")
+            out.write(f"  - Build the poncho package: "
+                      f"        poncho_package_create taskvine_poncho.json taskvine_poncho.tar.gz\n")
+            out.write(f"  - Start workers, e.g.: "
+                      f"        vine_worker localhost 9123\n")
+            out.write(f"  - Run the workflow: "
+                      f"        python3 ./taskvine_workflow.py\n")

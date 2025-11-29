@@ -118,8 +118,8 @@ class NextflowLogsParser(LogsParser):
                     for p in tasks_map[index - 1]:
                         self.workflow.add_edge(p, c)
 
-        self.workflow.makespan = round(
-            (int(timeline_data['endingMillis']) - int(timeline_data['beginningMillis'])) / 1024)
+        self.workflow.makespan = float(
+            (int(timeline_data['endingMillis']) - int(timeline_data['beginningMillis'])) / 1000)
 
     def _read_data(self, file_format: str) -> Dict:
         """

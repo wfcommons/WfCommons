@@ -58,7 +58,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
     def __init__(self, name: str,
                  data_footprint: Optional[int],
                  num_tasks: Optional[int],
-                 exclude_graphs: Set[str] = set(),
+                 exclude_graphs: Set[str]|None = None,
                  runtime_factor: Optional[float] = 1.0,
                  input_file_size_factor: Optional[float] = 1.0,
                  output_file_size_factor: Optional[float] = 1.0,
@@ -66,6 +66,8 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
                  this_dir: Union[str, pathlib.Path] = None,
                  base_method: Optional[Enum] = BaseMethod.ERROR_TABLE) -> None:
         """Create an object of the workflow recipe."""
+        if exclude_graphs is None:
+            exclude_graphs = set()
         super().__init__(
             name=name,
             data_footprint=data_footprint,
@@ -174,7 +176,7 @@ class WfChefWorkflowRecipe(WorkflowRecipe):
         :rtype: Workflow
         """
         workflow = Workflow(name=self.name + "-synthetic-instance" if not workflow_name else workflow_name,
-                            makespan=0)
+                            makespan=0.0)
         graph = self.generate_nx_graph()
 
         task_ids = {}
