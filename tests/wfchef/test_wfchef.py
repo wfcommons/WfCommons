@@ -52,10 +52,8 @@ class TestWfChef:
         create_recipe(args["path"], args["out"], args["name"], cutoff=args["cutoff"], verbose=True)
 
         # Check that some of the expected files are there
-        assert((dirpath / "setup.py").exists())
+        assert((dirpath / "pyproject.toml").exists())
         assert((dirpath / "recipe_recipes" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "somename" / "__init__.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "__init__.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "recipe.py").exists())
         assert((dirpath / "recipe_recipes" / "somename" / "microstructures").exists())
@@ -65,7 +63,7 @@ class TestWfChef:
 
         # Install the recipe
         sys.stderr.write("Installing the recipe...\n")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe/recipe_recipe"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe/"])
 
         sys.stderr.write("2. CALLING LS_RECIPE()\n")
         ls_recipe()
