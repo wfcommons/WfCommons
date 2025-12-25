@@ -51,7 +51,7 @@ def _install_WfCommons_on_container(container):
     exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
     if exit_code != 0:
-        raise RuntimeError("Failed to install WfCommons on the container");
+        raise RuntimeError("Failed to install WfCommons on the container")
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=None):
     if command is None:
@@ -62,13 +62,13 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
 
     try:
         image = client.images.get(image_name)
-        sys.stderr.write(f"Image '{image_name}' is available locally\n")
+        sys.stderr.write(f"[{backend}] Image '{image_name}' is available locally\n")
     except ImageNotFound:
-        sys.stderr.write(f"Pulling image '{image_name}'...\n")
+        sys.stderr.write(f"[{backend}] Pulling image '{image_name}'...\n")
         client.images.pull(image_name)
 
     # Launch the docker container to actually run the translated workflow
-    sys.stderr.write("Starting Docker container...\n")
+    sys.stderr.write(f"[{backend}] Starting Docker container...\n")
     container = client.containers.run(
         image=image_name,
         command=command,
@@ -83,7 +83,7 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
 
     # Copy over the wfbench and cpu-benchmark executables to where they should go on the container
     if bin_dir:
-        sys.stderr.write("Copying wfbench and cpu-benchmark...\n")
+        sys.stderr.write(f"[{backend}] Copying wfbench and cpu-benchmark...\n")
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + bin_dir],
                                                stdout=True, stderr=True)
         if exit_code != 0:
@@ -93,9 +93,27 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
         if exit_code != 0:
             raise RuntimeError("Failed to copy cpu-benchmark executable to the bin directory")
     else:
-        sys.stderr.write("Not Copying wfbench and cpu-benchmark...\n")
+        sys.stderr.write(f"[{backend}] Not Copying wfbench and cpu-benchmark...\n")
 
+    container.backend = backend
     return container
+
+def _shutdown_docker_container_and_remove_image(container):
+    image = container.image
+    sys.stderr.write(f"[{container.backend}] Terminating container if need be...\n")
+    try:
+        container.stop()
+        container.remove()
+    except Exception as e:
+        pass
+
+    # Remove the images as we go, if running on GitHub
+    if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+        sys.stderr.write(f"[{container.backend}] Removing Docker image...\n")
+        try:
+            image.remove(force=True)
+        except Exception as e:
+            sys.stderr.write(f"[{container.backend}] Warning: Error while removing image: {e}\n")
 
 def _get_total_size_of_directory(directory_path: str):
     total_size = 0

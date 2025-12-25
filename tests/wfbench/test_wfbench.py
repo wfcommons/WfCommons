@@ -17,6 +17,7 @@ import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _start_docker_container
+from tests.test_helpers import _shutdown_docker_container_and_remove_image
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _get_total_size_of_directory
 from tests.test_helpers import _compare_workflows
@@ -142,10 +143,6 @@ class TestWfBench:
 
         # Create the data_specification options
         fixed_total_footprint_in_mb = 5
-        # TODO: This seems really broken right now
-        # per_type_footprint = {}
-        # for task_type in ["blastall", "split_fasta", None]:
-        #         per_type_footprint[task_type] = "1" # string???
 
         for data_spec in [fixed_total_footprint_in_mb]:
             benchmark.create_benchmark(_create_fresh_local_dir(f"/tmp/benchmark"), cpu_work=1, data=data_spec, percent_cpu=0.6)
@@ -170,7 +167,7 @@ class TestWfBench:
             exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
 
             # Kill the container
-            container.remove(force=True)
+            _shutdown_docker_container_and_remove_image(container)
 
             # Inspect the data after execution
             _actual_data_files_as_expected(dirpath, benchmark.workflow, data_spec)

@@ -8,5 +8,5 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-__version__ = "1.3-dev"
+__version__ = "1.4-dev"
 __schema_version__ = "1.5"
