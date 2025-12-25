@@ -17,7 +17,8 @@ import numpy as np
 import pandas as pd
 import pathlib
 import pickle
-import pkg_resources
+from importlib.metadata import entry_points
+import tomli_w
 import subprocess
 import traceback
 import sys
@@ -165,49 +166,306 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     return stats_dict
 
 
-def get_recipe(recipe: str) -> "Module":
-    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
-        att = entry_point.attrs[0]
-        if att == recipe:
+def get_recipe(recipe: str) -> Optional[type]:
+    """
+    Load a recipe by name from installed entry points.
+
+    :param recipe: Name of the recipe to load
+    :return: Recipe class or None if not found
+    """
+    # For Python 3.10+, entry_points() returns a more convenient interface
+    # For Python 3.9, you may need to use entry_points().get('workflow_recipes', [])
+    try:
+        eps = entry_points(group='workflow_recipes')
+    except TypeError:
+        # Python 3.9 compatibility
+        eps = entry_points().get('workflow_recipes', [])
+
+    for entry_point in eps:
+        # In importlib.metadata, entry points have 'name' instead of 'attrs'
+        if entry_point.name == recipe:
             return entry_point.load()
+
+    return None
 
 
 def get_recipes() -> pd.DataFrame:
+    """
+    Get a DataFrame of all available workflow recipes.
+
+    :return: DataFrame with columns: name, module, import command
+    """
     rows = []
-    for entry_point in pkg_resources.iter_entry_points('workflow_recipes'):
+
+    try:
+        eps = entry_points(group='workflow_recipes')
+    except TypeError:
+        # Python 3.9 compatibility
+        eps = entry_points().get('workflow_recipes', [])
+
+    for entry_point in eps:
+        print("===> " + entry_point.name)
         try:
             Recipe = entry_point.load()
-            rows.append(
-                [Recipe.__name__, entry_point.module_name, f"from {entry_point.module_name} import {Recipe.__name__}"])
+            # Extract module name from the entry point value
+            module_name = entry_point.value.split(':')[0]
+            class_name = Recipe.__name__
+            rows.append([
+                entry_point.name,  # Use entry point name instead of class name
+                module_name,
+                f"from {module_name} import {class_name}"
+            ])
         except Exception as e:
+            print(f"Could not load {entry_point.name}: {e}")
             traceback.print_exc()
-            print(f"Could not load {entry_point.module_name}")
+
     return pd.DataFrame(rows, columns=["name", "module", "import command"])
 
 
 def ls_recipe():
     """
-    Inspired by UNIX `ls` command, it lists the recipes already installed into the system and 
-    how to import it to use.
+    Inspired by UNIX `ls` command, it lists the recipes already installed
+    into the system and how to import it to use.
     """
     print(get_recipes())
 
 
-def uninstall_recipe(module_name:str,
-                     savedir: pathlib.Path = this_dir.joinpath("recipes")):
+def install_recipe(recipe_path: Union[str, pathlib.Path],
+                   verbose: bool = False):
     """
-    Uninstalls a recipe installed in the system.
-    """
+    Installs a recipe from a local directory into the system. The recipe will be
 
-    dst = f"wfcommons.wfchef.recipe.{savedir.stem}"
+    :param recipe_path: Path to the recipe directory (containing setup.py or pyproject.toml)
+    :param verbose: If True, show detailed pip output
+    """
+    recipe_path = pathlib.Path(recipe_path).resolve()
+
+    if not recipe_path.exists():
+        print(f"Error: Recipe path does not exist: {recipe_path}")
+        return False
+
+    # Check for setup.py or pyproject.toml
+    has_setup = recipe_path.joinpath("setup.py").exists()
+    has_pyproject = recipe_path.joinpath("pyproject.toml").exists()
+
+    if not (has_setup or has_pyproject):
+        print(f"Error: No setup.py or pyproject.toml found in {recipe_path}")
+        return False
+
     try:
-        print([sys.executable, "-m", "pip", "uninstall", "-y", dst])
-        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", dst])
-        traceback.print_exc()
+        cmd = [sys.executable, "-m", "pip", "install"]
+
+        # Add verbose flag before -e if needed
+        if verbose:
+            cmd.append("-v")
+
+        cmd.append(str(recipe_path))
+
+        print(f"Installing recipe from: {recipe_path}")
+        print(f"Command: {' '.join(cmd)}")
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Installation failed: {result.stderr}")
+            return False
+        else:
+            print(f"Successfully installed recipe from {recipe_path}")
+            if verbose:
+                print(result.stdout)
+            return True
 
     except Exception as e:
+        print(f"Could not install recipe from {recipe_path}: {e}")
         traceback.print_exc()
-        print(f"Could not uninstall recipe for {module_name}")
+        return False
+
+
+def install_recipe(recipe_path: Union[str, pathlib.Path],
+                   editable: bool = False,
+                   verbose: bool = False):
+    """
+    Installs a recipe from a local directory into the system.
+
+    :param recipe_path: Path to the recipe directory (containing setup.py or pyproject.toml)
+    :param editable: If True, install in editable/development mode (-e flag).
+                     Default is False for production installs.
+    :param verbose: If True, show detailed pip output
+    """
+    recipeimport
+    sys
+
+
+import subprocess
+import pathlib
+import json
+import traceback
+from typing import Union, Optional
+from importlib.metadata import entry_points
+import pandas as pd
+
+
+def get_recipe(recipe: str) -> Optional[type]:
+    """
+    Load a recipe by name from installed entry points.
+
+    :param recipe: Name of the recipe to load
+    :return: Recipe class or None if not found
+    """
+    # For Python 3.10+, entry_points() returns a more convenient interface
+    # For Python 3.9, you may need to use entry_points().get('workflow_recipes', [])
+    try:
+        eps = entry_points(group='workflow_recipes')
+    except TypeError:
+        # Python 3.9 compatibility
+        eps = entry_points().get('workflow_recipes', [])
+
+    for entry_point in eps:
+        # In importlib.metadata, entry points have 'name' instead of 'attrs'
+        if entry_point.name == recipe:
+            return entry_point.load()
+
+    return None
+
+
+def get_recipes() -> pd.DataFrame:
+    """
+    Get a DataFrame of all available workflow recipes.
+
+    :return: DataFrame with columns: name, module, import command
+    """
+    rows = []
+
+    try:
+        eps = entry_points(group='workflow_recipes')
+    except TypeError:
+        # Python 3.9 compatibility
+        eps = entry_points().get('workflow_recipes', [])
+
+    for entry_point in eps:
+        try:
+            Recipe = entry_point.load()
+            # Extract module name from the entry point value
+            module_name = entry_point.value.split(':')[0]
+            class_name = Recipe.__name__
+            rows.append([
+                entry_point.name,  # Use entry point name instead of class name
+                module_name,
+                f"from {module_name} import {class_name}"
+            ])
+        except Exception as e:
+            # Try to get module name even if load fails
+            try:
+                module_name = entry_point.value.split(':')[0]
+                class_name = entry_point.value.split(':')[1] if ':' in entry_point.value else "Unknown"
+                rows.append([
+                    entry_point.name,
+                    module_name,
+                    f"from {module_name} import {class_name} (NOT LOADED: {e})"
+                ])
+            except:
+                pass
+            print(f"Could not load {entry_point.name}: {e}")
+            if "--verbose" in sys.argv or os.environ.get("WFCHEF_DEBUG"):
+                traceback.print_exc()
+
+    return pd.DataFrame(rows, columns=["name", "module", "import command"])
+
+
+def ls_recipe():
+    """
+    Inspired by UNIX `ls` command, it lists the recipes already installed
+    into the system and how to import it to use.
+    """
+    print(get_recipes())
+
+
+def install_recipe(recipe_path: Union[str, pathlib.Path],
+                   editable: bool = False,
+                   verbose: bool = False):
+    """
+    Installs a recipe from a local directory into the system.
+
+    :param recipe_path: Path to the recipe directory (containing setup.py or pyproject.toml)
+    :param editable: If True, install in editable/development mode (-e flag)
+    :param verbose: If True, show detailed pip output
+    """
+    recipe_path = pathlib.Path(recipe_path).resolve()
+
+    if not recipe_path.exists():
+        print(f"Error: Recipe path does not exist: {recipe_path}")
+        return False
+
+    # Check for setup.py or pyproject.toml
+    has_setup = recipe_path.joinpath("setup.py").exists()
+    has_pyproject = recipe_path.joinpath("pyproject.toml").exists()
+
+    if not (has_setup or has_pyproject):
+        print(f"Error: No setup.py or pyproject.toml found in {recipe_path}")
+        return False
+
+    try:
+        cmd = [sys.executable, "-m", "pip", "install"]
+
+        # Add verbose flag before -e if needed
+        if verbose:
+            cmd.append("-v")
+
+        # Add editable flag and path together
+        if editable:
+            cmd.extend(["-e", str(recipe_path)])
+        else:
+            cmd.append(str(recipe_path))
+
+        print(f"Installing recipe from: {recipe_path}")
+        print(f"Command: {' '.join(cmd)}")
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Installation failed: {result.stderr}")
+            return False
+        else:
+            print(f"Successfully installed recipe from {recipe_path}")
+            if verbose:
+                print(result.stdout)
+            return True
+
+    except Exception as e:
+        print(f"Could not install recipe from {recipe_path}: {e}")
+        traceback.print_exc()
+        return False
+
+
+def uninstall_recipe(recipe_name: str):
+    """
+    Uninstalls a recipe installed in the system.
+
+    :param recipe_name: Name of the recipe to uninstall (e.g., 'somename' or 'somename_recipe')
+    """
+    # Remove '_recipe' suffix if present
+    if recipe_name.endswith('_recipe'):
+        recipe_name = recipe_name[:-7]
+
+    package_name = f"wfchef-recipe-{recipe_name}"
+
+    try:
+        cmd = [sys.executable, "-m", "pip", "uninstall", "-y", package_name]
+        print(f"Uninstalling: {package_name}")
+        print(f"Command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Uninstall failed: {result.stderr}")
+            return False
+        else:
+            print(f"Successfully uninstalled {package_name}")
+            return True
+
+    except Exception as e:
+        print(f"Could not uninstall recipe for {recipe_name}: {e}")
+        traceback.print_exc()
+        return False
 
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],
@@ -215,85 +473,201 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
                   wf_name: str,
                   cutoff: int = 4000,
                   verbose: bool = False,
-                  runs: int = 1):
+                  runs: int = 1,
+                  author: str = "Workflow Chef",
+                  author_email: str = "workflow@example.com",
+                  package_version: str = "0.1.0"):
     """
-    Creates a recipe for a workflow application by automatically replacing custom information 
-    from the recipe skeleton.
+    Creates a standalone recipe package for a workflow application.
 
-    :param path_to_instances: name (for samples available in WfCommons) or path to the real workflow instances.
-    :type path_to_instances: str or pathlib.Path 
+    :param path_to_instances: name (for samples available in WfCommons) or
+                              path to the real workflow instances.
     :param savedir: path to save the recipe.
-    :type savedir: pathlib.Path
     :param wf_name: name of the workflow application.
-    :type wf_name: str 
     :param cutoff: when set, only consider instances of smaller or equal sizes.
-    :type cutoff: int
-    :param verbose: when set, prints status messages.
-    :type cutoff: bool
-    :param verbose: number of times to repeat the err calculation process (due to randomization).
-    :type runs: bool
+    :param verbose: when set, prints status messages (and helpful how-to instructions!)
+    :param runs: number of times to repeat the err calculation process
+                 (due to randomization).
+    :param author: package author name.
+    :param author_email: package author email.
+    :param package_version: initial package version.
     """
+    try:
+        import tomli_w
+    except ImportError:
+        raise ImportError(
+            "tomli_w is required for pyproject.toml generation. "
+            "Install it with: pip install tomli-w"
+        )
+
+    # Import these from your actual modules
+    from stringcase import capitalcase
+
+    # Note: You'll need to define these paths in your actual code
+    # skeleton_path = pathlib.Path(__file__).parent.joinpath("skeleton")
+
     camelname = capitalcase(wf_name)
+
+    # Create a standalone package name
+    package_name = f"wfchef-recipe-{wf_name}"
+    module_name = f"wfchef_recipe_{wf_name}"
+
+    # Create simple directory structure: {module_name}/
     savedir.mkdir(exist_ok=True, parents=True)
-    dst = pathlib.Path(savedir, f"{savedir.stem}_recipes", wf_name).resolve()
-    dst.mkdir(exist_ok=True, parents=True)
+
+    # Create the package directory
+    recipe_dir = savedir.joinpath(module_name)
+    recipe_dir.mkdir(exist_ok=True, parents=True)
 
     if verbose:
         print(f"Finding microstructures")
-    microstructures_path = dst.joinpath("microstructures")
-    save_microstructures(path_to_instances, microstructures_path, img_type=None, cutoff=cutoff)
+
+    microstructures_path = recipe_dir.joinpath("microstructures")
+    save_microstructures(path_to_instances, microstructures_path,
+                         img_type=None, cutoff=cutoff)
 
     if verbose:
         print(f"Generating Error Table")
+
     err_savepath = microstructures_path.joinpath("metric", "err.csv")
     err_savepath.parent.mkdir(exist_ok=True, parents=True)
     df = find_err(microstructures_path, runs=runs)
     err_savepath.write_text(df.to_csv())
 
-    # Recipe 
+    # Recipe
     with skeleton_path.joinpath("recipe.py").open() as fp:
         skeleton_str = fp.read()
 
     if verbose:
         print(f"Generating Recipe Code")
+
     skeleton_str = skeleton_str.replace("Skeleton", camelname)
     skeleton_str = skeleton_str.replace("skeleton", wf_name)
-    with this_dir.joinpath(dst.joinpath("recipe.py")).open("w+") as fp:
+    with recipe_dir.joinpath("recipe.py").open("w+") as fp:
         fp.write(skeleton_str)
 
-    # recipe __init__.py
-    dst.joinpath("__init__.py").write_text(f"from .recipe import {camelname}Recipe")
+    # Package __init__.py - exports the recipe class
+    recipe_dir.joinpath("__init__.py").write_text(
+        f"\"\"\"WfChef recipe for {wf_name} workflow.\"\"\"\n\n"
+        f"from .recipe import {camelname}Recipe\n\n"
+        f"__version__ = '{package_version}'\n"
+        f"__all__ = ['{camelname}Recipe']\n"
+    )
 
-    # setup.py 
-    with skeleton_path.joinpath("setup.py").open() as fp:
-        skeleton_str = fp.read()
+    # Create pyproject.toml at the package root
+    pyproject_path = savedir.joinpath("pyproject.toml")
 
-    skeleton_str = skeleton_str.replace("PACKAGE_NAME", savedir.stem)
+    if verbose:
+        print(f"Generating pyproject.toml at {pyproject_path}")
 
-    
-    print(f"The setup.py file being edit is located at {dst.parent.parent.joinpath('setup.py')}")
-    with this_dir.joinpath(dst.parent.parent.joinpath("setup.py")).open("w+") as fp:
-        fp.write(skeleton_str)
+    # Create config for this standalone recipe package
+    config = {
+        "build-system": {
+            "requires": ["setuptools>=61.0", "wheel"],
+            "build-backend": "setuptools.build_meta"
+        },
+        "project": {
+            "name": package_name,
+            "version": package_version,
+            "description": f"WfChef recipe for {wf_name} workflow",
+            "authors": [{"name": author, "email": author_email}],
+            "requires-python": ">=3.8",
+            "dependencies": [
+                "wfcommons>=1.0.0",
+                "pandas",
+                "numpy",
+            ],
+        },
+        "tool": {
+            "setuptools": {
+                "packages": [module_name],
+                "package-data": {
+                    module_name: ["**/*"]
+                }
+            }
+        }
+    }
 
-    # __init__.py
-    dst.parent.joinpath("__init__.py").touch(exist_ok=True)
-    with dst.parent.joinpath("__init__.py").open("a") as fp:
-        fp.write(f"from .{wf_name} import {camelname}Recipe\n")
+    # Add entry point for this recipe
+    config["project"]["entry-points"] = {
+        "workflow_recipes": {
+            f"{wf_name}_recipe": f"{module_name}:{camelname}Recipe"
+        }
+    }
 
-    # MANIFEST
-    with dst.parent.parent.joinpath("MANIFEST.in").open("a+") as fp:
-        fp.write(f"graft {savedir.stem}_recipes/{wf_name}/microstructures/**\n")
-        fp.write(f"graft {savedir.stem}_recipes/{wf_name}/microstructures\n")
-        fp.write(f"graft {savedir.stem}_recipes/{wf_name}\n")
+    # Add README if it exists
+    readme_path = savedir.joinpath("README.md")
+    if readme_path.exists():
+        config["project"]["readme"] = "README.md"
+    elif verbose:
+        # Create a basic README
+        readme_content = f"""# {package_name}
 
-    # workflow_recipes
-    with this_dir.joinpath(dst.parent.parent.joinpath("workflow_recipes.txt")).open("a+") as fp:
-        fp.write(f"{wf_name}_recipe = {savedir.stem}_recipes.{wf_name}:{camelname}Recipe\n")
+WfChef recipe for {wf_name} workflow.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```python
+from {module_name} import {camelname}Recipe
+
+recipe = {camelname}Recipe()
+# Use the recipe...
+```
+
+## Entry Point
+
+This package registers the following workflow recipe entry point:
+- `{wf_name}_recipe` -> `{module_name}:{camelname}Recipe`
+
+You can load it using:
+```python
+from wfcommons.wfchef import get_recipe
+
+Recipe = get_recipe("{wf_name}_recipe")
+recipe = Recipe()
+```
+"""
+        readme_path.write_text(readme_content)
+        config["project"]["readme"] = "README.md"
+
+    # Write pyproject.toml
+    with pyproject_path.open("wb") as f:
+        tomli_w.dump(config, f)
+
+    if verbose:
+        print(f"Created pyproject.toml with entry point: {wf_name}_recipe")
 
     if verbose:
         print(f"Analyzing Workflow Statistics")
+
     stats = analyzer_summary(path_to_instances)
-    dst.joinpath("task_type_stats.json").write_text(json.dumps(stats))
+    recipe_dir.joinpath("task_type_stats.json").write_text(json.dumps(stats))
+
+    if verbose:
+        print(f"\n{'=' * 60}")
+        print(f"Recipe created successfully!")
+        print(f"{'=' * 60}")
+        print(f"Recipe location: {recipe_dir}")
+        print(f"Package root: {savedir}")
+        print(f"Package name: {package_name}")
+        print(f"Module name: {module_name}")
+        print(f"Entry point: {wf_name}_recipe -> {module_name}:{camelname}Recipe")
+        print(f"\nTo install this recipe, run:")
+        print(f"  pip install -e {savedir}")
+        print(f"\nOr use the install_recipe function:")
+        print(f"  install_recipe('{savedir}', editable=True)")
+        print(f"\nAfter installation, import it as:")
+        print(f"  from {module_name} import {camelname}Recipe")
+        print(f"\nOr load via entry point:")
+        print(f"  from wfcommons.wfchef import get_recipe")
+        print(f"  Recipe = get_recipe('{wf_name}_recipe')")
+        print(f"{'=' * 60}\n")
 
 
 def get_parser() -> argparse.ArgumentParser:

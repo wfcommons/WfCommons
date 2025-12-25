@@ -38,6 +38,7 @@ dependencies = [
     "stringcase",
     "filelock",
     "pathos",
+    "tomli-w"
 ]
 dynamic = ["version", "entry-points", "scripts"]
 

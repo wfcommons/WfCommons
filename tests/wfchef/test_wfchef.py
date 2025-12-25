@@ -17,6 +17,7 @@ import sys
 
 from tests.test_helpers import _create_fresh_local_dir
 from wfcommons.wfchef.chef import create_recipe
+from wfcommons.wfchef.chef import install_recipe
 from wfcommons.wfchef.chef import uninstall_recipe
 from wfcommons.wfchef.chef import ls_recipe
 
@@ -32,10 +33,11 @@ class TestWfChef:
         dirpath = _create_fresh_local_dir("/tmp/recipe/")
 
         # Put a few JSON workflows in /tmp
-        urls = ["https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json",
-                "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-002.json",
-                "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-003.json",
-                ]
+        urls = [
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json",
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-002.json",
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-003.json",
+        ]
         for url in urls:
             response = requests.get(url)
             local_file_name = url.split("/")[-1]
@@ -49,28 +51,77 @@ class TestWfChef:
             "name": "somename",
             "cutoff": 4000
         }
-        create_recipe(args["path"], args["out"], args["name"], cutoff=args["cutoff"], verbose=True)
 
-        # Check that some of the expected files are there
-        assert((dirpath / "setup.py").exists())
-        assert((dirpath / "recipe_recipes" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "somename" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "somename" / "__init__.py").exists())
-        assert((dirpath / "recipe_recipes" / "somename" / "recipe.py").exists())
-        assert((dirpath / "recipe_recipes" / "somename" / "microstructures").exists())
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Creating recipe...\n")
+        sys.stderr.write("=" * 60 + "\n")
 
+        create_recipe(
+            args["path"],
+            args["out"],
+            args["name"],
+            cutoff=args["cutoff"],
+            verbose=True
+        )
+
+        # Check that expected files are there
+        sys.stderr.write("\nVerifying created files...\n")
+        assert (dirpath / "pyproject.toml").exists(), "pyproject.toml not found"
+        assert (dirpath / "wfchef_recipe_somename" / "__init__.py").exists(), "package __init__.py not found"
+        assert (dirpath / "wfchef_recipe_somename" / "recipe.py").exists(), "recipe.py not found"
+        assert (dirpath / "wfchef_recipe_somename" / "microstructures").exists(), "microstructures not found"
+        sys.stderr.write("✓ All expected files created\n")
+
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Calling ls_recipe before the install:\n")
+        sys.stderr.write("=" * 60 + "\n")
         ls_recipe()
 
         # Install the recipe
+        sys.stderr.write("\n" + "=" * 60 + "\n")
         sys.stderr.write("Installing the recipe...\n")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "/tmp/recipe"])
+        sys.stderr.write("=" * 60 + "\n")
+
+        success = install_recipe(dirpath, verbose=True)
+        assert success, "Recipe installation failed"
+        sys.stderr.write("✓ Recipe installed successfully\n")
+
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Calling ls_recipe after the install:\n")
+        sys.stderr.write("=" * 60 + "\n")
+        ls_recipe()
+
+        # Verify the recipe can be loaded
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Testing the recipe import...\n")
+        sys.stderr.write("=" * 60 + "\n")
+
+        try:
+            from wfchef_recipe_somename import SomenameRecipe
+            sys.stderr.write("✓ Successfully imported SomenameRecipe\n")
+            sys.stderr.write(f"  Recipe class: {SomenameRecipe}\n")
+            sys.stderr.write(f"  Module: {SomenameRecipe.__module__}\n")
+        except ImportError as e:
+            sys.stderr.write(f"✗ Failed to import recipe: {e}\n")
+            raise
 
         # Uninstall the recipe
-        # TODO: This does not uninstall the recipe (to fix)
-        # sys.stderr.write("Uninstalling the recipe...\n")
-        # uninstall_recipe("/tmp/recipe")
-        # ls_recipe()
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Uninstalling the recipe...\n")
+        sys.stderr.write("=" * 60 + "\n")
+
+        success = uninstall_recipe("somename")
+        assert success, "Recipe uninstallation failed"
+        sys.stderr.write("✓ Recipe uninstalled successfully\n")
+
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Calling ls_recipe after the uninstall:\n")
+        sys.stderr.write("=" * 60 + "\n")
+        ls_recipe()
+
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("TEST COMPLETED SUCCESSFULLY\n")
+        sys.stderr.write("=" * 60 + "\n")
 
 
         # TODO: Do more extensive tests
