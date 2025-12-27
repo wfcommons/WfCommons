@@ -204,7 +204,6 @@ def get_recipes() -> pd.DataFrame:
         eps = entry_points().get('workflow_recipes', [])
 
     for entry_point in eps:
-        print("===> " + entry_point.name)
         try:
             Recipe = entry_point.load()
             # Extract module name from the entry point value
