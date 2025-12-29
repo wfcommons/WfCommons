@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020-2024 The WfCommons Team.
+# Copyright (c) 2020-2025 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -231,7 +231,6 @@ class WorkflowRecipe(ABC):
         self._generate_files(task.task_id, task_recipe['input'], "input")
         task.input_files = [ifile for ifile in self.tasks_input_files[task.task_id]]
 
-
         return output_files_list
 
     def _generate_files(self, task_id: str, recipe: Dict[str, Any], input_or_output: str) -> List[File]:
@@ -249,12 +248,16 @@ class WorkflowRecipe(ABC):
         :rtype: List[File]
         """
 
-        # Early return due to recursive behavior
-        if (input_or_output == "output") and (task_id not in self.tasks_output_files):
-            return []
-
         files_list = []
         extension_list: List[str] = []
+
+        if (input_or_output == "output") and (task_id not in self.tasks_output_files):
+            for extension in recipe:
+                if extension not in extension_list:
+                    file = self._generate_file(extension, recipe, input_or_output)
+                    files_list.append(file)
+            self.tasks_output_files[task_id] = files_list
+            return files_list
 
         # Setup of references to relevant maps based in input/output
         if input_or_output == "input":
