@@ -232,7 +232,7 @@ def ls_recipe():
 def install_recipe(recipe_path: Union[str, pathlib.Path],
                    verbose: bool = False):
     """
-    Installs a recipe from a local directory into the system. The recipe will be
+    Installs a recipe from a local directory into the system.
 
     :param recipe_path: Path to the recipe directory (containing setup.py or pyproject.toml)
     :param verbose: If True, show detailed pip output
@@ -240,16 +240,14 @@ def install_recipe(recipe_path: Union[str, pathlib.Path],
     recipe_path = pathlib.Path(recipe_path).resolve()
 
     if not recipe_path.exists():
-        print(f"Error: Recipe path does not exist: {recipe_path}")
-        return False
+        raise FileNotFoundError(f"Recipe path does not exist: {recipe_path}")
 
     # Check for setup.py or pyproject.toml
     has_setup = recipe_path.joinpath("setup.py").exists()
     has_pyproject = recipe_path.joinpath("pyproject.toml").exists()
 
     if not (has_setup or has_pyproject):
-        print(f"Error: No setup.py or pyproject.toml found in {recipe_path}")
-        return False
+        raise FileNotFoundError(f"No setup.py or pyproject.toml found in {recipe_path}")
 
     try:
         cmd = [sys.executable, "-m", "pip", "install"]
@@ -266,18 +264,15 @@ def install_recipe(recipe_path: Union[str, pathlib.Path],
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            print(f"Installation failed: {result.stderr}")
-            return False
+            raise RuntimeError(f"Installation failed: {result.stderr}")
         else:
             print(f"Successfully installed recipe from {recipe_path}")
             if verbose:
                 print(result.stdout)
-            return True
 
     except Exception as e:
-        print(f"Could not install recipe from {recipe_path}: {e}")
         traceback.print_exc()
-        return False
+        raise RuntimeError(f"Could not install recipe from {recipe_path}: {e}")
 
 
 def uninstall_recipe(recipe_name: str):
@@ -294,21 +289,16 @@ def uninstall_recipe(recipe_name: str):
 
     try:
         cmd = [sys.executable, "-m", "pip", "uninstall", "-y", package_name]
-        print(f"Uninstalling: {package_name}")
-        print(f"Command: {' '.join(cmd)}")
+        # print(f"Uninstalling: {package_name}")
+        # print(f"Command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            print(f"Uninstall failed: {result.stderr}")
-            return False
-        else:
-            print(f"Successfully uninstalled {package_name}")
-            return True
+            raise RuntimeError(f"Uninstall failed: {result.stderr}")
 
     except Exception as e:
-        print(f"Could not uninstall recipe for {recipe_name}: {e}")
         traceback.print_exc()
-        return False
+        raise RuntimeError(f"Could not uninstall recipe for {recipe_name}: {e}")
 
 
 def create_recipe(path_to_instances: Union[str, pathlib.Path],
