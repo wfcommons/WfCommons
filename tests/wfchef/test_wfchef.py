@@ -82,8 +82,13 @@ class TestWfChef:
         sys.stderr.write("Installing the recipe...\n")
         sys.stderr.write("=" * 60 + "\n")
 
-        success = install_recipe(dirpath, verbose=True)
-        assert success, "Recipe installation failed"
+        try:
+            install_recipe("/bogus/bogus/whatever", verbose=True)
+            raise Exception("Should not be able to install a recipe given a bogus path")
+        except FileNotFoundError as e:
+            pass
+
+        install_recipe(dirpath, verbose=True)
         sys.stderr.write("✓ Recipe installed successfully\n")
 
         sys.stderr.write("\n" + "=" * 60 + "\n")
@@ -110,8 +115,7 @@ class TestWfChef:
         sys.stderr.write("Uninstalling the recipe...\n")
         sys.stderr.write("=" * 60 + "\n")
 
-        success = uninstall_recipe("somename")
-        assert success, "Recipe uninstallation failed"
+        uninstall_recipe("somename")
         sys.stderr.write("✓ Recipe uninstalled successfully\n")
 
         sys.stderr.write("\n" + "=" * 60 + "\n")
