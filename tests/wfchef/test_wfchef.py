@@ -26,7 +26,7 @@ from wfcommons import WorkflowGenerator
 class TestWfChef:
 
     @pytest.mark.unit
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_recipe_management_functions(self) -> None:
         """
         Just calling the create_recipe function from chef.py directly (i.e., bypassing main())
