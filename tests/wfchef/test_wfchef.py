@@ -20,12 +20,13 @@ from wfcommons.wfchef.chef import create_recipe
 from wfcommons.wfchef.chef import install_recipe
 from wfcommons.wfchef.chef import uninstall_recipe
 from wfcommons.wfchef.chef import ls_recipe
+from wfcommons import WorkflowGenerator
 
 
 class TestWfChef:
 
     @pytest.mark.unit
-    def test_create_recipe(self) -> None:
+    def test_recipe_management_functions(self) -> None:
         """
         Just calling the create_recipe function from chef.py directly (i.e., bypassing main())
         """
@@ -110,6 +111,18 @@ class TestWfChef:
             sys.stderr.write(f"✗ Failed to import recipe: {e}\n")
             raise
 
+        # Verify the recipe can be used
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Testing the recipe usage...\n")
+        sys.stderr.write("=" * 60 + "\n")
+        try:
+            generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(250))
+            generator.build_workflow()
+        except Exception as e:
+            sys.stderr.write(f"✗ Failed to use installed recipe: {e}\n")
+            raise
+
+
         # Uninstall the recipe
         sys.stderr.write("\n" + "=" * 60 + "\n")
         sys.stderr.write("Uninstalling the recipe...\n")
@@ -123,14 +136,16 @@ class TestWfChef:
         sys.stderr.write("=" * 60 + "\n")
         ls_recipe()
 
+        # Verify the recipe can be used
         sys.stderr.write("\n" + "=" * 60 + "\n")
-        sys.stderr.write("TEST COMPLETED SUCCESSFULLY\n")
+        sys.stderr.write("Testing the recipe usage after an uninstall...\n")
         sys.stderr.write("=" * 60 + "\n")
-
-
-        # TODO: Do more extensive tests
-        #  - Install/Uninstall the recipe
-        #  - Use the recipe
+        try:
+            generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(250))
+            generator.build_workflow()
+            raise Exception("Should not be able to use a recipe after an uninstall")
+        except Exception as e:
+            pass
 
 
 
