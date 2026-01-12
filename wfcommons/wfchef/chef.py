@@ -566,7 +566,7 @@ def main():
     if args.action == ls_recipe:
         ls_recipe()
     elif args.action == uninstall_recipe:
-        uninstall_recipe(args.name, pathlib.Path(args.out))
+        uninstall_recipe(args.name)
     elif args.action == create_recipe:
         create_recipe(args.path, args.out, args.name, cutoff=args.cutoff, verbose=True)
 

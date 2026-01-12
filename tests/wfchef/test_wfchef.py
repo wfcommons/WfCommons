@@ -20,12 +20,14 @@ from wfcommons.wfchef.chef import create_recipe
 from wfcommons.wfchef.chef import install_recipe
 from wfcommons.wfchef.chef import uninstall_recipe
 from wfcommons.wfchef.chef import ls_recipe
+from wfcommons import WorkflowGenerator
 
 
 class TestWfChef:
 
     @pytest.mark.unit
-    def test_create_recipe(self) -> None:
+    # @pytest.mark.skip
+    def test_recipe_management_functions(self) -> None:
         """
         Just calling the create_recipe function from chef.py directly (i.e., bypassing main())
         """
@@ -84,7 +86,7 @@ class TestWfChef:
 
         try:
             install_recipe("/bogus/bogus/whatever", verbose=True)
-            raise Exception("Should not be able to install a recipe given a bogus path")
+            raise RuntimeError("Should not be able to install a recipe given a bogus path")
         except FileNotFoundError as e:
             pass
 
@@ -110,6 +112,18 @@ class TestWfChef:
             sys.stderr.write(f"✗ Failed to import recipe: {e}\n")
             raise
 
+        # Verify the recipe can be used
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Testing the recipe usage...\n")
+        sys.stderr.write("=" * 60 + "\n")
+        try:
+            generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(250))
+            generator.build_workflow()
+        except Exception as e:
+            sys.stderr.write(f"✗ Failed to use installed recipe: {e}\n")
+            raise
+
+
         # Uninstall the recipe
         sys.stderr.write("\n" + "=" * 60 + "\n")
         sys.stderr.write("Uninstalling the recipe...\n")
@@ -123,15 +137,130 @@ class TestWfChef:
         sys.stderr.write("=" * 60 + "\n")
         ls_recipe()
 
+        # Verify the recipe can be used
         sys.stderr.write("\n" + "=" * 60 + "\n")
-        sys.stderr.write("TEST COMPLETED SUCCESSFULLY\n")
+        sys.stderr.write("Testing the recipe usage after an uninstall...\n")
         sys.stderr.write("=" * 60 + "\n")
+        try:
+            generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(250))
+            generator.build_workflow()
+            raise Exception("Should not be able to use a recipe after an uninstall")
+        except Exception as e:
+            pass
+
+    @pytest.mark.unit
+    def test_recipe_management_wfchef_main(self, monkeypatch, capsys) -> None:
+
+        # Importing main for easier testing/coverage (compared to subprocessing the executable)
+        from wfcommons.wfchef.chef import main
+
+        dirpath = _create_fresh_local_dir("/tmp/recipe/")
+
+        # Put a few JSON workflows in /tmp
+        urls = [
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-001.json",
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-002.json",
+            "https://raw.githubusercontent.com/wfcommons/WfInstances/refs/heads/main/makeflow/blast/blast-chameleon-small-003.json",
+        ]
+        for url in urls:
+            response = requests.get(url)
+            local_file_name = url.split("/")[-1]
+            with open(dirpath / local_file_name, 'wb') as f:
+                f.write(response.content)
+
+        # Calling main with --help
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with '--help'...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "--help"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "usage" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not print usage information with -h flag")
+        with capsys.disabled():
+            sys.stderr.write("✓ Script called successfully\n")
+
+        # Calling main with 'ls' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'ls' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "ls"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "_recipe" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not list recipes with 'ls' command")
+        num_recipes = sum(["_recipe" in x for x in captured.out.splitlines()])
+        with capsys.disabled():
+            sys.stderr.write(f"✓ Script called successfully ({num_recipes} recipes listed)\n")
+
+        # Calling main with 'create' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'create' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "create", str(dirpath), "-o",  str(dirpath), "-n", "SomeRecipe"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        capsys.readouterr() # Clear output
+
+        # Calling main with 'ls' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'ls' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "ls"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "_recipe" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not list recipes with 'ls' command")
+        new_num_recipes = sum(["_recipe" in x for x in captured.out.splitlines()])
+        with capsys.disabled():
+            sys.stderr.write(f"✓ Script called successfully ({new_num_recipes} recipes listed)\n")
+
+        assert(num_recipes + 1 == new_num_recipes)
+
+        # Calling main with 'uninstall' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'uninstall' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "uninstall", "-n", "SomeRecipe"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        capsys.readouterr() # Clear output
 
 
-        # TODO: Do more extensive tests
-        #  - Install/Uninstall the recipe
-        #  - Use the recipe
 
+        # Calling main with 'ls' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'ls' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "ls"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "_recipe" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not list recipes with 'ls' command")
+        new_new_num_recipes = sum(["_recipe" in x for x in captured.out.splitlines()])
+        with capsys.disabled():
+            sys.stderr.write(f"✓ Script called successfully ({new_new_num_recipes} recipes listed)\n")
 
-
-
+        assert(new_new_num_recipes == num_recipes)
