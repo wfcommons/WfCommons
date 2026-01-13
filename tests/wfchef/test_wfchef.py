@@ -193,6 +193,22 @@ class TestWfChef:
         with capsys.disabled():
             sys.stderr.write("✓ Script called successfully\n")
 
+        # Calling main with no argument, which should be the same as --help
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with no argument...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "usage" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not print usage information with -h flag")
+        with capsys.disabled():
+            sys.stderr.write("✓ Script called successfully\n")
+
         # Calling main with 'ls' command
         with capsys.disabled():
             sys.stderr.write("\n" + "=" * 60 + "\n")
@@ -210,12 +226,12 @@ class TestWfChef:
         with capsys.disabled():
             sys.stderr.write(f"✓ Script called successfully ({num_recipes} recipes listed)\n")
 
-        # Calling main with 'create' command
+        # Calling main with 'create' command with the --no-install flag
         with capsys.disabled():
             sys.stderr.write("\n" + "=" * 60 + "\n")
-            sys.stderr.write("Calling wfchef script with 'create' command...\n")
+            sys.stderr.write("Calling wfchef script with 'create' command withe the --no-install flag...\n")
             sys.stderr.write("=" * 60 + "\n")
-        monkeypatch.setattr(sys, 'argv', ["wfchef", "create", str(dirpath), "-o",  str(dirpath), "-n", "SomeRecipe"])
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "create", str(dirpath), "-o",  str(dirpath), "-n", "SomeRecipe", "--no-install"])
         try:
             main()
         except SystemExit as e:
@@ -239,7 +255,39 @@ class TestWfChef:
         with capsys.disabled():
             sys.stderr.write(f"✓ Script called successfully ({new_num_recipes} recipes listed)\n")
 
-        assert(num_recipes + 1 == new_num_recipes)
+        assert(num_recipes == new_num_recipes)
+
+        # Calling main with 'create' command WITHOUT the --no-install flag
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'create' command without the --no-install flag...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv',
+                            ["wfchef", "create", str(dirpath), "-o", str(dirpath), "-n", "SomeRecipe"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        capsys.readouterr()  # Clear output
+
+        # Calling main with 'ls' command
+        with capsys.disabled():
+            sys.stderr.write("\n" + "=" * 60 + "\n")
+            sys.stderr.write("Calling wfchef script with 'ls' command...\n")
+            sys.stderr.write("=" * 60 + "\n")
+        monkeypatch.setattr(sys, 'argv', ["wfchef", "ls"])
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code == 0
+        captured = capsys.readouterr()
+        if "_recipe" not in captured.out.lower():
+            raise RuntimeError("wfchef script does not list recipes with 'ls' command")
+        new_num_recipes = sum(["_recipe" in x for x in captured.out.splitlines()])
+        with capsys.disabled():
+            sys.stderr.write(f"✓ Script called successfully ({new_num_recipes} recipes listed)\n")
+
+        assert (num_recipes + 1 == new_num_recipes)
 
         # Calling main with 'uninstall' command
         with capsys.disabled():
