@@ -23,8 +23,9 @@ import subprocess
 import traceback
 import sys
 
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Type
 from stringcase import capitalcase
+from wfcommons.wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 
 from .duplicate import duplicate, NoMicrostructuresError
 from .find_microstructures import save_microstructures
@@ -166,7 +167,7 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     return stats_dict
 
 
-def get_recipe(recipe: str) -> Optional[type]:
+def get_recipe(recipe: str) -> Type[WfChefWorkflowRecipe] | None:
     """
     Load a recipe by name from installed entry points.
 

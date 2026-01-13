@@ -16,6 +16,7 @@ import subprocess
 import sys
 
 from tests.test_helpers import _create_fresh_local_dir
+from wfcommons.wfchef.chef import get_recipe
 from wfcommons.wfchef.chef import create_recipe
 from wfcommons.wfchef.chef import install_recipe
 from wfcommons.wfchef.chef import uninstall_recipe
@@ -123,6 +124,14 @@ class TestWfChef:
             sys.stderr.write(f"✗ Failed to use installed recipe: {e}\n")
             raise
 
+        try:
+            recipe = get_recipe("somename_recipe")
+            generator = WorkflowGenerator(recipe.from_num_tasks(250))
+        except Exception as e:
+            sys.stderr.write(f"✗ Failed to use get installed recipe by name: {e}\n")
+            raise
+
+        sys.stderr.write("✓ Successfully used recipe via direct import and by using get_recipe(name)\n")
 
         # Uninstall the recipe
         sys.stderr.write("\n" + "=" * 60 + "\n")
