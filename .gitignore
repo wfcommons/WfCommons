@@ -56,3 +56,5 @@ bin/gpu_benchmark
 /wfcommons/wfc-1.3_to_dask/htmlcov
 test/
 llmtests/
+
+scratch/
