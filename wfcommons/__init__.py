@@ -16,7 +16,7 @@ __credits__ = 'University of Hawaii at Manoa, Oak Ridge National Laboratoy, San 
 import logging
 
 from .wfchef.recipes import BlastRecipe, BwaRecipe, CyclesRecipe, EpigenomicsRecipe, GenomeRecipe, MontageRecipe, \
-    SeismologyRecipe, SoykbRecipe, SrasearchRecipe
+    RnaseqRecipe, SeismologyRecipe, SoykbRecipe, SrasearchRecipe
 from .wfgen import WorkflowGenerator
 from .wfinstances import Instance, InstanceAnalyzer, InstanceElement
 
