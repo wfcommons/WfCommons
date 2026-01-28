@@ -14,6 +14,7 @@ import shutil
 import sys
 import json
 import time
+import re
 import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
@@ -164,12 +165,12 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
-    # Run the workflow!
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "makeflow ./workflow.makeflow"], stdout=True, stderr=True)
+    # Run the workflow (with full logging)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose ./workflow.makeflow"], stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
-    sys.stderr.write("SHOULD BE CHECKING SANITY")
-    # assert (output.decode().count("completed") == num_tasks)
+    num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
+    assert (num_completed_jobs == num_tasks)
 
 def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!

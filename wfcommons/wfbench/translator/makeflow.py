@@ -19,7 +19,6 @@ from ...common import Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
-
 class MakeflowTranslator(Translator):
     """
     A WfFormat parser for creating Makeflow workflow applications.
@@ -71,29 +70,39 @@ class MakeflowTranslator(Translator):
             make_clause = ""
             # output files
             for output_file in task.output_files:
-                make_clause += f"{output_file.file_id} "
+                make_clause += f"data/{output_file.file_id} "
             make_clause += ": "
             # input files
             for input_file in task.input_files:
-                make_clause += f"{input_file.file_id} "
+                make_clause += f"data/{input_file.file_id} "
             make_clause += "\n"
+            # Command
             make_clause += "\t"
-            make_clause += task.program + " " + " ".join(task.args)
-            make_clause += "\n"
+            make_clause += task.program + " "
+
+            input_spec = "\"["
+            for file in task.input_files:
+                input_spec += f"\\\\\"data/{file.file_id}\\\\\","
+            input_spec = input_spec[:-1] + "]\""
+
+            output_spec = "\"{"
+            for file in task.output_files:
+                output_spec += f"\\\\\"data/{file.file_id}\\\\\":{str(file.size)},"
+            output_spec = output_spec[:-1] + "}\""
+
+            args = []
+            for a in task.args:
+                if "--output-files" in a:
+                    args.append(f"--output-files {output_spec}")
+                elif "--input-files" in a:
+                    args.append(f"--input-files {input_spec}")
+                else:
+                    args.append(a)
+
+            args = " ".join(f"{a}" for a in args)
+            make_clause += args + "\n"
             self._script += make_clause + "\n\n"
         return
-
-        # OLD CODE FOR TASK VINE...
-        # args = []
-        # for a in task.args:
-        #     if "--output-files" in a:
-        #         args.append(f"--output-files {output_spec}")
-        #     elif "--input-files" in a:
-        #         args.append(f"--input-files {input_spec}")
-        #     else:
-        #         args.append(a)
-        # args = " ".join(f"{a}" for a in args)
-
 
     def _write_readme_file(self, output_folder: pathlib.Path) -> None:
         """
@@ -105,7 +114,5 @@ class MakeflowTranslator(Translator):
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
             out.write(f"In directory {str(output_folder)}:\n")
-            out.write(f"  - The Makeflow input file: "
-                      f"        workflow.makeflow\n")
-            out.write(f"  - Run the workflow: "
-                      f"        makeflow workflow.makeflow\n")
+            out.write(f"  - The Makeflow input file:  workflow.makeflow\n")
+            out.write(f"  - Run the workflow:         makeflow workflow.makeflow\n")
