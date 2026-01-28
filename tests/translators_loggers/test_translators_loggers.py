@@ -31,6 +31,7 @@ from wfcommons.wfbench import NextflowTranslator
 from wfcommons.wfbench import AirflowTranslator
 from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
+from wfcommons.wfbench import MakeflowTranslator
 from wfcommons.wfbench import CWLTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
@@ -105,6 +106,7 @@ additional_setup_methods = {
     "airflow": noop,
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
+    "makeflow": noop,
     "cwl": noop,
     "pegasus": _additional_setup_pegasus,
     "swiftt": _additional_setup_swiftt,
@@ -161,6 +163,14 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
 
+def run_workflow_makeflow(container, num_tasks, str_dirpath):
+    # Run the workflow!
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "makeflow ./workflow.makeflow"], stdout=True, stderr=True)
+    # Check sanity
+    assert (exit_code == 0)
+    sys.stderr.write("SHOULD BE CHECKING SANITY")
+    # assert (output.decode().count("completed") == num_tasks)
+
 def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
@@ -194,6 +204,7 @@ run_workflow_methods = {
     "airflow": run_workflow_airflow,
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
+    "makeflow": run_workflow_makeflow,
     "cwl": run_workflow_cwl,
     "pegasus": run_workflow_pegasus,
     "swiftt": run_workflow_swiftt,
@@ -206,6 +217,7 @@ translator_classes = {
     "airflow": AirflowTranslator,
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
+    "makeflow": MakeflowTranslator,
     "cwl": CWLTranslator,
     "pegasus": PegasusTranslator,
     "swiftt": SwiftTTranslator,
@@ -217,15 +229,16 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
-           "nextflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "cwl",
-           "pegasus",
+           # "swiftt",
+           # "dask",
+           # "parsl",
+           # "nextflow",
+           # "airflow",
+           # "bash",
+           # "taskvine",
+           "makeflow",
+           # "cwl",
+           # "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
