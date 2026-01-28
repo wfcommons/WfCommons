@@ -18,3 +18,4 @@ from .pegasus import PegasusTranslator
 from .pycompss import PyCompssTranslator
 from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
+from .makeflow import MakeflowTranslator

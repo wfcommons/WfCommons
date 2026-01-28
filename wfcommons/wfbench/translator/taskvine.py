@@ -34,6 +34,7 @@ class TaskVineTranslator(Translator):
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
+        self._script = ""
         self.parsed_tasks = []
         self.task_counter = 1
         self.output_files_map = {}
@@ -45,16 +46,16 @@ class TaskVineTranslator(Translator):
         :param output_folder: The path to the folder in which the workflow benchmark will be generated.
         :type output_folder: pathlib.Path
         """
-        self.script = "# workflow tasks\n"
+        self._script = "# workflow tasks\n"
 
         # add tasks per level
         self.next_level = self.root_task_names.copy()
         while self.next_level:
             self.next_level = self._add_level_tasks(self.next_level)
-            self.script += "wait_for_tasks_completion()\n"
+            self._script += "wait_for_tasks_completion()\n"
 
         # generate code
-        run_workflow_code = self._merge_codelines("templates/taskvine_template.py", self.script)
+        run_workflow_code = self._merge_codelines("templates/taskvine_template.py", self._script)
 
         # generate Flowcept code
         if self.workflow.workflow_id is not None:
@@ -156,7 +157,7 @@ class TaskVineTranslator(Translator):
             args = " ".join(f"{a}" for a in args)
 
             # write task
-            self.script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
+            self._script += f"t_{self.task_counter} = vine.Task('{task.program} {args}')\n" \
                            f"t_{self.task_counter}.set_cores(1)\n{task_script}"
 
             self.task_counter += 1
