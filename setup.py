@@ -10,19 +10,32 @@
 
 import sys
 import subprocess
+import os
 
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext
 
 class Build(build_ext):
-    """Customized setuptools build command - builds protos on build."""
+    """Customized setuptools build command - builds cpu-benchmark on build."""
 
     def run(self):
-        protoc_command = ["make"]
-        if subprocess.call(protoc_command) != 0:
-            sys.stderr.write("Error: 'make' is not installed. Please install 'make' and try again.\n")
-            sys.exit(-1) 
+        # Try to build the cpu-benchmark, but make it optional
+        # This allows installation on Windows where make/g++ may not be available
+        try:
+            result = subprocess.call(["make"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            if result != 0:
+                sys.stderr.write("Warning: 'make' build failed. cpu-benchmark will not be available.\n")
+                sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
+        except (FileNotFoundError, OSError):
+            sys.stderr.write("Warning: 'make' is not installed. cpu-benchmark will not be available.\n")
+            sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
         super().run()
+
+# Conditionally include cpu-benchmark if it exists
+data_files = []
+cpu_benchmark_path = 'bin/cpu-benchmark'
+if os.path.exists(cpu_benchmark_path):
+    data_files.append(('bin', [cpu_benchmark_path]))
 
 setup(
     packages=find_packages(),
@@ -31,9 +44,7 @@ setup(
     cmdclass={
         'build_ext': Build,
     },
-    data_files=[
-        ('bin', ['bin/cpu-benchmark'])
-    ],
+    data_files=data_files,
     scripts=[
         'bin/wfbench'
     ],
