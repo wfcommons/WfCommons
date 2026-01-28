@@ -15,7 +15,6 @@ import sys
 import json
 import time
 import re
-import networkx
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
