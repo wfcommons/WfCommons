@@ -123,16 +123,16 @@ def _get_total_size_of_directory(directory_path: str):
             total_size += os.path.getsize(filepath)
     return total_size
 
-def _compare_workflows(workflow1: Workflow, workflow_2: Workflow):
+def _compare_workflows(workflow_1: Workflow, workflow_2: Workflow):
     
     # Test the number of tasks
-    assert (len(workflow1.tasks) == len(workflow_2.tasks))
+    assert (len(workflow_1.tasks) == len(workflow_2.tasks))
     # Test the task graph topology
-    assert (networkx.is_isomorphic(workflow1, workflow_2))
+    assert (networkx.is_isomorphic(workflow_1, workflow_2))
     # Test the total file size sum
     workflow1_input_bytes, workflow2_input_bytes = 0, 0
     workflow1_output_bytes, workflow2_output_bytes = 0, 0
-    for workflow1_task, workflow2_task in zip(workflow1.tasks.values(), workflow_2.tasks.values()):
+    for workflow1_task, workflow2_task in zip(workflow_1.tasks.values(), workflow_2.tasks.values()):
         # sys.stderr.write(f"WORKFLOW1: {workflow1_task.task_id}  WORKFLOW2 TASK: {workflow2_task.task_id}\n")
         for input_file in workflow1_task.input_files:
             # sys.stderr.write(f"WORKFLOW1 INPUT FILE: {input_file.file_id} {input_file.size}\n")

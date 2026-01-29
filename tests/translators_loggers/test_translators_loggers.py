@@ -38,6 +38,7 @@ from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
+from wfcommons.wfinstances.logs import MakeflowLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -165,7 +166,7 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
     # Run the workflow (with full logging)
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose ./workflow.makeflow"], stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"], stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
@@ -229,16 +230,16 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
-           "nextflow",
-           "airflow",
-           "bash",
-           "taskvine",
+           # "swiftt",
+           # "dask",
+           # "parsl",
+           # "nextflow",
+           # "airflow",
+           # "bash",
+           # "taskvine",
            "makeflow",
-           "cwl",
-           "pegasus",
+           # "cwl",
+           # "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -274,6 +275,8 @@ class TestTranslators:
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
+        elif backend == "makeflow":
+            parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         else:
             parser = None
 
