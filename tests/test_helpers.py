@@ -50,7 +50,7 @@ def _install_WfCommons_on_container(container):
     exit_code, output = container.exec_run(r"sudo sed -i 's|if os.path.exists(cpu_benchmark_path):|if True:|' /tmp/WfCommons/setup.py")
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
-    exit_code, output = container.exec_run("sudo python3 -m pip install -v . --break-system-packages",
+    exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
     # print(output.decode())
     if exit_code != 0:
