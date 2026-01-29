@@ -39,7 +39,7 @@ def _install_WfCommons_on_container(container):
     target_path = '/tmp/'  # inside container
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
-    # Cleanup files from the host
+    # Cleanup files that came from the host
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
     # Clean up and force a rebuild of cpu-benchmark (because it may be compiled for the wrong architecture)
@@ -52,6 +52,7 @@ def _install_WfCommons_on_container(container):
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
     exit_code, output = container.exec_run("sudo python3 -m pip install -v . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
+    # print(output.decode())
     if exit_code != 0:
         raise RuntimeError("Failed to install WfCommons on the container")
 
