@@ -31,11 +31,17 @@ class Build(build_ext):
             sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
         super().run()
 
-# Conditionally include cpu-benchmark if it exists
+# Conditionally include cpu-benchmark based on platform
 data_files = []
-cpu_benchmark_path = 'bin/cpu-benchmark'
-if os.path.exists(cpu_benchmark_path):
-    data_files.append(('bin', [cpu_benchmark_path]))
+if sys.platform != 'win32':
+    # On Unix-like systems (Linux, macOS, Docker), always try to include it
+    # The Build class will create it during the build process
+    data_files.append(('bin', ['bin/cpu-benchmark']))
+else:
+    # On Windows, only include if it exists (e.g., if user manually compiled it)
+    cpu_benchmark_path = 'bin/cpu-benchmark'
+    if os.path.exists(cpu_benchmark_path):
+        data_files.append(('bin', [cpu_benchmark_path]))
 
 setup(
     packages=find_packages(),
