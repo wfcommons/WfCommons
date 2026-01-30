@@ -99,6 +99,11 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
     else:
         sys.stderr.write(f"[{backend}] Not Copying wfbench and cpu-benchmark...\n")
 
+    # Change file permissions
+    exit_code, output = container.exec_run(["sh", "-c", "sudo chown -R wfcommons:wfcommons "],
+                                           stdout=True, stderr=True)
+
+
     container.backend = backend
     return container
 

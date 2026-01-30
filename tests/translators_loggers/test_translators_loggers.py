@@ -15,6 +15,7 @@ import sys
 import json
 import time
 import re
+import os
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
@@ -230,11 +231,11 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           # "swiftt",
-           # "dask",
+           "swiftt",
+           "dask",
            # "parsl",
            # "nextflow",
-           # "airflow",
+           "airflow",
            "bash",
            # "taskvine",
            # "makeflow",
@@ -257,6 +258,10 @@ class TestTranslators:
         sys.stderr.write(f"\n[{backend}] Translating workflow...\n")
         translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
+
+        # Make the directory that holds the translation world-writable,
+        # so that docker commands won't fail
+        os.chmod(dirpath, 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
