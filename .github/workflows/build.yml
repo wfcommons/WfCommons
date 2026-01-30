@@ -34,7 +34,6 @@ jobs:
 
       - name: Check package install
         run: |
-          sudo sed -i 's|if os.path.exists(cpu_benchmark_path):|if True:|' ./setup.py
           pip install .
 
       - name: Run tests

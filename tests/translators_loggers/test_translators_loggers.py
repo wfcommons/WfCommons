@@ -259,9 +259,11 @@ class TestTranslators:
         translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
-        # Make the directory that holds the translation world-writable,
-        # so that docker commands won't fail
-        os.chmod(dirpath, 0o777)
+        # # Make the directory that holds the translation world-writable,
+        # # so that docker commands won't fail
+        # TODO: Explore whether this below makes tests runnable on Linux due to
+        #       different Docker permission schemes, etc.
+        # os.chmod(dirpath, 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
