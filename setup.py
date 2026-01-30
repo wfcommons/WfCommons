@@ -34,7 +34,8 @@ class Build(build_ext):
 # Conditionally include cpu-benchmark if it exists
 data_files = []
 cpu_benchmark_path = 'bin/cpu-benchmark'
-if os.path.exists(cpu_benchmark_path):
+if True:
+#if os.path.exists(cpu_benchmark_path):
     data_files.append(('bin', [cpu_benchmark_path]))
 
 setup(
