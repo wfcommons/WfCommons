@@ -28,9 +28,9 @@ class MakeflowLogsParser(LogsParser):
     """
     Parse Makeflow submit directory to generate workflow instance.
 
-    :param execution_dir: Makeflow workflow execution directory (contains .mf and .makeflowlog files).
+    :param execution_dir: Makeflow workflow execution directory (contains .mf/.makeflow and .makeflowlog files).
     :type execution_dir: pathlib.Path
-    :param resource_monitor_logs_dir: Resource Monitor log files directory.
+    :param resource_monitor_logs_dir: Resource Monitor log files directory (created with `makeflow ----monitor=... ...`)
     :type resource_monitor_logs_dir: pathlib.Path
     :param description: Workflow instance description.
     :type description: Optional[str]
@@ -46,28 +46,38 @@ class MakeflowLogsParser(LogsParser):
         """Create an object of the makeflow log parser."""
         super().__init__('Makeflow', 'http://ccl.cse.nd.edu/software/makeflow/', description, logger)
 
-        # Sanity check
+        # Sanity checks
         if not execution_dir.is_dir():
             raise OSError(f'The provided path does not exist or is not a folder: {execution_dir}')
-
-        files: List[pathlib.Path] = list(execution_dir.glob('*.mf'))
-        if len(files) == 0:
-            raise OSError(f'Unable to find .mf file in: {execution_dir}')
-        self.mf_file: pathlib.Path = files[0]
-
-        files = list(execution_dir.glob('*.makeflowlog'))
-        if len(files) == 0:
-            raise OSError(f'Unable to find .makeflowlog file in: {execution_dir}')
-        self.mf_log_file: pathlib.Path = files[0]
-
         if not resource_monitor_logs_dir.is_dir():
             raise OSError(f'The provided path does not exist or is not a folder: {resource_monitor_logs_dir}')
 
-        self.execution_dir: pathlib.Path = execution_dir
+        # Makeflow file
+        files: List[pathlib.Path] = list(execution_dir.glob('*.mf'))
+        if len(files) > 1:
+            raise OSError(f'Multiple .mf files in: {execution_dir}')
+        if len(files) == 0:
+            files: List[pathlib.Path] = list(execution_dir.glob('*.makeflow'))
+            if len(files) > 1:
+                raise OSError(f'Multiple .makeflow files in: {execution_dir}')
+            if len(files) == 0:
+                raise OSError(f'Unable to find a .mf or .makeflow file in: {execution_dir}')
+        self.mf_file: pathlib.Path = files[0]
 
-        self.resource_monitor_logs_dir: pathlib.Path = resource_monitor_logs_dir
-        self.files_map = {}
-        self.args_map = {}
+        # Log file
+        files = list(execution_dir.glob('*.makeflowlog'))
+        if len(files) == 0:
+            raise OSError(f'Unable to find .makeflowlog file in: {execution_dir}')
+        if len(files) > 1:
+            raise OSError(f'Multiple .makeflowlog files in: {execution_dir}')
+        self.mf_log_file: pathlib.Path = files[0]
+        if self.mf_log_file.read_text().count("# NODE") == 0:
+            raise OSError(f'Not sufficiently verbose log file {self.mf_log_file}. Re-run the workflow with `makeflow --log-verbose ...`')
+
+        self._execution_dir: pathlib.Path = execution_dir
+        self._resource_monitor_logs_dir: pathlib.Path = resource_monitor_logs_dir
+        self._files_map = {}
+        self._args_map = {}
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
@@ -106,30 +116,31 @@ class MakeflowLogsParser(LogsParser):
             outputs = []
             inputs = []
             for line in f:
-                if ':' in line:
+                # print(f"Processing line: {line}")
+                if line.lstrip().startswith('#'):
+                    continue
+                if ':' in line and '\t' not in line:
                     outputs = line.split(':')[0].split()
                     inputs = line.split(':')[1].split()
 
                     for file in itertools.chain(outputs, inputs):
-                        if file not in self.files_map:
-                            self.files_map[file] = {'task_name': None, 'children': [], 'file': []}
+                        if file not in self._files_map:
+                            self._files_map[file] = {'task_name': None, 'children': [], 'file': []}
 
-                elif len(line.strip()) > 0:
-                    # task execution command
-                    prefix = line.replace('./', '').replace('perl', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "{}_ID{:07d}".format(prefix, task_id_counter)
+                elif '\t' in line:
+                    # task execution command (likely olf here)
+                    prefix = line.replace('./', '').strip().split()[1 if 'LOCAL' in line else 0]
+                    task_name = "ID{:07d}".format(task_id_counter)
 
-                    # create list of task files
-                    list_files = []
+                    # create list of input and output files
                     output_files = self._create_files(outputs, "output", task_name)
                     input_files = self._create_files(inputs, "input", task_name)
 
                     # create task
-                    args = ' '.join(line.replace('LOCAL', '').replace('perl', '').strip().split())
+                    args = ' '.join(line.split())
                     task = Task(name=task_name,
-                                task_id="ID{:07d}".format(task_id_counter),
+                                task_id=task_name,
                                 category=prefix,
-                                task_type=TaskType.COMPUTE,
                                 runtime=0,
                                 program=prefix,
                                 args=args.split(),
@@ -137,15 +148,16 @@ class MakeflowLogsParser(LogsParser):
                                 input_files=input_files,
                                 output_files=output_files,
                                 logger=self.logger)
-                    self.workflow.add_node(task_name, task=task)
-                    self.args_map[args] = task
+                    self.workflow.add_task(task)
+                    args = args.replace('\\\\', '\\')
+                    self._args_map[args] = task
                     task_id_counter += 1
 
         # adding edges
-        for file in self.files_map:
-            for child in self.files_map[file]['children']:
-                if self.files_map[file]['task_name']:
-                    self.workflow.add_edge(self.files_map[file]['task_name'], child)
+        for file in self._files_map:
+            for child in self._files_map[file]['children']:
+                if self._files_map[file]['task_name']:
+                    self.workflow.add_edge(self._files_map[file]['task_name'], child)
 
     def _create_files(self, files_list: List[str], input_or_output: str, task_name: str) -> List[File]:
         """
@@ -163,16 +175,16 @@ class MakeflowLogsParser(LogsParser):
         """
         list_files = []
         for file in files_list:
-            if self.files_map[file]['file']:
+            if self._files_map[file]['file']:
                 list_files.append(
-                    self.files_map[file]['file'][0] if input_or_output == "input" else self.files_map[file]['file'][1])
+                    self._files_map[file]['file'][0] if input_or_output == "input" else self._files_map[file]['file'][1])
             else:
                 size = 0
-                file_path = self.execution_dir.joinpath(file)
+                file_path = self._execution_dir.joinpath(file)
                 if file_path.is_dir():
-                    size = sum(math.ceil(f.stat().st_size / 1000) for f in file_path.glob("*") if f.is_file())
+                    size = sum(f.stat().st_size for f in file_path.glob("*") if f.is_file())
                 elif file_path.is_file():
-                    size = int(math.ceil(file_path.stat().st_size / 1000))  # B to KB
+                    size = int(file_path.stat().st_size)
 
                 file_obj_in = File(file_id=file,
                                    size=size,
@@ -181,13 +193,13 @@ class MakeflowLogsParser(LogsParser):
                                     size=size,
                                     logger=self.logger)
                 list_files.append(file_obj_in if input_or_output == "input" else file_obj_out)
-                self.files_map[file]['file'].extend([file_obj_in, file_obj_out])
+                self._files_map[file]['file'].extend([file_obj_in, file_obj_out])
 
             # files dependencies
             if input_or_output == "input":
-                self.files_map[file]['children'].append(task_name)
+                self._files_map[file]['children'].append(task_name)
             else:
-                self.files_map[file]['task_name'] = task_name
+                self._files_map[file]['task_name'] = task_name
 
         return list_files
 
@@ -208,24 +220,24 @@ class MakeflowLogsParser(LogsParser):
 
                 elif line.startswith('# FILE') and 'condorlog' not in line:
                     file_name = line.split()[3]
-                    if file_name in self.files_map:
-                        size = int(math.ceil(int(line.split()[5]) / 1000))  # B to KB
-                        for file_obj in self.files_map[file_name]['file']:
+                    if file_name in self._files_map:
+                        size = int(line.split()[5])
+                        for file_obj in self._files_map[file_name]['file']:
                             file_obj.size = size
 
     def _parse_resource_monitor_logs(self):
         """Parse the log files produced by resource monitor"""
-        for file in pathlib.Path.glob(f'{self.resource_monitor_logs_dir}/*.summary'):
+        for file in self._resource_monitor_logs_dir.glob("*.summary"):
             with open(file) as f:
                 data = json.load(f)
 
                 # task
-                task = self.args_map[data['command'].replace('perl', '').strip()]
+                task = self._args_map[data['command'].replace('perl', '').strip()]
                 task.runtime = float(data['wall_time'][0])
                 task.cores = float(data['cores'][0])
-                task.memory = int(data['memory'][0]) * 1000  # MB to KB
-                task.bytes_read = int(data['bytes_read'][0] * 1000)  # MB to KB
-                task.bytes_written = int(data['bytes_written'][0] * 1000)  # MB to KB
+                task.memory = int(data['memory'][0])
+                task.bytes_read = int(data['bytes_read'][0])
+                task.bytes_written = int(data['bytes_written'][0])
                 task.avg_cpu = float('%.4f' % (float(data['cpu_time'][0]) / float(data['wall_time'][0]) * 100))
                 task.machine = Machine(name=data['host'],
                                        cpu={'coreCount': int(data['machine_cpus'][0]), 'speedInMHz': 0, 'vendor': ''},

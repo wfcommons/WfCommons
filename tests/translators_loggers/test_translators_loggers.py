@@ -15,6 +15,7 @@ import sys
 import json
 import time
 import re
+import os
 
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
@@ -38,6 +39,7 @@ from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
+from wfcommons.wfinstances.logs import MakeflowLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -165,7 +167,7 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
     # Run the workflow (with full logging)
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose ./workflow.makeflow"], stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"], stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
@@ -257,6 +259,12 @@ class TestTranslators:
         translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
+        # # Make the directory that holds the translation world-writable,
+        # # so that docker commands won't fail
+        # TODO: Explore whether this below makes tests runnable on Linux due to
+        #       different Docker permission schemes, etc.
+        # os.chmod(dirpath, 0o777)
+
         # Start the Docker container
         container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
 
@@ -274,6 +282,8 @@ class TestTranslators:
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
+        elif backend == "makeflow":
+            parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         else:
             parser = None
 

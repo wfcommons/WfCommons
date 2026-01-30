@@ -39,9 +39,10 @@ def _install_WfCommons_on_container(container):
     target_path = '/tmp/'  # inside container
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
-    # Cleanup files from the host
+    # Cleanup files that came from the host
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
+    # Clean up and force a rebuild of cpu-benchmark (because it may be compiled for the wrong architecture)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
                                            stderr=True)
     exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", stdout=True,
@@ -50,6 +51,7 @@ def _install_WfCommons_on_container(container):
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
     exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
+    # print(output.decode())
     if exit_code != 0:
         raise RuntimeError("Failed to install WfCommons on the container")
 
@@ -88,12 +90,18 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
                                                stdout=True, stderr=True)
         if exit_code != 0:
             raise RuntimeError("Failed to copy wfbench script to the bin directory")
+
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + bin_dir],
                                                stdout=True, stderr=True)
         if exit_code != 0:
             raise RuntimeError("Failed to copy cpu-benchmark executable to the bin directory")
     else:
         sys.stderr.write(f"[{backend}] Not Copying wfbench and cpu-benchmark...\n")
+
+    # Change file permissions
+    exit_code, output = container.exec_run(["sh", "-c", "sudo chown -R wfcommons:wfcommons "],
+                                           stdout=True, stderr=True)
+
 
     container.backend = backend
     return container
@@ -123,16 +131,16 @@ def _get_total_size_of_directory(directory_path: str):
             total_size += os.path.getsize(filepath)
     return total_size
 
-def _compare_workflows(workflow1: Workflow, workflow_2: Workflow):
+def _compare_workflows(workflow_1: Workflow, workflow_2: Workflow):
     
     # Test the number of tasks
-    assert (len(workflow1.tasks) == len(workflow_2.tasks))
+    assert (len(workflow_1.tasks) == len(workflow_2.tasks))
     # Test the task graph topology
-    assert (networkx.is_isomorphic(workflow1, workflow_2))
+    assert (networkx.is_isomorphic(workflow_1, workflow_2))
     # Test the total file size sum
     workflow1_input_bytes, workflow2_input_bytes = 0, 0
     workflow1_output_bytes, workflow2_output_bytes = 0, 0
-    for workflow1_task, workflow2_task in zip(workflow1.tasks.values(), workflow_2.tasks.values()):
+    for workflow1_task, workflow2_task in zip(workflow_1.tasks.values(), workflow_2.tasks.values()):
         # sys.stderr.write(f"WORKFLOW1: {workflow1_task.task_id}  WORKFLOW2 TASK: {workflow2_task.task_id}\n")
         for input_file in workflow1_task.input_files:
             # sys.stderr.write(f"WORKFLOW1 INPUT FILE: {input_file.file_id} {input_file.size}\n")
