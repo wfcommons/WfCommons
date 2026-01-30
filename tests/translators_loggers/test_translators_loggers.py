@@ -257,10 +257,6 @@ class TestTranslators:
         # Perform the translation
         sys.stderr.write(f"\n[{backend}] Translating workflow...\n")
         translator = translator_classes[backend](benchmark.workflow)
-        sys.stderr.write("Checking that cpu-benchmark is in the path")
-        sys.stderr.write(f"{shutil.which('cpu-benchmark')}")
-        for path in os.environ["PATH"].split(os.pathsep):
-            sys.stderr.write(f"In PATH: {path}...\n")
         translator.translate(output_folder=dirpath)
 
         # Make the directory that holds the translation world-writable,
