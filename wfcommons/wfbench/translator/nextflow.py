@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2025 The WfCommons Team.
+# Copyright (c) 2021-2026 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,8 @@ class NextflowTranslator(Translator):
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path]
     :param use_subworkflows: Whether to split the workflow into multiple module files.
-        If None (default), automatically uses subworkflows for workflows with > 1000 tasks.
-    :type use_subworkflows: Optional[bool]
-    :param max_tasks_per_subworkflow: Maximum number of tasks per module file when using subworkflows (default: 1000).
+    :type use_subworkflows: bool
+    :param max_tasks_per_subworkflow: Maximum number of tasks per module file when using subworkflows.
     :type max_tasks_per_subworkflow: int
     :param max_parents_threshold: Tasks with more parents than this get their own module (default: 100).
     :type max_parents_threshold: int
@@ -44,8 +43,8 @@ class NextflowTranslator(Translator):
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 use_subworkflows: Optional[bool] = None,
-                 max_tasks_per_subworkflow: Optional[int] = 1000,
+                 use_subworkflows: bool = False,
+                 max_tasks_per_subworkflow: int = 1000,
                  max_parents_threshold: Optional[int] = 100,
                  slurm: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
@@ -84,23 +83,17 @@ class NextflowTranslator(Translator):
         # Create a topological order of the tasks
         sorted_tasks = self._get_tasks_in_topological_order()
 
-        # Determine whether to use subworkflows
-        use_subworkflows = self.use_subworkflows
-        if use_subworkflows is None:
-            # Auto-detect: use subworkflows for large workflows
-            use_subworkflows = len(sorted_tasks) > self.max_tasks_per_subworkflow
-
         # Create the bash script for each task
         for task in sorted_tasks:
             self._create_task_script(task)
 
-        if use_subworkflows:
+        if self.use_subworkflows:
             self._translate_with_subworkflows(output_folder, sorted_tasks)
         else:
             self._translate_single_file(output_folder, sorted_tasks)
 
         # Create the README file
-        self._write_readme_file(output_folder, use_subworkflows)
+        self._write_readme_file(output_folder, self.use_subworkflows)
 
     # =========================================================================
     # Common methods
@@ -252,26 +245,14 @@ class NextflowTranslator(Translator):
         code = f"// Function to call task {task.task_id}\n"
         function_name = task.task_id.replace(".", "_")
         code += f"def function_{function_name}(Map inputs) " + "{\n"
-
-        if self._find_parents(task.task_id):
-            # Input channel mixing and then call
-            code += f"\tdef {function_name}_necessary_input = Channel.empty()\n"
-            for f in task.input_files:
-                code += f"\t{function_name}_necessary_input = {function_name}_necessary_input.mix(inputs.{f.file_id})\n"
-            code += f"\tdef {function_name}_necessary_input_future = {function_name}_necessary_input.collect()\n"
-            code += f"\tdef {function_name}_produced_output = {function_name}({function_name}_necessary_input_future)\n"
-        else:
-            # Simple call
-            code += f"\tdef {function_name}_produced_output = {function_name}()\n"
-
-        # Pass on the outputs
-        code += "\n"
         code += "\tdef outputs = inputs.clone()\n"
-        if self._find_children(task.task_id):
-            counter = 0
-            for f in task.output_files:
-                code += f"\toutputs.{f.file_id} = {function_name}_produced_output.map" + "{it[" + str(counter) + "]}\n"
-                counter += 1
+        code += self._generate_task_call(
+            task=task,
+            function_name=function_name,
+            inputs_var="inputs",
+            results_var="outputs",
+            include_comment=False,
+        )
         code += "\treturn outputs\n"
         code += "}\n\n"
 
@@ -481,43 +462,61 @@ class NextflowTranslator(Translator):
         # Call each task's process
         for task in tasks:
             function_name = task.task_id.replace(".", "_")
-            code += self._generate_task_call_in_module(task, function_name)
+            code += self._generate_task_call(
+                task=task,
+                function_name=function_name,
+                inputs_var="results",
+                results_var="results",
+                include_comment=True,
+            )
 
         code += "\treturn results\n"
         code += "}\n\n"
 
         return code
 
-    def _generate_task_call_in_module(self, task: Task, function_name: str) -> str:
+    def _generate_task_call(self,
+                            task: Task,
+                            function_name: str,
+                            inputs_var: str,
+                            results_var: str,
+                            include_comment: bool) -> str:
         """
-        Generate the code to call a task's process within a module function.
+        Generate the code to call a task's process and map outputs into a results map.
 
         :param task: The task.
         :type task: Task
         :param function_name: The sanitized function name.
         :type function_name: str
+        :param inputs_var: The variable name containing input channels.
+        :type inputs_var: str
+        :param results_var: The variable name to update with outputs.
+        :type results_var: str
+        :param include_comment: Whether to include a task comment.
+        :type include_comment: bool
         :return: The code.
         :rtype: str
         """
         code = ""
+        has_parents = self._find_parents(task.task_id)
 
-        if self._find_parents(task.task_id):
-            # Mix input channels and call process
-            code += f"\t// Task: {task.task_id}\n"
+        if include_comment:
+            root_suffix = " (root)" if not has_parents else ""
+            code += f"\t// Task: {task.task_id}{root_suffix}\n"
+
+        if has_parents:
             code += f"\tdef {function_name}_input = Channel.empty()\n"
             for f in task.input_files:
-                code += f"\t{function_name}_input = {function_name}_input.mix(results.{f.file_id})\n"
-            code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
+                code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id})\n"
+            code += f"\tdef {function_name}_input_future = {function_name}_input.collect()\n"
+            code += f"\tdef {function_name}_output = {function_name}({function_name}_input_future)\n"
         else:
-            # Root task - no inputs needed
-            code += f"\t// Task: {task.task_id} (root)\n"
             code += f"\tdef {function_name}_output = {function_name}()\n"
 
-        # Update results map with outputs
         if self._find_children(task.task_id):
             counter = 0
             for f in task.output_files:
-                code += f"\tresults.{f.file_id} = {function_name}_output.map{{it[{counter}]}}\n"
+                code += f"\t{results_var}.{f.file_id} = {function_name}_output.map{{it[{counter}]}}\n"
                 counter += 1
         code += "\n"
 
@@ -530,49 +529,7 @@ class NextflowTranslator(Translator):
         :return: The main workflow file content.
         :rtype: str
         """
-        # Start with the template header
-        code = """params.simulate = false
-params.pwd = null
-params.help = null
-pwd = null
-
-def printUsage(error_msg, exit_code) {
-    def usage_string = \"\"\"
-Usage: nextflow run workflow.nf --pwd /path/to/directory [--simulate] [--help]
-
-    Required parameters:
-      --pwd         Working directory (where the workflow.nf file is located)
-
-    Optional parameters:
-      --help        Show this message and exit.
-      --simulate    Use a "sleep 1" for all tasks instead of the WfBench benchmark.
-\"\"\"
-    if (error_msg) {
-        def RED = '\\u001B[31m'
-        def RESET = '\\u001B[0m'
-        System.err.println \"${RED}Error: ${RESET}\" + error_msg
-    }
-    System.err.println usage_string
-    exit exit_code
-}
-
-def validateParams() {
-    if (params.help) {
-        printUsage(msg = \"\", exit_code=0)
-    }
-    if (params.pwd == null) {
-        printUsage(msg = \"Missing required parameter: --pwd\", exit_code=1)
-    }
-    pwd = file(params.pwd).toAbsolutePath().toString()
-    if (!file(pwd).exists()) {
-        printUsage(msg = \"Directory not found: ${pwd}\", exit_code=1)
-    }
-}
-
-// Call validation at the start
-validateParams()
-
-"""
+        code = ""
 
         # Include module functions (one per line to avoid long strings)
         code += "// Include module functions\n"
@@ -601,4 +558,4 @@ validateParams()
 
         code += "}\n"
 
-        return code
+        return self._merge_codelines("templates/nextflow/workflow.nf", code)

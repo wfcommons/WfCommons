@@ -13,7 +13,6 @@ from .bash import BashTranslator
 from .cwl import CWLTranslator
 from .dask import DaskTranslator
 from .nextflow import NextflowTranslator
-from .nextflow_subworkflow import NextflowSubworkflowTranslator
 from .parsl import ParslTranslator
 from .pegasus import PegasusTranslator
 from .pycompss import PyCompssTranslator
