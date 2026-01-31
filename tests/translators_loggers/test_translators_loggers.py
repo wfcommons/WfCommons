@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2025 The WfCommons Team.
+# Copyright (c) 2025-2026 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,6 +105,7 @@ additional_setup_methods = {
     "dask": noop,
     "parsl": noop,
     "nextflow": noop,
+    "nextflow_subworkflow": noop,
     "airflow": noop,
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
@@ -203,6 +204,7 @@ run_workflow_methods = {
     "dask": run_workflow_dask,
     "parsl": run_workflow_parsl,
     "nextflow": run_workflow_nextflow,
+    "nextflow_subworkflow": run_workflow_nextflow,
     "airflow": run_workflow_airflow,
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
@@ -216,6 +218,7 @@ translator_classes = {
     "dask": DaskTranslator,
     "parsl": ParslTranslator,
     "nextflow": NextflowTranslator,
+    "nextflow_subworkflow": NextflowTranslator,
     "airflow": AirflowTranslator,
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
@@ -235,6 +238,7 @@ class TestTranslators:
            "dask",
            "parsl",
            "nextflow",
+           "nextflow_subworkflow",
            "airflow",
            "bash",
            "taskvine",
@@ -256,7 +260,10 @@ class TestTranslators:
 
         # Perform the translation
         sys.stderr.write(f"\n[{backend}] Translating workflow...\n")
-        translator = translator_classes[backend](benchmark.workflow)
+        if backend == "nextflow_subworkflow":
+            translator = translator_classes[backend](benchmark.workflow, use_subworkflows=True, max_tasks_per_subworkflow=10)
+        else:
+            translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
         # # Make the directory that holds the translation world-writable,
@@ -266,7 +273,7 @@ class TestTranslators:
         # os.chmod(dirpath, 0o777)
 
         # Start the Docker container
-        container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
+        container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")
 
         # Do whatever necessary setup
         additional_setup_methods[backend](container)

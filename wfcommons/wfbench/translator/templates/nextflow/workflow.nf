@@ -33,7 +33,7 @@ def validateParams() {
     pwd = file(params.pwd).toAbsolutePath().toString()
     if (!file(pwd).exists()) {
         printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
-    } 
+    }
 }
 
 // Call validation at the start

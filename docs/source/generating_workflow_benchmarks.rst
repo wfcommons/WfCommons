@@ -132,8 +132,24 @@ workflow benchmark for running with Nextflow::
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
     # generate a Nextflow workflow
-    translator = NextflowTranslator(benchmark.workflow)
-    translator.translate(output_folder=pathlib.Path("./nextflow-wf/""))
+    translator = NextflowTranslator(
+        benchmark.workflow,
+        use_subworkflows=False,
+        max_tasks_per_subworkflow=1000,
+    )
+    translator.translate(output_folder=pathlib.Path("./nextflow-wf/"))
+
+If you want to split large workflows across multiple Nextflow module files, enable
+subworkflows and set the maximum number of tasks per module. This produces a
+``modules/`` directory plus a top-level ``workflow.nf`` that includes and runs
+the modules sequentially::
+
+    translator = NextflowTranslator(
+        benchmark.workflow,
+        use_subworkflows=True,
+        max_tasks_per_subworkflow=250,
+    )
+    translator.translate(output_folder=pathlib.Path("./nextflow-wf/"))
 
 .. warning::
 
