@@ -40,20 +40,39 @@ def _install_WfCommons_on_container(container):
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
     # Cleanup files that came from the host
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/build/", user="root", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/*.egg-info/", user="root", stdout=True, stderr=True)
     # Clean up and force a rebuild of cpu-benchmark (because it may be compiled for the wrong architecture)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
+    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", user="root", stdout=True,
                                            stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", stdout=True,
+    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", user="root", stdout=True,
                                            stderr=True)
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
-    exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
+    exit_code, output = container.exec_run("python3 -m pip install . --break-system-packages",
+                                           user="root",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
-    # print(output.decode())
     if exit_code != 0:
-        raise RuntimeError("Failed to install WfCommons on the container")
+        print(output.decode())
+        raise RuntimeError("Failed to pip install WfCommons on the container")
+
+    # Copy the ~/.local directory to /home/wfcommons/, because the path
+    # is /home/wfcommons (because this current Docker user may be unknown a priori)
+    # This is hack, and requires that the /home/wfcommons directory be world-read-write-exec,
+    # but who cares, these are containers!
+
+    # exit_code, output = container.exec_run(
+    #     ["sh", "-c", "whoami"],
+    #     stdout=True, stderr=True)
+    # print(f"WHOAMI: {output.decode()}")
+    # exit_code, output = container.exec_run(
+    #     ["sh", "-c", "ls /home/wfcommons/.local"],
+    #     stdout=True, stderr=True)
+    # print(f"LS /home/wfcommons/.local : {output.decode()}")
+    # exit_code, output = container.exec_run(
+    #     ["sh", "-c", "cp -r /.local /home/wfcommons/"],
+    #     stdout=True, stderr=True)
+
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=None):
     if command is None:

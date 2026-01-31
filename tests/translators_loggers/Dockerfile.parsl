@@ -45,4 +45,6 @@ ENV PATH="$PATH:/home/wfcommons/.local/bin/"
 
 USER wfcommons
 WORKDIR /home/wfcommons
+# Making this directory world rwx to facilitate testing
+RUN chmod -R 777 /home/wfcommons
 
