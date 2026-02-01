@@ -7,14 +7,11 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/wfcommons?period=total&units=international_system&left_color=grey&right_color=yellowgreen&left_text=Downloads)](https://pepy.tech/project/wfcommons)
 
 <a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-logo-white.png" width="350" /></a>
-<br/>_An open-source ecosystem of workflow execution instances, synthetic workflow generators, and benchmark specifications_
+<br/>An open-source ecosystem of workflow execution instances, synthetic workflow generators, and benchmark specifications. It helps the community study scheduling, performance, resilience, and emerging AI-driven workflow automation on modern distributed and HPC platforms.
 
-WfCommons is a Python framework that helps you:
-
-- Analyze real workflow execution instances;
-- Build workflow recipes from production traces;
-- Generate realistic synthetic workflow instances; and
-- Create workflow benchmark specifications.
+- **Real instances:** Workflow executions curated in a common JSON format (WfFormat).
+- **Synthetic realism:** Generate realistic workflows from real traces.
+- **Benchmarks:** Produce executable specs for repeatable experiments and fair comparisons.
 
 Quick links: [Documentation](https://wfcommons.readthedocs.io/en/latest/) · [Website](https://wfcommons.org) · [GitHub Issues](https://github.com/wfcommons/wfcommons/issues)
 
