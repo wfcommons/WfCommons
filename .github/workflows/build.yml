@@ -19,8 +19,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-sphinx sphinx-rtd-theme-common
-          pip install sphinx_rtd_theme recommonmark pytest pytest-cov
+          sudo apt-get install -y python3-sphinx
+          pip install -r docs/requirements.txt
+          pip install pytest pytest-cov
           pip install --upgrade setuptools
 
       - name: Install utilities for testing
