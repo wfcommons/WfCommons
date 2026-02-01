@@ -6,8 +6,8 @@
 [![Codecov][cov-badge]][cov-link]&nbsp;
 [![Downloads](https://static.pepy.tech/personalized-badge/wfcommons?period=total&units=international_system&left_color=grey&right_color=yellowgreen&left_text=Downloads)](https://pepy.tech/project/wfcommons)
 
-<a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-horizontal.png" width="350" /></a>
-<br/>_A Framework for Enabling Scientific Workflow Research and Development_
+<a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-logo-white.png" width="350" /></a>
+<br/>_An open-source ecosystem of workflow execution instances, synthetic workflow generators, and benchmark specifications_
 
 WfCommons is a Python framework that helps you:
 
@@ -17,8 +17,6 @@ WfCommons is a Python framework that helps you:
 - Create workflow benchmark specifications.
 
 Quick links: [Documentation](https://wfcommons.readthedocs.io/en/latest/) · [Website](https://wfcommons.org) · [GitHub Issues](https://github.com/wfcommons/wfcommons/issues)
-
-[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/main)
 
 ## Quickstart
 
