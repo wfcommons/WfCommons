@@ -228,7 +228,7 @@ class TaskVineLogsParser(LogsParser):
 
         with open(self.taskgraph_file) as f:
             for line in f:
-                if line[0] == "#":
+                if line.startswith("#"):
                     continue
                 
                 if line.startswith("TASK"):
