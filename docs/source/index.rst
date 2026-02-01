@@ -9,8 +9,11 @@ enabling scientific workflow research and development. Use it to analyze
 workflow execution instances, build workflow recipes, generate realistic
 synthetic workflows, and create benchmark specifications.
 
-Quick links: `Website <https://wfcommons.org>`__ ·
+Quick links: `Documentation <https://wfcommons.readthedocs.io/en/latest/>`__ ·
+`Website <https://wfcommons.org>`__ ·
 `GitHub <https://github.com/wfcommons/wfcommons>`__
+
+More information about the project can be found at: https://wfcommons.org/
 
 .. figure::  images/wfcommons.png
    :scale:   70 %
