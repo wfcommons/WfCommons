@@ -234,7 +234,10 @@ class TaskVineLogsParser(LogsParser):
                     task_key = parts[1]
                     if not task_key.startswith("T"):
                         continue
-                    task_id = int(task_key[1:])  # Remove the T
+                    try:
+                        task_id = int(task_key[1:])
+                    except ValueError:
+                        continue
                     if task_id not in self.known_task_ids:
                         continue
                     input_section = False
