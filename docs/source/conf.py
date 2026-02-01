@@ -12,9 +12,7 @@
 #
 
 import os.path
-import sphinx_rtd_theme
 import sys
-
 # Fetch the version
 exec(open('../../wfcommons/version.py').read())
 
@@ -63,10 +61,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_*.rst"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 html_favicon = 'favicon.png'
+html_logo = 'images/wfcommons-horizontal.png'
+html_title = 'WfCommons'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ['css/custom.css']

@@ -4,29 +4,43 @@ Installation
 WfCommons is available on `PyPI <https://pypi.org/project/wfcommons>`_.
 WfCommons requires Python3.11+ and has been tested on Linux and macOS.
 
-Installation using pip
+Recommended setup
 ----------------------
 
-While :code:`pip` can be used to install WfCommons, we suggest the following
-approach for reliable installation when many Python environments are available:
+We recommend installing into a virtual environment to keep dependencies isolated:
 
 .. code-block:: bash
 
+    $ python3 -m venv .venv
+    $ source .venv/bin/activate
     $ python3 -m pip install wfcommons
 
-Retrieving the latest unstable version
---------------------------------------
+Verify installation
+-------------------
 
-If you want to use the latest WfCommons unstable version, that will contain
-brand new features (but also contain bugs as the stabilization work is still
-underway), you may consider retrieving the latest unstable version.
+You can confirm the CLI entry point is available:
 
-Cloning from `WfCommons <https://github.com/wfcommons/wfcommons>`_'s GitHub
-repository: ::
+.. code-block:: bash
+
+    $ wfchef --help
+
+Or check the Python import:
+
+.. code-block:: bash
+
+    $ python3 -c "import wfcommons; print(wfcommons.__version__)"
+
+Installing from source (latest)
+-------------------------------
+
+If you want the latest development version (potentially unstable), clone the
+repository and install locally:
+
+.. code-block:: bash
 
     $ git clone https://github.com/wfcommons/wfcommons
     $ cd wfcommons
-    $ pip install .
+    $ python3 -m pip install .
 
 Optional Requirements
 ---------------------

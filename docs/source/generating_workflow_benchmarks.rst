@@ -3,16 +3,14 @@
 WfBench: Workflow Benchmarks
 ============================
 
-**WfBench** is a generator of realistic workflow benchmark specifications that 
-can be translated into benchmark code to be executed with current workflow 
-systems. it generates workflow tasks with arbitrary performance characteristics 
-(CPU, memory, and I/O usage) and with realistic task dependency structures 
-based on those seen in production workflows.
+**WfBench** generates realistic workflow benchmark specifications that can be
+translated into runnable benchmarks for current workflow systems. It produces
+tasks with tunable performance characteristics (CPU, memory, and I/O usage)
+and realistic dependency structures derived from production workflows.
 
-The generation of workflow benchmakrs is twofold. First, a realistic workflow 
-benchmark specification is generated in the :ref:`json-format-label`. Then, 
-this specification is translated into benchmark code to be executed with a 
-workflow system.
+Benchmark generation is twofold: first, a specification is produced in the
+:ref:`json-format-label`; then, that specification is translated into
+executable benchmark code for a target workflow system.
 
 Generating Workflow Benchmark Specifications
 --------------------------------------------
@@ -70,68 +68,130 @@ The generated benchmark will have exactly the same structure as the synthetic wo
 This is useful when you want to generate a benchmark with a specific structure or when you want
 benchmarks with the more detailed structure provided by WfChef workflow generation.
 
-Translating Specifications into Benchmark Codes
------------------------------------------------
+Translating Specifications into Benchmark Code
+----------------------------------------------
 
-WfCommons provides a collection of translators for executing the benchmarks as actual
-workflow applications. Below, we provide illustrative examples on how to generate 
-workflow benchmarks for the currently supported workflow systems.
+WfCommons provides a collection of translators that turn benchmark specifications
+into runnable workflow code. All translators inherit from
+:class:`~wfcommons.wfbench.translator.abstract_translator.Translator` and accept
+either a :class:`~wfcommons.common.workflow.Workflow` object or a path to a
+benchmark specification in :ref:`json-format-label`.
 
-The :class:`~wfcommons.wfbench.translator.abstract_translator.Translator` class is 
-the foundation for each translator class. This class takes as input either a 
-:class:`~wfcommons.common.workflow.Workflow` object or a path to a workflow benchmark
-description in :ref:`json-format-label`.
+Supported translators (alphabetical)
+++++++++++++++++++++++++++++++++++++
+
+- Airflow
+- Bash
+- CWL
+- Dask
+- Makeflow
+- Nextflow
+- Parsl
+- Pegasus
+- PyCOMPSs
+- Swift/T
+- TaskVine
 
 .. warning::
-    
-    WfBench leverages :code:`stress-ng` (https://github.com/ColinIanKing/stress-ng) 
-    to execute memory-intensive threads. Therefore, it is crucial to ensure that 
-    :code:`stress-ng` is installed on all worker nodes.
 
+    WfBench leverages :code:`stress-ng` (https://github.com/ColinIanKing/stress-ng)
+    to execute memory-intensive threads. Ensure :code:`stress-ng` is installed on
+    all worker nodes.
 
-Dask
-++++++++
-`Dask <https://www.dask.org/>`_ is an open-source library for parallel computing
-in Python. It makes it possible to easily implement and execute workflows local machines, HPC cluster schedulers, and cloud-based
-and container-based environments. Below, we provide an example on how to generate
-workflow benchmark for running with Dask::
+Airflow
++++++++
+
+`Apache Airflow <https://airflow.apache.org/>`_ is a platform for authoring,
+scheduling, and monitoring workflows as code. Use the Airflow translator to
+produce DAGs that can be executed by an Airflow scheduler::
 
     import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, AirflowTranslator
 
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=200)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    translator = AirflowTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./airflow-wf/"))
+
+Bash
+++++
+
+The Bash translator generates a simple, runnable shell workflow for quick local
+validation and debugging::
+
+    import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, BashTranslator
+
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=100)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=50, data=5, percent_cpu=0.7)
+
+    translator = BashTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./bash-wf/"))
+
+CWL
++++
+
+`CWL <https://www.commonwl.org/>`_ is a community standard for describing command-line
+tools and workflows. The CWL translator emits portable CWL definitions::
+
+    import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, CWLTranslator
+
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=150)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=80, data=8, percent_cpu=0.6)
+
+    translator = CWLTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./cwl-wf/"))
+
+Dask
+++++
+
+`Dask <https://www.dask.org/>`_ is an open-source library for parallel computing
+in Python. It supports local execution, HPC schedulers, and cloud environments::
+
+    import pathlib
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, DaskTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
-    # generate a Dask workflow
     translator = DaskTranslator(benchmark.workflow)
-    translator.translate(output_folder=pathlib.Path("./dask-wf/""))
+    translator.translate(output_folder=pathlib.Path("./dask-wf/"))
+
+Makeflow
+++++++++
+
+`Makeflow <http://ccl.cse.nd.edu/software/makeflow/>`_ targets large, DAG-shaped
+workflows on clusters, grids, and clouds. The translator emits Makeflow workflows::
+
+    import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, MakeflowTranslator
+
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=200)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    translator = MakeflowTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./makeflow-wf/"))
 
 Nextflow
 ++++++++
 
-`Nextflow <https://www.nextflow.io/>`_ is a workflow management system that enables
-the development of portable and reproducible workflows. It supports deploying workflows
-on a variety of execution platforms including local, HPC schedulers, and cloud-based
-and container-based environments. Below, we provide an example on how to generate
-workflow benchmark for running with Nextflow::
+`Nextflow <https://www.nextflow.io/>`_ enables portable, reproducible workflows
+across local, HPC, and cloud environments::
 
     import pathlib
-
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, NextflowTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
-    # generate a Nextflow workflow
     translator = NextflowTranslator(
         benchmark.workflow,
         use_subworkflows=False,
@@ -153,137 +213,113 @@ the modules sequentially::
 
 .. warning::
 
-    Nextflow's way of defining workflows does not support tasks with iterations i.e. tasks 
-    that depend on another instance of the same abstract task. Thus, the translator
-    fails when you try to translate a workflow with iterations.
+    Nextflow does not support tasks with iterations (tasks that depend on another
+    instance of the same abstract task). Translation fails for workflows that
+    include iterations.
 
 .. note::
-    
+
     If you plan to run Nextflow on an HPC system using Slurm, we **strongly
-    recommend** using the `HyperQueue <https://github.com/It4innovations/hyperqueue>`_ 
-    executor. HyperQueue efficiently distributes workflow tasks across all allocated 
+    recommend** using the `HyperQueue <https://github.com/It4innovations/hyperqueue>`_
+    executor. HyperQueue efficiently distributes workflow tasks across all allocated
     compute nodes, improving scalability and resource utilization.
 
     The :class:`~wfcommons.wfbench.translator.nextflow.NextflowTranslator`
-    class includes functionality to automatically generate a Slurm script 
+    class includes functionality to automatically generate a Slurm script
     template for running the workflow on HPC systems.
+
+Parsl
++++++
+
+`Parsl <https://parsl-project.org/>`_ is a parallel scripting library for Python.
+The translator emits a Parsl workflow suitable for local or distributed execution::
+
+    import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, ParslTranslator
+
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=200)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
+
+    translator = ParslTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./parsl-wf/"))
 
 Pegasus
 +++++++
 
-`Pegasus <http://pegasus.isi.edu>`_ orchestrates the execution of complex scientific 
-workflows by providing a platform to define, organize, and automate computational 
-tasks and data dependencies. Pegasus handles the complexity of large-scale workflows 
-by automatically mapping tasks onto distributed computing resources, such as clusters, 
-grids, or clouds. Below, we provide an example on how to generate workflow benchmark 
-for running with Pegasus::
+`Pegasus <http://pegasus.isi.edu>`_ orchestrates complex scientific workflows on
+clusters, grids, and clouds by mapping tasks onto distributed resources::
 
     import pathlib
-
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, PegasusTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=0.6)
 
-    # generate a Pegasus workflow
     translator = PegasusTranslator(benchmark.workflow)
     translator.translate(output_folder=pathlib.Path("./pegasus-wf/"))
 
 .. warning::
 
-    Pegasus utilizes the `HTCondor <https://htcondor.org/>`_ framework to orchestrate 
-    the execution of workflow tasks. By default, HTCondor does not implement CPU affinity 
-    for program threads. However, WfBench offers an extra capability to enforce CPU 
-    affinity during benchmark execution. To enable this feature, you need to specify 
-    the :code:`lock_files_folder` parameter when using 
+    Pegasus uses `HTCondor <https://htcondor.org/>`_ to orchestrate tasks. By
+    default, HTCondor does not implement CPU affinity for program threads.
+    To enable CPU affinity, specify :code:`lock_files_folder` when using
     :meth:`~wfcommons.wfbench.bench.WorkflowBenchmark.create_benchmark`.
 
 PyCOMPSs
 ++++++++
 
-`PyCOMPSs <https://compss.bsc.es/>`_ is a programming model and runtime that 
-enables the parallel execution of Python applications on distributed computing 
-infrastructures. It allows developers to define tasks using simple Python 
-decorators, automatically handling task scheduling, data dependencies, and 
-resource management.. Below, we provide an example on how to generate workflow 
-benchmark for running with PyCOMPSs::
+`PyCOMPSs <https://compss.bsc.es/>`_ is a programming model and runtime for
+parallel Python applications on distributed infrastructures::
 
     import pathlib
-
     from wfcommons import CyclesRecipe
     from wfcommons.wfbench import WorkflowBenchmark, PyCompssTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=CyclesRecipe, num_tasks=200)
-
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=500, data=1000, percent_cpu=0.8)
 
-    # generate a PyCOMPSs workflow
     translator = PyCompssTranslator(benchmark.workflow)
     translator.translate(output_folder=pathlib.Path("./pycompss-wf/"))
 
 Swift/T
 +++++++
 
-`Swift/T <http://swift-lang.org/Swift-T/>`_ is an advanced workflow system designed 
-specifically for high-performance computing (HPC) environments. It dynamically manages 
-task dependencies and resource allocation, enabling efficient utilization of HPC 
-systems. It provides a seamless interface to diverse tools, libraries, and scientific 
-applications, making it easy to integrate existing codes into workflows. Below, we 
-provide an example on how to generate workflow benchmark for running with Swift/T::
+`Swift/T <http://swift-lang.org/Swift-T/>`_ is a workflow system for HPC environments,
+designed to scale to large task graphs::
 
     import pathlib
-
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, SwiftTTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
 
-    # generate a Swift/T workflow
     translator = SwiftTTranslator(benchmark.workflow)
     translator.translate(output_folder=pathlib.Path("./swift-t-wf/"))
 
 TaskVine
 ++++++++
 
-`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for 
-building large scale data intensive dynamic workflows that run on HPC clusters, 
-GPU clusters, and commercial clouds. As tasks access external data sources and 
-produce their own outputs, more and more data is pulled into local storage on 
-workers. This data is used to accelerate future tasks and avoid re-computing 
-exisiting results. Data gradually grows "like a vine" through the cluster. 
-Below, we provide an example on how to generate workflow benchmark for running 
-with TaskVine::
+`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for
+data-intensive dynamic workflows across HPC clusters, GPU clusters, and clouds::
 
     import pathlib
-    
     from wfcommons import BlastRecipe
     from wfcommons.wfbench import WorkflowBenchmark, TaskVineTranslator
 
-    # create a workflow benchmark object to generate specifications based on a recipe
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
-    
-    # generate a specification based on performance characteristics
     benchmark.create_benchmark(save_dir=pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
 
-    # generate a TaskVine workflow
     translator = TaskVineTranslator(benchmark.workflow)
     translator.translate(output_folder=pathlib.Path("./taskvine-wf/"))
 
-In the example above, WfBench will generate a folder which will contain the 
-TaskVine workflow :code:`taskvine_workflow.py`, the workflow input data 
-(:code:`./taskvine-wf/data/`), the workflow binary files (:code:`./taskvine-wf/bin/`),
-and the Poncho package specification (:code:`./taskvine-wf/taskvine_poncho.json`).
+WfBench will generate a folder containing the TaskVine workflow
+:code:`taskvine_workflow.py`, workflow input data (:code:`./taskvine-wf/data/`),
+workflow binaries (:code:`./taskvine-wf/bin/`), and the Poncho package specification
+(:code:`./taskvine-wf/taskvine_poncho.json`).
 
 .. warning::
-    This TaskVine workflow requires :code:`stress-ng` to be installed and accessible 
+    This TaskVine workflow requires :code:`stress-ng` to be installed and accessible
     in the system's :code:`$PATH` where the manager runs.
