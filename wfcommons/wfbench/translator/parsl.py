@@ -96,6 +96,9 @@ class ParslTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
+        # README file
+        self._write_readme_file(output_folder)
+
     def _parsl_wftasks_codelines(self) -> list[str]:
         codelines = ["task_arr = []\n"]
 
@@ -161,3 +164,14 @@ class ParslTranslator(Translator):
         codelines.extend(cleanup_code)
 
         return codelines
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"Simply run: python3 ./parsl_workflow.py\n")
