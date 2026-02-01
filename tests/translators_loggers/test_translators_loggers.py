@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2025 The WfCommons Team.
+# Copyright (c) 2025-2026 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -289,7 +289,7 @@ class TestTranslators:
 
         if parser:
             sys.stderr.write(f"\n[{backend}] Parsing the logs...\n")
-            reconstructed_workflow : Workflow = parser.build_workflow("reconstructed_workflow")
+            reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
 
             original_workflow : Workflow = benchmark.workflow
