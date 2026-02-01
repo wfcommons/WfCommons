@@ -1,19 +1,42 @@
 .. figure::  images/wfcommons-horizontal.png
-   :scale:   35 %
+   :scale:   15 %
+   :align:   left
 
 |pypi-badge| |build-badge| |license-badge|
 
-`WfCommons <https://wfcommons.org>`__ is an open-source framework for
-enabling scientific workflow research and development. This Python package
-provides methods for analyzing instances, deriving recipes, generating
-representative synthetic workflow instances, and generating realistic 
-workflow benchmark specifications.
+`WfCommons <https://wfcommons.org>`__ is an open-source Python framework for
+enabling scientific workflow research and development. Use it to analyze
+workflow execution instances, build workflow recipes, generate realistic
+synthetic workflows, and create benchmark specifications.
+
+Quick links: `Documentation <https://wfcommons.readthedocs.io/en/latest/>`__ ·
+`Website <https://wfcommons.org>`__ ·
+`GitHub <https://github.com/wfcommons/wfcommons>`__
+
+More information about the project can be found at: https://wfcommons.org/
 
 .. figure::  images/wfcommons.png
    :scale:   70 %
    :align:   center
 
    The WfCommons conceptual architecture.
+
+What you can do
+===============
+
+- Analyze workflow instances from real executions.
+- Derive reusable recipes that capture workflow structure and performance.
+- Generate synthetic workflows at scale for experimentation.
+- Build benchmark specs for multiple workflow systems.
+
+Get started
+===========
+
+- :doc:`quickstart_installation` for install and first steps.
+- :doc:`introduction` for a project overview and WfFormat context.
+- :doc:`generating_workflows_recipe` to build recipes from real instances.
+- :doc:`generating_workflows` to generate synthetic workflows.
+- :doc:`generating_workflow_benchmarks` to produce benchmark specs.
 
 ----
 
@@ -30,14 +53,19 @@ support@wfcommons.org.
 
 ----
 
+Contents
+========
+
 .. toctree::
     :caption: Quickstart
+    :hidden:
     :maxdepth: 2
 
     quickstart_installation.rst
 
 .. toctree::
     :caption: User Guide
+    :hidden:
     :maxdepth: 2
 
     introduction.rst
@@ -48,6 +76,7 @@ support@wfcommons.org.
 
 .. toctree::
     :caption: API Reference
+    :hidden:
     :maxdepth: 1
 
     user_api_reference.rst

@@ -14,6 +14,56 @@ wfcommons.wfbench.bench
    :private-members:
    :noindex:
  
+wfcommons.wfbench.translator.airflow
+------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.airflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+wfcommons.wfbench.translator.bash
+---------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.bash
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+wfcommons.wfbench.translator.cwl
+--------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.cwl
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+wfcommons.wfbench.translator.dask
+---------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.dask
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+wfcommons.wfbench.translator.makeflow
+-------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.makeflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 wfcommons.wfbench.translator.nextflow
 -------------------------------------
 
@@ -24,10 +74,30 @@ wfcommons.wfbench.translator.nextflow
    :private-members:
    :noindex:
 
+wfcommons.wfbench.translator.parsl
+----------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.parsl
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 wfcommons.wfbench.translator.pegasus
 ------------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.pegasus
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
+wfcommons.wfbench.translator.pycompss
+-------------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.pycompss
    :members:
    :undoc-members:
    :show-inheritance:

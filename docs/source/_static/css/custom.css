@@ -1,0 +1,248 @@
+:root {
+  --content-max-width: 72rem;
+  --sidebar-width: 18rem;
+  --color-background-primary: #f7f6f2;
+  --color-background-secondary: #f0efe9;
+  --color-sidebar-background: #f0efe9;
+  --color-background-hover: #e9ecf2;
+  --color-background-border: #e1e4ee;
+  --color-brand-primary: #1f5eff;
+  --color-brand-content: #1a55e6;
+  --color-foreground-primary: #16181d;
+  --color-foreground-secondary: #4b5563;
+  --accent-warm: #ff7a59;
+  --accent-mint: #22c997;
+  --accent-sky: #4cc9f0;
+  --accent-violet: #9b5de5;
+  color-scheme: light;
+}
+
+article h1 {
+  letter-spacing: -0.01em;
+}
+
+article h2 {
+  letter-spacing: -0.005em;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
+    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
+    var(--color-background-primary);
+}
+
+.sidebar-drawer,
+.sidebar-container,
+.toc-drawer,
+.page-sidebar,
+.sidebar-tree {
+  background: var(--color-sidebar-background);
+}
+
+.content {
+  background: transparent;
+}
+
+/* Ensure any theme variant still uses the light palette. */
+html[data-theme="dark"],
+html[data-theme="auto"],
+body[data-theme="dark"],
+body[data-theme="auto"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"],
+html[data-theme="auto"],
+body[data-theme="dark"],
+body[data-theme="auto"] {
+  --color-background-primary: #f7f6f2;
+  --color-background-secondary: #f0efe9;
+  --color-sidebar-background: #f0efe9;
+  --color-background-hover: #e9ecf2;
+  --color-background-border: #e1e4ee;
+  --color-brand-primary: #1f5eff;
+  --color-brand-content: #1a55e6;
+  --color-foreground-primary: #16181d;
+  --color-foreground-secondary: #4b5563;
+  --accent-warm: #ff7a59;
+  --accent-mint: #22c997;
+  --accent-sky: #4cc9f0;
+  --accent-violet: #9b5de5;
+}
+
+body[data-theme="dark"],
+body[data-theme="auto"] {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
+    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
+    var(--color-background-primary);
+}
+
+body[data-theme="dark"] .sidebar-drawer,
+body[data-theme="auto"] .sidebar-drawer,
+body[data-theme="dark"] .sidebar-container,
+body[data-theme="auto"] .sidebar-container,
+body[data-theme="dark"] .toc-drawer,
+body[data-theme="auto"] .toc-drawer,
+body[data-theme="dark"] .page-sidebar,
+body[data-theme="auto"] .page-sidebar,
+body[data-theme="dark"] .sidebar-tree,
+body[data-theme="auto"] .sidebar-tree,
+body[data-theme="dark"] .mobile-header,
+body[data-theme="auto"] .mobile-header {
+  background: var(--color-sidebar-background);
+}
+
+/* Never show dark-only elements. */
+.only-dark {
+  display: none !important;
+}
+
+article {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--color-background-border);
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(19, 25, 39, 0.08);
+  padding: 2.25rem 2.5rem;
+}
+
+article h1 {
+  color: #0f172a;
+}
+
+article h1::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 6px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-warm), var(--accent-sky), var(--accent-mint));
+}
+
+article h2 {
+  color: #1e293b;
+}
+
+article h3 {
+  color: #1f2937;
+}
+
+article a {
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+article a:hover {
+  color: var(--accent-violet);
+}
+
+code,
+pre {
+  background: #eef2ff;
+  border-color: #d8def2;
+}
+
+pre {
+  box-shadow: inset 0 0 0 1px rgba(26, 85, 230, 0.08);
+}
+
+.sidebar-tree .current > a {
+  background: rgba(26, 85, 230, 0.08);
+  border-radius: 8px;
+}
+
+.sidebar-tree a:hover {
+  background: rgba(34, 201, 151, 0.12);
+  border-radius: 8px;
+}
+
+.toc-drawer .toc-tree li > a,
+.toc-tree li > a {
+  border-radius: 8px;
+}
+
+.toc-tree li > a:hover {
+  background: rgba(76, 201, 240, 0.14);
+}
+
+table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+th {
+  background: rgba(31, 94, 255, 0.08);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(31, 94, 255, 0.3), transparent);
+}
+
+/* Hide heading link glyphs while keeping the anchor element. */
+.headerlink {
+  color: transparent !important;
+  text-decoration: none !important;
+  font-size: 0 !important;
+  width: 0;
+  margin-left: 0;
+}
+
+.headerlink::before {
+  content: "";
+}
+
+/* Force light palette even if the theme requests dark mode. */
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="auto"],
+html[data-theme="auto"] body {
+  --color-background-primary: #f7f6f2;
+  --color-background-secondary: #f0efe9;
+  --color-sidebar-background: #f0efe9;
+  --color-background-hover: #e9ecf2;
+  --color-background-border: #e1e4ee;
+  --color-brand-primary: #1f5eff;
+  --color-brand-content: #1a55e6;
+  --color-foreground-primary: #16181d;
+  --color-foreground-secondary: #4b5563;
+  --accent-warm: #ff7a59;
+  --accent-mint: #22c997;
+  --accent-sky: #4cc9f0;
+  --accent-violet: #9b5de5;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="auto"] body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
+    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
+    var(--color-background-primary);
+}
+
+/* Hide the theme toggle UI entirely. */
+.theme-toggle,
+.theme-toggle-container,
+.theme-toggle-container button {
+  display: none !important;
+}
+
+/* Hide project title text in the sidebar, keep the logo visible. */
+.sidebar-brand-text,
+.sidebar-brand .brand-text,
+.sidebar-brand .title {
+  display: none !important;
+}
+
+article .align-left {
+  float: none !important
+}

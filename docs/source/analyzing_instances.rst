@@ -65,6 +65,32 @@ parser provides a
 :meth:`~wfcommons.wfinstances.logs.abstract_logs_parser.LogsParser.build_workflow`
 method.
 
+Supported log parsers
++++++++++++++++++++++
+
+- :class:`~wfcommons.wfinstances.logs.pegasusrec.HierarchicalPegasusLogsParser`
+- :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser`
+- :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser`
+- :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
+- :class:`~wfcommons.wfinstances.logs.taskvine.TaskVineLogsParser`
+
+Examples
+++++++++
+
+Hierarchical Pegasus
+++++++++++++++++++++
+
+This parser targets Pegasus submit directories that contain hierarchical workflows.
+It recursively parses sub-workflows and rebuilds a coherent workflow instance::
+
+    import pathlib
+    from wfcommons.wfinstances import HierarchicalPegasusLogsParser
+
+    submit_dir = pathlib.Path('/path/to/pegasus/hierarchical/submit/dir/')
+    parser = HierarchicalPegasusLogsParser(submit_dir=submit_dir)
+    workflow = parser.build_workflow('pegasus-hierarchical-workflow-test')
+    workflow.write_json(pathlib.Path('./pegasus-hierarchical-workflow.json'))
+
 Makeflow
 ++++++++
 
@@ -165,6 +191,21 @@ class: ::
     # writing the workflow instance to a JSON file
     workflow_path = pathlib.Path('./pegasus-workflow.json')
     workflow.write_json(workflow_path)
+
+TaskVine
+++++++++
+
+`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for
+data-intensive dynamic workflows. The TaskVine logs parser translates TaskVine
+execution logs into workflow instances compatible with :ref:`json-format-label`::
+
+    import pathlib
+    from wfcommons.wfinstances import TaskVineLogsParser
+
+    execution_dir = pathlib.Path('/path/to/taskvine/execution/dir/')
+    parser = TaskVineLogsParser(execution_dir=execution_dir)
+    workflow = parser.build_workflow('taskvine-workflow-test')
+    workflow.write_json(pathlib.Path('./taskvine-workflow.json'))
 
 The Instance Analyzer
 ---------------------

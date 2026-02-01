@@ -6,52 +6,64 @@
 [![Codecov][cov-badge]][cov-link]&nbsp;
 [![Downloads](https://static.pepy.tech/personalized-badge/wfcommons?period=total&units=international_system&left_color=grey&right_color=yellowgreen&left_text=Downloads)](https://pepy.tech/project/wfcommons)
 
-<a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-horizontal.png" width="350" /></a>
-<br/>_A Framework for Enabling Scientific Workflow Research and Development_
+<a href="https://wfcommons.org" target="_blank"><img src="https://wfcommons.org/images/wfcommons-logo-white.png" width="350" /></a>
+<br/>An open-source ecosystem of workflow execution instances, synthetic workflow generators, and benchmark specifications. It helps the community study scheduling, performance, resilience, and emerging AI-driven workflow automation on modern distributed and HPC platforms.
 
-This Python package provides a collection of tools for:
+- **Real instances:** Workflow executions curated in a common JSON format (WfFormat).
+- **Synthetic realism:** Generate realistic workflows from real traces.
+- **Benchmarks:** Produce executable specs for repeatable experiments and fair comparisons.
 
-- Analyzing instances of actual workflow executions;
-- Producing recipes structures for creating workflow recipes for workflow generation;
-- Generating synthetic realistic workflow instances; and
-- Generating realistic workflow benchmark specifications.
+Quick links: [Documentation](https://wfcommons.readthedocs.io/en/latest/) · [Website](https://wfcommons.org) · [GitHub Issues](https://github.com/wfcommons/wfcommons/issues)
 
-[![Open In Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/wfcommons/wfcommons/tree/main)
+## Quickstart
+
+WfCommons requires Python 3.11+ and has been tested on Linux and macOS.
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install wfcommons
+```
+
+Generate a synthetic workflow in a few lines:
+
+```python
+import pathlib
+from wfcommons.wfchef.recipes import SeismologyRecipe
+from wfcommons import WorkflowGenerator
+
+generator = WorkflowGenerator(SeismologyRecipe.from_num_tasks(250))
+workflow = generator.build_workflow()
+workflow.write_json(pathlib.Path("seismology-workflow.json"))
+```
+
+Next steps:
+
+- Learn how to build recipes in the [WfChef guide](https://wfcommons.readthedocs.io/en/latest/generating_workflows_recipe.html).
+- Generate larger workflow families in the [WfGen guide](https://wfcommons.readthedocs.io/en/latest/generating_workflows.html).
+- Produce benchmark specs in the [WfBench guide](https://wfcommons.readthedocs.io/en/latest/generating_workflow_benchmarks.html).
 
 ## Installation
 
 WfCommons is available on [PyPI](https://pypi.org/project/wfcommons).
-WfCommons requires Python3.11+ and has been tested on Linux and MacOS.
-
-### Installation using pip
-
-While `pip` can be used to install WfCommons, we suggest the following
-approach for reliable installation when many Python environments are available:
 
 ```
-$ python3 -m pip install wfcommons
+python3 -m pip install wfcommons
 ```
 
-### Retrieving the latest unstable version
-
-If you want to use the latest WfCommons unstable version, that will contain
-brand new features (but also contain bugs as the stabilization work is still
-underway), you may consider retrieving the latest unstable version.
-
-Cloning from [WfCommons's GitHub](https://github.com/wfcommons/wfcommons)
-repository:
+### Installing from source (latest)
 
 ```
-$ git clone https://github.com/wfcommons/wfcommons
-$ cd wfcommons
-$ pip install .
+git clone https://github.com/wfcommons/wfcommons
+cd wfcommons
+python3 -m pip install .
 ```
 
 ### Optional Requirements
 
 #### Graphviz
-WfCommons uses _pygraphviz_ for generating visualizations for the workflow task graph. 
-If you want to enable this feature, you will have to install the 
+WfCommons uses _pygraphviz_ for generating visualizations for the workflow task graph.
+If you want to enable this feature, you will have to install the
 [graphviz](https://www.graphviz.org/) package (version 2.16 or later).
 You can install graphviz easily on Linux with your favorite package manager,
 for example for Debian-based distributions:
@@ -82,15 +94,14 @@ python3 -m pip install pydot
 
 ## Get in Touch
 
-The main channel to reach the WfCommons team is via the support email: 
+The main channel to reach the WfCommons team is via the support email:
 [support@wfcommons.org](mailto:support@wfcommons.org).
 
-**Bug Report / Feature Request:** our preferred channel to report a bug or request a feature is via  
+**Bug Report / Feature Request:** our preferred channel to report a bug or request a feature is via
 WfCommons's [Github Issues Track](https://github.com/wfcommons/wfcommons/issues).
 
-
 ## Citing WfCommons
-When citing WfCommons, please use the following paper. You should also actually read 
+When citing WfCommons, please use the following paper. You should also actually read
 that paper, as it provides a recent and general overview on the framework.
 
 ```
