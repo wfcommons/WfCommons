@@ -25,7 +25,7 @@ wfcommons.wfbench.translator.airflow
    :noindex:
 
 wfcommons.wfbench.translator.bash
---------------------------------
+---------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.bash
    :members:
@@ -35,7 +35,7 @@ wfcommons.wfbench.translator.bash
    :noindex:
 
 wfcommons.wfbench.translator.cwl
--------------------------------
+--------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.cwl
    :members:
@@ -45,7 +45,7 @@ wfcommons.wfbench.translator.cwl
    :noindex:
 
 wfcommons.wfbench.translator.dask
---------------------------------
+---------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.dask
    :members:
@@ -55,7 +55,7 @@ wfcommons.wfbench.translator.dask
    :noindex:
 
 wfcommons.wfbench.translator.makeflow
-------------------------------------
+-------------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.makeflow
    :members:
@@ -75,7 +75,7 @@ wfcommons.wfbench.translator.nextflow
    :noindex:
 
 wfcommons.wfbench.translator.parsl
----------------------------------
+----------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.parsl
    :members:
@@ -95,7 +95,7 @@ wfcommons.wfbench.translator.pegasus
    :noindex:
 
 wfcommons.wfbench.translator.pycompss
-------------------------------------
+-------------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.pycompss
    :members:
