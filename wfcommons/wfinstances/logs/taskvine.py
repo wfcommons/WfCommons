@@ -227,14 +227,13 @@ class TaskVineLogsParser(LogsParser):
             self.task_output_files[task_id] = []
 
         with open(self.taskgraph_file) as f:
-            for line in f:
-                if line.startswith("#"):
-                    continue
-                
+            for line in f:               
                 if line.startswith("TASK"):
                     # TASK T23 "__vine_env_task-rnd-twtxpejwzsyiebf/bin/run_in_env" INPUTS task-rnd-twtxpejwzsyiebf file-meta-d7504c061a7afd9401c612b4ac7d6be6 file-meta-baab4e4516c4d93a8fcdcbba1a680af7 file-meta-693cb61fedd032b4ddec444b8cce6c89 file-rnd-fnrudlxsaqmlpqq OUTPUTS file-rnd-pdtdqayfmmxyxyp
                     parts = line.split()
-                    task_key = parts[1] # T23
+                    task_key = parts[1]
+                    if not task_key.startswith("T"):
+                        continue
                     task_id = int(task_key[1:])  # Remove the T
                     if task_id not in self.known_task_ids:
                         continue
