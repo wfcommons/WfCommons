@@ -274,8 +274,11 @@ class TestTranslators:
         translator.translate(output_folder=dirpath)
 
         # Make the directory that holds the translation world-writable,
-        # so that docker commands won't fail
-        # os.chmod(dirpath, 0o777)
+        # so that we don't have any permission shenanigans
+        for directory, directory_name, filenames in os.walk(dirpath):
+            os.chmod(directory, 0o777)
+            for filename in filenames:
+                os.chmod(os.path.join(directory, filename), 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")
@@ -288,6 +291,12 @@ class TestTranslators:
         start_time = time.time()
         run_workflow_methods[backend](container, num_tasks, str_dirpath)
         sys.stderr.write(f"[{backend}] Workflow ran in %.2f seconds\n" % (time.time() - start_time))
+
+        # Make the whole content world-writable/readable
+        # so that we don't have any permission shenanigans for loggers below
+        exit_code, output = container.exec_run(cmd=["bash", "-c", "chmod -R 0777 ."],
+                                               user="wfcommons",
+                                               stdout=True, stderr=True)
 
         # Run the log parser if any
         if backend == "pegasus":

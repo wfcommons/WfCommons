@@ -50,13 +50,12 @@ def _install_WfCommons_on_container(container):
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
     # Cleanup files that came from the host
-    exit_code, output = container.exec_run("sudo chown -R wfcommons:wfcommons /tmp/WfCommons", user="wfcommons", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/build/", user="wfcommons", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/*.egg-info/", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", user="wfcommons", stdout=True, stderr=True)
     # Clean up and force a rebuild of cpu-benchmark (because it may be compiled for the wrong architecture)
-    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", user="wfcommons", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", user="wfcommons", stdout=True,
                                            stderr=True)
-    exit_code, output = container.exec_run("/bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", user="wfcommons", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", user="wfcommons", stdout=True,
                                            stderr=True)
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
@@ -113,12 +112,6 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
             raise RuntimeError("Failed to copy cpu-benchmark executable to the bin directory")
     else:
         sys.stderr.write(f"[{backend}] Not Copying wfbench and cpu-benchmark...\n")
-
-    # Change file permissions
-    exit_code, output = container.exec_run(["sh", "-c", "sudo chown -R wfcommons:wfcommons ."],
-                                           user="wfcommons",
-                                           stdout=True, stderr=True)
-
 
     container.backend = backend
     return container
