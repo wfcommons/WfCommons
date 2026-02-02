@@ -309,7 +309,7 @@ class TestTranslators:
             parser = None
 
         if parser:
-            sys.stderr.write(f"\n[{backend}] Parsing the logs...\n")
+            sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
 
