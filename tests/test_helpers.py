@@ -50,20 +50,22 @@ def _install_WfCommons_on_container(container):
     tar_data = _make_tarfile_of_wfcommons()
     container.put_archive(target_path, tar_data)
     # Cleanup files that came from the host
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", stdout=True, stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/build/", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/*.egg-info/", user="wfcommons", stdout=True, stderr=True)
     # Clean up and force a rebuild of cpu-benchmark (because it may be compiled for the wrong architecture)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark.o", user="wfcommons", stdout=True,
                                            stderr=True)
-    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", stdout=True,
+    exit_code, output = container.exec_run("sudo /bin/rm -rf /tmp/WfCommons/bin/cpu-benchmark", user="wfcommons", stdout=True,
                                            stderr=True)
 
     # Install WfCommons on the container (to install wfbench and cpu-benchmark really)
     exit_code, output = container.exec_run("sudo python3 -m pip install . --break-system-packages",
+                                           user="wfcommons",
                                            workdir="/tmp/WfCommons", stdout=True, stderr=True)
-    # print(output.decode())
     if exit_code != 0:
-        raise RuntimeError("Failed to install WfCommons on the container")
+        print(output.decode())
+        raise RuntimeError("Failed to pip install WfCommons on the container")
+
 
 def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=None):
     if command is None:
@@ -86,6 +88,7 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
         command=command,
         volumes={mounted_dir: {'bind': mounted_dir, 'mode': 'rw'}},
         working_dir=working_dir,
+        user="wfcommons",
         tty=True,
         detach=True
     )
@@ -97,21 +100,18 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
     if bin_dir:
         sys.stderr.write(f"[{backend}] Copying wfbench and cpu-benchmark...\n")
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which wfbench` " + bin_dir],
+                                               user="wfcommons",
                                                stdout=True, stderr=True)
         if exit_code != 0:
             raise RuntimeError("Failed to copy wfbench script to the bin directory")
 
         exit_code, output = container.exec_run(["sh", "-c", "sudo cp -f `which cpu-benchmark` " + bin_dir],
+                                               user="wfcommons",
                                                stdout=True, stderr=True)
         if exit_code != 0:
             raise RuntimeError("Failed to copy cpu-benchmark executable to the bin directory")
     else:
         sys.stderr.write(f"[{backend}] Not Copying wfbench and cpu-benchmark...\n")
-
-    # Change file permissions
-    exit_code, output = container.exec_run(["sh", "-c", "sudo chown -R wfcommons:wfcommons "],
-                                           stdout=True, stderr=True)
-
 
     container.backend = backend
     return container

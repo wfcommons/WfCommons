@@ -16,8 +16,10 @@ from typing import List
 from parsl.app.app import bash_app
 from parsl.config import Config
 from parsl.executors import HighThroughputExecutor
+from parsl.executors.threads import ThreadPoolExecutor
 from parsl.providers import LocalProvider
 from parsl.data_provider.files import File
+
 # NOTE: Uncomment the following lines to enable Parsl workflow monitoring
 # from parsl.monitoring.monitoring import MonitoringHub
 # from parsl.addresses import address_by_hostname
@@ -25,16 +27,9 @@ from parsl.data_provider.files import File
 # NOTE: update the configuration below for your desired system (https://parsl.readthedocs.io/en/stable/userguide/configuring.html)
 config = Config(
     executors=[
-        HighThroughputExecutor(
-            label="local_htex",
-            worker_debug=True,
-            cores_per_worker=1,
-            max_workers_per_node=1,
-            provider=LocalProvider(
-                init_blocks=1,
-                max_blocks=1,
-            ),
-        )
+        ThreadPoolExecutor(
+            max_threads=1,
+            label='local_threads'),
     ],
     strategy=None,
 

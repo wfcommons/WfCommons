@@ -65,6 +65,7 @@ def _additional_setup_taskvine(container):
     # Create the poncho package
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "source ~/conda/etc/profile.d/conda.sh && conda activate && poncho_package_create taskvine_poncho.json taskvine_poncho.tar.gz"],
+                                           user="wfcommons",
                                            stdout=True, stderr=True)
     if exit_code != 0:
         raise Exception("Failed to setup TaskVine: cannot create poncho package")
@@ -79,12 +80,14 @@ def _additional_setup_pegasus(container):
     # Start Condor
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "bash /home/wfcommons/start_condor.sh"],
+                                           user="wfcommons",
                                            stdout=True, stderr=True)
     if exit_code != 0:
         raise Exception("Failed to setup Pegasus: cannot start HTCondor")
     # Run pegasus script
     exit_code, output = container.exec_run(cmd=["bash", "-c",
                                                 "python3 ./pegasus_workflow.py"],
+                                           user="wfcommons",
                                            stdout=True, stderr=True)
     if exit_code != 0:
         raise Exception("Failed to setup Pegasus: error while running the pegasus_workflow.py script")
@@ -92,12 +95,12 @@ def _additional_setup_pegasus(container):
 def _additional_setup_swiftt(container):
     # Start a redis server in the background
     exit_code, output = container.exec_run(
-        cmd=["bash", "-c", "redis-server"], detach=True, stdout=True, stderr=True)
+        cmd=["bash", "-c", "redis-server"], user="wfcommons", detach=True, stdout=True, stderr=True)
     # Note that exit_code will always be None because of detach=True.
 
     # Check that the redis-server is up
     exit_code, output = container.exec_run(
-        cmd=["bash", "-c", "redis-cli ping"], stdout=True, stderr=True)
+        cmd=["bash", "-c", "redis-cli ping"], user="wfcommons", stdout=True, stderr=True)
     if output.decode().strip() != 'PONG':
         raise Exception("Failed to start redis-server...")
 
@@ -120,15 +123,15 @@ additional_setup_methods = {
 #############################################################################
 
 def run_workflow_dask(container, num_tasks, str_dirpath):
-    exit_code, output = container.exec_run("python ./dask_workflow.py", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("python ./dask_workflow.py", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed!")  == num_tasks)
     # TODO: Look at the (I think) generated run.json file on the container?
 
 def run_workflow_parsl(container, num_tasks, str_dirpath):
-    exit_code, output = container.exec_run("python ./parsl_workflow.py", stdout=True, stderr=True)
-    ignored, output = container.exec_run(f"cat {str_dirpath}/runinfo/000/parsl.log", stdout=True, stderr=True)
+    exit_code, output = container.exec_run("python ./parsl_workflow.py", user="wfcommons", stdout=True, stderr=True)
+    ignored, output = container.exec_run(f"cat {str_dirpath}/runinfo/000/parsl.log", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert ("completed" in output.decode())
@@ -136,8 +139,8 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", stdout=True, stderr=True)
-    ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
+    ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert (task_exit_codes.decode() == num_tasks * "0")
@@ -146,29 +149,30 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
     # Run the workflow! (use a specific working directory)
     # TODO: Remove the hardcoded Blast-Benchmark as it's ugly
     exit_code, output = container.exec_run(cmd=["sh", "-c", "cd /home/wfcommons/ && sudo /bin/bash /run_a_workflow.sh Blast-Benchmark"],
-                                           stdout=True,
-                                           stderr=True)
+                                           user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks * 2)
 
 def run_workflow_bash(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"], stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"],
+                                           user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
     # Run the workflow (with full logging)
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"], stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"],
+                                           user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
@@ -177,7 +181,8 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
 def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
-    exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
+                                           user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
     # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
@@ -186,14 +191,16 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
 
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh",
+                                           user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert(exit_code == 0)
     assert("success" in output.decode())
 
 def run_workflow_swiftt(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(cmd="swift-t workflow.swift", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd="swift-t workflow.swift",
+                                           user="wfcommons", stdout=True, stderr=True)
     # sys.stderr.write(output.decode())
     # Check sanity
     assert(exit_code == 0)
@@ -266,11 +273,12 @@ class TestTranslators:
             translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
-        # # Make the directory that holds the translation world-writable,
-        # # so that docker commands won't fail
-        # TODO: Explore whether this below makes tests runnable on Linux due to
-        #       different Docker permission schemes, etc.
-        # os.chmod(dirpath, 0o777)
+        # Make the directory that holds the translation world-writable,
+        # so that we don't have any permission shenanigans
+        for directory, directory_name, filenames in os.walk(dirpath):
+            os.chmod(directory, 0o777)
+            for filename in filenames:
+                os.chmod(os.path.join(directory, filename), 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")
@@ -284,6 +292,12 @@ class TestTranslators:
         run_workflow_methods[backend](container, num_tasks, str_dirpath)
         sys.stderr.write(f"[{backend}] Workflow ran in %.2f seconds\n" % (time.time() - start_time))
 
+        # Make the whole content world-writable/readable
+        # so that we don't have any permission shenanigans for loggers below
+        exit_code, output = container.exec_run(cmd=["bash", "-c", "chmod -R 0777 ."],
+                                               user="wfcommons",
+                                               stdout=True, stderr=True)
+
         # Run the log parser if any
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
@@ -295,7 +309,7 @@ class TestTranslators:
             parser = None
 
         if parser:
-            sys.stderr.write(f"\n[{backend}] Parsing the logs...\n")
+            sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
 
