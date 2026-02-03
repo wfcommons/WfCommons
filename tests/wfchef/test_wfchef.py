@@ -16,6 +16,7 @@ import subprocess
 import sys
 
 from tests.test_helpers import _create_fresh_local_dir
+from wfcommons.wfchef.utils import draw
 from wfcommons.wfchef.chef import get_recipe
 from wfcommons.wfchef.chef import create_recipe
 from wfcommons.wfchef.chef import install_recipe
@@ -120,6 +121,18 @@ class TestWfChef:
         try:
             generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(250))
             generator.build_workflow()
+        except Exception as e:
+            sys.stderr.write(f"✗ Failed to use installed recipe: {e}\n")
+            raise
+
+        # Test the graph drawing utility
+        sys.stderr.write("\n" + "=" * 60 + "\n")
+        sys.stderr.write("Testing the graph drawing utility...\n")
+        sys.stderr.write("=" * 60 + "\n")
+        try:
+            generator = WorkflowGenerator(SomenameRecipe.from_num_tasks(50))
+            workflow = generator.build_workflow()
+            plt_figure, plt_axis = draw(workflow) # Coverage
         except Exception as e:
             sys.stderr.write(f"✗ Failed to use installed recipe: {e}\n")
             raise
@@ -300,8 +313,6 @@ class TestWfChef:
         except SystemExit as e:
             assert e.code == 0
         capsys.readouterr() # Clear output
-
-
 
         # Calling main with 'ls' command
         with capsys.disabled():
