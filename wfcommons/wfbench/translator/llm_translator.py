@@ -5,7 +5,6 @@ This translator inherits from the existing abstract Translator class
 from wfcommons.wfbench.translator and implements the required interface.
 """
 
-from os import path
 import requests
 from wfcommons.wfbench.bench import WorkflowBenchmark
 from typing import Optional, Dict, Any, List
@@ -58,10 +57,12 @@ class LLMTranslator():
                        ref: str="main") -> List[str]:
         """
         Load and return the content from the provided URLs.
+        
         Parameters
         ----------
         path_list : List[str]
             List of paths within the repository to fetch files from.
+        
         Returns
         -------
         List[Dict[str, Any]]
@@ -82,6 +83,7 @@ class LLMTranslator():
                                   ref: str="main") -> List[Dict[str, Any]]:
         """
         Fetch Python files from a specific path in a GitHub repository.
+        
         Parameters
         ----------
         path : str
@@ -120,11 +122,9 @@ class LLMTranslator():
             # assume Python code or any raw text
             trace_text = str(trace)
 
-        # grounding_examples = self._retrieve_examples(trace_text)
 
         prompt = self._build_prompt(
             trace=trace_text,
-            # examples=grounding_examples,
             metadata=metadata,
         )
 
@@ -164,7 +164,7 @@ class LLMTranslator():
     @staticmethod
     def _similarity(a: str, b: str) -> float:
         """
-        Very naive similarity; replace with embeddings for real use.
+        Very naive similarity based on word overlap. Replace with embeddings if desired.
         """
         return len(set(a.split()) & set(b.split()))
     
