@@ -195,7 +195,8 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
                 "--monte-carlo-method", "pi",
                 "--monte-carlo-rand", "lcg",
                 "--monte-carlo-samples", f"{cpu_samples}",
-                "--monte-carlo-ops", f"{cpu_ops}"]
+                "--monte-carlo-ops", f"{cpu_ops}",
+                "--quiet"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
                 "--vm-bytes", f"{total_mem}", "--vm-keep"]
 
