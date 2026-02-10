@@ -44,6 +44,8 @@ this_dir = pathlib.Path(__file__).resolve().parent
 
 
 def kill_process_and_children(proc):
+    if proc is None:
+        return
     try:
         parent = psutil.Process(proc.pid)
         children = parent.children(recursive=True)
@@ -470,7 +472,6 @@ def main():
                                                  cpu_work=int32_max**2 if args.time else int(args.cpu_work),
                                                  core=core,
                                                  total_mem=mem_bytes)
-                    
         procs.append(cpu_proc)
         if args.time:
             time.sleep(int(args.time))
@@ -485,11 +486,11 @@ def main():
                 if isinstance(proc, subprocess.Popen):
                     proc.wait()
         if io_proc is not None and io_proc.is_alive():
-            # io_proc.terminate()
+            io_proc.terminate()
             io_proc.join()
 
         try:
-            os.kill(mem_proc.pid, signal.SIGKILL)  # Force kill if SIGTERM fails
+            kill_process_and_children(mem_proc)
         except subprocess.TimeoutExpired:
             log_debug("Memory process did not terminate; force-killing.")
         # As a fallback, use pkill if any remaining instances are stuck
