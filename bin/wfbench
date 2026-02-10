@@ -181,11 +181,11 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
     :rtype: List
     """
     total_mem = f"{total_mem}B" if total_mem else f"{100.0 / os.cpu_count()}%"
-    cpu_work_per_thread = int(1000000 * cpu_work / (16384 * cpu_threads))
+    cpu_work_per_thread = int(1000000 * cpu_work / (16384 * cpu_threads)) if cpu_threads != 0 else int32_max**2
     cpu_samples = min(cpu_work_per_thread, int32_max)
     cpu_ops = (cpu_work_per_thread + int32_max - 1) // int32_max
     if cpu_ops > int32_max:
-        log_info("Exceeded maximum number of cpu work.")    
+        log_info("Exceeded maximum allowed value of cpu work.")
         cpu_ops = int32_max
 
     cpu_proc = None
