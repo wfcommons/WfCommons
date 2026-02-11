@@ -52,8 +52,10 @@ def kill_process_and_children(proc):
         for child in children:
             child.kill()
         parent.kill()
+
     except psutil.NoSuchProcess:
         pass # Process is already dead
+
 
 def log_info(msg: str):
     """
@@ -213,7 +215,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
         if core:
             os.sched_setaffinity(mem_proc.pid, {core})
 
-    return cpu_proc, mem_proc
+    return [cpu_proc, mem_proc]
 
 
 def io_read_benchmark_user_input_data_size(inputs,
@@ -467,7 +469,7 @@ def main():
             log_debug(f"{args.name} acquired core {core}")
 
         mem_threads=int(10 - 10 * args.percent_cpu)
-        cpu_proc, mem_proc = cpu_mem_benchmark(cpu_queue=cpu_queue, 
+        [cpu_proc, mem_proc] = cpu_mem_benchmark(cpu_queue=cpu_queue,
                                                  cpu_threads=int(10 * args.percent_cpu),
                                                  mem_threads=mem_threads,
                                                  cpu_work=int32_max**2 if args.time else int(args.cpu_work),
