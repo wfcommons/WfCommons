@@ -198,7 +198,7 @@ def cpu_mem_benchmark(cpu_queue: multiprocessing.Queue,
                 "--monte-carlo-ops", f"{cpu_ops}",
                 "--quiet"]
     mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", f"{total_mem}", "--vm-keep"]
+                "--vm-bytes", f"{total_mem}", "--vm-keep", "--quiet"]
 
     if cpu_threads > 0:
         cpu_proc = subprocess.Popen(cpu_prog, preexec_fn=os.setsid)
