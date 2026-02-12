@@ -263,7 +263,7 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
     for name in outputs:
         open(rundir.joinpath(name), "wb").close()
 
-    io_completed = 0
+    io_completed = 1
     bytes_read = {
         name: 0
         for name in inputs
@@ -280,15 +280,15 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
     }
 
     while io_completed < 100:
-        cpu_percent = max(io_completed, cpu_queue.get())
-        while True: # Get the last message
-            try:
-                cpu_percent = max(io_completed, cpu_queue.get_nowait())
-            except queue.Empty:
-                break
+        #cpu_percent = max(io_completed, cpu_queue.get())
+        #while True: # Get the last message
+        #    try:
+        #        cpu_percent = max(io_completed, cpu_queue.get_nowait())
+        #    except queue.Empty:
+        #        break
 
         log_debug(f"CPU Percent: {cpu_percent}")
-        if cpu_percent:
+        if true: #cpu_percent:
             bytes_to_read = {
                 name: int(size * (cpu_percent / 100) - bytes_read[name])
                 for name, size in inputs.items()
@@ -312,7 +312,7 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
             log_debug(f"Bytes Read: {bytes_read}")
             log_debug(f"Bytes Written: {bytes_written}")
 
-            io_completed = cpu_percent
+            io_completed = io_completed + 1 # cpu_percent
 
             if io_completed >= 100:
                 break
@@ -489,7 +489,7 @@ def main():
                 if isinstance(proc, subprocess.Popen):
                     proc.wait()
         if io_proc is not None and io_proc.is_alive():
-            io_proc.terminate()
+            #io_proc.terminate()
             io_proc.join()
 
         try:
