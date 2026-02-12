@@ -252,7 +252,7 @@ def io_write_benchmark_user_input_data_size(outputs,
 def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit=None, rundir=None, event=None):
     """Alternate between reading and writing to a file, ensuring read only happens after write."""
 
-    if memory_limit is None:f
+    if memory_limit is None:
         memory_limit = 10 * 1024 * 1024  # sys.maxsize
     memory_limit = int(memory_limit)
 
