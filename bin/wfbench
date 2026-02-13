@@ -287,14 +287,14 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
         #    except queue.Empty:
         #        break
 
-        log_debug(f"CPU Percent: {cpu_percent}")
-        if true: #cpu_percent:
+        log_debug(f"IO Percent: {io_completed}")
+        if True: #cpu_percent:
             bytes_to_read = {
-                name: int(size * (cpu_percent / 100) - bytes_read[name])
+                name: int(size * (io_completed / 100) - bytes_read[name])
                 for name, size in inputs.items()
             }
             bytes_to_write = {
-                name: int(size * (cpu_percent / 100) - bytes_written[name])
+                name: int(size * (io_completed / 100) - bytes_written[name])
                 for name, size in outputs.items()
             }
             io_read_benchmark_user_input_data_size(bytes_to_read, rundir, memory_limit=memory_limit)
@@ -312,7 +312,7 @@ def io_alternate(inputs, outputs, cpu_queue: multiprocessing.Queue, memory_limit
             log_debug(f"Bytes Read: {bytes_read}")
             log_debug(f"Bytes Written: {bytes_written}")
 
-            io_completed = io_completed + 1 # cpu_percent
+            io_completed = io_completed + 1
 
             if io_completed >= 100:
                 break
