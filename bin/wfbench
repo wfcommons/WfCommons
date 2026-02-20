@@ -768,9 +768,10 @@ def main():
     except KeyboardInterrupt:
         log_debug("Detected Keyboard interrupt: cleaning up processes...")
         kill_current_handles(current_proc_handles)
-        sys.exit(1)
     finally:
+        log_debug("Aborting: cleaning up processes...")
         kill_current_handles(current_proc_handles)
+
 
     # Cleanups
     if core:
