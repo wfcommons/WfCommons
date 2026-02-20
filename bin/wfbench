@@ -80,10 +80,11 @@ class ProcessHandle:
         self._proc.terminate()
 
     def terminate_along_with_children(self):
+        # If it's a multiprocessing, just kill the parent and return
         if isinstance(self._proc, multiprocessing.Process):
-            log_error("Calling terminate_along_with_children() on a multiprocessing.Process is a likely bug")
+            self._proc.terminate()
             return
-
+        # If it's a Popen, then do the brute-force thing
         try:
             parent = psutil.Process(self._proc.pid)
             children = parent.children(recursive=True)
@@ -595,6 +596,12 @@ def compute_num_chunks(args):
     num_chunks = max(num_chunks, 1)  # The above computations may say "zero"
     return num_chunks
 
+def kill_current_handles(handles: list[ProcessHandle]):
+    for handle in handles:
+        if handle is not None and handle.is_alive():
+            handle.terminate_along_with_children()
+
+
 def main():
     """Main program."""
     parser = get_parser()
@@ -618,10 +625,10 @@ def main():
         core = lock_core(path_locked, path_cores)
 
     if args.time and (not args.cpu_work and not args.gpu_work):
-        log_error("If --time is provided, then --cpu-work and/or --gpu-work must also be provided.")
+        log_error("If --time is provided, at least one of --cpu-work and --gpu-work must also be provided.")
         sys.exit(1)
 
-    # Compute the (feasible) number of chunks
+    # Compute the (feasible) number of chunks based on the arguments
     num_chunks = compute_num_chunks(args)
     log_debug(f"Executing benchmark with {num_chunks} chunks.")
 
@@ -718,39 +725,52 @@ def main():
 
     # All benchmarks have been specified, we can just go through the steps blindly
     # log_info(f"Starting {args.name} Benchmark")
-    for step_index, step in enumerate(steps):
-        log_debug(f"**** STEP {step_index} ***")
-        io_read_process = step["io_read_benchmark"].run()
-        io_write_process = step["io_write_benchmark"].run()
-        [cpu_benchmark_process, memory_benchmark_process] = step["cpu_benchmark"].run()
-        gpu_benchmark_process = step["gpu_benchmark"].run()
 
-        # If time based, sleep the required amount of time and kill the process
-        if args.time:
-            time.sleep(float(args.time) / num_chunks)
+    current_proc_handles = []
+    try:
+        for step_index, step in enumerate(steps):
+            log_debug(f"**** STEP {step_index} ***")
+            io_read_process = step["io_read_benchmark"].run()
+            current_proc_handles += [io_read_process]
+            io_write_process = step["io_write_benchmark"].run()
+            [cpu_benchmark_process, memory_benchmark_process] = step["cpu_benchmark"].run()
+            current_proc_handles += [cpu_benchmark_process, memory_benchmark_process]
+            gpu_benchmark_process = step["gpu_benchmark"].run()
+            current_proc_handles += [gpu_benchmark_process]
+            current_proc_handles[:] = [io_read_process, cpu_benchmark_process, memory_benchmark_process, gpu_benchmark_process]
+
+            # If time based, sleep the required amount of time and kill the process
+            if args.time:
+                time.sleep(float(args.time) / num_chunks)
+                if cpu_benchmark_process is not None:
+                    cpu_benchmark_process.terminate_along_with_children()
+                if gpu_benchmark_process is not None:
+                    gpu_benchmark_process.terminate()
+
+            # Wait for the I/O processes to be done
+            if io_read_process is not None:
+                io_read_process.wait()
+            if io_write_process is not None:
+                io_write_process.wait()
+
+            # Wait for the CPU process to be done
             if cpu_benchmark_process is not None:
-                cpu_benchmark_process.terminate_along_with_children()
+                cpu_benchmark_process.wait()
+
+            # Kill the Memory process
+            if memory_benchmark_process is not None:
+                memory_benchmark_process.terminate_along_with_children()
+                memory_benchmark_process.wait()
+
+            # Wait for the GPU Process to be done
             if gpu_benchmark_process is not None:
-                gpu_benchmark_process.terminate()
-
-        # Wait for the I/O processes to be done
-        if io_read_process is not None:
-            io_read_process.wait()
-        if io_write_process is not None:
-            io_write_process.wait()
-
-        # Wait for the CPU process to be done
-        if cpu_benchmark_process is not None:
-            cpu_benchmark_process.wait()
-
-        # Kill the Memory process
-        if memory_benchmark_process is not None:
-            memory_benchmark_process.terminate_along_with_children()
-            memory_benchmark_process.wait()
-
-        # Wait for the GPU Process to be done
-        if gpu_benchmark_process is not None:
-            gpu_benchmark_process.wait()
+                gpu_benchmark_process.wait()
+    except KeyboardInterrupt:
+        log_debug("Detected Keyboard interrupt: cleaning up processes...")
+        kill_current_handles(current_proc_handles)
+        sys.exit(1)
+    finally:
+        kill_current_handles(current_proc_handles)
 
     # Cleanups
     if core:
