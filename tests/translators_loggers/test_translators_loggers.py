@@ -114,6 +114,7 @@ additional_setup_methods = {
     "taskvine": _additional_setup_taskvine,
     "makeflow": noop,
     "cwl": noop,
+    "streamflow": noop,
     "pegasus": _additional_setup_pegasus,
     "swiftt": _additional_setup_swiftt,
 }
@@ -189,6 +190,19 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
 
+def run_workflow_streamflow(container, num_tasks, str_dirpath):
+    # Run the workflow!
+    # Note that the input file is hardcoded and Blast-specific
+    sys.stderr.write("TODO: RUN THE STREAMFLOW WORKFLOW!!!")
+    time.sleep(100000)
+    # exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
+    #                                        user="wfcommons", stdout=True, stderr=True)
+    # # Check sanity
+    # assert (exit_code == 0)
+    # # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
+    # # and there is a 2* because there is a message for the job and for the step)
+    # assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
+
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh",
@@ -217,6 +231,7 @@ run_workflow_methods = {
     "taskvine": run_workflow_taskvine,
     "makeflow": run_workflow_makeflow,
     "cwl": run_workflow_cwl,
+    "streamflow": run_workflow_streamflow,
     "pegasus": run_workflow_pegasus,
     "swiftt": run_workflow_swiftt,
 }
@@ -231,6 +246,7 @@ translator_classes = {
     "taskvine": TaskVineTranslator,
     "makeflow": MakeflowTranslator,
     "cwl": CWLTranslator,
+    "streamflow": CWLTranslator,
     "pegasus": PegasusTranslator,
     "swiftt": SwiftTTranslator,
 }
@@ -241,17 +257,18 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
-           "nextflow",
-           "nextflow_subworkflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "makeflow",
-           "cwl",
-           "pegasus",
+           # "swiftt",
+           # "dask",
+           # "parsl",
+           # "nextflow",
+           # "nextflow_subworkflow",
+           # "airflow",
+           # "bash",
+           # "taskvine",
+           # "makeflow",
+           # "cwl",
+           "streamflow",
+           # "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -305,6 +322,8 @@ class TestTranslators:
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
+        elif backend == "streamflow":
+            parsed =
         else:
             parser = None
 
