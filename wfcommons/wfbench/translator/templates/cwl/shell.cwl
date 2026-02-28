@@ -3,8 +3,6 @@ class: CommandLineTool
 requirements:
   InlineJavascriptRequirement: {}
   ShellCommandRequirement: {}
-stdout: $(inputs.step_name + ".out")
-stderr: $(inputs.step_name + ".err")
 
 arguments:
   - position: 1
@@ -16,6 +14,9 @@ arguments:
             cmd = cmd.replace(new RegExp(inputs.input_files[i].basename, 'g'), inputs.input_files[i].path);
           }
         }
+        cmd = cmd + " > " + runtime.outdir + "/" + inputs.step_name + ".out 2> " + runtime.outdir + "/" + inputs.step_name + ".err";
+        cmd = cmd + " ; echo '-- end of stdout for " + inputs.step_name + " --' >> " + runtime.outdir + "/" + inputs.step_name + ".out";
+        cmd = cmd + " ; echo '-- end of stderr for " + inputs.step_name + " --' >> " + runtime.outdir + "/" + inputs.step_name + ".err";
         return cmd;
       }
     shellQuote: false
@@ -32,9 +33,13 @@ inputs:
 
 outputs:
   out:
-    type: stdout
+    type: File
+    outputBinding:
+      glob: $(inputs.step_name + ".out")
   err:
-    type: stderr
+    type: File
+    outputBinding:
+      glob: $(inputs.step_name + ".err")
   output_files:
     type: File[]
     outputBinding:

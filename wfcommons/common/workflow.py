@@ -259,8 +259,8 @@ class Workflow(nx.DiGraph):
             self.write_json(pathlib.Path(temp.name))
             return create_graph(pathlib.Path(temp.name))
 
-    def roots(self) -> List[Task]:
+    def roots(self) -> List[str]:
         return [n for n,d in self.in_degree() if d==0]
 
-    def leaves(self) -> List[Task]:
+    def leaves(self) -> List[str]:
         return [n for n,d in self.out_degree() if d==0]

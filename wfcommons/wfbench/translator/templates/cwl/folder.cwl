@@ -7,7 +7,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-cwlVersion: v1.2
+cwlVersion: v1.0
 class: ExpressionTool
 requirements:
   InlineJavascriptRequirement: {}

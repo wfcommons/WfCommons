@@ -119,7 +119,7 @@ class TaskVineLogsParser(LogsParser):
             if not "size" in self.files_map[file_key]:
                 sys.stderr.write(f"Warning: Could not determine size for file with key {file_key}: assuming zero bytes.\n")
                 self.files_map[file_key]["size"] = 0
-        sys.stderr.write(f"Identified {len(self.files_map)} valid files\n")
+        # sys.stderr.write(f"Identified {len(self.files_map)} valid files\n")
 
         # Construct the task runtimes
         self._construct_task_runtimes()
@@ -134,7 +134,7 @@ class TaskVineLogsParser(LogsParser):
         for victim in to_remove:
             self.known_task_ids.remove(victim)
 
-        sys.stderr.write(f"Identified {len(self.known_task_ids)} valid tasks\n")
+        # sys.stderr.write(f"Identified {len(self.known_task_ids)} valid tasks\n")
 
         # Construct the input and output file for each task
         self._construct_task_input_output_files()
