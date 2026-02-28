@@ -24,6 +24,7 @@ RUN apt-get -y install vim --fix-missing
 RUN apt-get -y install gcc 
 RUN apt-get -y install gcc-multilib
 RUN apt-get -y install graphviz libgraphviz-dev
+RUN apt-get -y install zip
 
 
 
