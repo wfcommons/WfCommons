@@ -45,7 +45,9 @@ class ROCrateLogsParser(LogsParser):
                  crate_dir: pathlib.Path,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
-                 steps_to_ignore: Optional[list[str]]=None) -> None:
+                 steps_to_ignore: Optional[list[str]]=[],
+                 file_extensions_to_ignore: Optional[list[str]]=[],
+                 ) -> None:
         """Create an object of the RO crate parser."""
 
         # TODO: Decide if these should be RO crate or Streamflow or whatev
@@ -67,8 +69,10 @@ class ROCrateLogsParser(LogsParser):
         self.file_objects = {}
 
         self.task_id_name_map: dict[str, str] = {}
+        self.data_file_id_name_map: dict[str, str] = {}
 
         self.steps_to_ignore = steps_to_ignore
+        self.file_extensions_to_ignore = file_extensions_to_ignore
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -96,6 +100,9 @@ class ROCrateLogsParser(LogsParser):
         # Dictionary of ro-crate objects by "@id"
         self.lookup = {item["@id"]: item for item in self.graph_data}
 
+        # Dictionary of application data files
+        self._construct_data_file_id_name_map()
+
         # Find id of the main workflow
         overview = self.lookup.get("./")
         main_workflow_id = overview.get("mainEntity").get("@id")
@@ -103,9 +110,22 @@ class ROCrateLogsParser(LogsParser):
         create_actions = list(filter((lambda x: x.get('@type') == "CreateAction"), self.graph_data))
         self._create_tasks(create_actions, main_workflow_id)
 
-
-
         return self.workflow
+
+
+    def _construct_data_file_id_name_map(self):
+        for item in self.graph_data:
+            if item["@type"] != "File":
+                continue
+            id = item["@id"]
+            if "alternateName" not in item:
+                continue
+            alternate_name = item["alternateName"]
+            self.data_file_id_name_map[id] = alternate_name
+        print("=== FILE MAP ===")
+        print(self.data_file_id_name_map)
+        print("==== END FILE MAP ===")
+
 
     def _create_tasks(self, create_actions, main_workflow_id):
         # Object to track dependencies between tasks based on files
@@ -121,6 +141,8 @@ class ROCrateLogsParser(LogsParser):
                 continue
 
             create_action['name'] = create_action['name'].removeprefix("Run of workflow/")
+            print("***************************************")
+            print("DEALING WITH TASK:", create_action['name'])
 
             # Below would remove the "file.cwl#" tag, which runs the risk
             # of non-uniqueness of action names perhaps
@@ -133,11 +155,19 @@ class ROCrateLogsParser(LogsParser):
             # Get all input & output for the create_action
             input = [obj['@id'] for obj in create_action['object']]
             output = [obj['@id'] for obj in create_action['result']]
+            # print("RAW INPUT FILES: ", input)
+            # print("RAW OUTPUT FILES: ", output)
 
             # Filter for actual files
             input_files = self._filter_file_ids(input)
+            print("GOT THESE IDS FOR INPUT FILES: ", input_files)
+            print("TRANSLATED TO REAL FILE NAMES: ", [self.data_file_id_name_map[f] for f in input_files])
             output_files = self._filter_file_ids(output)
+            print("GOT THESE IDS FOR OUTPUT FILES: ", output_files)
+            print("TRANSLATED TO REAL FILE NAMES: ", [self.data_file_id_name_map[f] for f in output_files])
 
+            print("FILTERED INPUT FILES: ", input_files)
+            print("FILTERED OUTPUT FILES: ", output_files)
 
             task = Task(name=create_action['name'],
                         task_id=create_action['name'],
@@ -214,23 +244,29 @@ class ROCrateLogsParser(LogsParser):
         output = []
         for file in files:
             if file not in self.file_objects:
-                self.file_objects[file] = File(file_id=file,
+                self.file_objects[file] = File(file_id=self.data_file_id_name_map[file],
                                                size=os.path.getsize(f"{self.crate_dir}/{file}"),
                                                logger=self.logger)
             output.append(self.file_objects[file])
         return output
 
     def _filter_file_ids(self, ids):
-        # Given a list of "@id"s, returns those with the File type as well as unpacks PropertyValue into Files.
-        file_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'File', ids))
 
+        file_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'File', ids))
         property_value_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'PropertyValue', ids))
+        # print("FILE_IDS =", file_ids)
+        # print("PROPERTY_VALUE_IDS =", property_value_ids)
         for property_value_id in property_value_ids:
             property_values = self.lookup.get(property_value_id)['value']
+            # print("PROPERTY_VALUES =", property_values)
+            if isinstance(property_values, dict):
+                property_values = [property_values]
 
             # Filter out values without "@id"s (i.e. int values, etc.)
             pv_contained_ids = list(filter(lambda x: isinstance(x, dict) and "@id" in x, property_values))
+            # print("PV_CONTAINED_IDS.1 = ", pv_contained_ids)
             pv_contained_ids = [obj["@id"] for obj in pv_contained_ids]
+            # print("PV_CONTAINED_IDS.2 = ", pv_contained_ids)
 
             # Recurse to verify everything's a file
             pv_filtered_ids = self._filter_file_ids(pv_contained_ids)
@@ -238,7 +274,19 @@ class ROCrateLogsParser(LogsParser):
             # Filter duplicates while adding
             file_ids = list(set(file_ids + pv_filtered_ids))
 
-        return file_ids
+        # Removing files based on file extensions
+        to_return = []
+        for file_id in file_ids:
+            to_ignore = False
+            for suffix in self.file_extensions_to_ignore:
+                if self.data_file_id_name_map[file_id].endswith(suffix):
+                    to_ignore = True
+                    break
+            if not to_ignore:
+                to_return.append(file_id)
+
+        return to_return
+
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])
         self.workflow.executed_at = main_workflow['startTime']

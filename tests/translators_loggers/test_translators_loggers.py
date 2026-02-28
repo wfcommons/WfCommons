@@ -335,7 +335,9 @@ class TestTranslators:
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         elif backend == "streamflow":
-            parser = ROCrateLogsParser(dirpath / "RO-Crate", steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"])
+            parser = ROCrateLogsParser(dirpath / "RO-Crate",
+                                       steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
+                                       file_extensions_to_ignore=[".out", ".err"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
@@ -349,7 +351,7 @@ class TestTranslators:
             # print(reconstructed_workflow.tasks)
             for task_name in original_workflow.tasks.keys():
                 original_task = original_workflow.tasks[task_name]
-                reconstructed_task = reconstructed_workflow.tasks[task_name]
+                reconstructed_task = reconstructed_workflow.tasks["main.cwl#" + task_name]
                 print("ORIGINAL:", original_task.task_id, "RECONSTRUCTED:", reconstructed_task.task_id)
                 print("   NUM_INPUT_FILES: ", len(original_task.input_files), len(reconstructed_task.input_files))
                 print("   NUM_OUTPUT_FILES: ", len(original_task.output_files), len(reconstructed_task.output_files))
