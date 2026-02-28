@@ -34,12 +34,14 @@ from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import MakeflowTranslator
 from wfcommons.wfbench import CWLTranslator
+from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
+from wfcommons.wfinstances.logs import ROCrateLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -114,6 +116,7 @@ additional_setup_methods = {
     "taskvine": _additional_setup_taskvine,
     "makeflow": noop,
     "cwl": noop,
+    "streamflow": noop,
     "pegasus": _additional_setup_pegasus,
     "swiftt": _additional_setup_swiftt,
 }
@@ -189,6 +192,24 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
 
+def run_workflow_streamflow(container, num_tasks, str_dirpath):
+    # Run the workflow!
+    # Note that the input file is hardcoded and Blast-specific
+    exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
+                                           user="wfcommons", stdout=True, stderr=True)
+    # print(output.decode())
+    # Check sanity
+    assert (exit_code == 0)
+    # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
+    assert (output.decode().count("COMPLETED Step") == num_tasks + 2)
+
+    # Generate RO-Crate now that the workflow has completed (Fails for now)
+    exit_code, output = container.exec_run(cmd="streamflow list",
+                                           user="wfcommons", stdout=True, stderr=True)
+    uuid = output.decode().splitlines()[1].strip().split(" ")[0]
+    exit_code, output = container.exec_run(cmd=f"streamflow prov {uuid}",
+                                           user="wfcommons", stdout=True, stderr=True)
+
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh",
@@ -217,6 +238,7 @@ run_workflow_methods = {
     "taskvine": run_workflow_taskvine,
     "makeflow": run_workflow_makeflow,
     "cwl": run_workflow_cwl,
+    "streamflow": run_workflow_streamflow,
     "pegasus": run_workflow_pegasus,
     "swiftt": run_workflow_swiftt,
 }
@@ -231,6 +253,7 @@ translator_classes = {
     "taskvine": TaskVineTranslator,
     "makeflow": MakeflowTranslator,
     "cwl": CWLTranslator,
+    "streamflow": StreamflowTranslator,
     "pegasus": PegasusTranslator,
     "swiftt": SwiftTTranslator,
 }
@@ -251,6 +274,7 @@ class TestTranslators:
            "taskvine",
            "makeflow",
            "cwl",
+           "streamflow",
            "pegasus",
         ])
     @pytest.mark.unit
@@ -299,16 +323,17 @@ class TestTranslators:
                                                stdout=True, stderr=True)
 
         # Run the log parser if any
+        parser = None
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
-        else:
-            parser = None
+        # elif backend == "streamflow":
+        #     parser =ROCrateLogsParser(dirpath / "work/wfcommons/most-recent/wfbench")
 
-        if parser:
+        if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))

@@ -22,12 +22,14 @@ RUN apt-get -y install sudo
 RUN apt-get -y install vim --fix-missing
 RUN apt-get -y install gcc 
 RUN apt-get -y install gcc-multilib
+RUN apt-get -y install graphviz libgraphviz-dev
+
 
 # Python stuff
 RUN apt-get -y install python3 python3-pip
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN python3 -m pip install --break-system-packages pathos pandas filelock
-RUN python3 -m pip install --break-system-packages networkx scipy matplotlib
+RUN python3 -m pip install --break-system-packages networkx scipy matplotlib pygraphviz
 RUN python3 -m pip install --break-system-packages pyyaml jsonschema requests
 RUN python3 -m pip install --break-system-packages --upgrade setuptools
 

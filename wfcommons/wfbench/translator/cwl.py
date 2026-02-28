@@ -17,7 +17,7 @@ from typing import Union, Optional
 from collections import defaultdict, deque
 
 from .abstract_translator import Translator
-from ...common import Workflow
+from ...common import Workflow, Task, File
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -35,7 +35,7 @@ class CWLTranslator(Translator):
                  workflow: Union[Workflow, pathlib.Path],
                  logger: Optional[logging.Logger] = None) -> None:
         super().__init__(workflow, logger)
-        self.cwl_script = ["cwlVersion: v1.2",
+        self.cwl_script = ["cwlVersion: v1.0",
                            "class: Workflow",
                            "requirements:",
                            "  MultipleInputFeatureRequirement: {}",
@@ -77,7 +77,7 @@ class CWLTranslator(Translator):
         # Parsing the inputs and outputs of the workflow
         self._parse_inputs_outputs()
 
-        # Parsing the steos
+        # Parsing the steps
         self._parse_steps()
 
         # additional files
@@ -86,6 +86,9 @@ class CWLTranslator(Translator):
 
         # Writing the CWL files to the output folder
         self._write_cwl_files(output_folder)
+
+        # Write README file
+        self._write_readme_file(output_folder)
 
     def _parse_steps(self) -> None:
         self.cwl_script.append("steps:")
@@ -223,7 +226,6 @@ class CWLTranslator(Translator):
 
         clt_folder = cwl_folder.joinpath("clt")
         clt_folder.mkdir(exist_ok=True)
-        shutil.copy(this_dir.joinpath("templates/cwl/wfbench.cwl"), clt_folder)
         shutil.copy(this_dir.joinpath("templates/cwl/folder.cwl"), clt_folder)
         shutil.copy(this_dir.joinpath("templates/cwl/shell.cwl"), clt_folder)
 
@@ -232,3 +234,14 @@ class CWLTranslator(Translator):
 
         with (open(cwl_folder.joinpath("config.yml"), "w", encoding="utf-8")) as f:
             f.write("\n".join(self.yml_script))
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        readme_file_path = output_folder.joinpath("README")
+
+        with open(readme_file_path, "w") as out:
+            out.write(f"In directory {str(output_folder)}: cwltool ./main.cwl ")
+            for task_id in self.workflow.roots():
+                task = self.workflow.tasks[task_id]
+                for input_file in task.input_files:
+                    out.write(f"--{task_id}_input ./data/{input_file} ")
+            out.write("\n")
