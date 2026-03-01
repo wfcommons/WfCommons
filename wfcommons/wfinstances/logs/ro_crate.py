@@ -122,9 +122,6 @@ class ROCrateLogsParser(LogsParser):
                 continue
             alternate_name = item["alternateName"]
             self.data_file_id_name_map[id] = alternate_name
-        print("=== FILE MAP ===")
-        print(self.data_file_id_name_map)
-        print("==== END FILE MAP ===")
 
 
     def _create_tasks(self, create_actions, main_workflow_id):
@@ -141,8 +138,8 @@ class ROCrateLogsParser(LogsParser):
                 continue
 
             create_action['name'] = create_action['name'].removeprefix("Run of workflow/")
-            print("***************************************")
-            print("DEALING WITH TASK:", create_action['name'])
+            # print("***************************************")
+            # print("DEALING WITH TASK:", create_action['name'])
 
             # Below would remove the "file.cwl#" tag, which runs the risk
             # of non-uniqueness of action names perhaps
@@ -155,19 +152,11 @@ class ROCrateLogsParser(LogsParser):
             # Get all input & output for the create_action
             input = [obj['@id'] for obj in create_action['object']]
             output = [obj['@id'] for obj in create_action['result']]
-            # print("RAW INPUT FILES: ", input)
-            # print("RAW OUTPUT FILES: ", output)
 
             # Filter for actual files
             input_files = self._filter_file_ids(input)
-            print("GOT THESE IDS FOR INPUT FILES: ", input_files)
-            print("TRANSLATED TO REAL FILE NAMES: ", [self.data_file_id_name_map[f] for f in input_files])
             output_files = self._filter_file_ids(output)
-            print("GOT THESE IDS FOR OUTPUT FILES: ", output_files)
-            print("TRANSLATED TO REAL FILE NAMES: ", [self.data_file_id_name_map[f] for f in output_files])
 
-            print("FILTERED INPUT FILES: ", input_files)
-            print("FILTERED OUTPUT FILES: ", output_files)
 
             task = Task(name=create_action['name'],
                         task_id=create_action['name'],
@@ -208,31 +197,31 @@ class ROCrateLogsParser(LogsParser):
         self._add_dependencies(files, instruments)
 
     def _add_dependencies(self, files, instruments):
+
+        # File dependencies
         for file in files.values():
             for parent in file.get('out', []):
                 for child in file.get('in', []):
-                    # self.workflow.add_dependency(parent, child)
                     self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
-        # Assumes
-        parameter_connections = list(filter((lambda x: x.get('@type') == "ParameterConnection"), self.graph_data))
-        for parameter_connection in parameter_connections:
-            # parameter_connection["sourceParameter"] is either a single dict or a list of dicts,
-            # which is bad design but whatever
-            source_parameters = parameter_connection["sourceParameter"]
-            if not isinstance(source_parameters, list):
-                source_parameters = [source_parameters]
-
-            for item in source_parameters:
-                source = item["@id"]
-                source = source.rsplit("#", 1)[0]   # Trim to get instrument
-
-                target = parameter_connection["targetParameter"]["@id"]
-                target = target.rsplit("#", 1)[0]   # Trim to get instrument
-
-                for parent in instruments.get(source, []):
-                    for child in instruments.get(target, []):
-                        self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
+        # THIS IS COMMENTED OUT AT IT SEEMS TO ADD TONS OF NON-EXISTING DEPENDENCIES ON WORKFLOW BENCHMARKS
+        # (FOR INSTANCE, IT TOTALLY BREAKS THE BENCHMARK WORKFLOW DUE TO ALL OF THEM USING shell.cwl#output_files
+        # parameter_connections = list(filter((lambda x: x.get('@type') == "ParameterConnection"), self.graph_data))
+        # for parameter_connection in parameter_connections:
+        #     # parameter_connection["sourceParameter"] is either a single dict or a list of dicts,
+        #     # which is bad design but whatever
+        #     source_parameters = parameter_connection["sourceParameter"]
+        #     if not isinstance(source_parameters, list):
+        #         source_parameters = [source_parameters]
+        #         source = item["@id"]
+        #         source = source.rsplit("#", 1)[0]   # Trim to get instrument
+        #
+        #         target = parameter_connection["targetParameter"]["@id"]
+        #         target = target.rsplit("#", 1)[0]   # Trim to get instrument
+        #
+        #         for parent in instruments.get(source, []):
+        #             for child in instruments.get(target, []):
+        #                 self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
 
     def _time_diff(self, start_time, end_time):
@@ -254,19 +243,14 @@ class ROCrateLogsParser(LogsParser):
 
         file_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'File', ids))
         property_value_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'PropertyValue', ids))
-        # print("FILE_IDS =", file_ids)
-        # print("PROPERTY_VALUE_IDS =", property_value_ids)
         for property_value_id in property_value_ids:
             property_values = self.lookup.get(property_value_id)['value']
-            # print("PROPERTY_VALUES =", property_values)
             if isinstance(property_values, dict):
                 property_values = [property_values]
 
             # Filter out values without "@id"s (i.e. int values, etc.)
             pv_contained_ids = list(filter(lambda x: isinstance(x, dict) and "@id" in x, property_values))
-            # print("PV_CONTAINED_IDS.1 = ", pv_contained_ids)
             pv_contained_ids = [obj["@id"] for obj in pv_contained_ids]
-            # print("PV_CONTAINED_IDS.2 = ", pv_contained_ids)
 
             # Recurse to verify everything's a file
             pv_filtered_ids = self._filter_file_ids(pv_contained_ids)

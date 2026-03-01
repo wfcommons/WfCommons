@@ -268,18 +268,18 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           # "swiftt",
-           # "dask",
-           # "parsl",
-           # "nextflow",
-           # "nextflow_subworkflow",
-           # "airflow",
-           # "bash",
-           # "taskvine",
-           # "makeflow",
-           # "cwl",
+           "swiftt",
+           "dask",
+           "parsl",
+           "nextflow",
+           "nextflow_subworkflow",
+           "airflow",
+           "bash",
+           "taskvine",
+           "makeflow",
+           "cwl",
            "streamflow",
-           # "pegasus",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -346,18 +346,9 @@ class TestTranslators:
 
             original_workflow : Workflow = benchmark.workflow
 
-            # print(original_workflow.tasks)
-            # print("======")
-            # print(reconstructed_workflow.tasks)
             for task_name in original_workflow.tasks.keys():
                 original_task = original_workflow.tasks[task_name]
                 reconstructed_task = reconstructed_workflow.tasks["main.cwl#" + task_name]
-                print("ORIGINAL:", original_task.task_id, "RECONSTRUCTED:", reconstructed_task.task_id)
-                print("   NUM_INPUT_FILES: ", len(original_task.input_files), len(reconstructed_task.input_files))
-                print("   NUM_OUTPUT_FILES: ", len(original_task.output_files), len(reconstructed_task.output_files))
-                print("   INPUT FILES: ", [f.file_id for f in original_task.input_files], [f.file_id for f in reconstructed_task.input_files])
-                print("   OUTPUT FILES: ", [f.file_id for f in original_task.output_files], [f.file_id for f in reconstructed_task.output_files])
-
             _compare_workflows(original_workflow, reconstructed_workflow)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
