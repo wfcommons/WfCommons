@@ -213,11 +213,13 @@ class ROCrateLogsParser(LogsParser):
         #     source_parameters = parameter_connection["sourceParameter"]
         #     if not isinstance(source_parameters, list):
         #         source_parameters = [source_parameters]
+        #     for item in source_parameters:
         #         source = item["@id"]
         #         source = source.rsplit("#", 1)[0]   # Trim to get instrument
         #
         #         target = parameter_connection["targetParameter"]["@id"]
         #         target = target.rsplit("#", 1)[0]   # Trim to get instrument
+        #         print("source", source, "----> target", target)
         #
         #         for parent in instruments.get(source, []):
         #             for child in instruments.get(target, []):
