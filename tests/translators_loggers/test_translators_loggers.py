@@ -346,9 +346,6 @@ class TestTranslators:
 
             original_workflow : Workflow = benchmark.workflow
 
-            for task_name in original_workflow.tasks.keys():
-                original_task = original_workflow.tasks[task_name]
-                reconstructed_task = reconstructed_workflow.tasks["main.cwl#" + task_name]
             _compare_workflows(original_workflow, reconstructed_workflow)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
