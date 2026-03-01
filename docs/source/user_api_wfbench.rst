@@ -38,6 +38,14 @@ wfcommons.wfbench.translator.cwl
    :undoc-members:
    :show-inheritance:
 
+wfcommons.wfbench.translator.streamflow
+--------------------------------
+
+.. automodule:: wfcommons.wfbench.translator.streamflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 wfcommons.wfbench.translator.dask
 ---------------------------------
 

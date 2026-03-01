@@ -209,6 +209,10 @@ def run_workflow_streamflow(container, num_tasks, str_dirpath):
     uuid = output.decode().splitlines()[1].strip().split(" ")[0]
     exit_code, output = container.exec_run(cmd=f"streamflow prov {uuid}",
                                            user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=f"mkdir RO-Crate",
+                                           user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=f"unzip *.zip -d ./RO-Crate",
+                                           user="wfcommons", stdout=True, stderr=True)
 
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
@@ -330,8 +334,10 @@ class TestTranslators:
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
-        # elif backend == "streamflow":
-        #     parser =ROCrateLogsParser(dirpath / "work/wfcommons/most-recent/wfbench")
+        elif backend == "streamflow":
+            parser = ROCrateLogsParser(dirpath / "RO-Crate",
+                                       steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
+                                       file_extensions_to_ignore=[".out", ".err"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")

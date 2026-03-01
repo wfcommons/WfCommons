@@ -38,6 +38,12 @@ class StreamflowTranslator(Translator):
         super().__init__(workflow, logger)
 
     def translate(self, output_folder: pathlib.Path) -> None:
+        """
+        Translate a workflow benchmark description (WfFormat) into an actual workflow application.
+
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
+        """
         # Perform the CWL translation (which will create the output folder)
         from wfcommons.wfbench import CWLTranslator
         cwl_translator = CWLTranslator(workflow=self.workflow, logger=self.logger)
