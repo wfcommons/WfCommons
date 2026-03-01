@@ -159,8 +159,8 @@ class ROCrateLogsParser(LogsParser):
 
 
             task = Task(name=create_action['name'],
-                        task_id=create_action['name'],
-                        # task_id=create_action['name'] + "_" + create_action['@id'],
+                        # task_id=create_action['name'],
+                        task_id=create_action['name'] + "_" + create_action['@id'],
                         task_type=TaskType.COMPUTE,
                         runtime=self._time_diff(create_action['startTime'], create_action['endTime']),
                         executed_at=create_action['startTime'],
@@ -168,8 +168,8 @@ class ROCrateLogsParser(LogsParser):
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
             self.workflow.add_task(task)
-            self.task_id_name_map[create_action['@id']] = create_action['name']
-            # self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
+            # self.task_id_name_map[create_action['@id']] = create_action['name']
+            self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
 
             # For each file, track which task(s) it is in/output for
             for infile in input_files:
