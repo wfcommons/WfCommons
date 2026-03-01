@@ -159,8 +159,8 @@ class ROCrateLogsParser(LogsParser):
 
 
             task = Task(name=create_action['name'],
-                        task_id=create_action['name'],
-                        # task_id=create_action['name'] + "_" + create_action['@id'],
+                        # task_id=create_action['name'],
+                        task_id=create_action['name'] + "_" + create_action['@id'],
                         task_type=TaskType.COMPUTE,
                         runtime=self._time_diff(create_action['startTime'], create_action['endTime']),
                         executed_at=create_action['startTime'],
@@ -168,8 +168,8 @@ class ROCrateLogsParser(LogsParser):
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
             self.workflow.add_task(task)
-            self.task_id_name_map[create_action['@id']] = create_action['name']
-            # self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
+            # self.task_id_name_map[create_action['@id']] = create_action['name']
+            self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
 
             # For each file, track which task(s) it is in/output for
             for infile in input_files:
@@ -213,11 +213,13 @@ class ROCrateLogsParser(LogsParser):
         #     source_parameters = parameter_connection["sourceParameter"]
         #     if not isinstance(source_parameters, list):
         #         source_parameters = [source_parameters]
+        #     for item in source_parameters:
         #         source = item["@id"]
         #         source = source.rsplit("#", 1)[0]   # Trim to get instrument
         #
         #         target = parameter_connection["targetParameter"]["@id"]
         #         target = target.rsplit("#", 1)[0]   # Trim to get instrument
+        #         print("source", source, "----> target", target)
         #
         #         for parent in instruments.get(source, []):
         #             for child in instruments.get(target, []):
