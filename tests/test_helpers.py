@@ -90,7 +90,8 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
         working_dir=working_dir,
         user="wfcommons",
         tty=True,
-        detach=True
+        detach=True,
+        init=True  # For zombies
     )
 
     # Installing WfCommons on container
