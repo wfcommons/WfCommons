@@ -58,3 +58,6 @@ test/
 llmtests/
 
 scratch/
+
+models.yaml
+.env 

@@ -66,8 +66,7 @@ class LLMClient:
             Format specification for structured output (e.g., JSON schema).
             Note: Not all providers support this parameter.
         temperature : float, optional
-            Sampling temperature (0.0 = deterministic). Defaults to 0.0.
-
+            Sampling temperature (default: 0.0 for deterministic output).
         Returns
         -------
         str

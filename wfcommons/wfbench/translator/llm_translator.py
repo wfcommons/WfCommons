@@ -5,10 +5,19 @@ This translator inherits from the existing abstract Translator class
 from wfcommons.wfbench.translator and implements the required interface.
 """
 
+import os
+import re
+from pathlib import Path
+
 import requests
-from wfcommons.wfbench.bench import WorkflowBenchmark
+import yaml
+from dotenv import load_dotenv
 from typing import Optional, Dict, Any, List
 from wfcommons.wfbench.translator.utils.llm_client import LLMClient
+
+load_dotenv()  # loads .env from cwd (project root)
+
+MODELS_YAML = Path("models.yaml")
 
 
 class LLMTranslator():
@@ -22,8 +31,10 @@ class LLMTranslator():
     """
 
     def __init__(self,
-                llm_client: LLMClient,
-                examples_instances: Optional[List[str]],
+                llm_client: LLMClient | None = None,
+                model_name: str | None = None,
+                models_file: str | Path | None = None,
+                examples_instances: Optional[List[str]] = None,
                 num_examples: int = 3,
                 system_prompt: Optional[str] = None,
                 **kwargs
@@ -31,15 +42,22 @@ class LLMTranslator():
         """
         Parameters
         ----------
-        llm_client : Any
-            An object with `.complete(prompt: str) -> str`.
+        llm_client : LLMClient, optional
+            A pre-configured LLMClient instance.  Either this or
+            ``model_name`` must be provided.
+        model_name : str, optional
+            Key from models.yaml (e.g. "qwen3", "ollama/llama3").
+            The matching config is used to build an LLMClient automatically.
+        models_file : str or Path, optional
+            Path to a custom models YAML file.  Defaults to the
+            ``models.yaml`` shipped alongside this module.
         example_instances : List[str]
              URLs pointing to translator examples or benchmarks:
               - raw GitHub links
               - JSON traces
               - scripts
         num_examples : int, optional
-            Number of example instances to include in the prompt. 
+            Number of example instances to include in the prompt.
         system_prompt : str, optional
             Override the default system instructions for the LLM.
         kwargs : dict
@@ -47,10 +65,70 @@ class LLMTranslator():
         """
         super().__init__(**kwargs)
 
+        if llm_client is None and model_name is None:
+            raise ValueError("Provide either llm_client or model_name.")
+        if llm_client is not None and model_name is not None:
+            raise ValueError("Provide only one of llm_client or model_name, not both.")
+
+        if model_name is not None:
+            llm_client = self._client_from_yaml(model_name, models_file)
+
         self.llm = llm_client
         self.examples_instances = examples_instances
         self.num_examples = num_examples
         self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+
+    # ------------------------------------------------------------------ #
+    #  YAML helpers                                                       #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def available_models(models_file: str | Path | None = None) -> list[str]:
+        """Return the list of model keys defined in models.yaml."""
+        cfg = LLMTranslator._load_models_yaml(models_file)
+        return list(cfg.keys())
+
+    @staticmethod
+    def _load_models_yaml(models_file: str | Path | None = None) -> dict:
+        path = Path(models_file) if models_file else MODELS_YAML
+        with open(path) as f:
+            return yaml.safe_load(f)
+
+    @staticmethod
+    def _resolve_env(value: str) -> str:
+        """Replace ``${VAR}`` placeholders with environment variables."""
+        def _replace(m):
+            var = m.group(1)
+            val = os.environ.get(var)
+            if val is None:
+                raise EnvironmentError(
+                    f"Environment variable '{var}' is not set "
+                    f"(required by models.yaml)."
+                )
+            return val
+        return re.sub(r"\$\{(\w+)\}", _replace, value)
+
+    @staticmethod
+    def _client_from_yaml(model_name: str,
+                          models_file: str | Path | None = None) -> LLMClient:
+        cfg = LLMTranslator._load_models_yaml(models_file)
+        if model_name not in cfg:
+            raise KeyError(
+                f"Model '{model_name}' not found in models.yaml. "
+                f"Available: {list(cfg.keys())}"
+            )
+        entry = cfg[model_name]
+        api_key = LLMTranslator._resolve_env(str(entry["api_key"]))
+        base_url = entry.get("base_url")
+        if base_url and base_url != "null":
+            base_url = LLMTranslator._resolve_env(str(base_url))
+        else:
+            base_url = None
+        return LLMClient(
+            model=entry["model"],
+            api_key=api_key,
+            base_url=base_url,
+        )
     
     def _load_examples(self,
                        path_list: List[str] , 
@@ -128,16 +206,17 @@ class LLMTranslator():
             metadata=metadata,
         )
 
-        output = self.llm.complete(
-            prompt,
-            response_format={
+        response_format = None
+        if json_schema is not None:
+            response_format = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "WfFormat",
                     "schema": json_schema
                 }
             }
-        )
+
+        output = self.llm.complete(prompt, response_format=response_format)
         return output
     
     def _retrieve_examples(self, trace_text: str):
