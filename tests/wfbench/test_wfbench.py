@@ -165,7 +165,7 @@ class TestWfBench:
             # Run the workflow
             sys.stderr.write("Running workflow...\n")
             exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
-
+            print(output.decode())
             # Kill the container
             _shutdown_docker_container_and_remove_image(container)
 
