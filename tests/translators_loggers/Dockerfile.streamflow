@@ -26,8 +26,6 @@ RUN apt-get -y install gcc-multilib
 RUN apt-get -y install graphviz libgraphviz-dev
 RUN apt-get -y install zip
 
-
-
 # Python stuff
 RUN apt-get -y install python3 python3-pip
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
@@ -41,9 +39,9 @@ RUN apt-get -y install stress-ng
 
 # Streamflow
 RUN apt-get -y install nodejs
-#RUN python3 -m pip install --break-system-packages streamflow==0.2.0.dev15
+RUN python3 -m pip install --break-system-packages streamflow==0.2.0.dev14
 # For now, the above hasnt' been released yet, so we get a commit tag
-RUN git clone https://github.com/alpha-unito/streamflow.git && cd streamflow && git checkout 2295eda80ad37214d6f607f75f542b9eca03e121 && python3 -m pip install --break-system-packages . 
+#RUN git clone https://github.com/alpha-unito/streamflow.git && cd streamflow && git checkout 2295eda80ad37214d6f607f75f542b9eca03e121 && python3 -m pip install --break-system-packages . 
 
 # Add wfcommons user
 RUN useradd -ms /bin/bash wfcommons
