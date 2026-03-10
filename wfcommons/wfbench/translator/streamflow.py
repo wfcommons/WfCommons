@@ -29,13 +29,21 @@ class StreamflowTranslator(Translator):
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path],
+    :param generate_stdout_files: If true, each CWL step will generate a .out file with stdout from the step's execution
+    :type generate_stdout_files: Optional[bool]
+    :param generate_stderr_files: If true, each CWL step will generate a .err file with stderr from the step's execution
+    :type generate_stderr_files: Optional[bool]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
+                 generate_stdout_files: Optional[bool] = True,
+                 generate_stderr_files: Optional[bool] = True,
                  logger: Optional[logging.Logger] = None) -> None:
         super().__init__(workflow, logger)
+        self.generate_stdout_files : bool = (generate_stdout_files is None) or generate_stdout_files
+        self.generate_stderr_files : bool = (generate_stderr_files is None) or generate_stderr_files
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -46,7 +54,9 @@ class StreamflowTranslator(Translator):
         """
         # Perform the CWL translation (which will create the output folder)
         from wfcommons.wfbench import CWLTranslator
-        cwl_translator = CWLTranslator(workflow=self.workflow, logger=self.logger)
+        cwl_translator = CWLTranslator(workflow=self.workflow, logger=self.logger,
+                                       generate_stdout_files=self.generate_stdout_files,
+                                       generate_stderr_files=self.generate_stderr_files)
         cwl_translator.translate(output_folder)
 
         # Generate the streamflow.yml file

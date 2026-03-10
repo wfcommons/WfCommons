@@ -15,6 +15,8 @@ arguments:
           }
         }
         cmd = cmd + " > " + runtime.outdir + "/" + inputs.step_name + ".out 2> " + runtime.outdir + "/" + inputs.step_name + ".err";
+        cmd = cmd + " ; echo '-- end of stdout for " + inputs.step_name + " --' >> " + runtime.outdir + "/" + inputs.step_name + ".out"; #OPTIONAL_STDOUT_FILE
+        cmd = cmd + " ; echo '-- end of stderr for " + inputs.step_name + " --' >> " + runtime.outdir + "/" + inputs.step_name + ".err"; #OPTIONAL_STDERR_FILE
         return cmd;
       }
     shellQuote: false
@@ -30,14 +32,14 @@ inputs:
     type: string
 
 outputs:
-  out:
-    type: File
-    outputBinding:
-      glob: $(inputs.step_name + ".out")
-  err:
-    type: File
-    outputBinding:
-      glob: $(inputs.step_name + ".err")
+  out: #OPTIONAL_STDOUT_FILE
+    type: File #OPTIONAL_STDOUT_FILE
+    outputBinding: #OPTIONAL_STDOUT_FILE
+      glob: $(inputs.step_name + ".out") #OPTIONAL_STDOUT_FILE
+  err: #OPTIONAL_STDERR_FILE
+    type: File #OPTIONAL_STDERR_FILE
+    outputBinding: #OPTIONAL_STDERR_FILE
+      glob: $(inputs.step_name + ".err") #OPTIONAL_STDERR_FILE
   output_files:
     type: File[]
     outputBinding:
