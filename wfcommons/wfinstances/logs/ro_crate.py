@@ -39,23 +39,27 @@ class ROCrateLogsParser(LogsParser):
     :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Optional[Logger]
+    :param steps_to_ignore: Names of CWL steps that should be ignored in the translation
+    :type steps_to_ignore: Optional[list[str]]
+    :param file_extensions_to_ignore: File extensions that should be ignored in the translation
+    :type file_extensions_to_ignore: Optional[list[str]]
+    :param instruments_to_ignore: Names of instruments that should be ignored in the translation
+    :type instruments_to_ignore: Optional[list[str]]
     """
 
     def __init__(self,
                  crate_dir: pathlib.Path,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
-                 steps_to_ignore: Optional[list[str]]=[],
-                 file_extensions_to_ignore: Optional[list[str]]=[],
+                 steps_to_ignore: Optional[list[str]] = None,
+                 file_extensions_to_ignore: Optional[list[str]] = None,
+                 instruments_to_ignore: Optional[list[str]] = None,
                  ) -> None:
         """Create an object of the RO crate parser."""
 
-        # TODO: Decide if these should be RO crate or Streamflow or whatev
         super().__init__('Streamflow-ROCrate', 'https://w3id.org/workflowhub/workflow-ro-crate/1.0', description, logger)
 
         # Sanity check
-        if steps_to_ignore is None:
-            steps_to_ignore = []
         if not crate_dir.is_dir():
             raise OSError(f'The provided path does not exist or is not a folder: {crate_dir}')
 
@@ -71,8 +75,9 @@ class ROCrateLogsParser(LogsParser):
         self.task_id_name_map: dict[str, str] = {}
         self.data_file_id_name_map: dict[str, str] = {}
 
-        self.steps_to_ignore = steps_to_ignore
-        self.file_extensions_to_ignore = file_extensions_to_ignore
+        self.steps_to_ignore : list[str] = steps_to_ignore or []
+        self.file_extensions_to_ignore : list[str] = file_extensions_to_ignore or []
+        self.instruments_to_ignore : list[str] = instruments_to_ignore or []
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -159,8 +164,8 @@ class ROCrateLogsParser(LogsParser):
 
 
             task = Task(name=create_action['name'],
-                        task_id=create_action['name'],
-                        # task_id=create_action['name'] + "_" + create_action['@id'],
+                        # task_id=create_action['name'],
+                        task_id=create_action['name'] + "_" + create_action['@id'],
                         task_type=TaskType.COMPUTE,
                         runtime=self._time_diff(create_action['startTime'], create_action['endTime']),
                         executed_at=create_action['startTime'],
@@ -168,8 +173,8 @@ class ROCrateLogsParser(LogsParser):
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
             self.workflow.add_task(task)
-            self.task_id_name_map[create_action['@id']] = create_action['name']
-            # self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
+            # self.task_id_name_map[create_action['@id']] = create_action['name']
+            self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
 
             # For each file, track which task(s) it is in/output for
             for infile in input_files:
@@ -204,25 +209,27 @@ class ROCrateLogsParser(LogsParser):
                 for child in file.get('in', []):
                     self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
-        # THIS IS COMMENTED OUT AT IT SEEMS TO ADD TONS OF NON-EXISTING DEPENDENCIES ON WORKFLOW BENCHMARKS
-        # (FOR INSTANCE, IT TOTALLY BREAKS THE BENCHMARK WORKFLOW DUE TO ALL OF THEM USING shell.cwl#output_files
-        # parameter_connections = list(filter((lambda x: x.get('@type') == "ParameterConnection"), self.graph_data))
-        # for parameter_connection in parameter_connections:
-        #     # parameter_connection["sourceParameter"] is either a single dict or a list of dicts,
-        #     # which is bad design but whatever
-        #     source_parameters = parameter_connection["sourceParameter"]
-        #     if not isinstance(source_parameters, list):
-        #         source_parameters = [source_parameters]
-        #         source = item["@id"]
-        #         source = source.rsplit("#", 1)[0]   # Trim to get instrument
-        #
-        #         target = parameter_connection["targetParameter"]["@id"]
-        #         target = target.rsplit("#", 1)[0]   # Trim to get instrument
-        #
-        #         for parent in instruments.get(source, []):
-        #             for child in instruments.get(target, []):
-        #                 self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
+        parameter_connections = list(filter((lambda x: x.get('@type') == "ParameterConnection"), self.graph_data))
+        for parameter_connection in parameter_connections:
+            # parameter_connection["sourceParameter"] is either a single dict or a list of dicts,
+            # which is bad design but whatever
+            source_parameters = parameter_connection["sourceParameter"]
+            if not isinstance(source_parameters, list):
+                source_parameters = [source_parameters]
+            for item in source_parameters:
+                source = item["@id"]
+                source = source.rsplit("#", 1)[0]   # Trim to get instrument
 
+                target = parameter_connection["targetParameter"]["@id"]
+                target = target.rsplit("#", 1)[0]   # Trim to get instrument
+
+                if source in self.instruments_to_ignore or target in self.instruments_to_ignore:
+                    continue
+                # print("source", source, "----> target", target)
+
+                for parent in instruments.get(source, []):
+                    for child in instruments.get(target, []):
+                        self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
     def _time_diff(self, start_time, end_time):
         diff = datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)

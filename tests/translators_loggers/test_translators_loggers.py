@@ -338,7 +338,8 @@ class TestTranslators:
         elif backend == "streamflow":
             parser = ROCrateLogsParser(dirpath / "RO-Crate",
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
-                                       file_extensions_to_ignore=[".out", ".err"])
+                                       file_extensions_to_ignore=[".out", ".err"],
+                                       instruments_to_ignore=["shell.cwl"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
