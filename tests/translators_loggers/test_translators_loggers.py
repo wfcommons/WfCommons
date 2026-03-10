@@ -299,7 +299,7 @@ class TestTranslators:
         if backend == "nextflow_subworkflow":
             translator = translator_classes[backend](benchmark.workflow, use_subworkflows=True, max_tasks_per_subworkflow=10)
         else:
-            translator = translator_classes[backend](benchmark.workflow, generate_stderr_files=False)
+            translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
         # Make the directory that holds the translation world-writable,
