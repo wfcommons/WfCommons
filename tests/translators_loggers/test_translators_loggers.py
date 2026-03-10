@@ -186,6 +186,7 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
                                            user="wfcommons", stdout=True, stderr=True)
+    # print(output.decode())
     # Check sanity
     assert (exit_code == 0)
     # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
@@ -298,7 +299,7 @@ class TestTranslators:
         if backend == "nextflow_subworkflow":
             translator = translator_classes[backend](benchmark.workflow, use_subworkflows=True, max_tasks_per_subworkflow=10)
         else:
-            translator = translator_classes[backend](benchmark.workflow)
+            translator = translator_classes[backend](benchmark.workflow, generate_stderr_files=False)
         translator.translate(output_folder=dirpath)
 
         # Make the directory that holds the translation world-writable,
