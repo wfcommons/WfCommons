@@ -14,6 +14,7 @@ import yaml
 from dotenv import load_dotenv
 from typing import Optional, Dict, Any, List
 from wfcommons.wfbench.translator.utils.llm_client import LLMClient
+from wfcommons.wfbench.translator.skills.loader import SkillLoader
 
 load_dotenv()  # loads .env from cwd (project root)
 
@@ -25,7 +26,7 @@ class LLMTranslator():
     • Uses existing WfFormat as examples.
     • Accepts a trace from a NEW workflow system.
     • Sends all of this as grounding context to an LLM.
-    • Produces a new recipe automatically.
+    • Produces a new trace in WfFormat automatically.
 
     The user does not implement translation logic.
     """
@@ -37,13 +38,14 @@ class LLMTranslator():
                 examples_instances: Optional[List[str]] = None,
                 num_examples: int = 3,
                 system_prompt: Optional[str] = None,
+                skill_name: Optional[str] = None,
                 **kwargs
             ):
         """
         Parameters
         ----------
         llm_client : LLMClient, optional
-            A pre-configured LLMClient instance.  Either this or
+            A pre-configured LLMClient instance. Either this or
             ``model_name`` must be provided.
         model_name : str, optional
             Key from models.yaml (e.g. "qwen3", "ollama/llama3").
@@ -60,6 +62,10 @@ class LLMTranslator():
             Number of example instances to include in the prompt.
         system_prompt : str, optional
             Override the default system instructions for the LLM.
+            When provided, the skills system is bypassed entirely.
+        skill_name : str, optional
+            Explicit skill to use (e.g. "nextflow", "cwl").
+            Auto-detected from trace content if not specified.
         kwargs : dict
             Additional parameters passed to the parent Translator if needed.
         """
@@ -76,7 +82,9 @@ class LLMTranslator():
         self.llm = llm_client
         self.examples_instances = examples_instances
         self.num_examples = num_examples
-        self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self.skill_name = skill_name
+        self._skill_loader = SkillLoader()
+        self._system_prompt_override = system_prompt
 
     # ------------------------------------------------------------------ #
     #  YAML helpers                                                       #
@@ -87,6 +95,11 @@ class LLMTranslator():
         """Return the list of model keys defined in models.yaml."""
         cfg = LLMTranslator._load_models_yaml(models_file)
         return list(cfg.keys())
+
+    @staticmethod
+    def available_skills() -> list[str]:
+        """Return the list of available skill names."""
+        return SkillLoader().available_skills()
 
     @staticmethod
     def _load_models_yaml(models_file: str | Path | None = None) -> dict:
@@ -160,8 +173,8 @@ class LLMTranslator():
                                   path: str,
                                   ref: str="main") -> List[Dict[str, Any]]:
         """
-        Fetch Python files from a specific path in a GitHub repository.
-        
+        Fetch JSON files from a specific path in the WfInstances GitHub repository.
+
         Parameters
         ----------
         path : str
@@ -169,14 +182,37 @@ class LLMTranslator():
         ref : str, optional
             Git reference (branch, tag, or commit SHA). Defaults to "main".
 
-        Returns         
+        Returns
         -------
         List[Dict[str, Any]]
             List of dictionaries with 'url', 'filename', and 'content' keys.
+            Returns an empty list if the path does not exist in the repository.
         """
         print(f"Fetching examples from path: {path} at ref: {ref}")
         url = f"https://api.github.com/repos/wfcommons/WfInstances/contents/{path}?ref={ref}"
-        listing = requests.get(url).json()
+        resp = requests.get(url)
+
+        if resp.status_code == 404:
+            print(f"Warning: path '{path}' not found in WfInstances repository. "
+                  "Skipping examples from this path.")
+            return []
+
+        if resp.status_code != 200:
+            print(f"Warning: GitHub API returned status {resp.status_code} for "
+                  f"path '{path}'. Skipping examples from this path.")
+            return []
+
+        listing = resp.json()
+
+        if isinstance(listing, dict) and "message" in listing:
+            print(f"Warning: GitHub API error for path '{path}': "
+                  f"{listing['message']}. Skipping examples from this path.")
+            return []
+
+        if not isinstance(listing, list):
+            print(f"Warning: unexpected response for path '{path}'. "
+                  "Skipping examples from this path.")
+            return []
 
         examples = []
         for item in listing:
@@ -201,8 +237,11 @@ class LLMTranslator():
             trace_text = str(trace)
 
 
+        examples = self._retrieve_examples(trace_text)
+
         prompt = self._build_prompt(
             trace=trace_text,
+            examples=examples,
             metadata=metadata,
         )
 
@@ -219,11 +258,16 @@ class LLMTranslator():
         output = self.llm.complete(prompt, response_format=response_format)
         return output
     
-    def _retrieve_examples(self, trace_text: str):
+    def _retrieve_examples(self, trace_text: str) -> List[Dict[str, Any]]:
         """
-        Simple scoring method to choose top-k (num_examples) examples
-        Replace with embeddings if desired.
+        Simple scoring method to choose top-k (num_examples) examples.
+
+        Returns an empty list if no examples_instances were provided or
+        none of the paths exist in the WfInstances repository.
         """
+        if not self.examples_instances:
+            return []
+
         examples = self._load_examples(self.examples_instances)
         flat_examples = []
         if isinstance(examples, dict):
@@ -231,6 +275,11 @@ class LLMTranslator():
                 flat_examples.extend(v)
         else:
             flat_examples = list(examples)
+
+        if not flat_examples:
+            print("Warning: no valid examples found from any of the provided "
+                  "instance paths. Proceeding without examples.")
+            return []
 
         results = []
         for example in flat_examples:
@@ -243,7 +292,7 @@ class LLMTranslator():
     @staticmethod
     def _similarity(a: str, b: str) -> float:
         """
-        Very naive similarity based on word overlap. Replace with embeddings if desired.
+        Very naive similarity based on word overlap.
         """
         return len(set(a.split()) & set(b.split()))
     
@@ -254,9 +303,22 @@ class LLMTranslator():
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
 
-        prompt = self.system_prompt.strip() + "\n\n"
+        if self._system_prompt_override is not None:
+            # Explicit override: use as-is (backward compat)
+            system_prompt = self._system_prompt_override
+        else:
+            # Compose from skill files
+            skill_hint = self.skill_name
+            if not skill_hint and metadata and "source_system" in metadata:
+                skill_hint = metadata["source_system"].lower()
+            system_prompt = self._skill_loader.compose_prompt(
+                trace_text=trace,
+                skill_name=skill_hint,
+            )
 
-        prompt += "=== EXAMPLE TRANSLATORS (FROM URLS) ===\n"
+        prompt = system_prompt.strip() + "\n\n"
+
+        prompt += "=== EXAMPLE WORKFLOW INSTANCES (WFFORMAT) ===\n"
         for i, ex in enumerate(examples, 1):
             prompt += f"\n--- Example {i} ---\n"
             prompt += f"Source URL: {ex['url']}\n"
@@ -309,69 +371,3 @@ class LLMTranslator():
                 pass
 
         raise ValueError("Could not extract valid JSON from LLM output.")
-    
-DEFAULT_SYSTEM_PROMPT = """
-You are an expert software engineer specializing in workflow systems.
-Translate workflow definitions/traces into WfCommons WfFormat 1.5 JSON.
-
-OUTPUT THIS EXACT STRUCTURE:
-{
-  "name": "<workflow_name - REQUIRED>",
-  "schemaVersion": "1.5",
-  "workflow": {
-    "specification": {
-      "tasks": [
-        {
-          "name": "<task_name>",
-          "id": "<task_id>",
-          "parents": [],
-          "children": [],
-          "inputFiles": [],
-          "outputFiles": []
-        }
-      ],
-      "files": []
-    },
-    "execution": {
-      "makespanInSeconds": <number or 0 if unknown>,
-      "executedAt": "<timestamp or "1970-01-01T00:00:00Z" if unknown>",
-      "tasks": [
-        {
-          "id": "<task_id matching specification>",
-          "runtimeInSeconds": <number or 0 if unknown>,
-          "executedAt": "<timestamp or "1970-01-01T00:00:00Z" if unknown>",
-          "command": {
-            "program": "<program name>",
-            "arguments": []
-          },
-          "coreCount": <number or 1>,
-          "avgCPU": <percentage or 0>,
-          "readBytes": <number or 0>,
-          "writtenBytes": <number or 0>,
-          "memoryInBytes": <number or 0>,
-          "machines": ["unknown"]
-        }
-      ],
-      "machines": [
-        {
-          "nodeName": "unknown"
-        }
-      ]
-    }
-  }
-}
-
-RULES:
-1. Use EXACTLY this structure - do not add or rename fields
-2. "name" is REQUIRED - use the workflow name from the file, or the filename from metadata
-3. "schemaVersion" is always "1.5"
-4. Do NOT include optional top-level fields like "description", "createdAt", "author", "runtimeSystem" unless explicitly provided in source
-5. For arrays not found, use empty array []
-6. For numbers not found, use 0
-7. For timestamp strings not found, use "1970-01-01T00:00:00Z"
-8. Each task in specification MUST have: name, id, parents, children
-9. Each task in execution MUST have: id (matching specification), runtimeInSeconds
-10. Infer task dependencies from data flow (channels, inputs/outputs)
-11. Only populate execution fields if runtime data exists in the source - otherwise use 0 or placeholder values
-12. Output ONLY valid JSON - no explanations or markdown
-"""
