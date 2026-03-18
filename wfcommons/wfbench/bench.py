@@ -252,6 +252,7 @@ class WorkflowBenchmark:
                          percent_cpu: Union[float, Dict[str, float]] = 0.6,
                          cpu_work: Union[int, Dict[str, int]] = None,
                          gpu_work: Union[int, Dict[str, int]] = None,
+                         num_chunks: Optional[int] = 10,
                          time: Optional[int] = None,
                          data: Optional[int] = 0,
                          mem: Optional[float] = None,
@@ -269,6 +270,8 @@ class WorkflowBenchmark:
         :type cpu_work: Union[int, Dict[str, int]]
         :param gpu_work: GPU work per workflow task.
         :type gpu_work: Union[int, Dict[str, int]]
+        :param num_chunks: Number of chunks for pipelining I/O and computation for each task execution.
+        :type num_chunks: Optional[int]
         :param time: Time limit for running each task (in seconds).
         :type time: Optional[int]
         :param data: Total workflow data footprint (in MB).
@@ -308,6 +311,7 @@ class WorkflowBenchmark:
                 cpu_work,
                 gpu_work,
                 time,
+                num_chunks,
                 mem,
                 lock_files_folder,
                 cores,
@@ -367,6 +371,7 @@ class WorkflowBenchmark:
                                  cpu_work: Union[int, Dict[str, int]],
                                  gpu_work: Union[int, Dict[str, int]],
                                  time: Optional[int],
+                                 num_chunks: Optional[int],
                                  mem: Optional[float],
                                  lock_files_folder: Optional[pathlib.Path],
                                  cores: Optional[pathlib.Path],
@@ -381,6 +386,7 @@ class WorkflowBenchmark:
         params.extend(cpu_params)
         gpu_params = self._generate_task_gpu_params(task, gpu_work)
         params.extend(gpu_params)
+        params.extend([f"--num-chunks {num_chunks}"])
 
         if mem:
             params.extend([f"--mem {mem}"])
