@@ -17,6 +17,7 @@ import time
 import re
 import os
 
+from tests.test_helpers import _recursive_chmod
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
@@ -304,10 +305,7 @@ class TestTranslators:
 
         # Make the directory that holds the translation world-writable,
         # so that we don't have any permission shenanigans
-        for directory, directory_name, filenames in os.walk(dirpath):
-            os.chmod(directory, 0o777)
-            for filename in filenames:
-                os.chmod(os.path.join(directory, filename), 0o777)
+        _recursive_chmod(dirpath, 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")

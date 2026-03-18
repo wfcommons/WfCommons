@@ -15,6 +15,7 @@ import sys
 import json
 import networkx
 
+from tests.test_helpers import _recursive_chmod
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _start_docker_container
 from tests.test_helpers import _shutdown_docker_container_and_remove_image
@@ -157,6 +158,10 @@ class TestWfBench:
             sys.stderr.write("\nTranslating workflow...\n")
             translator = BashTranslator(benchmark.workflow)
             translator.translate(output_folder=dirpath)
+
+            # Make the directory world-writable so that
+            # we don't have any permission shenanigans
+            _recursive_chmod(dirpath, 0o777)
 
             # Start the Docker container
             sys.stderr.write("Starting Docker container...\n")
