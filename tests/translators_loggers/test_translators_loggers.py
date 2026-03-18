@@ -241,17 +241,17 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           # "swiftt",
-           # "dask",
-           # "parsl",
-           # "nextflow",
-           # "nextflow_subworkflow",
-           # "airflow",
+           "swiftt",
+           "dask",
+           "parsl",
+           "nextflow",
+           "nextflow_subworkflow",
+           "airflow",
            "bash",
-           # "taskvine",
-           # "makeflow",
-           # "cwl",
-           # "pegasus",
+           "taskvine",
+           "makeflow",
+           "cwl",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -318,6 +318,5 @@ class TestTranslators:
             _compare_workflows(original_workflow, reconstructed_workflow)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
-        time.sleep(100000)
         _shutdown_docker_container_and_remove_image(container)
 
