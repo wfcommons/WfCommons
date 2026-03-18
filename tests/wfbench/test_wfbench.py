@@ -53,7 +53,6 @@ def _workflow_as_expected(dirpath: pathlib.Path,
     with json_path.open("r") as f:
         generated_json = json.load(f)
 
-
     # Check the number of tasks
     assert(len(workflow.tasks) == len(generated_json['workflow']['specification']['tasks']))
 

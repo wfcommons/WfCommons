@@ -543,7 +543,8 @@ def get_parser() -> argparse.ArgumentParser:
                                                          "if amounts of work and or input/output file sizes are too small).")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
     parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete "
-                                                     "the computational portion of the benchmark (overrides CPU and GPU works).")
+                                                     "the computational portion of the benchmark (overrides CPU and GPU works). "
+                                                     "Is only approximate since I/O time may make the overall time longer.")
     parser.add_argument("--mem", type=float, default=None, help="Maximum memory consumption (in MB).")
     parser.add_argument("--output-files", help="Output file names with sizes in bytes as a JSON dictionary "
                                                "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
@@ -591,7 +592,7 @@ def compute_num_chunks(args):
             num_chunks_gpu = min(int(args.num_chunks), int(float(args.gpu_work) / min_chunk_size_gpu_work))
         else:
             num_chunks_gpu = 1
-        num_chunks = min(num_chunks_cpu, num_chunks_cpu)
+        num_chunks = min(num_chunks_cpu, num_chunks_gpu)
 
     num_chunks = max(num_chunks, 1)  # The above computations may say "zero"
     return num_chunks
@@ -624,9 +625,9 @@ def main():
         path_cores = pathlib.Path(args.path_cores)
         core = lock_core(path_locked, path_cores)
 
-    if args.time and (not args.cpu_work and not args.gpu_work):
-        log_error("If --time is provided, at least one of --cpu-work and --gpu-work must also be provided.")
-        sys.exit(1)
+    # if args.time and (not args.cpu_work and not args.gpu_work):
+    #     log_error("If --time is provided, at least one of --cpu-work and --gpu-work must also be provided.")
+    #     sys.exit(1)
 
     # Compute the (feasible) number of chunks based on the arguments
     num_chunks = compute_num_chunks(args)
@@ -741,11 +742,12 @@ def main():
 
             # If time based, sleep the required amount of time and kill the process
             if args.time:
-                time.sleep(float(args.time) / num_chunks)
-                if cpu_benchmark_process is not None:
-                    cpu_benchmark_process.terminate_along_with_children()
-                if gpu_benchmark_process is not None:
-                    gpu_benchmark_process.terminate()
+                if cpu_benchmark_process is not None or gpu_benchmark_process is not None:
+                    time.sleep(float(args.time) / num_chunks)
+                    if cpu_benchmark_process is not None:
+                        cpu_benchmark_process.terminate_along_with_children()
+                    if gpu_benchmark_process is not None:
+                        gpu_benchmark_process.terminate()
 
             # Wait for the I/O processes to be done
             if io_read_process is not None:
