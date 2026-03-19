@@ -8,7 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-from .logs import MakeflowLogsParser, NextflowLogsParser, PegasusLogsParser, HierarchicalPegasusLogsParser
+from .logs import MakeflowLogsParser, NextflowLogsParser, PegasusLogsParser, HierarchicalPegasusLogsParser, ROCrateLogsParser
 from .schema import SchemaValidator
 from .instance import Instance
 from .instance_analyzer import InstanceAnalyzer, InstanceElement

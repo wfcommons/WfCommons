@@ -11,6 +11,7 @@
 from .airflow import AirflowTranslator
 from .bash import BashTranslator
 from .cwl import CWLTranslator
+from .streamflow import StreamflowTranslator
 from .dask import DaskTranslator
 from .nextflow import NextflowTranslator
 from .parsl import ParslTranslator

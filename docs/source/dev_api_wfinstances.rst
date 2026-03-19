@@ -50,6 +50,16 @@ wfcommons.wfinstances.logs.makeflow
    :private-members:
    :noindex:
 
+wfcommons.wfinstances.logs.taskvine
+-----------------------------------
+
+.. automodule:: wfcommons.wfinstances.logs.taskvine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :noindex:
+
 wfcommons.wfinstances.logs.nextflow
 -----------------------------------
 

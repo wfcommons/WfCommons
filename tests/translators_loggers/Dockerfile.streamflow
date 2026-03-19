@@ -1,6 +1,7 @@
-# docker build --platform amd64 -t wfcommons-dev-makeflow -f Dockerfile.makeflow .
-# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-makeflow /bin/bash
+# docker build --platform amd64 -t wfcommons-dev-streamflow -f Dockerfile.streamflow .
+# docker run -it --rm -v `pwd`:/home/wfcommons wfcommons-dev-streamflow /bin/bash
 
+# FROM alphaunito/streamflow
 FROM amd64/ubuntu:noble
 
 LABEL org.containers.image.authors="henric@hawaii.edu"
@@ -15,7 +16,6 @@ RUN echo "America/Los_Angeles" > /etc/timezone && export DEBIAN_FRONTEND=noninte
 RUN apt-get -y install pkg-config 
 RUN apt-get -y install git
 RUN apt-get -y install wget 
-RUN apt-get -y install curl 
 RUN apt-get -y install make 
 RUN apt-get -y install cmake 
 RUN apt-get -y install cmake-data 
@@ -24,7 +24,7 @@ RUN apt-get -y install vim --fix-missing
 RUN apt-get -y install gcc 
 RUN apt-get -y install gcc-multilib
 RUN apt-get -y install graphviz libgraphviz-dev
-
+RUN apt-get -y install zip
 
 # Python stuff
 RUN apt-get -y install python3 python3-pip
@@ -37,6 +37,12 @@ RUN python3 -m pip install --break-system-packages --upgrade setuptools
 # Stress-ng
 RUN apt-get -y install stress-ng
 
+# Streamflow
+RUN apt-get -y install nodejs
+#RUN python3 -m pip install --break-system-packages streamflow==0.2.0.dev14
+# For now, the above hasnt' been released yet, so we get a commit tag
+RUN git clone https://github.com/alpha-unito/streamflow.git && cd streamflow && git checkout 4cbe9244165a81114a73f5bb2ff5067a85a5600c && python3 -m pip install --break-system-packages . 
+
 # Add wfcommons user
 RUN useradd -ms /bin/bash wfcommons
 RUN adduser wfcommons sudo
@@ -47,20 +53,4 @@ USER wfcommons
 WORKDIR /home/wfcommons
 # Making this directory world rwx to facilitate testing
 RUN chmod -R 777 /home/wfcommons
-
-
-# Install Miniforge
-RUN wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" && \
-    bash Miniforge3.sh -b -p "${HOME}/conda" && \
-    rm Miniforge3.sh
-
-# Make sure conda is available in each shell session
-RUN echo "source ${HOME}/conda/etc/profile.d/conda.sh" >> ${HOME}/.bashrc
-RUN echo "conda activate" >> ${HOME}/.bashrc
-
-# Install necessary packages
-RUN . ${HOME}/conda/etc/profile.d/conda.sh && \
-    conda activate base && \
-    conda install -c conda-forge ndcctools && \
-    conda clean --all -f -y
 

@@ -26,6 +26,7 @@ license = {text = "GNU General Public License v3 (GPLv3)"}
 dependencies = [
     "jsonschema",
     "matplotlib",
+    "pygraphviz",
     "networkx",
     "numpy",
     "pandas",

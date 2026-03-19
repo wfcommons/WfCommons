@@ -1,0 +1,11 @@
+version: "v1.0"
+workflows:
+  head-tail:
+    type: cwl
+    config:
+      file: main.cwl
+      settings: inputs.yml
+deployments:
+  local:
+    type: local
+    config: {}

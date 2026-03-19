@@ -17,6 +17,7 @@ import time
 import re
 import os
 
+from tests.test_helpers import _recursive_chmod
 from tests.test_helpers import _create_fresh_local_dir
 from tests.test_helpers import _remove_local_dir_if_it_exists
 from tests.test_helpers import _start_docker_container
@@ -34,12 +35,14 @@ from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import MakeflowTranslator
 from wfcommons.wfbench import CWLTranslator
+from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
 from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
+from wfcommons.wfinstances.logs import ROCrateLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -114,6 +117,7 @@ additional_setup_methods = {
     "taskvine": _additional_setup_taskvine,
     "makeflow": noop,
     "cwl": noop,
+    "streamflow": noop,
     "pegasus": _additional_setup_pegasus,
     "swiftt": _additional_setup_swiftt,
 }
@@ -183,11 +187,34 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
                                            user="wfcommons", stdout=True, stderr=True)
+    # print(output.decode())
     # Check sanity
     assert (exit_code == 0)
     # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
+
+def run_workflow_streamflow(container, num_tasks, str_dirpath):
+    # Run the workflow!
+    # Note that the input file is hardcoded and Blast-specific
+    exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
+                                           user="wfcommons", stdout=True, stderr=True)
+    # print(output.decode())
+    # Check sanity
+    assert (exit_code == 0)
+    # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
+    assert (output.decode().count("COMPLETED Step") == num_tasks + 2)
+
+    # Generate RO-Crate now that the workflow has completed (Fails for now)
+    exit_code, output = container.exec_run(cmd="streamflow list",
+                                           user="wfcommons", stdout=True, stderr=True)
+    uuid = output.decode().splitlines()[1].strip().split(" ")[0]
+    exit_code, output = container.exec_run(cmd=f"streamflow prov {uuid}",
+                                           user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=f"mkdir RO-Crate",
+                                           user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(cmd=f"unzip *.zip -d ./RO-Crate",
+                                           user="wfcommons", stdout=True, stderr=True)
 
 def run_workflow_pegasus(container, num_tasks, str_dirpath):
     # Run the workflow!
@@ -217,6 +244,7 @@ run_workflow_methods = {
     "taskvine": run_workflow_taskvine,
     "makeflow": run_workflow_makeflow,
     "cwl": run_workflow_cwl,
+    "streamflow": run_workflow_streamflow,
     "pegasus": run_workflow_pegasus,
     "swiftt": run_workflow_swiftt,
 }
@@ -231,6 +259,7 @@ translator_classes = {
     "taskvine": TaskVineTranslator,
     "makeflow": MakeflowTranslator,
     "cwl": CWLTranslator,
+    "streamflow": StreamflowTranslator,
     "pegasus": PegasusTranslator,
     "swiftt": SwiftTTranslator,
 }
@@ -251,6 +280,7 @@ class TestTranslators:
            "taskvine",
            "makeflow",
            "cwl",
+           "streamflow",
            "pegasus",
         ])
     @pytest.mark.unit
@@ -275,10 +305,7 @@ class TestTranslators:
 
         # Make the directory that holds the translation world-writable,
         # so that we don't have any permission shenanigans
-        for directory, directory_name, filenames in os.walk(dirpath):
-            os.chmod(directory, 0o777)
-            for filename in filenames:
-                os.chmod(os.path.join(directory, filename), 0o777)
+        _recursive_chmod(dirpath, 0o777)
 
         # Start the Docker container
         container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")
@@ -299,16 +326,20 @@ class TestTranslators:
                                                stdout=True, stderr=True)
 
         # Run the log parser if any
+        parser = None
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
             parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
-        else:
-            parser = None
+        elif backend == "streamflow":
+            parser = ROCrateLogsParser(dirpath / "RO-Crate",
+                                       steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
+                                       file_extensions_to_ignore=[".out", ".err"],
+                                       instruments_to_ignore=["shell.cwl"])
 
-        if parser:
+        if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))

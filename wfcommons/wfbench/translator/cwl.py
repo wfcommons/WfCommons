@@ -17,7 +17,7 @@ from typing import Union, Optional
 from collections import defaultdict, deque
 
 from .abstract_translator import Translator
-from ...common import Workflow
+from ...common import Workflow, Task, File
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -28,19 +28,29 @@ class CWLTranslator(Translator):
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path],
+    :param generate_stdout_files: If true, each step will generate a .out file with stdout from the step's execution
+    :type generate_stdout_files: Optional[bool]
+    :param generate_stderr_files: If true, each step will generate a .err file with stderr from the step's execution
+    :type generate_stderr_files: Optional[bool]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Logger
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
+                 generate_stdout_files: Optional[bool] = True,
+                 generate_stderr_files: Optional[bool] = True,
                  logger: Optional[logging.Logger] = None) -> None:
         super().__init__(workflow, logger)
-        self.cwl_script = ["cwlVersion: v1.2",
+        self.cwl_script = ["cwlVersion: v1.0",
                            "class: Workflow",
                            "requirements:",
                            "  MultipleInputFeatureRequirement: {}",
                            "  StepInputExpressionRequirement: {}",
                            "  InlineJavascriptRequirement: {}\n"]
+
+        self.generate_stdout_files : bool = (generate_stdout_files is None) or generate_stdout_files
+        self.generate_stderr_files : bool = (generate_stderr_files is None) or generate_stderr_files
+
         self.yml_script = []
         self.parsed_tasks = []
         self.task_level_map = defaultdict(lambda: [])
@@ -77,7 +87,7 @@ class CWLTranslator(Translator):
         # Parsing the inputs and outputs of the workflow
         self._parse_inputs_outputs()
 
-        # Parsing the steos
+        # Parsing the steps
         self._parse_steps()
 
         # additional files
@@ -86,6 +96,9 @@ class CWLTranslator(Translator):
 
         # Writing the CWL files to the output folder
         self._write_cwl_files(output_folder)
+
+        # Write README file
+        self._write_readme_file(output_folder)
 
     def _parse_steps(self) -> None:
         self.cwl_script.append("steps:")
@@ -144,13 +157,23 @@ class CWLTranslator(Translator):
                      "      step_name:",
                     f"        valueFrom: \"{task.task_id}\"",
                     f"      output_filenames: {{default: {output_files}}}",
-                     "    out: [out, err, output_files]\n"
+                     "    out: [" # Completed below
                 ]
+                # Add stdout file?
+                if self.generate_stdout_files:
+                    code[-1] += "out, "
+                # Add stderr file?
+                if self.generate_stderr_files:
+                    code[-1] += "err, "
+                # Always add output files
+                code[-1] += "output_files]\n"
 
                 self.cwl_script.extend(code)
                 output_files_sources.append(f"          - {task.task_id}/output_files")
-                log_files_sources.append(f"          - {task.task_id}/out")
-                log_files_sources.append(f"          - {task.task_id}/err")
+                if self.generate_stdout_files:
+                    log_files_sources.append(f"          - {task.task_id}/out")
+                if self.generate_stderr_files:
+                    log_files_sources.append(f"          - {task.task_id}/err")
 
         code = [
              "  compile_output_files:",
@@ -169,22 +192,24 @@ class CWLTranslator(Translator):
              "    out: [out]\n"
         ]
 
-        code += [
-             "  compile_log_files:",
-             "    run: clt/folder.cwl",
-             "    in:",
-             "      - id: name",
-             "        valueFrom: \"logs\"",
-             "      - id: item",
-             "        linkMerge: merge_flattened",
-             "        source:",
-        ]
+        # Only deal with log files if there are any
+        if len(log_files_sources) > 0:
+            code += [
+                 "  compile_log_files:",
+                 "    run: clt/folder.cwl",
+                 "    in:",
+                 "      - id: name",
+                 "        valueFrom: \"logs\"",
+                 "      - id: item",
+                 "        linkMerge: merge_flattened",
+                 "        source:",
+            ]
 
-        code += log_files_sources
+            code += log_files_sources
 
-        code += [
-             "    out: [out]\n"
-        ]
+            code += [
+                 "    out: [out]\n"
+            ]
 
         self.cwl_script.extend(code)
 
@@ -211,10 +236,15 @@ class CWLTranslator(Translator):
         code = ["\noutputs:",
                 "  data_folder:",
                 "    type: Directory",
-                "    outputSource: compile_output_files/out",
+                "    outputSource: compile_output_files/out"]
+
+        if self.generate_stdout_files or self.generate_stderr_files:
+            code += [
                 "  log_folder:",
                 "    type: Directory",
-                "    outputSource: compile_log_files/out\n"]
+                "    outputSource: compile_log_files/out"]
+
+        code[-1] += "\n"
 
         self.cwl_script.extend(code)
 
@@ -223,12 +253,37 @@ class CWLTranslator(Translator):
 
         clt_folder = cwl_folder.joinpath("clt")
         clt_folder.mkdir(exist_ok=True)
-        shutil.copy(this_dir.joinpath("templates/cwl/wfbench.cwl"), clt_folder)
         shutil.copy(this_dir.joinpath("templates/cwl/folder.cwl"), clt_folder)
-        shutil.copy(this_dir.joinpath("templates/cwl/shell.cwl"), clt_folder)
+
+        # Create the shell.cwl file
+        # shutil.copy(this_dir.joinpath("templates/cwl/shell.cwl"), clt_folder)
+        updates_shell_cwl = ""
+        with open(this_dir.joinpath("templates/cwl/shell.cwl"), "r", encoding="utf-8") as f:
+            for line in f.readlines():
+                if line.endswith("#OPTIONAL_STDOUT_FILE\n"):
+                    if self.generate_stdout_files:
+                        updates_shell_cwl += line.replace("#OPTIONAL_STDOUT_FILE", "")
+                elif line.endswith("#OPTIONAL_STDERR_FILE\n"):
+                    if self.generate_stderr_files:
+                        updates_shell_cwl += line.replace("#OPTIONAL_STDERR_FILE", "")
+                else:
+                    updates_shell_cwl += line
+        with open(cwl_folder.joinpath(clt_folder / "shell.cwl"), "w", encoding="utf-8") as f:
+            f.write(updates_shell_cwl)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))
 
         with (open(cwl_folder.joinpath("config.yml"), "w", encoding="utf-8")) as f:
             f.write("\n".join(self.yml_script))
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        readme_file_path = output_folder.joinpath("README")
+
+        with open(readme_file_path, "w") as out:
+            out.write(f"In directory {str(output_folder)}: cwltool ./main.cwl ")
+            for task_id in self.workflow.roots():
+                task = self.workflow.tasks[task_id]
+                for input_file in task.input_files:
+                    out.write(f"--{task_id}_input ./data/{input_file} ")
+            out.write("\n")

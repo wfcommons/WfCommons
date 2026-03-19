@@ -20,6 +20,11 @@ from docker.errors import ImageNotFound
 
 from wfcommons.common import Workflow
 
+def _recursive_chmod(dirpath, permissions):
+            for directory, directory_name, filenames in os.walk(dirpath):
+                os.chmod(directory, permissions)
+                for filename in filenames:
+                    os.chmod(os.path.join(directory, filename), permissions)
 
 def _create_fresh_local_dir(path: str) -> pathlib.Path:
     dirpath = pathlib.Path(path)
@@ -89,6 +94,7 @@ def _start_docker_container(backend, mounted_dir, working_dir, bin_dir, command=
         volumes={mounted_dir: {'bind': mounted_dir, 'mode': 'rw'}},
         working_dir=working_dir,
         user="wfcommons",
+        privileged=True,
         tty=True,
         detach=True,
         init=True  # For zombies
