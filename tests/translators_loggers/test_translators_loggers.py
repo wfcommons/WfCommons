@@ -130,7 +130,7 @@ def run_workflow_dask(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./dask_workflow.py", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
-    assert (output.decode().count("completed!")  == num_tasks)
+    assert (output.decode().count("benchmark completed")  == num_tasks)
     # TODO: Look at the (I think) generated run.json file on the container?
 
 def run_workflow_parsl(container, num_tasks, str_dirpath):
@@ -163,7 +163,7 @@ def run_workflow_bash(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
-    assert (output.decode().count("completed") == num_tasks)
+    assert (output.decode().count("benchmark completed") == num_tasks)
 
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
     # Run the workflow!
@@ -187,7 +187,6 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
                                            user="wfcommons", stdout=True, stderr=True)
-    # print(output.decode())
     # Check sanity
     assert (exit_code == 0)
     # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
@@ -199,7 +198,6 @@ def run_workflow_streamflow(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
                                            user="wfcommons", stdout=True, stderr=True)
-    # print(output.decode())
     # Check sanity
     assert (exit_code == 0)
     # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")

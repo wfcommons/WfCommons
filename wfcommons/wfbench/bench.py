@@ -86,6 +86,7 @@ class WorkflowBenchmark:
             percent_cpu: Union[float, Dict[str, float]] = 0.6,
             cpu_work: Union[int, Dict[str, int]] = None,
             gpu_work: Union[int, Dict[str, int]] = None,
+            num_chunks: Optional[int] = 10,
             time: Optional[int] = None,
             mem: Optional[float] = None,
             lock_files_folder: Optional[pathlib.Path] = None,
@@ -102,6 +103,8 @@ class WorkflowBenchmark:
         :type cpu_work: Union[int, Dict[str, int]]
         :param gpu_work: Maximum GPU work per workflow task.
         :type gpu_work: Union[int, Dict[str, int]]
+        :param num_chunks: Number of chunks for pipelining I/O and computation for each task execution.
+        :type num_chunks: Optional[int]
         :param time: Time limit for running each task (in seconds).
         :type time: Optional[int]
         :param mem: Maximum amount of memory consumption per task (in MB).
@@ -164,6 +167,7 @@ class WorkflowBenchmark:
                 task_percent_cpu,
                 task_cpu_work,
                 task_gpu_work,
+                num_chunks,
                 time,
                 task_memory,
                 lock_files_folder,
