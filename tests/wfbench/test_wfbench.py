@@ -54,6 +54,7 @@ def _workflow_as_expected(dirpath: pathlib.Path,
     with json_path.open("r") as f:
         generated_json = json.load(f)
 
+
     # Check the number of tasks
     assert(len(workflow.tasks) == len(generated_json['workflow']['specification']['tasks']))
 
@@ -169,7 +170,7 @@ class TestWfBench:
             # Run the workflow
             sys.stderr.write("Running workflow...\n")
             exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", stdout=True, stderr=True)
-            print(output.decode())
+
             # Kill the container
             _shutdown_docker_container_and_remove_image(container)
 
