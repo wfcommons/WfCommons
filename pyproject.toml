@@ -35,6 +35,7 @@ dependencies = [
     "requests",
     "scipy>=1.16.1",
     "pyyaml",
+    "pandas",
     "shortuuid",
     "stringcase",
     "filelock",
