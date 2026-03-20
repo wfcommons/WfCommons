@@ -270,20 +270,6 @@ class GPUBenchmark:
         p = subprocess.Popen(gpu_prog, shell=True)
         return ProcessHandle(p)
 
-# def kill_process_and_children(proc):
-#     if proc is None:
-#         return
-#     try:
-#         parent = psutil.Process(proc.pid)
-#         children = parent.children(recursive=True)
-#         for child in children:
-#             child.kill()
-#         parent.kill()
-#
-#     except psutil.NoSuchProcess:
-#         pass # Process is already dead
-
-
 
 # Utility code functions
 ########################
