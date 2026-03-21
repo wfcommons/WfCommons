@@ -363,7 +363,7 @@ def get_parser() -> argparse.ArgumentParser:
                                                          "computation throughout the execution (fewer chunks may be used "
                                                          "if amounts of work and or input/output file sizes are too small).")
     parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
-    parser.add_argument("--time", default=None, help="Time limit (in seconds) to complete "
+    parser.add_argument("--time-limit", default=None, help="Time limit (in seconds) to complete "
                                                      "the computational portion of the benchmark (overrides CPU and GPU works). "
                                                      "Is only approximate since I/O time may make the overall time longer.")
     parser.add_argument("--mem", type=float, default=None, help="Maximum memory consumption (in MB).")
@@ -379,15 +379,15 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def begin_flowcept(args):
+def begin_flowcept(workflow_id, name, used):
     log_debug("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     # TODO: parametrize to allow storing individual tasks
-    f = Flowcept(workflow_id=args.workflow_id,
-                 bundle_exec_id=args.workflow_id,
+    f = Flowcept(workflow_id=workflow_id,
+                 bundle_exec_id=workflow_id,
                  start_persistence=False, save_workflow=False)
     f.start()
-    t = FlowceptTask(task_id=f"{args.workflow_id}_{args.name}", workflow_id=args.workflow_id, used={**args.__dict__})
+    t = FlowceptTask(task_id=f"{workflow_id}_{name}", workflow_id=workflow_id, used=used)
     return f, t
 
 
@@ -396,22 +396,22 @@ def end_flowcept(flowcept, flowcept_task):
     flowcept.stop()
 
 
-def compute_num_chunks(args):
+def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
     # Compute the (feasible number of chunks)
     min_chunk_size_time = 1.0  # At least 1 second per chunk, if we're doing time-based
     # TODO: Pick reasonable factors below so that a chunk takes about min_chunk_size_time sec on a reasonable machine
     min_chunk_size_cpu_work = 3000000 * min_chunk_size_time  # 1s on my MacBook Pro
     min_chunk_size_gpu_work = 30000000 * min_chunk_size_time # unknown.....
 
-    if args.time:
-        num_chunks = min(int(args.num_chunks), int(float(args.time) / min_chunk_size_time))
+    if time_limit:
+        num_chunks = min(int(num_chunks), int(float(time_limit) / min_chunk_size_time))
     else:
-        if args.cpu_work:
-            num_chunks_cpu = min(int(args.num_chunks), int(float(args.cpu_work) / min_chunk_size_cpu_work))
+        if cpu_work:
+            num_chunks_cpu = min(int(num_chunks), int(float(cpu_work) / min_chunk_size_cpu_work))
         else:
             num_chunks_cpu = 1
-        if args.gpu_work:
-            num_chunks_gpu = min(int(args.num_chunks), int(float(args.gpu_work) / min_chunk_size_gpu_work))
+        if gpu_work:
+            num_chunks_gpu = min(int(num_chunks), int(float(gpu_work) / min_chunk_size_gpu_work))
         else:
             num_chunks_gpu = 1
         num_chunks = min(num_chunks_cpu, num_chunks_gpu)
@@ -425,36 +425,38 @@ def kill_current_handles(handles: list[ProcessHandle]):
             handle.terminate_along_with_children()
 
 
-def main():
-    """Main program."""
-    parser = get_parser()
-    args = parser.parse_args()
-    core = None
+def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path_cores,
+        time_limit, cpu_work, percent_cpu, mem, gpu_work, num_chunks,
+        input_files, output_files):
+    """Main function."""
 
-    if args.with_flowcept:
-        flowcept, flowcept_task = begin_flowcept(args)
+    if with_flowcept:
+        flowcept, flowcept_task = begin_flowcept(workflow_id, name, locals())
+    else:
+        flowcept = None
+        flowcept_task = None
 
-    if args.silent:
+    if silent:
         logging.getLogger().setLevel(logging.NOTSET)
-    if args.debug:
+    if debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    if args.rundir:
-        rundir = pathlib.Path(args.rundir)
+    if rundir:
+        rundir = pathlib.Path(rundir)
     else:
         rundir = pathlib.Path(os.getcwd())
 
-    if args.path_lock and args.path_cores:
-        path_locked = pathlib.Path(args.path_lock)
-        path_cores = pathlib.Path(args.path_cores)
+    if path_lock and path_cores:
+        path_locked = pathlib.Path(path_lock)
+        path_cores = pathlib.Path(path_cores)
         core = lock_core(path_locked, path_cores)
-
-    if not args.time and (not args.cpu_work and not args.gpu_work):
-        log_error("At least one of --time, --cpu-work, or --gpu-work should be provided.")
-        sys.exit(1)
+    else:
+        path_locked = None
+        path_cores = None
+        core = None
 
     # Compute the (feasible) number of chunks based on the arguments
-    num_chunks = compute_num_chunks(args)
+    num_chunks = compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks)
     log_debug(f"Executing benchmark with {num_chunks} chunks.")
 
     # At this point we know the number of chunks, and we can just iterate as follows (N = num_chunks + 2)
@@ -470,17 +472,17 @@ def main():
     N = num_chunks + 2
     steps = [{"io_read_benchmark": IOReadBenchmark(),
               "io_write_benchmark": IOWriteBenchmark(),
-              "cpu_benchmark": CPUBenchmark(cpu_threads=int(10 * args.percent_cpu),
-                                            mem_threads=int(10 - 10 * args.percent_cpu),
+              "cpu_benchmark": CPUBenchmark(cpu_threads=int(10 * percent_cpu),
+                                            mem_threads=int(10 - 10 * percent_cpu),
                                             core=core,
-                                            total_mem=args.mem * 1000 * 1000 if args.mem else None),
+                                            total_mem=mem * 1000 * 1000 if mem else None),
               "gpu_benchmark": GPUBenchmark()} for i in range(N)]
 
     min_chunk_size_data = 1000  # 1KB per chunk at a minimum for each input / output file, otherwise the file
     # is read/written all at once at the beginning/end
 
     # Augment I/O read benchmarks for each input file
-    cleaned_input = "{}" if args.input_files is None else re.sub(r'\\+', '', args.input_files)
+    cleaned_input = "{}" if input_files is None else re.sub(r'\\+', '', input_files)
     try:
         input_files = json.loads(cleaned_input)
     except json.JSONDecodeError as e:
@@ -503,7 +505,7 @@ def main():
             steps[step]["io_read_benchmark"].add_read_operation(file_path, opened_file, num_bytes)
 
     # Augment I/O write benchmarks for each output file
-    cleaned_output = "{}" if args.output_files is None else re.sub(r'\\+', '', args.output_files)
+    cleaned_output = "{}" if output_files is None else re.sub(r'\\+', '', output_files)
     try:
         output_files = json.loads(cleaned_output)
     except json.JSONDecodeError as e:
@@ -526,25 +528,25 @@ def main():
             steps[step]["io_write_benchmark"].add_write_operation(file_path, opened_file, num_bytes)
 
     # Augment CPU benchmark with computation (if need be)
-    if args.cpu_work:
-        if args.time:
+    if cpu_work:
+        if time_limit:
             for step in range(1, N-1):
                 steps[step]["cpu_benchmark"].set_infinite_work()
         else:
             for step in range(1, N-1):
-                chunk_work = int(args.cpu_work) // num_chunks + (int(args.cpu_work) % num_chunks > step - 1)
+                chunk_work = int(cpu_work) // num_chunks + (int(cpu_work) % num_chunks > step - 1)
                 steps[step]["cpu_benchmark"].set_work(chunk_work)
 
     # Augment GPU benchmark with computation (if need be)
-    if args.gpu_work:
-        if args.time:
+    if gpu_work:
+        if time_limit:
             for step in range(1, N - 1):
                 steps[step]["gpu_benchmark"].set_device()
-                steps[step]["gpu_benchmark"].set_work(int(args.gpu_work))
-                steps[step]["gpu_benchmark"].set_time(float(args.time))
+                steps[step]["gpu_benchmark"].set_work(int(gpu_work))
+                steps[step]["gpu_benchmark"].set_time(float(time_limit))
         else:
             for step in range(1, N - 1):
-                chunk_work = int(args.gpu_work) // num_chunks + (int(args.gpu_work) % num_chunks > step - 1)
+                chunk_work = int(gpu_work) // num_chunks + (int(gpu_work) % num_chunks > step - 1)
                 steps[step]["gpu_benchmark"].set_device()
                 steps[step]["gpu_benchmark"].set_work(chunk_work)
 
@@ -565,9 +567,9 @@ def main():
             current_proc_handles[:] = [io_read_process, cpu_benchmark_process, memory_benchmark_process, gpu_benchmark_process]
 
             # If time based, sleep the required amount of time and kill the process
-            if args.time:
+            if time_limit:
                 if cpu_benchmark_process is not None or gpu_benchmark_process is not None:
-                    time.sleep(float(args.time) / num_chunks)
+                    time.sleep(float(time_limit) / num_chunks)
                     if cpu_benchmark_process is not None:
                         cpu_benchmark_process.terminate_along_with_children()
                     if gpu_benchmark_process is not None:
@@ -603,10 +605,22 @@ def main():
     if core:
         unlock_core(path_locked, path_cores, core)
 
-    if args.with_flowcept:
+    if with_flowcept:
         end_flowcept(flowcept, flowcept_task)
 
-    log_info(f"{args.name} benchmark completed")
+    log_info(f"{name} benchmark completed")
 
+def main():
+    # Parse command-line argument
+    parser = get_parser()
+    args = parser.parse_args()
+
+    # Sanity checks
+    if not args.time_limit and (not args.cpu_work and not args.gpu_work):
+        log_error("At least one of --time-limit, --cpu-work, or --gpu-work should be provided.")
+        sys.exit(1)
+
+    run(**vars(args))
+    
 if __name__ == "__main__":
     main()
