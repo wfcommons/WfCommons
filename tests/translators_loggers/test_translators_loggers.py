@@ -269,17 +269,17 @@ class TestTranslators:
         "backend",
         [
            "swiftt",
-           "dask",
-           "parsl",
-           "nextflow",
-           "nextflow_subworkflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "makeflow",
-           "cwl",
-           "streamflow",
-           "pegasus",
+          "dask",
+          "parsl",
+          "nextflow",
+          "nextflow_subworkflow",
+          "airflow",
+          "bash",
+          "taskvine",
+          "makeflow",
+          "cwl",
+          "streamflow",
+          "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")

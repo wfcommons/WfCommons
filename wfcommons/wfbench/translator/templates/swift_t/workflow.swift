@@ -107,21 +107,30 @@ if 'workflow_id':
 
 __import__("logging").info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
-cmd = [
-    sys.executable, wfbench,
-    "--name", task_name,
-    "--workflow_id", workflow_id,
-    "--percent-cpu", str(percent_cpu),
-    "--cpu-work", str(cpu_work),
-    "--output-files", f'{{"{output_file}": {output_file_size}}}',
-    "--input-files", str(input_file).replace("'", '"'),
-    "--with-flowcept",
-]
-if gpu_work:
-    cmd += ["--gpu-work", str(gpu_work)]
-
-logging.info(f"Launching wfbench for task {task_name}")
-proc = subprocess.run(cmd)
+from importlib.util import spec_from_file_location, module_from_spec
+from importlib.machinery import SourceFileLoader
+loader = SourceFileLoader("wfbench", wfbench)
+spec = spec_from_file_location("wfbench", wfbench, loader=loader)
+mod = module_from_spec(spec)
+spec.loader.exec_module(mod)
+mod.run(
+    name=task_name,
+    workflow_id=workflow_id,
+    percent_cpu=percent_cpu,
+    cpu_work=cpu_work,
+    mem=None,
+    gpu_work=gpu_work,
+    output_files=f'{{"{output_file}": {output_file_size}}}',
+    input_files=str(input_file).replace("'", '"'),
+    with_flowcept=True,
+    silent=False,
+    debug=False,
+    rundir=None,
+    path_lock=None,
+    path_cores=None,
+    time_limit=None,
+    num_chunks=10,
+)
 
 __import__("logging").info(f"Benchmark {task_name} completed!")
 
