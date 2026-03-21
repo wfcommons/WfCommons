@@ -116,6 +116,9 @@ class SwiftTTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
+        # write README file
+        self._write_readme_file(output_folder)
+
     def _find_categories_list(self, task_name: str, parent_task: Optional[str] = None) -> None:
         """"
         Find list of task categories ordered by task dependencies.
@@ -238,3 +241,17 @@ class SwiftTTranslator(Translator):
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
         
         self.cmd_counter += 1
+
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the README  file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        readme_file_path = output_folder.joinpath("README")
+        with open(readme_file_path, "w") as out:
+            out.write(f"Start a REDIS server: redis-server\n")
+            out.write(f"[Optional] Check that REDIS works: redis-cli ping  (it should say \"PONG\")\n")
+            out.write(f"Run the workflow: swift-t workflow.swift\n")
+
