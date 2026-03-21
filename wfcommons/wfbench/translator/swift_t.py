@@ -74,7 +74,7 @@ class SwiftTTranslator(Translator):
         self.logger.debug("Defining input files")
         in_count = 0
         self.output_folder = output_folder
-        self.cpu_benchmark = output_folder.joinpath("./bin/cpu-benchmark").absolute()
+        self.wfbench = output_folder.joinpath("./bin/wfbench").absolute()
         self.script = f"string fs = sprintf(flowcept_start, \"{self.workflow.workflow_id}\");\nstring fss = python_persist(fs);\n\n" if self.workflow.workflow_id else ""
         self.script += "string root_in_files[];\n"
 
@@ -116,7 +116,7 @@ class SwiftTTranslator(Translator):
         self._copy_binary_files(output_folder)
         self._generate_input_files(output_folder)
 
-        # write README file
+        # README file
         self._write_readme_file(output_folder)
 
     def _find_categories_list(self, task_name: str, parent_task: Optional[str] = None) -> None:
@@ -221,7 +221,7 @@ class SwiftTTranslator(Translator):
             self.script += f"foreach i in [0:{num_tasks - 1}] {{\n" \
                 f"  string of = sprintf(\"{self.output_folder.absolute()}/data/{category}_%i_output.txt\", i);\n" \
                 f"  string task_id = \"{category}_\" + i;\n" \
-                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", task_id, {args});\n" \
+                f"  string cmd_{self.cmd_counter} = sprintf(command, \"{self.wfbench}\", task_id, {args});\n" \
                 f"  string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"  string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"  {category}__out[i] = string2int(of_{self.cmd_counter});\n" \
@@ -235,7 +235,7 @@ class SwiftTTranslator(Translator):
                 self.out_files.add(out_file)
             args = args.replace(
                 ", of", f", \"{out_file}\"").replace("[i]", "[0]")
-            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.cpu_benchmark}\", \"{category}_{self.cmd_counter}\", {args});\n" \
+            self.script += f"string cmd_{self.cmd_counter} = sprintf(command, \"{self.wfbench}\", \"{category}_{self.cmd_counter}\", {args});\n" \
                 f"string co_{self.cmd_counter} = python_persist(cmd_{self.cmd_counter});\n" \
                 f"string of_{self.cmd_counter} = sprintf(\"0%s\", co_{self.cmd_counter});\n" \
                 f"{category}__out[0] = string2int(of_{self.cmd_counter});\n\n"
@@ -254,4 +254,3 @@ class SwiftTTranslator(Translator):
             out.write(f"Start a REDIS server: redis-server\n")
             out.write(f"[Optional] Check that REDIS works: redis-cli ping  (it should say \"PONG\")\n")
             out.write(f"Run the workflow: swift-t workflow.swift\n")
-
