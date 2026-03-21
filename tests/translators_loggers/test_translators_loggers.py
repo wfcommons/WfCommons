@@ -268,7 +268,7 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
+          "swiftt",
           "dask",
           "parsl",
           "nextflow",
