@@ -129,7 +129,9 @@ additional_setup_methods = {
 def run_workflow_dask(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./dask_workflow.py", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("benchmark completed")  == num_tasks)
     # TODO: Look at the (I think) generated run.json file on the container?
 
@@ -137,7 +139,9 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./parsl_workflow.py", user="wfcommons", stdout=True, stderr=True)
     ignored, output = container.exec_run(f"cat {str_dirpath}/runinfo/000/parsl.log", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert ("completed" in output.decode())
     assert (output.decode().count("_complete_task") == num_tasks)
 
@@ -146,7 +150,9 @@ def run_workflow_nextflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (task_exit_codes.decode() == num_tasks * "0")
 
 def run_workflow_airflow(container, num_tasks, str_dirpath):
@@ -155,14 +161,18 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["sh", "-c", "cd /home/wfcommons/ && sudo /bin/bash /run_a_workflow.sh Blast-Benchmark"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed") == num_tasks * 2)
 
 def run_workflow_bash(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("benchmark completed") == num_tasks)
 
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
@@ -170,7 +180,9 @@ def run_workflow_taskvine(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
@@ -178,7 +190,9 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
     assert (num_completed_jobs == num_tasks)
 
@@ -188,8 +202,10 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
-    # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+        # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
 
@@ -199,8 +215,10 @@ def run_workflow_streamflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
-    # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+        # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
     assert (output.decode().count("COMPLETED Step") == num_tasks + 2)
 
     # Generate RO-Crate now that the workflow has completed (Fails for now)
@@ -219,18 +237,20 @@ def run_workflow_pegasus(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh",
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert(exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert("success" in output.decode())
 
 def run_workflow_swiftt(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="swift-t workflow.swift",
                                            user="wfcommons", stdout=True, stderr=True)
-    # sys.stderr.write(output.decode())
     # Check sanity
-    assert(exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed!") == num_tasks)
-    pass
 
 run_workflow_methods = {
     "dask": run_workflow_dask,
