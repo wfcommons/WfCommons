@@ -348,7 +348,7 @@ class TestTranslators:
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
-            parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
+            parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         elif backend == "streamflow":
