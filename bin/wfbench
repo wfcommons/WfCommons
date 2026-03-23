@@ -18,6 +18,7 @@ import argparse
 import re
 import json
 import logging
+import pandas as pd
 import psutil
 
 from io import StringIO
