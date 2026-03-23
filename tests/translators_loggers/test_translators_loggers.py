@@ -372,3 +372,6 @@ class TestTranslators:
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)
 
+        # Remove the created local directory
+        _remove_local_dir_if_it_exists(str_dirpath)
+
