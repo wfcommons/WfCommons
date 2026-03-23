@@ -101,6 +101,9 @@ def _additional_setup_swiftt(container):
         cmd=["bash", "-c", "redis-server"], user="wfcommons", detach=True, stdout=True, stderr=True)
     # Note that exit_code will always be None because of detach=True.
 
+    # Give redis time to start!
+    time.sleep(1)
+
     # Check that the redis-server is up
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-cli ping"], user="wfcommons", stdout=True, stderr=True)
