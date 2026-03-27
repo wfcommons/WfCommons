@@ -18,3 +18,5 @@ from .taskvine import TaskVineTranslator
 from .cwl import CWLTranslator
 from .bash import BashTranslator
 from .pycompss import PyCompssTranslator
+from .llm_translator import LLMTranslator
+from .llm_backward_translator import LLMBackwardTranslator

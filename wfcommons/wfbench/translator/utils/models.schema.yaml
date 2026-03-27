@@ -1,0 +1,18 @@
+$schema: "https://json-schema.org/draft-07/schema#"
+title: Models Configuration
+type: object
+additionalProperties:
+  type: object
+  required:
+    - model
+    - api_key
+  properties:
+    model:
+      type: string
+    api_key:
+      type: string
+    base_url:
+      type:
+        - string
+        - "null"
+  additionalProperties: false

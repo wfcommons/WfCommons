@@ -1,75 +1,77 @@
 """
-LLM-based translator scaffolding for WFCommons WFBench.
+LLM-based forward translator for WFCommons WFBench.
 
-This translator inherits from the existing abstract Translator class
-from wfcommons.wfbench.translator and implements the required interface.
+Translates WfFormat JSON INTO WMS-specific workflow code using an LLM.
+Extends the abstract Translator class, matching the same interface as
+the hand-coded translators (Nextflow, Pegasus, CWL, etc.).
 """
 
-import os
+import json
+import logging
+import pathlib
 import re
-from pathlib import Path
+from typing import Optional, Union, List
 
-import requests
-import yaml
 from dotenv import load_dotenv
-from typing import Optional, Dict, Any, List
-from wfcommons.wfbench.translator.utils.llm_client import LLMClient
-from wfcommons.wfbench.translator.skills.loader import SkillLoader
 
-load_dotenv()  # loads .env from cwd (project root)
+from .abstract_translator import Translator
+from .utils.llm_client import LLMClient, client_from_yaml
+from .utils.wfinstances import retrieve_instances
+from .skills.loader import SkillLoader
+from ...common import Workflow
 
-MODELS_YAML = Path("models.yaml")
+load_dotenv()
+
+FORWARD_SKILLS_DIR = pathlib.Path(__file__).resolve().parent / "skills" / "forward"
 
 
-class LLMTranslator():
+class LLMTranslator(Translator):
     """
-    • Uses existing WfFormat as examples.
-    • Accepts a trace from a NEW workflow system.
-    • Sends all of this as grounding context to an LLM.
-    • Produces a new trace in WfFormat automatically.
+    An LLM-based WfFormat-to-WMS translator.
 
-    The user does not implement translation logic.
+    Uses an LLM to translate a WfFormat workflow specification into
+    executable code for a target workflow management system (e.g., Nextflow,
+    CWL, Airflow). Supports the same ``translate(output_folder)`` interface
+    as all other concrete translators.
+
+    :param workflow: Workflow benchmark object or path to the WfFormat JSON instance.
+    :type workflow: Union[Workflow, pathlib.Path]
+    :param target_system: Target WMS name (e.g. "nextflow", "cwl", "airflow").
+    :type target_system: str
+    :param llm_client: A pre-configured LLMClient. Provide either this or ``model_name``.
+    :type llm_client: LLMClient, optional
+    :param model_name: Key from models.yaml to auto-build an LLMClient.
+    :type model_name: str, optional
+    :param models_file: Path to a custom models YAML file.
+    :type models_file: str or pathlib.Path, optional
+    :param context_examples: List of example WMS scripts/files to include as style reference.
+    :type context_examples: List[str], optional
+    :param examples_instances: WfInstances queries to fetch WfFormat examples as LLM context.
+        Accepts application names (``"blast"``), specific instance filenames
+        (``"blast-chameleon-small-001"``), or full repo paths (``"makeflow/blast"``).
+        Can be a single string or a list.
+    :type examples_instances: Union[str, List[str]], optional
+    :param num_examples: Max number of WfInstances examples to include. Defaults to 3.
+    :type num_examples: int
+    :param system_prompt: Override the default system instructions (bypasses skills).
+    :type system_prompt: str, optional
+    :param logger: Logger instance.
+    :type logger: logging.Logger, optional
     """
 
     def __init__(self,
-                llm_client: LLMClient | None = None,
-                model_name: str | None = None,
-                models_file: str | Path | None = None,
-                examples_instances: Optional[List[str]] = None,
-                num_examples: int = 3,
-                system_prompt: Optional[str] = None,
-                skill_name: Optional[str] = None,
-                **kwargs
-            ):
-        """
-        Parameters
-        ----------
-        llm_client : LLMClient, optional
-            A pre-configured LLMClient instance. Either this or
-            ``model_name`` must be provided.
-        model_name : str, optional
-            Key from models.yaml (e.g. "qwen3", "ollama/llama3").
-            The matching config is used to build an LLMClient automatically.
-        models_file : str or Path, optional
-            Path to a custom models YAML file.  Defaults to the
-            ``models.yaml`` shipped alongside this module.
-        example_instances : List[str]
-             URLs pointing to translator examples or benchmarks:
-              - raw GitHub links
-              - JSON traces
-              - scripts
-        num_examples : int, optional
-            Number of example instances to include in the prompt.
-        system_prompt : str, optional
-            Override the default system instructions for the LLM.
-            When provided, the skills system is bypassed entirely.
-        skill_name : str, optional
-            Explicit skill to use (e.g. "nextflow", "cwl").
-            Auto-detected from trace content if not specified.
-        kwargs : dict
-            Additional parameters passed to the parent Translator if needed.
-        """
-        super().__init__(**kwargs)
+                 workflow: Union[Workflow, pathlib.Path],
+                 target_system: str,
+                 llm_client: Optional[LLMClient] = None,
+                 model_name: Optional[str] = None,
+                 models_file: Optional[Union[str, pathlib.Path]] = None,
+                 context_examples: Optional[List[str]] = None,
+                 examples_instances: Optional[Union[str, List[str]]] = None,
+                 num_examples: int = 3,
+                 system_prompt: Optional[str] = None,
+                 logger: Optional[logging.Logger] = None) -> None:
+        """Create an object of the LLM forward translator."""
+        super().__init__(workflow, logger)
 
         if llm_client is None and model_name is None:
             raise ValueError("Provide either llm_client or model_name.")
@@ -77,297 +79,182 @@ class LLMTranslator():
             raise ValueError("Provide only one of llm_client or model_name, not both.")
 
         if model_name is not None:
-            llm_client = self._client_from_yaml(model_name, models_file)
+            llm_client = client_from_yaml(model_name, models_file)
 
         self.llm = llm_client
+        self.target_system = target_system.lower()
+        self.context_examples = context_examples or []
+        if isinstance(examples_instances, str):
+            examples_instances = [examples_instances]
         self.examples_instances = examples_instances
         self.num_examples = num_examples
-        self.skill_name = skill_name
-        self._skill_loader = SkillLoader()
         self._system_prompt_override = system_prompt
+        self._skill_loader = SkillLoader(skills_dir=FORWARD_SKILLS_DIR)
 
-    # ------------------------------------------------------------------ #
-    #  YAML helpers                                                       #
-    # ------------------------------------------------------------------ #
+    def translate(self, output_folder: pathlib.Path) -> None:
+        """
+        Translate a workflow benchmark description (WfFormat) into a WMS workflow
+        application using an LLM.
 
-    @staticmethod
-    def available_models(models_file: str | Path | None = None) -> list[str]:
-        """Return the list of model keys defined in models.yaml."""
-        cfg = LLMTranslator._load_models_yaml(models_file)
-        return list(cfg.keys())
+        :param output_folder: The path to the folder in which the workflow benchmark will be generated.
+        :type output_folder: pathlib.Path
+        """
+        output_folder.mkdir(parents=True, exist_ok=True)
 
-    @staticmethod
-    def available_skills() -> list[str]:
-        """Return the list of available skill names."""
-        return SkillLoader().available_skills()
+        wfformat_json = json.dumps(self._trim_workflow_json(), indent=1)
 
-    @staticmethod
-    def _load_models_yaml(models_file: str | Path | None = None) -> dict:
-        path = Path(models_file) if models_file else MODELS_YAML
-        with open(path) as f:
-            return yaml.safe_load(f)
-
-    @staticmethod
-    def _resolve_env(value: str) -> str:
-        """Replace ``${VAR}`` placeholders with environment variables."""
-        def _replace(m):
-            var = m.group(1)
-            val = os.environ.get(var)
-            if val is None:
-                raise EnvironmentError(
-                    f"Environment variable '{var}' is not set "
-                    f"(required by models.yaml)."
-                )
-            return val
-        return re.sub(r"\$\{(\w+)\}", _replace, value)
-
-    @staticmethod
-    def _client_from_yaml(model_name: str,
-                          models_file: str | Path | None = None) -> LLMClient:
-        cfg = LLMTranslator._load_models_yaml(models_file)
-        if model_name not in cfg:
-            raise KeyError(
-                f"Model '{model_name}' not found in models.yaml. "
-                f"Available: {list(cfg.keys())}"
+        # Fetch WfInstances examples if configured
+        wf_examples = []
+        if self.examples_instances:
+            wf_examples = retrieve_instances(
+                self.examples_instances,
+                num_examples=self.num_examples,
+                score_against=wfformat_json,
             )
-        entry = cfg[model_name]
-        api_key = LLMTranslator._resolve_env(str(entry["api_key"]))
-        base_url = entry.get("base_url")
-        if base_url and base_url != "null":
-            base_url = LLMTranslator._resolve_env(str(base_url))
-        else:
-            base_url = None
-        return LLMClient(
-            model=entry["model"],
-            api_key=api_key,
-            base_url=base_url,
-        )
-    
-    def _load_examples(self,
-                       path_list: List[str] , 
-                       ref: str="main") -> List[str]:
+
+        prompt = self._build_prompt(wfformat_json, wf_examples=wf_examples)
+
+        self.logger.info(f"Sending WfFormat to LLM for {self.target_system} translation...")
+        raw_output = self.llm.complete(prompt)
+
+        code = self._extract_code(raw_output)
+
+        output_file = output_folder / self._default_output_filename()
+        self._write_output_file(code, output_file)
+
+        # Skip _copy_binary_files and _generate_input_files — the LLM
+        # translator produces standalone WMS code, not a wfbench harness.
+
+    def _build_prompt(self,
+                      wfformat_json: str,
+                      wf_examples: Optional[list] = None) -> str:
         """
-        Load and return the content from the provided URLs.
-        
-        Parameters
-        ----------
-        path_list : List[str]
-            List of paths within the repository to fetch files from.
-        
-        Returns
-        -------
-        List[Dict[str, Any]]
-            List of dictionaries with 'url', 'filename', and 'content' keys.
+        Build the full LLM prompt from skills, WfFormat input, examples, and context.
+
+        :param wfformat_json: The serialized WfFormat JSON.
+        :type wfformat_json: str
+        :param wf_examples: WfInstances examples fetched from GitHub.
+        :type wf_examples: list, optional
+        :return: The composed prompt.
+        :rtype: str
         """
-        all_examples = {}
-        for path in path_list:
-            examples = self._fetch_examples_from_path(
-                path=path,
-                ref=ref
-            )
-            all_examples[path] = examples
-        return all_examples
-
-     
-    def _fetch_examples_from_path(self,
-                                  path: str,
-                                  ref: str="main") -> List[Dict[str, Any]]:
-        """
-        Fetch JSON files from a specific path in the WfInstances GitHub repository.
-
-        Parameters
-        ----------
-        path : str
-            Path within the repository to fetch files from.
-        ref : str, optional
-            Git reference (branch, tag, or commit SHA). Defaults to "main".
-
-        Returns
-        -------
-        List[Dict[str, Any]]
-            List of dictionaries with 'url', 'filename', and 'content' keys.
-            Returns an empty list if the path does not exist in the repository.
-        """
-        print(f"Fetching examples from path: {path} at ref: {ref}")
-        url = f"https://api.github.com/repos/wfcommons/WfInstances/contents/{path}?ref={ref}"
-        resp = requests.get(url)
-
-        if resp.status_code == 404:
-            print(f"Warning: path '{path}' not found in WfInstances repository. "
-                  "Skipping examples from this path.")
-            return []
-
-        if resp.status_code != 200:
-            print(f"Warning: GitHub API returned status {resp.status_code} for "
-                  f"path '{path}'. Skipping examples from this path.")
-            return []
-
-        listing = resp.json()
-
-        if isinstance(listing, dict) and "message" in listing:
-            print(f"Warning: GitHub API error for path '{path}': "
-                  f"{listing['message']}. Skipping examples from this path.")
-            return []
-
-        if not isinstance(listing, list):
-            print(f"Warning: unexpected response for path '{path}'. "
-                  "Skipping examples from this path.")
-            return []
-
-        examples = []
-        for item in listing:
-            if item["type"] == "file" and item["name"].endswith(".json") and not item["name"].endswith(".md"):
-                raw = requests.get(item["download_url"]).text
-                examples.append({
-                    "url": item["download_url"],
-                    "filename": item["name"],
-                    "content": raw
-                })
-        return examples
-    
-    def translate(self, trace, metadata=None, json_schema: dict | None = None, **kwargs):
-        # --- Normalize the trace into a string ---
-        if isinstance(trace, dict):
-            import json
-            trace_text = json.dumps(trace, indent=2)
-        elif isinstance(trace, (list, tuple)):
-            trace_text = "\n".join(map(str, trace))
-        else:
-            # assume Python code or any raw text
-            trace_text = str(trace)
-
-
-        examples = self._retrieve_examples(trace_text)
-
-        prompt = self._build_prompt(
-            trace=trace_text,
-            examples=examples,
-            metadata=metadata,
-        )
-
-        response_format = None
-        if json_schema is not None:
-            response_format = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "WfFormat",
-                    "schema": json_schema
-                }
-            }
-
-        output = self.llm.complete(prompt, response_format=response_format)
-        return output
-    
-    def _retrieve_examples(self, trace_text: str) -> List[Dict[str, Any]]:
-        """
-        Simple scoring method to choose top-k (num_examples) examples.
-
-        Returns an empty list if no examples_instances were provided or
-        none of the paths exist in the WfInstances repository.
-        """
-        if not self.examples_instances:
-            return []
-
-        examples = self._load_examples(self.examples_instances)
-        flat_examples = []
-        if isinstance(examples, dict):
-            for v in examples.values():
-                flat_examples.extend(v)
-        else:
-            flat_examples = list(examples)
-
-        if not flat_examples:
-            print("Warning: no valid examples found from any of the provided "
-                  "instance paths. Proceeding without examples.")
-            return []
-
-        results = []
-        for example in flat_examples:
-            score = self._similarity(trace_text, example["content"])
-            results.append((score, example))
-
-        results.sort(reverse=True, key=lambda x: x[0])
-        return [ex for _, ex in results[: self.num_examples]]
-    
-    @staticmethod
-    def _similarity(a: str, b: str) -> float:
-        """
-        Very naive similarity based on word overlap.
-        """
-        return len(set(a.split()) & set(b.split()))
-    
-    def _build_prompt(
-        self,
-        trace: str,
-        examples: List[Dict[str, Any]] = [],
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> str:
-
         if self._system_prompt_override is not None:
-            # Explicit override: use as-is (backward compat)
             system_prompt = self._system_prompt_override
         else:
-            # Compose from skill files
-            skill_hint = self.skill_name
-            if not skill_hint and metadata and "source_system" in metadata:
-                skill_hint = metadata["source_system"].lower()
             system_prompt = self._skill_loader.compose_prompt(
-                trace_text=trace,
-                skill_name=skill_hint,
+                trace_text=self.target_system,
+                skill_name=self.target_system,
             )
 
         prompt = system_prompt.strip() + "\n\n"
 
-        prompt += "=== EXAMPLE WORKFLOW INSTANCES (WFFORMAT) ===\n"
-        for i, ex in enumerate(examples, 1):
-            prompt += f"\n--- Example {i} ---\n"
-            prompt += f"Source URL: {ex['url']}\n"
-            prompt += "Content:\n"
-            prompt += ex["content"][:5000]  # safety truncation
+        prompt += f"=== TARGET SYSTEM: {self.target_system.upper()} ===\n\n"
+
+        # Include WfInstances examples so the LLM sees real WfFormat structures
+        if wf_examples:
+            prompt += "=== REFERENCE WFFORMAT INSTANCES (from WfInstances) ===\n"
+            prompt += ("These are real WfFormat workflow instances for reference. "
+                       "They show the structure and conventions used in practice.\n")
+            for i, ex in enumerate(wf_examples, 1):
+                prompt += f"\n--- Instance {i}: {ex['filename']} ---\n"
+                prompt += ex["content"][:8000]  # safety truncation
+                prompt += "\n"
             prompt += "\n"
 
-        prompt += "\n=== NEW WORKFLOW TRACE TO TRANSLATE (e.g., dispel4py) ===\n"
-        prompt += trace + "\n"
+        prompt += "=== WFFORMAT INPUT (translate this) ===\n"
+        prompt += wfformat_json + "\n"
 
-        if metadata:
-            prompt += "\n=== ADDITIONAL METADATA ===\n"
-            for k, v in metadata.items():
-                prompt += f"- {k}: {v}\n"
+        if self.context_examples:
+            prompt += "\n=== CONTEXT EXAMPLES (target system code for reference) ===\n"
+            for i, example in enumerate(self.context_examples, 1):
+                prompt += f"\n--- Example {i} ---\n"
+                prompt += example[:10000]  # safety truncation
+                prompt += "\n"
 
         prompt += (
-            "\n=== OUTPUT REQUIREMENTS ===\n"
-            "Produce ONLY a JSON object compatible with WorkflowBenchmark.from_dict().\n"
-            "Infer tasks, dependencies, runtimes, and workflow structure.\n"
-            "Do not include explanations.\n"
+            f"\n=== OUTPUT REQUIREMENTS ===\n"
+            f"Produce ONLY valid, executable {self.target_system} workflow code.\n"
+            f"The code must faithfully represent the workflow from the WfFormat input.\n"
+            f"Respect all task dependencies, input/output files, and task ordering.\n"
+            f"Do not include explanations or markdown formatting.\n"
         )
 
         return prompt
-    
-    def _parse_llm_output(self, output: str) -> Dict[str, Any]:
-        import json
-        import re
 
-        # Try direct parse first
-        try:
-            return json.loads(output)
-        except json.JSONDecodeError:
-            pass
+    def _trim_workflow_json(self) -> dict:
+        """
+        Produce a trimmed copy of the workflow JSON for the LLM prompt.
 
-        # Extract JSON from markdown code blocks
-        code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', output)
+        Strips fields that are not needed for code generation:
+        - Execution tasks: keep only id, command, coreCount
+        - Specification tasks: simplify inputFiles/outputFiles to just IDs
+        - Drop the top-level files array and machines list
+        """
+        import copy
+        wf = copy.deepcopy(self.workflow.workflow_json)
+
+        spec = wf.get("workflow", {}).get("specification", {})
+
+        # Simplify spec tasks: file references -> just IDs
+        if "tasks" in spec:
+            for task in spec["tasks"]:
+                for key in ("inputFiles", "outputFiles"):
+                    if key in task and task[key]:
+                        task[key] = [f["id"] if isinstance(f, dict) else f
+                                     for f in task[key]]
+            # Drop the redundant top-level files list
+            spec.pop("files", None)
+
+        # Strip execution tasks to essentials
+        exe = wf.get("workflow", {}).get("execution", {})
+        if "tasks" in exe:
+            keep_keys = {"id", "command", "coreCount"}
+            exe["tasks"] = [
+                {k: v for k, v in t.items() if k in keep_keys}
+                for t in exe["tasks"]
+            ]
+        exe.pop("machines", None)
+
+        return wf
+
+    @staticmethod
+    def _extract_code(output: str) -> str:
+        """
+        Extract code from LLM output, stripping markdown code blocks if present.
+
+        :param output: Raw LLM output.
+        :type output: str
+        :return: Extracted code.
+        :rtype: str
+        """
+        code_block_match = re.search(r'```(?:\w+)?\s*([\s\S]*?)\s*```', output)
         if code_block_match:
-            try:
-                return json.loads(code_block_match.group(1))
-            except json.JSONDecodeError:
-                pass
+            return code_block_match.group(1).strip()
+        return output.strip()
 
-        # Extract JSON object by finding first { and last }
-        first_brace = output.find('{')
-        last_brace = output.rfind('}')
-        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-            try:
-                return json.loads(output[first_brace:last_brace + 1])
-            except json.JSONDecodeError:
-                pass
+    def _default_output_filename(self) -> str:
+        """
+        Return the default output filename for the target system.
 
-        raise ValueError("Could not extract valid JSON from LLM output.")
+        :return: Filename string.
+        :rtype: str
+        """
+        extensions = {
+            "nextflow": "workflow.nf",
+            "cwl": "workflow.cwl",
+            "airflow": "workflow_dag.py",
+            "bash": "run_workflow.sh",
+            "pegasus": "run_workflow.py",
+            "parsl": "run_workflow.py",
+            "dask": "run_workflow.py",
+            "swift_t": "workflow.swift",
+            "pycompss": "run_workflow.py",
+            "taskvine": "run_workflow.py",
+            "radical_pilot": "run_workflow.py",
+        }
+        return extensions.get(self.target_system, f"workflow.{self.target_system}")
+
+    @staticmethod
+    def available_skills() -> list[str]:
+        """Return the list of available forward skill names."""
+        return SkillLoader(skills_dir=FORWARD_SKILLS_DIR).available_skills()
