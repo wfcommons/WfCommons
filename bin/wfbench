@@ -394,7 +394,7 @@ def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
         num_chunks = min(int(num_chunks), int(float(time_limit) / min_chunk_size_time))
     else:
         if cpu_work:
-            num_chunks_cpu = min(int(num_chunks), int(float(cpu_work) / min_chunk_size_cpu_work))
+            num_chunks_cpu = min(num_chunks, cpu_work // min_chunk_size_cpu_work)
         else:
             num_chunks_cpu = 1
         if gpu_work:
