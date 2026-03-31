@@ -41,8 +41,6 @@ class AirflowTranslator(Translator):
         self.script = f"""
 from __future__ import annotations
 
-import os
-from datetime import datetime
 from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 
@@ -64,13 +62,9 @@ from airflow.operators.bash import BashOperator
 with DAG(
     "{name}",
     description="airflow translation of a wfcommons instance",
-
-    catchup=False,
     tags=["wfcommons"],
 ) as dag:
 """
-# schedule="0 0 * * *",
-# start_date=datetime(2021, 1, 1),
 
         self._prep_commands(output_folder)
 
@@ -81,9 +75,6 @@ with DAG(
         bash_command='{self.task_commands[task.task_id]}',
         )
 """
-# depends_on_past=False,
-# env={{"AIRFLOW_HOME": os.environ["AIRFLOW_HOME"]}},
-#  retries=3,
 
         for task in self.tasks.values():
             # Comma-separated list of the task's parents
