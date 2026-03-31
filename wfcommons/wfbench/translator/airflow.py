@@ -64,12 +64,13 @@ from airflow.operators.bash import BashOperator
 with DAG(
     "{name}",
     description="airflow translation of a wfcommons instance",
-    schedule="0 0 * * *",
-    start_date=datetime(2021, 1, 1),
+
     catchup=False,
     tags=["wfcommons"],
 ) as dag:
 """
+# schedule="0 0 * * *",
+# start_date=datetime(2021, 1, 1),
 
         self._prep_commands(output_folder)
 
@@ -77,12 +78,13 @@ with DAG(
             self.script += f"""
     {self._sanitize_varname(task.task_id)} = BashOperator(
         task_id="{task.task_id}",
-        depends_on_past=False,
         bash_command='{self.task_commands[task.task_id]}',
-        env={{"AIRFLOW_HOME": os.environ["AIRFLOW_HOME"]}},
-        retries=3,
         )
 """
+# depends_on_past=False,
+# env={{"AIRFLOW_HOME": os.environ["AIRFLOW_HOME"]}},
+#  retries=3,
+
         for task in self.tasks.values():
             # Comma-separated list of the task's parents
             parents = ", ".join(map(self._sanitize_varname, self.task_parents[task.task_id]))
