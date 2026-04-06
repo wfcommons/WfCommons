@@ -345,12 +345,12 @@ def get_parser() -> argparse.ArgumentParser:
                         help="percentage related to the number of CPU threads.")
     parser.add_argument("--path-lock", default=None, help="Path to lock file.")
     parser.add_argument("--path-cores", default=None, help="Path to cores file.")
-    parser.add_argument("--cpu-work", default=None, help="Amount of CPU work.")
-    parser.add_argument("--num-chunks", default=10, help="Number of chunks used for pipelining I/O and "
+    parser.add_argument("--cpu-work", default=None, type=int, help="Amount of CPU work.")
+    parser.add_argument("--num-chunks", default=10, type=int, help="Number of chunks used for pipelining I/O and "
                                                          "computation throughout the execution (fewer chunks may be used "
                                                          "if amounts of work and or input/output file sizes are too small).")
-    parser.add_argument("--gpu-work", default=None, help="Amount of GPU work.")
-    parser.add_argument("--time-limit", default=None, help="Time limit (in seconds) to complete "
+    parser.add_argument("--gpu-work", default=None, type=int, help="Amount of GPU work.")
+    parser.add_argument("--time-limit", default=None, type=int, help="Time limit (in seconds) to complete "
                                                      "the computational portion of the benchmark (overrides CPU and GPU works). "
                                                      "Is only approximate since I/O time may make the overall time longer.")
     parser.add_argument("--mem", type=float, default=None, help="Maximum memory consumption (in MB).")
@@ -385,20 +385,20 @@ def end_flowcept(flowcept, flowcept_task):
 
 def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
     # Compute the (feasible number of chunks)
-    min_chunk_size_time = 1.0  # At least 1 second per chunk, if we're doing time-based
+    min_chunk_size_time = 1 # At least 1 second per chunk, if we're doing time-based
     # TODO: Pick reasonable factors below so that a chunk takes about min_chunk_size_time sec on a reasonable machine
     min_chunk_size_cpu_work = 3000000 * min_chunk_size_time  # 1s on my MacBook Pro
     min_chunk_size_gpu_work = 30000000 * min_chunk_size_time # unknown.....
 
     if time_limit:
-        num_chunks = min(int(num_chunks), int(float(time_limit) / min_chunk_size_time))
+        num_chunks = min(num_chunks, time_limit // min_chunk_size_time)
     else:
         if cpu_work:
             num_chunks_cpu = min(num_chunks, cpu_work // min_chunk_size_cpu_work)
         else:
             num_chunks_cpu = 1
         if gpu_work:
-            num_chunks_gpu = min(int(num_chunks), int(float(gpu_work) / min_chunk_size_gpu_work))
+            num_chunks_gpu = min(num_chunks, gpu_work // min_chunk_size_gpu_work)
         else:
             num_chunks_gpu = 1
         num_chunks = min(num_chunks_cpu, num_chunks_gpu)
