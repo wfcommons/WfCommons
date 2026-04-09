@@ -101,6 +101,9 @@ def _additional_setup_swiftt(container):
         cmd=["bash", "-c", "redis-server"], user="wfcommons", detach=True, stdout=True, stderr=True)
     # Note that exit_code will always be None because of detach=True.
 
+    # Give redis time to start!
+    time.sleep(1)
+
     # Check that the redis-server is up
     exit_code, output = container.exec_run(
         cmd=["bash", "-c", "redis-cli ping"], user="wfcommons", stdout=True, stderr=True)
@@ -129,15 +132,19 @@ additional_setup_methods = {
 def run_workflow_dask(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./dask_workflow.py", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
-    assert (output.decode().count("completed!")  == num_tasks)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+    assert (output.decode().count("benchmark completed")  == num_tasks)
     # TODO: Look at the (I think) generated run.json file on the container?
 
 def run_workflow_parsl(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run("python ./parsl_workflow.py", user="wfcommons", stdout=True, stderr=True)
     ignored, output = container.exec_run(f"cat {str_dirpath}/runinfo/000/parsl.log", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert ("completed" in output.decode())
     assert (output.decode().count("_complete_task") == num_tasks)
 
@@ -146,7 +153,9 @@ def run_workflow_nextflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (task_exit_codes.decode() == num_tasks * "0")
 
 def run_workflow_airflow(container, num_tasks, str_dirpath):
@@ -155,22 +164,28 @@ def run_workflow_airflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["sh", "-c", "cd /home/wfcommons/ && sudo /bin/bash /run_a_workflow.sh Blast-Benchmark"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed") == num_tasks * 2)
 
 def run_workflow_bash(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="/bin/bash ./run_workflow.sh", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
-    assert (output.decode().count("completed") == num_tasks)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+    assert (output.decode().count("benchmark completed") == num_tasks)
 
 def run_workflow_taskvine(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && python3 ./taskvine_workflow.py"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed") == num_tasks)
 
 def run_workflow_makeflow(container, num_tasks, str_dirpath):
@@ -178,7 +193,9 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd=["bash", "-c", "source ~/conda/etc/profile.d/conda.sh && conda activate && makeflow --log-verbose  --monitor=./monitor_data/ ./workflow.makeflow"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert (exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
     assert (num_completed_jobs == num_tasks)
 
@@ -187,10 +204,11 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="cwltool ./main.cwl --split_fasta_00000001_input ./data/workflow_infile_0001 ",
                                            user="wfcommons", stdout=True, stderr=True)
-    # print(output.decode())
     # Check sanity
-    assert (exit_code == 0)
-    # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+        # this below is ugly (the 3 is for "workflow", "compile_output_files" and "compile_log_files",
     # and there is a 2* because there is a message for the job and for the step)
     assert (output.decode().count("completed success") == 3 + 2 *num_tasks)
 
@@ -199,10 +217,11 @@ def run_workflow_streamflow(container, num_tasks, str_dirpath):
     # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
                                            user="wfcommons", stdout=True, stderr=True)
-    # print(output.decode())
     # Check sanity
-    assert (exit_code == 0)
-    # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
+    if exit_code != 0:
+        print(output.decode())
+        assert False
+        # 2 extra "COMPLETED Step" ("COMPLETED Step /compile_output_files", "COMPLETED Step /compile_log_files")
     assert (output.decode().count("COMPLETED Step") == num_tasks + 2)
 
     # Generate RO-Crate now that the workflow has completed (Fails for now)
@@ -221,18 +240,20 @@ def run_workflow_pegasus(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(cmd="bash /home/wfcommons/run_workflow.sh",
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
-    assert(exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert("success" in output.decode())
 
 def run_workflow_swiftt(container, num_tasks, str_dirpath):
     # Run the workflow!
     exit_code, output = container.exec_run(cmd="swift-t workflow.swift",
                                            user="wfcommons", stdout=True, stderr=True)
-    # sys.stderr.write(output.decode())
     # Check sanity
-    assert(exit_code == 0)
+    if exit_code != 0:
+        print(output.decode())
+        assert False
     assert (output.decode().count("completed!") == num_tasks)
-    pass
 
 run_workflow_methods = {
     "dask": run_workflow_dask,
@@ -270,18 +291,18 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
-           "nextflow",
-           "nextflow_subworkflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "makeflow",
-           "cwl",
-           "streamflow",
-           "pegasus",
+          "swiftt",
+          "dask",
+          "parsl",
+          "nextflow",
+          "nextflow_subworkflow",
+          "airflow",
+          "bash",
+          "taskvine",
+          "makeflow",
+          "cwl",
+          "streamflow",
+          "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -330,7 +351,7 @@ class TestTranslators:
         if backend == "pegasus":
             parser = PegasusLogsParser(dirpath / "work/wfcommons/pegasus/Blast-Benchmark/run0001/")
         elif backend == "taskvine":
-            parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["cpu-benchmark","stress-ng", "wfbench"])
+            parser = TaskVineLogsParser(dirpath / "vine-run-info/most-recent/vine-logs", filenames_to_ignore=["stress-ng", "wfbench"])
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         elif backend == "streamflow":
@@ -350,4 +371,7 @@ class TestTranslators:
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)
+
+        # Remove the created local directory
+        _remove_local_dir_if_it_exists(str_dirpath)
 
