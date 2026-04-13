@@ -61,4 +61,5 @@ scratch/
 
 models.yaml
 .env 
-blast_translated*
+blast_translated
+blast_batch* 
