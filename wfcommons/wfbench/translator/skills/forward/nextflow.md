@@ -116,3 +116,13 @@ def bootstrap() {
 
 // ... task functions and workflow block ...
 ```
+
+## Validation
+
+### Required elements
+- nextflow.enable.dsl
+- process
+- workflow
+
+### Syntax check
+command: nextflow config {file}

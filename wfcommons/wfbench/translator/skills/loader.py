@@ -17,19 +17,31 @@ class Skill:
     """Parsed representation of a single .md skill file."""
 
     def __init__(self, name: str, filepath: Path, triggers: list[str],
-                 description: str, domain_knowledge: str, examples: str):
+                 description: str, domain_knowledge: str, examples: str,
+                 validation: dict | None = None):
         self.name = name
         self.filepath = filepath
         self.triggers = triggers
         self.description = description
         self.domain_knowledge = domain_knowledge
         self.examples = examples
+        self.validation = validation or {}
 
     def matches(self, text: str) -> bool:
         """Check if any trigger appears in the text (case-insensitive)."""
         text_lower = text.lower()
         return any(t.strip().lower() in text_lower
                    for t in self.triggers if t.strip())
+
+    @property
+    def required_elements(self) -> list[str]:
+        """Strings that must appear in generated code."""
+        return self.validation.get("required_elements", [])
+
+    @property
+    def syntax_check_command(self) -> str | None:
+        """Shell command for syntax checking. '{file}' is substituted with the output file."""
+        return self.validation.get("syntax_check_command")
 
 
 class SkillLoader:
@@ -67,6 +79,9 @@ class SkillLoader:
         triggers_raw = extract_section("Triggers")
         triggers = [t.strip() for t in triggers_raw.split(",") if t.strip()]
 
+        validation_raw = extract_section("Validation")
+        validation = SkillLoader._parse_validation(validation_raw) if validation_raw else {}
+
         return Skill(
             name=name,
             filepath=filepath,
@@ -74,7 +89,31 @@ class SkillLoader:
             description=extract_section("Description"),
             domain_knowledge=extract_section("Domain Knowledge"),
             examples=extract_section("Examples"),
+            validation=validation,
         )
+
+    @staticmethod
+    def _parse_validation(text: str) -> dict:
+        """Parse the ## Validation section into a dict of rules."""
+        result = {}
+
+        req_match = re.search(
+            r"###\s*Required elements\s*\n(.*?)(?=^###|\Z)",
+            text, re.MULTILINE | re.DOTALL)
+        if req_match:
+            result["required_elements"] = [
+                line.lstrip("- ").strip()
+                for line in req_match.group(1).strip().splitlines()
+                if line.strip().startswith("-")
+            ]
+
+        cmd_match = re.search(
+            r"###\s*Syntax check\s*\n.*?command:\s*(.+?)(?:\n|$)",
+            text, re.MULTILINE | re.DOTALL)
+        if cmd_match:
+            result["syntax_check_command"] = cmd_match.group(1).strip()
+
+        return result
 
     def detect_skills(self, trace_text: str) -> list[Skill]:
         """Auto-detect which system-specific skills match the trace."""

@@ -276,3 +276,17 @@ try:
 finally:
     session.close()
 ```
+
+## Validation
+
+### Required elements
+- import radical.pilot
+- rp.Session()
+- rp.PilotManager
+- rp.TaskManager
+- rp.TaskDescription
+- rp.PilotDescription
+- session.close()
+
+### Syntax check
+command: python -m py_compile {file}

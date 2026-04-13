@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-04-13T15:13:01.016829+00:00",
+  "model": "openai/gpt-4o-mini",
+  "run_executed": false,
+  "max_retries": 2,
+  "total": 15,
+  "passed": 15,
+  "failed": 0,
+  "instances": [
+    {
+      "name": "blast-chameleon-large-001",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-large-002",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-large-003",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-large-004",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-large-005",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-medium-001",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-medium-002",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-medium-003",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-medium-004",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-medium-005",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-small-001",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-small-002",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-small-003",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-small-004",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    },
+    {
+      "name": "blast-chameleon-small-005",
+      "status": "SYNTAX_OK",
+      "attempts": 1,
+      "syntax_error": null,
+      "run_error": null
+    }
+  ]
+}

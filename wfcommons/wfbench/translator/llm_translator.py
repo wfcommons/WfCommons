@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 
 from .abstract_translator import Translator
 from .utils.llm_client import LLMClient, client_from_yaml
+from .utils.validator import (TranslationValidationError, format_retry_feedback,
+                              validate)
 from .utils.wfinstances import retrieve_instances
 from .skills.loader import SkillLoader
 from ...common import Workflow
@@ -69,6 +71,8 @@ class LLMTranslator(Translator):
                  examples_instances: Optional[Union[str, List[str]]] = None,
                  num_examples: int = 3,
                  system_prompt: Optional[str] = None,
+                 validate_output: bool = True,
+                 max_validation_retries: int = 2,
                  logger: Optional[logging.Logger] = None) -> None:
         """Create an object of the LLM forward translator."""
         super().__init__(workflow, logger)
@@ -89,6 +93,8 @@ class LLMTranslator(Translator):
         self.examples_instances = examples_instances
         self.num_examples = num_examples
         self._system_prompt_override = system_prompt
+        self.validate_output = validate_output
+        self.max_validation_retries = max_validation_retries
         self._skill_loader = SkillLoader(skills_dir=FORWARD_SKILLS_DIR)
 
     def translate(self, output_folder: pathlib.Path) -> None:
@@ -112,18 +118,64 @@ class LLMTranslator(Translator):
                 score_against=wfformat_json,
             )
 
-        prompt = self._build_prompt(wfformat_json, wf_examples=wf_examples)
+        base_prompt = self._build_prompt(wfformat_json, wf_examples=wf_examples)
 
-        self.logger.info(f"Sending WfFormat to LLM for {self.target_system} translation...")
-        raw_output = self.llm.complete(prompt)
-
-        code = self._extract_code(raw_output)
+        code = self._generate_with_validation(base_prompt)
 
         output_file = output_folder / self._default_output_filename()
         self._write_output_file(code, output_file)
 
         # Skip _copy_binary_files and _generate_input_files — the LLM
         # translator produces standalone WMS code, not a wfbench harness.
+
+    def _generate_with_validation(self, base_prompt: str) -> str:
+        """
+        Call the LLM and validate its output. Retries on failure.
+
+        - Truncation errors (output hit token limit) retry silently with the same prompt.
+        - Semantic errors retry with the error embedded as feedback.
+        - Raises TranslationValidationError if retries are exhausted.
+        """
+        skill = self._skill_loader.get_skill(self.target_system)
+        feedback = ""
+        last_errors: list[str] = []
+        last_code = ""
+
+        for attempt in range(1, self.max_validation_retries + 2):
+            prompt = base_prompt + (("\n\n" + feedback) if feedback else "")
+
+            self.logger.info(
+                f"Sending WfFormat to LLM for {self.target_system} translation "
+                f"(attempt {attempt}/{self.max_validation_retries + 1})...")
+            raw_output = self.llm.complete(prompt)
+            code = self._extract_code(raw_output)
+            last_code = code
+
+            if not self.validate_output or skill is None:
+                return code
+
+            result = validate(code, skill)
+            if result.passed:
+                if attempt > 1:
+                    self.logger.info(f"Validation passed after {attempt} attempts.")
+                return code
+
+            last_errors = result.errors
+            self.logger.warning(
+                f"Validation failed on attempt {attempt}: {'; '.join(result.errors)[:300]}")
+
+            # Truncation → silent retry (same prompt). Otherwise add feedback.
+            if result.is_truncation:
+                feedback = ""
+            else:
+                feedback = format_retry_feedback(result.errors)
+
+        raise TranslationValidationError(
+            f"Translation failed validation after {self.max_validation_retries + 1} "
+            f"attempts. Errors: {'; '.join(last_errors)}",
+            code=last_code,
+            errors=last_errors,
+        )
 
     def _build_prompt(self,
                       wfformat_json: str,
