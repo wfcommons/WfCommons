@@ -3,6 +3,16 @@
 #include <cstdlib>  // For std::atoi
 #include "gpu_benchmark.h"
 
+// The macro wraps any CUDA API call
+#define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true) {
+   if (code != cudaSuccess) {
+      fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 // Kernel function to perform a simple workload
 __global__ void simpleKernel(int* data, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -22,10 +32,10 @@ void runBenchmark(int max_work) {
     }
 
     // Allocate GPU memory
-    cudaMalloc(&d_data, max_work * sizeof(int));
+    CUDA_CHECK(cudaMalloc(&d_data, max_work * sizeof(int)));
 
     // Copy data to GPU
-    cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice);
+    CUDA_CHECK(cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice));
 
     // Kernel configuration
     int threadsPerBlock = 256;
@@ -35,13 +45,13 @@ void runBenchmark(int max_work) {
     simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
 
     // Ensure the kernel has finished executing
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaDeviceSynchronize());
 
     // Copy results back to host (optional, just for validation)
-    cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost));
 
     // Cleanup
-    cudaFree(d_data);
+    CUDA_CHECK(cudaFree(d_data));
     delete[] h_data;
 
     std::cout << "Benchmark completed!" << std::endl;
@@ -58,10 +68,10 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
     }
 
     // Allocate GPU memory
-    cudaMalloc(&d_data, max_work * sizeof(int));
+    CUDA_CHECK(cudaMalloc(&d_data, max_work * sizeof(int)));
 
     // Copy data to GPU
-    cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice);
+    CUDA_CHECK(cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice));
 
     // Start the timer
     auto start = std::chrono::high_resolution_clock::now();
@@ -77,10 +87,10 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
     }
 
     // Copy results back to host (optional, just for validation)
-    cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost));
 
     // Cleanup
-    cudaFree(d_data);
+    CUDA_CHECK(cudaFree(d_data));
     delete[] h_data;
 
     std::cout << "Benchmark completed!" << std::endl;

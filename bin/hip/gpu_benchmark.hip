@@ -4,6 +4,18 @@
 #include <cstdlib>  // For std::atoi
 #include "gpu_benchmark.h"
 
+#define HIP_CHECK(expression)                  \
+{                                              \
+    const hipError_t status = expression;      \
+    if(status != hipSuccess){                  \
+        std::cerr << "HIP error "              \
+                  << status << ": "            \
+                  << hipGetErrorString(status) \
+                  << " at " << __FILE__ << ":" \
+                  << __LINE__ << std::endl;    \
+    }                                          \
+}
+
 // Kernel function to perform a simple workload
 __global__ void simpleKernel(int* data, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -23,10 +35,10 @@ void runBenchmark(int max_work) {
     }
 
     // Allocate GPU memory
-    hipMalloc(&d_data, max_work * sizeof(int));
+    HIP_CHECK(hipMalloc(&d_data, max_work * sizeof(int)));
 
     // Copy data to GPU
-    hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice);
+    HIP_CHECK(hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice));
 
     // Kernel configuration
     int threadsPerBlock = 256;
@@ -36,13 +48,13 @@ void runBenchmark(int max_work) {
     simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
 
     // Ensure the kernel has finished executing
-    hipDeviceSynchronize();
+    HIP_CHECK(hipDeviceSynchronize());
 
     // Copy results back to host (optional, just for validation)
-    hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost);
+    HIP_CHECK(hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost));
 
     // Cleanup
-    hipFree(d_data);
+    HIP_CHECK(hipFree(d_data));
     delete[] h_data;
 
     std::cout << "Benchmark completed!" << std::endl;
@@ -59,10 +71,10 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
     }
 
     // Allocate GPU memory
-    hipMalloc(&d_data, max_work * sizeof(int));
+    HIP_CHECK(hipMalloc(&d_data, max_work * sizeof(int)));
 
     // Copy data to GPU
-    hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice);
+    HIP_CHECK(hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice));
 
     // Start the timer
     auto start = std::chrono::high_resolution_clock::now();
@@ -74,14 +86,14 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
     // Run the workload loop until the specified runtime is reached
     while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count() < runtime_in_seconds) {
         simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
-        hipDeviceSynchronize();  // Ensure the kernel has finished executing
+        HIP_CHECK(hipDeviceSynchronize());  // Ensure the kernel has finished executing
     }
 
     // Copy results back to host (optional, just for validation)
-    hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost);
+    HIP_CHECK(hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost));
 
     // Cleanup
-    hipFree(d_data);
+    HIP_CHECK(hipFree(d_data));
     delete[] h_data;
 
     std::cout << "Benchmark completed!" << std::endl;
