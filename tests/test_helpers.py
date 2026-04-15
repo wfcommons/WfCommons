@@ -152,7 +152,24 @@ def _compare_workflows(workflow_1: Workflow, workflow_2: Workflow):
     # Test the number of tasks
     assert (len(workflow_1.tasks) == len(workflow_2.tasks))
     # Test the task graph topology
-    assert (networkx.is_isomorphic(workflow_1, workflow_2))
+
+    # Slow (too slow for some DAGs) isomorphic check with networkx
+    # assert (networkx.is_isomorphic(workflow_1, workflow_2))
+
+    # Fast isomorphic check using igraph
+    import igraph as ig
+
+    def nx_to_igraph(G):
+        g = ig.Graph(directed=True)
+        g.add_vertices(list(G.nodes()))
+        g.add_edges(list(G.edges()))
+        return g
+
+    g1 = nx_to_igraph(workflow_1)
+    g2 = nx_to_igraph(workflow_2)
+
+    assert(g1.isomorphic(g2))
+
     # Test the total file size sum
     workflow1_input_bytes, workflow2_input_bytes = 0, 0
     workflow1_output_bytes, workflow2_output_bytes = 0, 0
