@@ -49,7 +49,7 @@ from wfcommons.wfinstances.logs import ROCrateLogsParser
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
     desired_num_tasks = 45
-    benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
+    benchmark_full_path = f"/tmp/blast-benchmark-{desired_num_tasks}.json"
     # benchmark_full_path = f"/tmp/epigenomics-benchmark-{desired_num_tasks}.json"
     # benchmark_full_path = f"/tmp/bwa-benchmark-{desired_num_tasks}.json"
     # benchmark_full_path = f"/tmp/cycles-benchmark-{desired_num_tasks}.json"
