@@ -24,7 +24,8 @@ from tests.test_helpers import _start_docker_container
 from tests.test_helpers import _shutdown_docker_container_and_remove_image
 from tests.test_helpers import _compare_workflows
 
-from wfcommons import BlastRecipe
+from wfcommons import BlastRecipe, EpigenomicsRecipe, BwaRecipe, CyclesRecipe, GenomeRecipe, MontageRecipe, \
+    RnaseqRecipe, SeismologyRecipe, SoykbRecipe, SrasearchRecipe
 from wfcommons.common import Workflow, Task
 from wfcommons.wfbench import WorkflowBenchmark
 from wfcommons.wfbench import DaskTranslator
@@ -49,10 +50,28 @@ def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
     desired_num_tasks = 45
     benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/epigenomics-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/bwa-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/cycles-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/genome-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/montage-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/rnaseq-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/seismology-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/soykb-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/srasearch-benchmark-{desired_num_tasks}.json"
     shutil.rmtree(benchmark_full_path, ignore_errors=True)
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=EpigenomicsRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=BwaRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=CyclesRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=GenomeRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=MontageRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=RnaseqRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SeismologyRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SoykbRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SrasearchRecipe, num_tasks=desired_num_tasks)
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=10, data=10, percent_cpu=0.6)
-    with open(f"/tmp/blast-benchmark-{desired_num_tasks}.json", "r") as f:
+    with open(benchmark_full_path, "r") as f:
         generated_json = json.load(f)
         num_tasks = len(generated_json["workflow"]["specification"]["tasks"])
     return benchmark, num_tasks
@@ -196,7 +215,6 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
 
 def run_workflow_streamflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
                                            user="wfcommons", stdout=True, stderr=True)
     # print(output.decode())
@@ -343,7 +361,6 @@ class TestTranslators:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
-
             original_workflow : Workflow = benchmark.workflow
 
             _compare_workflows(original_workflow, reconstructed_workflow)
