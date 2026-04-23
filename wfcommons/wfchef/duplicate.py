@@ -97,7 +97,7 @@ def duplicate(path: pathlib.Path,
         
         p: List[float] = (np.array(freqs) / np.sum(freqs)).tolist()
         while graph.order() < num_nodes and microstructures:
-            i = random.choice(range(len(microstructures)))
+            i = np.random.choice(len(microstructures), p=p)
             ms = microstructures[i]
             while ms["nodes"]:
                 j = random.choice(range(len(ms["nodes"])))
@@ -110,6 +110,9 @@ def duplicate(path: pathlib.Path,
             if not ms["nodes"]:  # delete microstructure
                 del microstructures[i]
                 del p[i]
+                total = sum(p)
+                if total > 0:
+                    p = [x / total for x in p]
                 continue
 
             duplicate_nodes(graph, structure)
