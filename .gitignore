@@ -60,3 +60,7 @@ bin/gpu_benchmark
 coverage.xml
 
 test/
+scratch/
+llmtests
+blast_batch*
+blast_translated
