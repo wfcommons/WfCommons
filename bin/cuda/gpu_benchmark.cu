@@ -1,132 +1,158 @@
-#include <iostream>
-#include <chrono>
-#include <cstdlib>  // For std::atoi
 #include "gpu_benchmark.h"
+#include "kernels.h"
+#include <chrono>
+#include <cstdlib> // For std::atoi
+#include <iostream>
 
 // The macro wraps any CUDA API call
-#define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+#define CUDA_CHECK(ans)                                                        \
+  { gpuAssert((ans), __FILE__, __LINE__); }
 
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true) {
-   if (code != cudaSuccess) {
-      fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
-
-// Kernel function to perform a simple workload
-__global__ void simpleKernel(int* data, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        data[idx] = data[idx] * data[idx];  // Simple workload: squaring each element
-    }
+inline void gpuAssert(cudaError_t code, const char *file, int line,
+                      bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+            line);
+    if (abort)
+      exit(code);
+  }
 }
 
 // Function to run the GPU benchmark with no time limit
 void runBenchmark(int max_work) {
-    int* h_data = new int[max_work];
-    int* d_data;
+  unsigned int n = 256 * 256;
+  unsigned int m = 20000;
+  int *h_count;
+  int *d_count;
+  curandState *d_state;
+  float pi;
 
-    // Initialize data
-    for (int i = 0; i < max_work; i++) {
-        h_data[i] = i;
-    }
+  // allocate memory
+  h_count = (int *)malloc(n * sizeof(int));
+  cudaMalloc((void **)&d_count, n * sizeof(int));
+  cudaMalloc((void **)&d_state, n * sizeof(curandState));
+  cudaMemset(d_count, 0, sizeof(int));
 
-    // Allocate GPU memory
-    CUDA_CHECK(cudaMalloc(&d_data, max_work * sizeof(int)));
+  // set up timing stuff
+  float gpu_elapsed_time;
+  cudaEvent_t gpu_start, gpu_stop;
+  cudaEventCreate(&gpu_start);
+  cudaEventCreate(&gpu_stop);
+  cudaEventRecord(gpu_start, 0);
 
-    // Copy data to GPU
-    CUDA_CHECK(cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice));
+  // set kernel
+  dim3 gridSize = 256;
+  dim3 blockSize = 256;
+  setup_kernel<<<gridSize, blockSize>>>(d_state);
 
-    // Kernel configuration
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (max_work + threadsPerBlock - 1) / threadsPerBlock;
+  // monte carlo kernel
+  monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
+  cudaDeviceSynchronize();
 
-    // Run the kernel
-    simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
+  // copy results back to the host
+  cudaMemcpy(h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaEventRecord(gpu_stop, 0);
+  cudaEventSynchronize(gpu_stop);
+  cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
+  cudaEventDestroy(gpu_start);
+  cudaEventDestroy(gpu_stop);
 
-    // Ensure the kernel has finished executing
-    CUDA_CHECK(cudaDeviceSynchronize());
+  // display results and timings for gpu
+  pi = *h_count * 4.0 / (n * m);
+  std::cout << "Approximate pi calculated on GPU is: " << pi << " " << *h_count
+            << " and calculation took " << gpu_elapsed_time << std::endl;
 
-    // Copy results back to host (optional, just for validation)
-    CUDA_CHECK(cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost));
-
-    // Cleanup
-    CUDA_CHECK(cudaFree(d_data));
-    delete[] h_data;
-
-    std::cout << "Benchmark completed!" << std::endl;
+  std::cout << "Benchmark completed!" << std::endl;
 }
 
 // Function to run the GPU benchmark for a specified time
 void runBenchmarkTime(int max_work, int runtime_in_seconds) {
-    int* h_data = new int[max_work];
-    int* d_data;
 
-    // Initialize data
-    for (int i = 0; i < max_work; i++) {
-        h_data[i] = i;
-    }
+  unsigned int n = 256 * 256;
+  unsigned int m = 20000;
+  int *h_count;
+  int *d_count;
+  curandState *d_state;
+  float pi;
 
-    // Allocate GPU memory
-    CUDA_CHECK(cudaMalloc(&d_data, max_work * sizeof(int)));
+  // allocate memory
+  h_count = (int *)malloc(n * sizeof(int));
+  cudaMalloc((void **)&d_count, n * sizeof(int));
+  cudaMalloc((void **)&d_state, n * sizeof(curandState));
+  cudaMemset(d_count, 0, sizeof(int));
 
-    // Copy data to GPU
-    CUDA_CHECK(cudaMemcpy(d_data, h_data, max_work * sizeof(int), cudaMemcpyHostToDevice));
+  // set up timing stuff
+  float gpu_elapsed_time;
+  cudaEvent_t gpu_start, gpu_stop;
+  cudaEventCreate(&gpu_start);
+  cudaEventCreate(&gpu_stop);
+  cudaEventRecord(gpu_start, 0);
 
-    // Start the timer
-    auto start = std::chrono::high_resolution_clock::now();
+  // set kernel
+  dim3 gridSize = 256;
+  dim3 blockSize = 256;
 
-    // Kernel configuration
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (max_work + threadsPerBlock - 1) / threadsPerBlock;
+  auto start = std::chrono::high_resolution_clock::now();
+  setup_kernel<<<gridSize, blockSize>>>(d_state);
 
-    // Run the workload loop until the specified runtime is reached
-    while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count() < runtime_in_seconds) {
-        simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
-        cudaDeviceSynchronize();  // Ensure the kernel has finished executing
-    }
+  // Run the workload loop until the specified runtime is reached
+  while (std::chrono::duration_cast<std::chrono::seconds>(
+             std::chrono::high_resolution_clock::now() - start)
+             .count() < runtime_in_seconds) {
+    monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
+    cudaDeviceSynchronize(); // Ensure the kernel has finished executing
+  }
 
-    // Copy results back to host (optional, just for validation)
-    CUDA_CHECK(cudaMemcpy(h_data, d_data, max_work * sizeof(int), cudaMemcpyDeviceToHost));
+  // copy results back to the host
+  cudaMemcpy(h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaEventRecord(gpu_stop, 0);
+  cudaEventSynchronize(gpu_stop);
+  cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
+  cudaEventDestroy(gpu_start);
+  cudaEventDestroy(gpu_stop);
 
-    // Cleanup
-    CUDA_CHECK(cudaFree(d_data));
-    delete[] h_data;
+  // display results and timings for gpu
+  pi = *h_count * 4.0 / (n * m);
+  std::cout << "Approximate pi calculated on GPU is: " << pi
+            << " and calculation took " << gpu_elapsed_time << std::endl;
 
-    std::cout << "Benchmark completed!" << std::endl;
+  std::cout << "Benchmark completed!" << std::endl;
 }
 
-int main(int argc, char* argv[]) {
-    // Check for the correct number of command line arguments
-    if (argc == 2) {
-        // Parse the command line arguments
-        int max_work = std::atoi(argv[1]);
+int main(int argc, char *argv[]) {
+  // Check for the correct number of command line arguments
+  if (argc == 2) {
+    // Parse the command line arguments
+    int max_work = std::atoi(argv[1]);
 
-        // Validate the input arguments
-        if (max_work <= 0) {
-            std::cerr << "max_work must be a positive integer." << std::endl;
-            return 1;
-        }
-
-        runBenchmark(max_work);
-
-    } else if (argc == 3) {
-        // Parse the command line arguments
-        int max_work = std::atoi(argv[1]);
-        int runtime_in_seconds = std::atoi(argv[2]);
-
-        // Validate the input arguments
-        if (max_work <= 0 || runtime_in_seconds <= 0) {
-            std::cerr << "Both max_work and runtime_in_seconds must be positive integers." << std::endl;
-            return 1;
-        }
-
-        runBenchmarkTime(max_work, runtime_in_seconds);
-
-    } else {
-        std::cerr << "Usage: " << argv[0] << " <max_work> [runtime_in_seconds]" << std::endl;
-        return 1;
+    // Validate the input arguments
+    if (max_work <= 0) {
+      std::cerr << "max_work must be a positive integer." << std::endl;
+      return 1;
     }
 
-    return 0;
+    runBenchmark(max_work);
+
+  } else if (argc == 3) {
+    // Parse the command line arguments
+    int max_work = std::atoi(argv[1]);
+    int runtime_in_seconds = std::atoi(argv[2]);
+
+    // Validate the input arguments
+    if (max_work <= 0 || runtime_in_seconds <= 0) {
+      std::cerr
+          << "Both max_work and runtime_in_seconds must be positive integers."
+          << std::endl;
+      return 1;
+    }
+
+    runBenchmarkTime(max_work, runtime_in_seconds);
+
+  } else {
+    std::cerr << "Usage: " << argv[0] << " <max_work> [runtime_in_seconds]"
+              << std::endl;
+    return 1;
+  }
+
+  return 0;
 }
