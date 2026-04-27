@@ -5,10 +5,10 @@ __global__ void setup_kernel(curandState *state) {
   curand_init(123456789, index, 0, &state[index]);
 }
 
-__global__ void monte_carlo_kernel(curandState *state, int *count, int m) {
+__global__ void monte_carlo_kernel(curandState *state, int64_t *count, int64_t m) {
   unsigned int index = threadIdx.x + blockDim.x * blockIdx.x;
 
-  __shared__ int cache[256];
+  __shared__ int64_t cache[256];
   cache[threadIdx.x] = 0;
   __syncthreads();
 
@@ -36,6 +36,6 @@ __global__ void monte_carlo_kernel(curandState *state, int *count, int m) {
 
   // update to our global variable count
   if (threadIdx.x == 0) {
-    atomicAdd(count, cache[0]);
+    atomicAdd((unsigned long long int*)count, (unsigned long long int)cache[0]);
   }
 }

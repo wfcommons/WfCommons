@@ -20,18 +20,18 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 
 // Function to run the GPU benchmark with no time limit
 void runBenchmark(int max_work) {
-  unsigned int n = 256 * 256;
-  unsigned int m = 20000;
-  int *h_count;
-  int *d_count;
+  uint32_t n = 256 * 256;
+  uint64_t m = max_work * 16384 / n;
+  int64_t *h_count;
+  int64_t *d_count;
   curandState *d_state;
   float pi;
 
   // allocate memory
-  h_count = (int *)malloc(n * sizeof(int));
-  cudaMalloc((void **)&d_count, n * sizeof(int));
+  h_count = (int64_t *)malloc(n * sizeof(int64_t));
+  cudaMalloc((void **)&d_count, n * sizeof(int64_t));
   cudaMalloc((void **)&d_state, n * sizeof(curandState));
-  cudaMemset(d_count, 0, sizeof(int));
+  cudaMemset(d_count, 0, sizeof(int64_t));
 
   // set up timing stuff
   float gpu_elapsed_time;
@@ -50,7 +50,7 @@ void runBenchmark(int max_work) {
   cudaDeviceSynchronize();
 
   // copy results back to the host
-  cudaMemcpy(h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost);
   cudaEventRecord(gpu_stop, 0);
   cudaEventSynchronize(gpu_stop);
   cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
@@ -68,18 +68,18 @@ void runBenchmark(int max_work) {
 // Function to run the GPU benchmark for a specified time
 void runBenchmarkTime(int max_work, int runtime_in_seconds) {
 
-  unsigned int n = 256 * 256;
-  unsigned int m = 20000;
-  int *h_count;
-  int *d_count;
+  uint32_t n = 256 * 256;
+  uint64_t m = max_work * 16384 / n;
+  int64_t *h_count;
+  int64_t *d_count;
   curandState *d_state;
   float pi;
 
   // allocate memory
-  h_count = (int *)malloc(n * sizeof(int));
-  cudaMalloc((void **)&d_count, n * sizeof(int));
+  h_count = (int64_t *)malloc(n * sizeof(int64_t));
+  cudaMalloc((void **)&d_count, n * sizeof(int64_t));
   cudaMalloc((void **)&d_state, n * sizeof(curandState));
-  cudaMemset(d_count, 0, sizeof(int));
+  cudaMemset(d_count, 0, sizeof(int64_t));
 
   // set up timing stuff
   float gpu_elapsed_time;
@@ -95,16 +95,18 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
   auto start = std::chrono::high_resolution_clock::now();
   setup_kernel<<<gridSize, blockSize>>>(d_state);
 
+  int iteration = 0;
   // Run the workload loop until the specified runtime is reached
   while (std::chrono::duration_cast<std::chrono::seconds>(
              std::chrono::high_resolution_clock::now() - start)
              .count() < runtime_in_seconds) {
     monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
     cudaDeviceSynchronize(); // Ensure the kernel has finished executing
+    iteration++;
   }
 
   // copy results back to the host
-  cudaMemcpy(h_count, d_count, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost);
   cudaEventRecord(gpu_stop, 0);
   cudaEventSynchronize(gpu_stop);
   cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
@@ -112,7 +114,7 @@ void runBenchmarkTime(int max_work, int runtime_in_seconds) {
   cudaEventDestroy(gpu_stop);
 
   // display results and timings for gpu
-  pi = *h_count * 4.0 / (n * m);
+  pi = *h_count * 4.0 / (n * m) / iteration;
   std::cout << "Approximate pi calculated on GPU is: " << pi
             << " and calculation took " << gpu_elapsed_time << std::endl;
 
