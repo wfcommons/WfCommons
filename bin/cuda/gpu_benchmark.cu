@@ -18,27 +18,33 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
   }
 }
 
+float getElapsedTime(const cudaEvent_t &gpu_start, cudaEvent_t &gpu_stop) {
+  float gpu_elapsed_time;
+  CUDA_CHECK(cudaEventRecord(gpu_stop, 0));
+  CUDA_CHECK(cudaEventSynchronize(gpu_stop));
+  CUDA_CHECK(cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop));
+  return gpu_elapsed_time / 1000.0f;
+}
+
 // Function to run the GPU benchmark with no time limit
-void runBenchmark(int max_work) {
+void runBenchmark(long max_work) {
   uint32_t n = 256 * 256;
   uint64_t m = max_work * 16384 / n;
-  int64_t *h_count;
-  int64_t *d_count;
-  curandState *d_state;
-  float pi;
 
   // allocate memory
-  h_count = (int64_t *)malloc(n * sizeof(int64_t));
-  cudaMalloc((void **)&d_count, n * sizeof(int64_t));
-  cudaMalloc((void **)&d_state, n * sizeof(curandState));
-  cudaMemset(d_count, 0, sizeof(int64_t));
+  auto h_count = new int64_t[n];
+
+  int64_t *d_count;
+  curandState *d_state;
+  CUDA_CHECK(cudaMalloc((void **)&d_count, n * sizeof(int64_t)));
+  CUDA_CHECK(cudaMalloc((void **)&d_state, n * sizeof(curandState)));
+  CUDA_CHECK(cudaMemset(d_count, 0, sizeof(int64_t)));
 
   // set up timing stuff
-  float gpu_elapsed_time;
   cudaEvent_t gpu_start, gpu_stop;
-  cudaEventCreate(&gpu_start);
-  cudaEventCreate(&gpu_stop);
-  cudaEventRecord(gpu_start, 0);
+  CUDA_CHECK(cudaEventCreate(&gpu_start));
+  CUDA_CHECK(cudaEventCreate(&gpu_stop));
+  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -47,85 +53,81 @@ void runBenchmark(int max_work) {
 
   // monte carlo kernel
   monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
-  cudaDeviceSynchronize();
+  CUDA_CHECK(cudaDeviceSynchronize());
 
   // copy results back to the host
-  cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost);
-  cudaEventRecord(gpu_stop, 0);
-  cudaEventSynchronize(gpu_stop);
-  cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
-  cudaEventDestroy(gpu_start);
-  cudaEventDestroy(gpu_stop);
+  CUDA_CHECK(cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost));
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(cudaEventDestroy(gpu_start));
+  CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
   // display results and timings for gpu
-  pi = *h_count * 4.0 / (n * m);
-  std::cout << "Approximate pi calculated on GPU is: " << pi << " " << *h_count
-            << " and calculation took " << gpu_elapsed_time << std::endl;
-
+  float pi = *h_count * 4.0 / (n * m);
+  std::cout << "Approximate pi calculated on GPU is: " << pi
+            << " and calculation took " << gpu_elapsed_time << "s\n";
   std::cout << "Benchmark completed!" << std::endl;
+
+  delete[] h_count;
+  CUDA_CHECK(cudaFree(d_count));
+  CUDA_CHECK(cudaFree(d_state));
 }
 
 // Function to run the GPU benchmark for a specified time
-void runBenchmarkTime(int max_work, int runtime_in_seconds) {
+void runBenchmarkTime(long max_work, int runtime_in_seconds) {
 
   uint32_t n = 256 * 256;
   uint64_t m = max_work * 16384 / n;
-  int64_t *h_count;
-  int64_t *d_count;
-  curandState *d_state;
-  float pi;
 
   // allocate memory
-  h_count = (int64_t *)malloc(n * sizeof(int64_t));
-  cudaMalloc((void **)&d_count, n * sizeof(int64_t));
-  cudaMalloc((void **)&d_state, n * sizeof(curandState));
-  cudaMemset(d_count, 0, sizeof(int64_t));
+  auto h_count = new int64_t[n];
+  int64_t *d_count;
+  curandState *d_state;
+  CUDA_CHECK(cudaMalloc((void **)&d_count, n * sizeof(int64_t)));
+  CUDA_CHECK(cudaMalloc((void **)&d_state, n * sizeof(curandState)));
+  CUDA_CHECK(cudaMemset(d_count, 0, sizeof(int64_t)));
 
   // set up timing stuff
-  float gpu_elapsed_time;
   cudaEvent_t gpu_start, gpu_stop;
-  cudaEventCreate(&gpu_start);
-  cudaEventCreate(&gpu_stop);
-  cudaEventRecord(gpu_start, 0);
+  CUDA_CHECK(cudaEventCreate(&gpu_start));
+  CUDA_CHECK(cudaEventCreate(&gpu_stop));
+  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
   dim3 blockSize = 256;
 
-  auto start = std::chrono::high_resolution_clock::now();
   setup_kernel<<<gridSize, blockSize>>>(d_state);
 
   int iteration = 0;
   // Run the workload loop until the specified runtime is reached
-  while (std::chrono::duration_cast<std::chrono::seconds>(
-             std::chrono::high_resolution_clock::now() - start)
-             .count() < runtime_in_seconds) {
+  while (getElapsedTime(gpu_start, gpu_stop) < runtime_in_seconds) {
     monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
-    cudaDeviceSynchronize(); // Ensure the kernel has finished executing
+    CUDA_CHECK(cudaDeviceSynchronize()); // Ensure the kernel has finished executing
     iteration++;
   }
-
+  std::cout << n << " " << m << std::endl;
+  std::cout << "Completed " << iteration << " iterations in "
+            << getElapsedTime(gpu_start, gpu_stop) << " seconds." << std::endl;
   // copy results back to the host
-  cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost);
-  cudaEventRecord(gpu_stop, 0);
-  cudaEventSynchronize(gpu_stop);
-  cudaEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop);
-  cudaEventDestroy(gpu_start);
-  cudaEventDestroy(gpu_stop);
+  CUDA_CHECK(cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost));
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(cudaEventDestroy(gpu_start));
+  CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
   // display results and timings for gpu
-  pi = *h_count * 4.0 / (n * m) / iteration;
+  float pi = *h_count * 4.0 / (n * m) / iteration;
   std::cout << "Approximate pi calculated on GPU is: " << pi
-            << " and calculation took " << gpu_elapsed_time << std::endl;
-
-  std::cout << "Benchmark completed!" << std::endl;
+            << " and calculation took " << gpu_elapsed_time << "s\n";
+  delete[] h_count;
+  CUDA_CHECK(cudaFree(d_count));
+  CUDA_CHECK(cudaFree(d_state));
 }
 
 int main(int argc, char *argv[]) {
   // Check for the correct number of command line arguments
   if (argc == 2) {
     // Parse the command line arguments
-    int max_work = std::atoi(argv[1]);
+    long max_work = std::atol(argv[1]);
 
     // Validate the input arguments
     if (max_work <= 0) {
@@ -137,7 +139,7 @@ int main(int argc, char *argv[]) {
 
   } else if (argc == 3) {
     // Parse the command line arguments
-    int max_work = std::atoi(argv[1]);
+    long max_work = std::atol(argv[1]);
     int runtime_in_seconds = std::atoi(argv[2]);
 
     // Validate the input arguments
