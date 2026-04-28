@@ -42,6 +42,9 @@ class SnakemakeLogsParser(LogsParser):
     :type logger: Optional[Logger]
     :param rules_to_ignore: Names of Snakemake rules that should be ignored in the translation
     :type rules_to_ignore: Optional[list[str]]
+    :param path_prefix_rewrite: A tuple that specifies that a file path prefix(for the workflow data files)
+       should be replaced by another prefix (this is useful when the workflow execution was on a
+       different machine than the log parsing)
     """
 
     def __init__(self,
@@ -50,6 +53,7 @@ class SnakemakeLogsParser(LogsParser):
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
                  rules_to_ignore: Optional[list[str]] = None,
+                 path_prefix_rewrite: Optional[tuple[str, str]] = None
                  ) -> None:
         """Create an object of the Snakemake parser."""
 
@@ -72,6 +76,7 @@ class SnakemakeLogsParser(LogsParser):
         self.file_input_output = {}
 
         self.rules_to_ignore : list[str] = rules_to_ignore or []
+        self.path_prefix_rewrite : tuple[str, str] = path_prefix_rewrite or None
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -127,7 +132,8 @@ class SnakemakeLogsParser(LogsParser):
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
                 continue
             full_path = row[1]
-            relative_path = row[1].removeprefix(self.execution_dir.as_posix())
+            if self.path_prefix_rewrite:
+                full_path = full_path.replace(self.path_prefix_rewrite[0], self.path_prefix_rewrite[1])
             file_size = os.path.getsize(f"{full_path}")
             input_or_output = row[2]
             if input_or_output == 'INPUT':
@@ -142,7 +148,7 @@ class SnakemakeLogsParser(LogsParser):
                 self.file_input_output[full_path][1].append(task_idx)
 
             if full_path not in self.file_map:
-                self.file_objects[full_path] =  File(file_id=relative_path, size=file_size)
+                self.file_objects[full_path] =  File(file_id=full_path, size=file_size)
 
     def _create_tasks(self):
         conn = sqlite3.connect(self.snkmt_db)
@@ -164,7 +170,6 @@ class SnakemakeLogsParser(LogsParser):
             input_files = [self.file_objects[path] for path in self.task_input_files[idx]]
             output_files = [self.file_objects[path] for path in self.task_output_files[idx]]
 
-
             task = Task(name=self.task_map[idx],
                         task_id=self.task_map[idx],
                         task_type=TaskType.COMPUTE,
@@ -181,5 +186,5 @@ class SnakemakeLogsParser(LogsParser):
             output_from = self.file_input_output[file][1]
             for input_idx in input_to:
                 for output_idx in output_from:
-                    # print(f"ADDING DEPENDENCY: {self.task_map[output_idx]} --> {self.task_map[input_idx]}")
+                    # print(f"Adding dependency: {self.task_map[output_idx]} --> {self.task_map[input_idx]}")
                     self.workflow.add_dependency(self.task_map[output_idx], self.task_map[input_idx])
