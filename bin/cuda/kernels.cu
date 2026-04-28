@@ -1,16 +1,17 @@
 #include "kernels.h"
 
+#include <cub/cub.cuh>
+
 __global__ void setup_kernel(curandState *state) {
   int index = threadIdx.x + blockDim.x * blockIdx.x;
   curand_init(123456789, index, 0, &state[index]);
 }
 
-__global__ void monte_carlo_kernel(curandState *state, int64_t *count, int64_t m) {
+__global__ void monte_carlo_kernel(curandState *state,
+                                   unsigned long long int *count, int64_t m) {
   unsigned int index = threadIdx.x + blockDim.x * blockIdx.x;
 
-  __shared__ int64_t cache[256];
-  cache[threadIdx.x] = 0;
-  __syncthreads();
+  unsigned long long int thread_data = 0;
 
   unsigned int temp = 0;
   while (temp < m) {
@@ -19,23 +20,18 @@ __global__ void monte_carlo_kernel(curandState *state, int64_t *count, int64_t m
     float r = x * x + y * y;
 
     if (r <= 1) {
-      cache[threadIdx.x]++;
+      thread_data++;
     }
     temp++;
   }
 
-  int i = blockDim.x / 2;
-  while (i != 0) {
-    if (threadIdx.x < i) {
-      cache[threadIdx.x] += cache[threadIdx.x + i];
-    }
-
-    i /= 2;
-    __syncthreads();
-  }
+  typedef cub::BlockReduce<unsigned long long int, 256> BlockReduceT;
+  __shared__ typename BlockReduceT::TempStorage temp_storage;
+  unsigned long long int aggregate =
+      BlockReduceT(temp_storage).Sum(thread_data);
 
   // update to our global variable count
   if (threadIdx.x == 0) {
-    atomicAdd((unsigned long long int*)count, (unsigned long long int)cache[0]);
+    count[blockIdx.x] += aggregate;
   }
 }

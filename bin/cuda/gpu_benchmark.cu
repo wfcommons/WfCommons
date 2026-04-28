@@ -1,5 +1,8 @@
 #include "gpu_benchmark.h"
+
 #include "kernels.h"
+#include <cub/cub.cuh>
+
 #include <chrono>
 #include <cstdlib> // For std::atoi
 #include <iostream>
@@ -31,14 +34,12 @@ void runBenchmark(long max_work) {
   uint32_t n = 256 * 256;
   uint64_t m = max_work * 16384 / n;
 
-  // allocate memory
-  auto h_count = new int64_t[n];
-
-  int64_t *d_count;
+  unsigned long long int *d_count;
   curandState *d_state;
-  CUDA_CHECK(cudaMalloc((void **)&d_count, n * sizeof(int64_t)));
+  CUDA_CHECK(
+      cudaMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
   CUDA_CHECK(cudaMalloc((void **)&d_state, n * sizeof(curandState)));
-  CUDA_CHECK(cudaMemset(d_count, 0, sizeof(int64_t)));
+  CUDA_CHECK(cudaMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
   // set up timing stuff
   cudaEvent_t gpu_start, gpu_stop;
@@ -55,21 +56,40 @@ void runBenchmark(long max_work) {
   monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
   CUDA_CHECK(cudaDeviceSynchronize());
 
-  // copy results back to the host
-  CUDA_CHECK(cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost));
+  // Allocate device output array
+  unsigned long long int *d_out = nullptr;
+  CUDA_CHECK(cudaMalloc((void **)&d_out, sizeof(unsigned long long int)));
+
+  // Request and allocate temporary storage
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out,
+                         256);
+  CUDA_CHECK(cudaMalloc((void **)&d_temp_storage, temp_storage_bytes));
+
+  // Run
+  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out,
+                         256);
+
   float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
   CUDA_CHECK(cudaEventDestroy(gpu_start));
   CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
+  // copy results back to the host
+  unsigned long long int h_count = 0;
+  CUDA_CHECK(cudaMemcpy(&h_count, d_out, sizeof(unsigned long long int),
+                        cudaMemcpyDeviceToHost));
+
   // display results and timings for gpu
-  float pi = *h_count * 4.0 / (n * m);
+  float pi = h_count * 4.0 / (n * m);
   std::cout << "Approximate pi calculated on GPU is: " << pi
             << " and calculation took " << gpu_elapsed_time << "s\n";
   std::cout << "Benchmark completed!" << std::endl;
 
-  delete[] h_count;
   CUDA_CHECK(cudaFree(d_count));
   CUDA_CHECK(cudaFree(d_state));
+  CUDA_CHECK(cudaFree(d_out));
+  CUDA_CHECK(cudaFree(d_temp_storage));
 }
 
 // Function to run the GPU benchmark for a specified time
@@ -79,12 +99,12 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   uint64_t m = max_work * 16384 / n;
 
   // allocate memory
-  auto h_count = new int64_t[n];
-  int64_t *d_count;
+  unsigned long long int *d_count;
   curandState *d_state;
-  CUDA_CHECK(cudaMalloc((void **)&d_count, n * sizeof(int64_t)));
+  CUDA_CHECK(
+      cudaMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
   CUDA_CHECK(cudaMalloc((void **)&d_state, n * sizeof(curandState)));
-  CUDA_CHECK(cudaMemset(d_count, 0, sizeof(int64_t)));
+  CUDA_CHECK(cudaMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
   // set up timing stuff
   cudaEvent_t gpu_start, gpu_stop;
@@ -105,22 +125,41 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
     CUDA_CHECK(cudaDeviceSynchronize()); // Ensure the kernel has finished executing
     iteration++;
   }
-  std::cout << n << " " << m << std::endl;
-  std::cout << "Completed " << iteration << " iterations in "
-            << getElapsedTime(gpu_start, gpu_stop) << " seconds." << std::endl;
+
   // copy results back to the host
-  CUDA_CHECK(cudaMemcpy(h_count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost));
+  // Allocate device output array
+  unsigned long long int *d_out = nullptr;
+  CUDA_CHECK(cudaMalloc((void **)&d_out, sizeof(unsigned long long int)));
+
+  // Request and allocate temporary storage
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out,
+                         256);
+  CUDA_CHECK(cudaMalloc((void **)&d_temp_storage, temp_storage_bytes));
+
+  // Run
+  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out,
+                         256);
+
   float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
   CUDA_CHECK(cudaEventDestroy(gpu_start));
   CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
+  // copy results back to the host
+  unsigned long long int h_count = 0;
+  CUDA_CHECK(cudaMemcpy(&h_count, d_out, sizeof(unsigned long long int),
+                        cudaMemcpyDeviceToHost));
+
   // display results and timings for gpu
-  float pi = *h_count * 4.0 / (n * m) / iteration;
+  float pi = h_count * 4.0 / (n * m) / iteration;
   std::cout << "Approximate pi calculated on GPU is: " << pi
             << " and calculation took " << gpu_elapsed_time << "s\n";
-  delete[] h_count;
+
   CUDA_CHECK(cudaFree(d_count));
   CUDA_CHECK(cudaFree(d_state));
+  CUDA_CHECK(cudaFree(d_out));
+  CUDA_CHECK(cudaFree(d_temp_storage));
 }
 
 int main(int argc, char *argv[]) {
