@@ -39,7 +39,6 @@ void runBenchmark(long max_work) {
   hipEvent_t gpu_start, gpu_stop;
   HIP_CHECK(hipEventCreate(&gpu_start));
   HIP_CHECK(hipEventCreate(&gpu_stop));
-  HIP_CHECK(hipEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -47,8 +46,13 @@ void runBenchmark(long max_work) {
   setup_kernel<<<gridSize, blockSize>>>(d_state);
 
   // monte carlo kernel
+  HIP_CHECK(hipEventRecord(gpu_start, 0));
   monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
   HIP_CHECK(hipDeviceSynchronize());
+
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  HIP_CHECK(hipEventDestroy(gpu_start));
+  HIP_CHECK(hipEventDestroy(gpu_stop));
 
   // Allocate device output array
   unsigned long long int *d_out = nullptr;
@@ -62,10 +66,6 @@ void runBenchmark(long max_work) {
 
   // Run
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-
-  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  HIP_CHECK(hipEventDestroy(gpu_start));
-  HIP_CHECK(hipEventDestroy(gpu_stop));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
@@ -115,6 +115,10 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
     iteration++;
   }
 
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  HIP_CHECK(hipEventDestroy(gpu_start));
+  HIP_CHECK(hipEventDestroy(gpu_stop));
+
   // copy results back to the host
   // Allocate device output array
   unsigned long long int *d_out = nullptr;
@@ -128,10 +132,6 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
 
   // Run
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-
-  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  HIP_CHECK(hipEventDestroy(gpu_start));
-  HIP_CHECK(hipEventDestroy(gpu_stop));
 
   // copy results back to the host
   unsigned long long int h_count = 0;

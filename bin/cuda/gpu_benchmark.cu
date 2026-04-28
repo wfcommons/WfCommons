@@ -41,7 +41,6 @@ void runBenchmark(long max_work) {
   cudaEvent_t gpu_start, gpu_stop;
   CUDA_CHECK(cudaEventCreate(&gpu_start));
   CUDA_CHECK(cudaEventCreate(&gpu_stop));
-  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -49,8 +48,13 @@ void runBenchmark(long max_work) {
   setup_kernel<<<gridSize, blockSize>>>(d_state);
 
   // monte carlo kernel
+  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
   monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
   CUDA_CHECK(cudaDeviceSynchronize());
+
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(cudaEventDestroy(gpu_start));
+  CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
   // Allocate device output array
   unsigned long long int *d_out = nullptr;
@@ -59,15 +63,11 @@ void runBenchmark(long max_work) {
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
-  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  CUDA_CHECK(cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
   CUDA_CHECK(cudaMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
-  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-
-  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  CUDA_CHECK(cudaEventDestroy(gpu_start));
-  CUDA_CHECK(cudaEventDestroy(gpu_stop));
+  CUDA_CHECK(cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
@@ -101,7 +101,6 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   cudaEvent_t gpu_start, gpu_stop;
   CUDA_CHECK(cudaEventCreate(&gpu_start));
   CUDA_CHECK(cudaEventCreate(&gpu_stop));
-  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -109,6 +108,7 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
 
   setup_kernel<<<gridSize, blockSize>>>(d_state);
 
+  CUDA_CHECK(cudaEventRecord(gpu_start, 0));
   int iteration = 0;
   // Run the workload loop until the specified runtime is reached
   while (getElapsedTime(gpu_start, gpu_stop) < runtime_in_seconds) {
@@ -116,6 +116,10 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
     CUDA_CHECK(cudaDeviceSynchronize()); // Ensure the kernel has finished executing
     iteration++;
   }
+
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(cudaEventDestroy(gpu_start));
+  CUDA_CHECK(cudaEventDestroy(gpu_stop));
 
   // copy results back to the host
   // Allocate device output array
@@ -125,15 +129,11 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
-  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  CUDA_CHECK(cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
   CUDA_CHECK(cudaMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
-  cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-
-  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  CUDA_CHECK(cudaEventDestroy(gpu_start));
-  CUDA_CHECK(cudaEventDestroy(gpu_stop));
+  CUDA_CHECK(cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
