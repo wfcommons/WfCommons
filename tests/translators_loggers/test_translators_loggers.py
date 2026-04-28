@@ -44,6 +44,7 @@ from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
+from wfcommons.wfinstances.logs import SnakemakeLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -186,7 +187,7 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
 
 def run_workflow_snakemake(container, num_tasks, str_dirpath):
     # Run the workflow (with full logging)
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1"],
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1 --logger snkmt --logger-snkmt-db ./snkmt.sqlite"],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
@@ -352,6 +353,8 @@ class TestTranslators:
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
                                        file_extensions_to_ignore=[".out", ".err"],
                                        instruments_to_ignore=["shell.cwl"])
+        elif backend == "snakemake":
+            parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")

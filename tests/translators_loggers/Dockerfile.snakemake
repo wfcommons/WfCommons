@@ -56,5 +56,6 @@ ENV PATH="$PATH:/home/wfcommons/.pixi/bin"
 # Install snakemake
 RUN pixi global install snakemake conda -c conda-forge -c bioconda
 RUN pixi global install snakedeploy -c conda-forge -c bioconda
-
+RUN ~/.pixi/envs/snakemake/bin/python -m ensurepip && \
+    ~/.pixi/envs/snakemake/bin/python -m pip install snakemake-logger-plugin-snkmt
 

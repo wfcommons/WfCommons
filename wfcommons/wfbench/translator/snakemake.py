@@ -66,7 +66,7 @@ class SnakemakeTranslator(Translator):
         :rtype: str
         """
         all_rule = ("# Rule to force all task executions\n"
-                    "rule all_tasks:\n"
+                    "rule all_wfbench_tasks:\n"
                     "\tinput:\n")
 
         self._script = "\n# WfBench task rules\n"
@@ -123,4 +123,4 @@ class SnakemakeTranslator(Translator):
         with open(readme_file_path, "w") as out:
             out.write(f"In directory {str(output_folder)}:\n")
             out.write(f"  - The Snakemake file: workflow.smk\n")
-            out.write(f"  - Run the workflow:   snakemake -s workflow.smk --cores 1\n")
+            out.write(f"  - Run the workflow:   snakemake -s workflow.smk --cores 1 [--logger snkmt --logger-snkmt-db ./snkmt.sqlite]\n")
