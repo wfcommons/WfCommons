@@ -1,135 +1,184 @@
-#include "hip/hip_runtime.h"
-#include <iostream>
-#include <chrono>
-#include <cstdlib>  // For std::atoi
-#include "gpu_benchmark.h"
+#include "kernels.h"
+#include <hipcub/hipcub.hpp>
 
-#define HIP_CHECK(expression)                  \
-{                                              \
-    const hipError_t status = expression;      \
-    if(status != hipSuccess){                  \
-        std::cerr << "HIP error "              \
-                  << status << ": "            \
-                  << hipGetErrorString(status) \
-                  << " at " << __FILE__ << ":" \
-                  << __LINE__ << std::endl;    \
-    }                                          \
+#include <chrono>
+#include <cstdlib> // For std::atoi
+#include <iostream>
+
+// The macro wraps any CUDA API call
+#define CUDA_CHECK(ans)                                                                                                \
+  { gpuAssert((ans), __FILE__, __LINE__); }
+
+inline void gpuAssert(hipError_t code, const char *file, int line, bool abort = true) {
+  if (code != hipSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", hipGetErrorString(code), file, line);
+    if (abort)
+      exit(code);
+  }
 }
 
-// Kernel function to perform a simple workload
-__global__ void simpleKernel(int* data, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        data[idx] = data[idx] * data[idx];  // Simple workload: squaring each element
-    }
+float getElapsedTime(const hipEvent_t &gpu_start, hipEvent_t &gpu_stop) {
+  float gpu_elapsed_time;
+  CUDA_CHECK(hipEventRecord(gpu_stop, 0));
+  CUDA_CHECK(hipEventSynchronize(gpu_stop));
+  CUDA_CHECK(hipEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop));
+  return gpu_elapsed_time / 1000.0f;
 }
 
 // Function to run the GPU benchmark with no time limit
-void runBenchmark(int max_work) {
-    int* h_data = new int[max_work];
-    int* d_data;
+void runBenchmark(long max_work) {
+  uint32_t n = 256 * 256;
+  uint64_t m = max_work * 16384 / n;
 
-    // Initialize data
-    for (int i = 0; i < max_work; i++) {
-        h_data[i] = i;
-    }
+  unsigned long long int *d_count;
+  hiprandState *d_state;
+  CUDA_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
+  CUDA_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
+  CUDA_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
-    // Allocate GPU memory
-    HIP_CHECK(hipMalloc(&d_data, max_work * sizeof(int)));
+  // set up timing stuff
+  hipEvent_t gpu_start, gpu_stop;
+  CUDA_CHECK(hipEventCreate(&gpu_start));
+  CUDA_CHECK(hipEventCreate(&gpu_stop));
+  CUDA_CHECK(hipEventRecord(gpu_start, 0));
 
-    // Copy data to GPU
-    HIP_CHECK(hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice));
+  // set kernel
+  dim3 gridSize = 256;
+  dim3 blockSize = 256;
+  setup_kernel<<<gridSize, blockSize>>>(d_state);
 
-    // Kernel configuration
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (max_work + threadsPerBlock - 1) / threadsPerBlock;
+  // monte carlo kernel
+  monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
+  CUDA_CHECK(hipDeviceSynchronize());
 
-    // Run the kernel
-    simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
+  // Allocate device output array
+  unsigned long long int *d_out = nullptr;
+  CUDA_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
 
-    // Ensure the kernel has finished executing
-    HIP_CHECK(hipDeviceSynchronize());
+  // Request and allocate temporary storage
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  CUDA_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
-    // Copy results back to host (optional, just for validation)
-    HIP_CHECK(hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost));
+  // Run
+  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
 
-    // Cleanup
-    HIP_CHECK(hipFree(d_data));
-    delete[] h_data;
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(hipEventDestroy(gpu_start));
+  CUDA_CHECK(hipEventDestroy(gpu_stop));
 
-    std::cout << "Benchmark completed!" << std::endl;
+  // copy results back to the host
+  unsigned long long int h_count = 0;
+  CUDA_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
+
+  // display results and timings for gpu
+  float pi = h_count * 4.0 / (n * m);
+  std::cout << "Approximate pi calculated on GPU is: " << pi << " and calculation took " << gpu_elapsed_time << "s\n";
+  std::cout << "Benchmark completed!" << std::endl;
+
+  CUDA_CHECK(hipFree(d_count));
+  CUDA_CHECK(hipFree(d_state));
+  CUDA_CHECK(hipFree(d_out));
+  CUDA_CHECK(hipFree(d_temp_storage));
 }
 
 // Function to run the GPU benchmark for a specified time
-void runBenchmarkTime(int max_work, int runtime_in_seconds) {
-    int* h_data = new int[max_work];
-    int* d_data;
+void runBenchmarkTime(long max_work, int runtime_in_seconds) {
 
-    // Initialize data
-    for (int i = 0; i < max_work; i++) {
-        h_data[i] = i;
-    }
+  uint32_t n = 256 * 256;
+  uint64_t m = max_work * 16384 / n;
 
-    // Allocate GPU memory
-    HIP_CHECK(hipMalloc(&d_data, max_work * sizeof(int)));
+  // allocate memory
+  unsigned long long int *d_count;
+  hiprandState *d_state;
+  CUDA_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
+  CUDA_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
+  CUDA_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
-    // Copy data to GPU
-    HIP_CHECK(hipMemcpy(d_data, h_data, max_work * sizeof(int), hipMemcpyHostToDevice));
+  // set up timing stuff
+  hipEvent_t gpu_start, gpu_stop;
+  CUDA_CHECK(hipEventCreate(&gpu_start));
+  CUDA_CHECK(hipEventCreate(&gpu_stop));
+  CUDA_CHECK(hipEventRecord(gpu_start, 0));
 
-    // Start the timer
-    auto start = std::chrono::high_resolution_clock::now();
+  // set kernel
+  dim3 gridSize = 256;
+  dim3 blockSize = 256;
 
-    // Kernel configuration
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (max_work + threadsPerBlock - 1) / threadsPerBlock;
+  setup_kernel<<<gridSize, blockSize>>>(d_state);
 
-    // Run the workload loop until the specified runtime is reached
-    while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count() < runtime_in_seconds) {
-        simpleKernel<<<blocksPerGrid, threadsPerBlock>>>(d_data, max_work);
-        HIP_CHECK(hipDeviceSynchronize());  // Ensure the kernel has finished executing
-    }
+  int iteration = 0;
+  // Run the workload loop until the specified runtime is reached
+  while (getElapsedTime(gpu_start, gpu_stop) < runtime_in_seconds) {
+    monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
+    CUDA_CHECK(hipDeviceSynchronize()); // Ensure the kernel has finished executing
+    iteration++;
+  }
 
-    // Copy results back to host (optional, just for validation)
-    HIP_CHECK(hipMemcpy(h_data, d_data, max_work * sizeof(int), hipMemcpyDeviceToHost));
+  // copy results back to the host
+  // Allocate device output array
+  unsigned long long int *d_out = nullptr;
+  CUDA_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
 
-    // Cleanup
-    HIP_CHECK(hipFree(d_data));
-    delete[] h_data;
+  // Request and allocate temporary storage
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  CUDA_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
-    std::cout << "Benchmark completed!" << std::endl;
+  // Run
+  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  CUDA_CHECK(hipEventDestroy(gpu_start));
+  CUDA_CHECK(hipEventDestroy(gpu_stop));
+
+  // copy results back to the host
+  unsigned long long int h_count = 0;
+  CUDA_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
+
+  // display results and timings for gpu
+  float pi = h_count * 4.0 / (n * m) / iteration;
+  std::cout << "Approximate pi calculated on GPU is: " << pi << " and calculation took " << gpu_elapsed_time << "s\n";
+
+  CUDA_CHECK(hipFree(d_count));
+  CUDA_CHECK(hipFree(d_state));
+  CUDA_CHECK(hipFree(d_out));
+  CUDA_CHECK(hipFree(d_temp_storage));
 }
 
-int main(int argc, char* argv[]) {
-    // Check for the correct number of command line arguments
-    if (argc == 2) {
-        // Parse the command line arguments
-        int max_work = std::atoi(argv[1]);
+int main(int argc, char *argv[]) {
+  // Check for the correct number of command line arguments
+  if (argc == 2) {
+    // Parse the command line arguments
+    long max_work = std::atol(argv[1]);
 
-        // Validate the input arguments
-        if (max_work <= 0) {
-            std::cerr << "max_work must be a positive integer." << std::endl;
-            return 1;
-        }
-
-        runBenchmark(max_work);
-
-    } else if (argc == 3) {
-        // Parse the command line arguments
-        int max_work = std::atoi(argv[1]);
-        int runtime_in_seconds = std::atoi(argv[2]);
-
-        // Validate the input arguments
-        if (max_work <= 0 || runtime_in_seconds <= 0) {
-            std::cerr << "Both max_work and runtime_in_seconds must be positive integers." << std::endl;
-            return 1;
-        }
-
-        runBenchmarkTime(max_work, runtime_in_seconds);
-
-    } else {
-        std::cerr << "Usage: " << argv[0] << " <max_work> [runtime_in_seconds]" << std::endl;
-        return 1;
+    // Validate the input arguments
+    if (max_work <= 0) {
+      std::cerr << "max_work must be a positive integer." << std::endl;
+      return 1;
     }
 
-    return 0;
+    runBenchmark(max_work);
+
+  } else if (argc == 3) {
+    // Parse the command line arguments
+    long max_work = std::atol(argv[1]);
+    int runtime_in_seconds = std::atoi(argv[2]);
+
+    // Validate the input arguments
+    if (max_work <= 0 || runtime_in_seconds <= 0) {
+      std::cerr << "Both max_work and runtime_in_seconds must be positive integers." << std::endl;
+      return 1;
+    }
+
+    runBenchmarkTime(max_work, runtime_in_seconds);
+
+  } else {
+    std::cerr << "Usage: " << argv[0] << " <max_work> [runtime_in_seconds]" << std::endl;
+    return 1;
+  }
+
+  return 0;
 }
