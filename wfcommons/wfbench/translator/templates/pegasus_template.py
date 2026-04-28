@@ -22,9 +22,9 @@ def which(file):
 tc = TransformationCatalog()
 rc = ReplicaCatalog()
 
-t_cpu_benchmark = Transformation('cpu-benchmark', site='local',
-pfn = os.getcwd() + '/bin/cpu-benchmark', is_stageable=True)
-tc.add_transformations(t_cpu_benchmark)
+# t_cpu_benchmark = Transformation('cpu-benchmark', site='local',
+# pfn = os.getcwd() + '/bin/cpu-benchmark', is_stageable=True)
+# tc.add_transformations(t_cpu_benchmark)
 transformation_path = os.getcwd() + '/bin/wfbench'
 
 task_output_files = {}

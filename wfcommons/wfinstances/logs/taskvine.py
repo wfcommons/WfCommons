@@ -45,7 +45,7 @@ class TaskVineLogsParser(LogsParser):
                                 are input to tasks. This argument is the list of names of files that should be
                                 ignored in the reconstructed instances, which typically do not include such
                                 files at task input. For instance, if reconstructing a workflow from an execution
-                                of a WfBench-generated benchmark, one could pass ["wfbench", "cpu-benchmark", "stress-ng"]
+                                of a WfBench-generated benchmark, one could pass ["wfbench", "stress-ng"]
     :type filenames_to_ignore: List[str]
     :param description: Workflow instance description.
     :type description: Optional[str]

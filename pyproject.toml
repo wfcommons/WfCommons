@@ -30,6 +30,7 @@ dependencies = [
     "networkx",
     "numpy",
     "pandas",
+    "psutil",
     "python-dateutil",
     "requests",
     "scipy>=1.16.1",
