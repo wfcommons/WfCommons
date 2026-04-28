@@ -2,26 +2,25 @@
 #include <hipcub/hipcub.hpp>
 
 #include <chrono>
-#include <cstdlib> // For std::atoi
 #include <iostream>
 
-// The macro wraps any CUDA API call
-#define CUDA_CHECK(ans)                                                                                                \
-  { gpuAssert((ans), __FILE__, __LINE__); }
-
-inline void gpuAssert(hipError_t code, const char *file, int line, bool abort = true) {
-  if (code != hipSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n", hipGetErrorString(code), file, line);
-    if (abort)
-      exit(code);
-  }
+#define HIP_CHECK(expression)                  \
+{                                              \
+    const hipError_t status = expression;      \
+    if(status != hipSuccess){                  \
+        std::cerr << "HIP error "              \
+                  << status << ": "            \
+                  << hipGetErrorString(status) \
+                  << " at " << __FILE__ << ":" \
+                  << __LINE__ << std::endl;    \
+    }                                          \
 }
 
 float getElapsedTime(const hipEvent_t &gpu_start, hipEvent_t &gpu_stop) {
   float gpu_elapsed_time;
-  CUDA_CHECK(hipEventRecord(gpu_stop, 0));
-  CUDA_CHECK(hipEventSynchronize(gpu_stop));
-  CUDA_CHECK(hipEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop));
+  HIP_CHECK(hipEventRecord(gpu_stop, 0));
+  HIP_CHECK(hipEventSynchronize(gpu_stop));
+  HIP_CHECK(hipEventElapsedTime(&gpu_elapsed_time, gpu_start, gpu_stop));
   return gpu_elapsed_time / 1000.0f;
 }
 
@@ -32,15 +31,15 @@ void runBenchmark(long max_work) {
 
   unsigned long long int *d_count;
   hiprandState *d_state;
-  CUDA_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
-  CUDA_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
-  CUDA_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
+  HIP_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
   // set up timing stuff
   hipEvent_t gpu_start, gpu_stop;
-  CUDA_CHECK(hipEventCreate(&gpu_start));
-  CUDA_CHECK(hipEventCreate(&gpu_stop));
-  CUDA_CHECK(hipEventRecord(gpu_start, 0));
+  HIP_CHECK(hipEventCreate(&gpu_start));
+  HIP_CHECK(hipEventCreate(&gpu_stop));
+  HIP_CHECK(hipEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -49,38 +48,38 @@ void runBenchmark(long max_work) {
 
   // monte carlo kernel
   monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
-  CUDA_CHECK(hipDeviceSynchronize());
+  HIP_CHECK(hipDeviceSynchronize());
 
   // Allocate device output array
   unsigned long long int *d_out = nullptr;
-  CUDA_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
 
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-  CUDA_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
+  HIP_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
 
   float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  CUDA_CHECK(hipEventDestroy(gpu_start));
-  CUDA_CHECK(hipEventDestroy(gpu_stop));
+  HIP_CHECK(hipEventDestroy(gpu_start));
+  HIP_CHECK(hipEventDestroy(gpu_stop));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
-  CUDA_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
+  HIP_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
 
   // display results and timings for gpu
   float pi = h_count * 4.0 / (n * m);
   std::cout << "Approximate pi calculated on GPU is: " << pi << " and calculation took " << gpu_elapsed_time << "s\n";
   std::cout << "Benchmark completed!" << std::endl;
 
-  CUDA_CHECK(hipFree(d_count));
-  CUDA_CHECK(hipFree(d_state));
-  CUDA_CHECK(hipFree(d_out));
-  CUDA_CHECK(hipFree(d_temp_storage));
+  HIP_CHECK(hipFree(d_count));
+  HIP_CHECK(hipFree(d_state));
+  HIP_CHECK(hipFree(d_out));
+  HIP_CHECK(hipFree(d_temp_storage));
 }
 
 // Function to run the GPU benchmark for a specified time
@@ -92,15 +91,15 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   // allocate memory
   unsigned long long int *d_count;
   hiprandState *d_state;
-  CUDA_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
-  CUDA_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
-  CUDA_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_count, 256 * sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_state, n * sizeof(hiprandState)));
+  HIP_CHECK(hipMemset(d_count, 0, 256 * sizeof(unsigned long long int)));
 
   // set up timing stuff
   hipEvent_t gpu_start, gpu_stop;
-  CUDA_CHECK(hipEventCreate(&gpu_start));
-  CUDA_CHECK(hipEventCreate(&gpu_stop));
-  CUDA_CHECK(hipEventRecord(gpu_start, 0));
+  HIP_CHECK(hipEventCreate(&gpu_start));
+  HIP_CHECK(hipEventCreate(&gpu_stop));
+  HIP_CHECK(hipEventRecord(gpu_start, 0));
 
   // set kernel
   dim3 gridSize = 256;
@@ -112,40 +111,40 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   // Run the workload loop until the specified runtime is reached
   while (getElapsedTime(gpu_start, gpu_stop) < runtime_in_seconds) {
     monte_carlo_kernel<<<gridSize, blockSize>>>(d_state, d_count, m);
-    CUDA_CHECK(hipDeviceSynchronize()); // Ensure the kernel has finished executing
+    HIP_CHECK(hipDeviceSynchronize()); // Ensure the kernel has finished executing
     iteration++;
   }
 
   // copy results back to the host
   // Allocate device output array
   unsigned long long int *d_out = nullptr;
-  CUDA_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
+  HIP_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
 
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
-  CUDA_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
+  HIP_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
   hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
 
   float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
-  CUDA_CHECK(hipEventDestroy(gpu_start));
-  CUDA_CHECK(hipEventDestroy(gpu_stop));
+  HIP_CHECK(hipEventDestroy(gpu_start));
+  HIP_CHECK(hipEventDestroy(gpu_stop));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
-  CUDA_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
+  HIP_CHECK(hipMemcpy(&h_count, d_out, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
 
   // display results and timings for gpu
   float pi = h_count * 4.0 / (n * m) / iteration;
   std::cout << "Approximate pi calculated on GPU is: " << pi << " and calculation took " << gpu_elapsed_time << "s\n";
 
-  CUDA_CHECK(hipFree(d_count));
-  CUDA_CHECK(hipFree(d_state));
-  CUDA_CHECK(hipFree(d_out));
-  CUDA_CHECK(hipFree(d_temp_storage));
+  HIP_CHECK(hipFree(d_count));
+  HIP_CHECK(hipFree(d_state));
+  HIP_CHECK(hipFree(d_out));
+  HIP_CHECK(hipFree(d_temp_storage));
 }
 
 int main(int argc, char *argv[]) {

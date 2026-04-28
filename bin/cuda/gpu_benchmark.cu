@@ -4,7 +4,6 @@
 #include <cub/cub.cuh>
 
 #include <chrono>
-#include <cstdlib> // For std::atoi
 #include <iostream>
 
 // The macro wraps any CUDA API call
