@@ -89,6 +89,7 @@ Supported translators (alphabetical)
 - Parsl
 - Pegasus
 - PyCOMPSs
+- Snakemake
 - Swift/T
 - TaskVine
 
@@ -282,6 +283,22 @@ parallel Python applications on distributed infrastructures::
 
     translator = PyCompssTranslator(benchmark.workflow)
     translator.translate(output_folder=pathlib.Path("./pycompss-wf/"))
+
+Snakemake
++++++++++
+
+`Snakemake <https://snakemake.readthedocs.io/>`_ is a workflow system to create data
+analysis workflows using a human readable, Python-based language::
+
+    import pathlib
+    from wfcommons import BlastRecipe
+    from wfcommons.wfbench import WorkflowBenchmark, SnakemakeTranslator
+
+    benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=500)
+    benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=100, data=10, percent_cpu=1.0)
+
+    translator = SnakemakeTranslator(benchmark.workflow)
+    translator.translate(output_folder=pathlib.Path("./snakemake/"))
 
 Swift/T
 +++++++
