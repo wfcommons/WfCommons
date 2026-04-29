@@ -61,11 +61,11 @@ void runBenchmark(long max_work) {
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
-  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
   HIP_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
-  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
@@ -127,11 +127,11 @@ void runBenchmarkTime(long max_work, int runtime_in_seconds) {
   // Request and allocate temporary storage
   void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
-  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
   HIP_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
 
   // Run
-  hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256);
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, 256));
 
   // copy results back to the host
   unsigned long long int h_count = 0;
