@@ -20,3 +20,4 @@ from .pycompss import PyCompssTranslator
 from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
 from .makeflow import MakeflowTranslator
+from .snakemake import SnakemakeTranslator

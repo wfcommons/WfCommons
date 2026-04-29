@@ -35,6 +35,7 @@ from wfcommons.wfbench import AirflowTranslator
 from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import MakeflowTranslator
+from wfcommons.wfbench import SnakemakeTranslator
 from wfcommons.wfbench import CWLTranslator
 from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
@@ -44,6 +45,7 @@ from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
+from wfcommons.wfinstances.logs import SnakemakeLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -135,6 +137,7 @@ additional_setup_methods = {
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
     "makeflow": noop,
+    "snakemake": noop,
     "cwl": noop,
     "streamflow": noop,
     "pegasus": _additional_setup_pegasus,
@@ -201,6 +204,15 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
     assert (num_completed_jobs == num_tasks)
 
+def run_workflow_snakemake(container, num_tasks, str_dirpath):
+    # Run the workflow (with full logging)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1 --logger snkmt --logger-snkmt-db ./snkmt.sqlite"],
+                                           user="wfcommons", stdout=True, stderr=True)
+    # Check sanity
+    assert (exit_code == 0)
+    num_completed_jobs = len(re.findall(r'Finished jobid: \d+', output.decode()))
+    assert (num_completed_jobs - 1 == num_tasks) # Discounting the "all_tasks" rule
+
 def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
@@ -261,6 +273,7 @@ run_workflow_methods = {
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
     "makeflow": run_workflow_makeflow,
+    "snakemake": run_workflow_snakemake,
     "cwl": run_workflow_cwl,
     "streamflow": run_workflow_streamflow,
     "pegasus": run_workflow_pegasus,
@@ -276,6 +289,7 @@ translator_classes = {
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
     "makeflow": MakeflowTranslator,
+    "snakemake": SnakemakeTranslator,
     "cwl": CWLTranslator,
     "streamflow": StreamflowTranslator,
     "pegasus": PegasusTranslator,
@@ -297,6 +311,7 @@ class TestTranslators:
            "bash",
            "taskvine",
            "makeflow",
+           "snakemake",
            "cwl",
            "streamflow",
            "pegasus",
@@ -356,6 +371,8 @@ class TestTranslators:
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
                                        file_extensions_to_ignore=[".out", ".err"],
                                        instruments_to_ignore=["shell.cwl"])
+        elif backend == "snakemake":
+            parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
