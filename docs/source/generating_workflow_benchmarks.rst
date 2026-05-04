@@ -35,9 +35,7 @@ recipe to generate a task graph. Once the task graph has been generated, each ta
 is set to be an instance of the workflow task benchmark. For each task, the following 
 values for the parameters of the workflow task benchmark can be specified:
 
-- :code:`cpu_work`: CPU work per workflow task. The :code:`cpu-benchmark` executable 
-  (compiled C++) calculates an increasingly precise value of π up until the specified 
-  total amount of computation (cpu_work) has been performed.
+- :code:`cpu_work`: CPU work per workflow task.
 - :code:`data`: Individual data volumes for each task in a way that is coherent 
   with respect to task data dependencies (in the form of a dictionary of input 
   size files per workflow task type). Alternatively, a total data footprint (in MB)

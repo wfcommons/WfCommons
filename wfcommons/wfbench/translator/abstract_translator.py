@@ -94,7 +94,6 @@ class Translator(ABC):
         bin_folder.mkdir(exist_ok=True)
 
         shutil.copy(shutil.which("wfbench"), bin_folder)
-        shutil.copy(shutil.which("cpu-benchmark"), bin_folder)
 
     def _generate_input_files(self, output_folder: pathlib.Path) -> None:
         """

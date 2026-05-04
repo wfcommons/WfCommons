@@ -46,7 +46,6 @@ poncho_pkg = m.declare_poncho(poncho_file, cache="workflow")
 
 # wfbench executable files
 wfbench = m.declare_file("bin/wfbench", cache="workflow")
-cpu_bench = m.declare_file("bin/cpu-benchmark", cache="workflow")
 stress_ng = m.declare_file(shutil.which("stress-ng"), cache="workflow")
 
 # Generated code goes here

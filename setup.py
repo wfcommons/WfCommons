@@ -16,32 +16,33 @@ from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext
 
 class Build(build_ext):
-    """Customized setuptools build command - builds cpu-benchmark on build."""
+    """Customized setuptools build command"""
 
     def run(self):
-        # Try to build the cpu-benchmark, but make it optional
-        # This allows installation on Windows where make/g++ may not be available
-        try:
-            result = subprocess.call(["make"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-            if result != 0:
-                sys.stderr.write("Warning: 'make' build failed. cpu-benchmark will not be available.\n")
-                sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
-        except (FileNotFoundError, OSError):
-            sys.stderr.write("Warning: 'make' is not installed. cpu-benchmark will not be available.\n")
-            sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
-        super().run()
+        pass
+        # OLD CODE TO build a C++ executable
+        # # This allows installation on Windows where make/g++ may not be available
+        # try:
+        #     result = subprocess.call(["make"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        #     if result != 0:
+        #         sys.stderr.write("Warning: 'make' build failed. cpu-benchmark will not be available.\n")
+        #         sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
+        # except (FileNotFoundError, OSError):
+        #     sys.stderr.write("Warning: 'make' is not installed. cpu-benchmark will not be available.\n")
+        #     sys.stderr.write("This is expected on Windows. To build cpu-benchmark, install make and g++.\n")
+        # super().run()
 
 # Conditionally include cpu-benchmark based on platform
 data_files = []
-if sys.platform != 'win32':
-    # On Unix-like systems (Linux, macOS, Docker), always try to include it
-    # The Build class will create it during the build process
-    data_files.append(('bin', ['bin/cpu-benchmark']))
-else:
-    # On Windows, only include if it exists (e.g., if user manually compiled it)
-    cpu_benchmark_path = 'bin/cpu-benchmark'
-    if os.path.exists(cpu_benchmark_path):
-        data_files.append(('bin', [cpu_benchmark_path]))
+# if sys.platform != 'win32':
+#     # On Unix-like systems (Linux, macOS, Docker), always try to include it
+#     # The Build class will create it during the build process
+#     data_files.append(('bin', ['bin/cpu-benchmark']))
+# else:
+#     # On Windows, only include if it exists (e.g., if user manually compiled it)
+#     cpu_benchmark_path = 'bin/cpu-benchmark'
+#     if os.path.exists(cpu_benchmark_path):
+#         data_files.append(('bin', [cpu_benchmark_path]))
 
 setup(
     packages=find_packages(),

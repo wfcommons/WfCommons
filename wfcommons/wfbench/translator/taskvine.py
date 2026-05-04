@@ -118,7 +118,6 @@ class TaskVineTranslator(Translator):
             f_counter = 1
             task_script = f"t_{self.task_counter}.add_poncho_package(poncho_pkg)\n" \
                           f"t_{self.task_counter}.add_input(wfbench, 'wfbench')\n" \
-                          f"t_{self.task_counter}.add_input(cpu_bench, 'cpu-benchmark')\n" \
                           f"t_{self.task_counter}.add_input(stress_ng, 'stress-ng')\n"
             input_spec = "\"["
             for file in task.input_files:

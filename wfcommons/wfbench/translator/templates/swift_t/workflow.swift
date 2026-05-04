@@ -25,7 +25,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-workflow_id = "%s"  
+workflow_id = "%s"
 workflow_name = "%s"
 out_files = [%s]
 
@@ -63,12 +63,12 @@ string command =
 """
 import logging
 import os
+import sys
 import pathlib
 import signal
 import socket
 import subprocess
 import time
-from pathos.helpers import mp as multiprocessing
 
 __import__("logging").basicConfig(
     level=logging.INFO,
@@ -77,14 +77,15 @@ __import__("logging").basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-cpu_benchmark = "%s"
+wfbench = "%s"
 task_name = "%s"
-files_list = ["%s"]
+input_file = ["%s"]
 gpu_work = int(%i)
 cpu_work = int(%i)
 percent_cpu = %f
 cpu_threads = int(10 * percent_cpu)
-output_data = {"%s": int(%i)}
+output_file = "%s"
+output_file_size = int(%i)
 dep = %i
 workflow_id = "%s"
 task_id = f"{workflow_id}_{task_name}"
@@ -106,131 +107,31 @@ if 'workflow_id':
 
 __import__("logging").info(f"Starting {task_name} Benchmark on {socket.gethostname()}")
 
-procs = []
-cpu_queue = multiprocessing.Queue()
-__import__("logging").debug(f"Working directory: {os.getcwd()}")
-
-__import__("logging").debug("Starting IO benchmark...")
-io_proc = None
-termination_event = multiprocessing.Event()
-
-io_proc = multiprocessing.Process(
-    target=lambda inputs=files_list, outputs=output_data, cpu_queue=cpu_queue, 
-           termination_event=termination_event: (
-        memory_limit := 10 * 1024 * 1024,
-        [open(name, "wb").close() for name in outputs],
-        io_completed := 0,
-        bytes_read := {name: 0 for name in inputs},
-        bytes_written := {name: 0 for name in outputs},
-        input_sizes := {name: __import__("os").path.getsize(name) for name in inputs},
-        [
-            (
-                cpu_percent := cpu_queue.get(timeout=1.0),                
-                should_exit := termination_event.is_set(),
-                (
-                    while_loop_var := True,
-                    [
-                        (
-                            new_val := (
-                                cpu_queue.get(timeout = 1.0)
-                                if not cpu_queue.empty() else None
-                            ),
-                            cpu_percent := (
-                                max(cpu_percent, new_val) 
-                                if new_val is not None else cpu_percent
-                            ),
-                            while_loop_var := (
-                                new_val is not None and not cpu_queue.empty()
-                            )
-                        )
-                        for _ in range(100) if while_loop_var
-                    ],
-                    bytes_to_read := {
-                        name: max(0, int(size * (cpu_percent / 100) - bytes_read[name]))
-                        for name, size in input_sizes.items()
-                    },
-                    bytes_to_write := {
-                        name: max(0, int(size * (cpu_percent / 100) - bytes_written[name]))
-                        for name, size in outputs.items()
-                    },
-                    __import__("logging").debug("Starting IO Read Benchmark..."),
-                    in_file := list(bytes_to_read.keys())[0],
-                    in_size := list(bytes_to_read.values())[0],
-                    open(in_file, "rb").read(int(in_size)),
-                    __import__("logging").debug("Completed IO Read Benchmark!"),
-                    out_file := list(outputs.keys())[0],
-                    out_size := list(outputs.values())[0],
-                    __import__("logging").debug(f"Writing output file '{out_file}'"),
-                    open(out_file, "ab").write(__import__("os").urandom(int(out_size))),
-                    bytes_read.update({
-                        name: bytes_read[name] + bytes_to_read[name]
-                        for name in bytes_to_read
-                    }),
-                    bytes_written.update({
-                        name: bytes_written[name] + bytes_to_write[name]
-                        for name in bytes_to_write
-                    }),
-                    
-                    __import__("logging").debug(f"Bytes Read: {bytes_read}"),
-                    __import__("logging").debug(f"Bytes Written: {bytes_written}"),
-                    io_completed := cpu_percent,
-                ) if cpu_percent is not None else time.sleep(0.1),
-                not (should_exit or io_completed >= 100)
-            )
-            for _ in range(1000000)
-            if not (io_completed >= 100 or termination_event.is_set())
-        ],
-        __import__("logging").info("IO benchmark completed")
-    )
+from importlib.util import spec_from_file_location, module_from_spec
+from importlib.machinery import SourceFileLoader
+loader = SourceFileLoader("wfbench", wfbench)
+spec = spec_from_file_location("wfbench", wfbench, loader=loader)
+mod = module_from_spec(spec)
+spec.loader.exec_module(mod)
+mod.run(
+    name=task_name,
+    workflow_id=workflow_id,
+    percent_cpu=percent_cpu,
+    cpu_work=cpu_work,
+    mem=None,
+    gpu_work=gpu_work,
+    output_files=f'{{"{output_file}": {output_file_size}}}',
+    input_files=str(input_file).replace("'", '"'),
+    with_flowcept=True,
+    silent=False,
+    debug=False,
+    rundir=None,
+    path_lock=None,
+    path_cores=None,
+    time_limit=None,
+    num_chunks=10,
 )
-io_proc.start()
-procs.append(io_proc)
 
-if cpu_work > 0:
-    __import__("logging").info(f"Starting CPU and Memory Benchmarks for {task_name}...")
-
-    mem_threads = 10 - cpu_threads
-    cpu_work_per_thread = int(cpu_work / cpu_threads)
-
-    cpu_procs = []
-    mem_procs = []
-    cpu_prog = [f"{cpu_benchmark}", f"{cpu_work_per_thread}"]
-    mem_prog = ["stress-ng", "--vm", f"{mem_threads}",
-                "--vm-bytes", "0.05%%", "--vm-keep"]
-
-    for i in range(cpu_threads):
-        cpu_proc = subprocess.Popen(cpu_prog, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        cpu_procs.append(cpu_proc)
-        monitor_thread = multiprocessing.Process(
-            target=lambda proc=cpu_proc, queue=cpu_queue: 
-                [
-                    queue.put(float(line.strip().split()[1].strip('%%')))
-                    for line in iter(proc.stdout.readline, "") 
-                    if line.strip() and line.strip().startswith("Progress:")
-                ]
-        )
-        monitor_thread.start()
-
-    if mem_threads > 0:
-        mem_proc = subprocess.Popen(mem_prog, preexec_fn=os.setsid)
-        mem_procs.append(mem_proc)
-
-    procs.extend(cpu_procs)
-    for proc in procs:
-        if isinstance(proc, subprocess.Popen):
-            proc.wait()
-    if io_proc is not None and io_proc.is_alive():
-        io_proc.join()
-
-    for mem_proc in mem_procs:
-        try:
-            os.kill(mem_proc.pid, signal.SIGKILL)
-        except subprocess.TimeoutExpired:
-            __import__("logging").debug("Memory process did not terminate; force-killing.")
-    subprocess.Popen(["pkill", "-f", "stress-ng"]).wait()
-
-    __import__("logging").info("Completed CPU and Memory Benchmarks!")
-    
 __import__("logging").info(f"Benchmark {task_name} completed!")
 
 if 'workflow_id':
