@@ -18,6 +18,7 @@ from .translator import (AirflowTranslator,
                          SwiftTTranslator,
                          TaskVineTranslator,
                          MakeflowTranslator,
+                         SnakemakeTranslator,
                          CWLTranslator,
                          StreamflowTranslator,
                          PyCompssTranslator)

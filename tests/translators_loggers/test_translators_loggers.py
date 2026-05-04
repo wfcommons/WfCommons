@@ -24,7 +24,8 @@ from tests.test_helpers import _start_docker_container
 from tests.test_helpers import _shutdown_docker_container_and_remove_image
 from tests.test_helpers import _compare_workflows
 
-from wfcommons import BlastRecipe
+from wfcommons import BlastRecipe, EpigenomicsRecipe, BwaRecipe, CyclesRecipe, GenomeRecipe, MontageRecipe, \
+    RnaseqRecipe, SeismologyRecipe, SoykbRecipe, SrasearchRecipe
 from wfcommons.common import Workflow, Task
 from wfcommons.wfbench import WorkflowBenchmark
 from wfcommons.wfbench import DaskTranslator
@@ -34,6 +35,7 @@ from wfcommons.wfbench import AirflowTranslator
 from wfcommons.wfbench import BashTranslator
 from wfcommons.wfbench import TaskVineTranslator
 from wfcommons.wfbench import MakeflowTranslator
+from wfcommons.wfbench import SnakemakeTranslator
 from wfcommons.wfbench import CWLTranslator
 from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
@@ -43,16 +45,35 @@ from wfcommons.wfinstances import PegasusLogsParser
 from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
+from wfcommons.wfinstances.logs import SnakemakeLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
     desired_num_tasks = 45
-    benchmark_full_path = "/tmp/blast-benchmark-{desired_num_tasks}.json"
+    benchmark_full_path = f"/tmp/blast-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/epigenomics-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/bwa-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/cycles-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/genome-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/montage-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/rnaseq-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/seismology-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/soykb-benchmark-{desired_num_tasks}.json"
+    # benchmark_full_path = f"/tmp/srasearch-benchmark-{desired_num_tasks}.json"
     shutil.rmtree(benchmark_full_path, ignore_errors=True)
     benchmark = WorkflowBenchmark(recipe=BlastRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=EpigenomicsRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=BwaRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=CyclesRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=GenomeRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=MontageRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=RnaseqRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SeismologyRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SoykbRecipe, num_tasks=desired_num_tasks)
+    # benchmark = WorkflowBenchmark(recipe=SrasearchRecipe, num_tasks=desired_num_tasks)
     benchmark.create_benchmark(pathlib.Path("/tmp/"), cpu_work=10, data=10, percent_cpu=0.6)
-    with open(f"/tmp/blast-benchmark-{desired_num_tasks}.json", "r") as f:
+    with open(benchmark_full_path, "r") as f:
         generated_json = json.load(f)
         num_tasks = len(generated_json["workflow"]["specification"]["tasks"])
     return benchmark, num_tasks
@@ -119,6 +140,7 @@ additional_setup_methods = {
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
     "makeflow": noop,
+    "snakemake": noop,
     "cwl": noop,
     "streamflow": noop,
     "pegasus": _additional_setup_pegasus,
@@ -199,6 +221,15 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
     num_completed_jobs = len(re.findall(r'job \d+ completed', output.decode()))
     assert (num_completed_jobs == num_tasks)
 
+def run_workflow_snakemake(container, num_tasks, str_dirpath):
+    # Run the workflow (with full logging)
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1 --logger snkmt --logger-snkmt-db ./snkmt.sqlite"],
+                                           user="wfcommons", stdout=True, stderr=True)
+    # Check sanity
+    assert (exit_code == 0)
+    num_completed_jobs = len(re.findall(r'Finished jobid: \d+', output.decode()))
+    assert (num_completed_jobs - 1 == num_tasks) # Discounting the "all_tasks" rule
+
 def run_workflow_cwl(container, num_tasks, str_dirpath):
     # Run the workflow!
     # Note that the input file is hardcoded and Blast-specific
@@ -214,7 +245,6 @@ def run_workflow_cwl(container, num_tasks, str_dirpath):
 
 def run_workflow_streamflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    # Note that the input file is hardcoded and Blast-specific
     exit_code, output = container.exec_run(cmd="streamflow run ./streamflow.yml",
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
@@ -264,6 +294,7 @@ run_workflow_methods = {
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
     "makeflow": run_workflow_makeflow,
+    "snakemake": run_workflow_snakemake,
     "cwl": run_workflow_cwl,
     "streamflow": run_workflow_streamflow,
     "pegasus": run_workflow_pegasus,
@@ -279,6 +310,7 @@ translator_classes = {
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
     "makeflow": MakeflowTranslator,
+    "snakemake": SnakemakeTranslator,
     "cwl": CWLTranslator,
     "streamflow": StreamflowTranslator,
     "pegasus": PegasusTranslator,
@@ -291,18 +323,19 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-          "swiftt",
-          "dask",
-          "parsl",
-          "nextflow",
-          "nextflow_subworkflow",
-          "airflow",
-          "bash",
-          "taskvine",
-          "makeflow",
-          "cwl",
-          "streamflow",
-          "pegasus",
+           "swiftt",
+           "dask",
+           "parsl",
+           "nextflow",
+           "nextflow_subworkflow",
+           "airflow",
+           "bash",
+           "taskvine",
+           "makeflow",
+           "snakemake",
+           "cwl",
+           "streamflow",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -359,12 +392,13 @@ class TestTranslators:
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
                                        file_extensions_to_ignore=[".out", ".err"],
                                        instruments_to_ignore=["shell.cwl"])
+        elif backend == "snakemake":
+            parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
             reconstructed_workflow : Workflow = parser.build_workflow(f"reconstructed_workflow_{backend}")
             reconstructed_workflow.write_json(pathlib.Path("/tmp/reconstructed_workflow.json"))
-
             original_workflow : Workflow = benchmark.workflow
 
             _compare_workflows(original_workflow, reconstructed_workflow)

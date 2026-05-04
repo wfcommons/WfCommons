@@ -32,6 +32,7 @@ jobs:
           pip install docker
           pip install pygraphviz
           pip install pydot
+          pip install igraph
 
       - name: Check package install
         run: |

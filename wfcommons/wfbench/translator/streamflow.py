@@ -80,7 +80,7 @@ class StreamflowTranslator(Translator):
                 out.write(f"{task.task_id}_input:\n")
                 for f in task.input_files:
                     out.write(f"  - class: File\n")
-                    out.write(f"    path: ./data/{f}")
+                    out.write(f"    path: ./data/{f}\n")
 
 
 
