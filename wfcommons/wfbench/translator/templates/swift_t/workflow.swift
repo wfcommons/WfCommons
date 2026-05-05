@@ -122,7 +122,7 @@ mod.run(
     gpu_work=gpu_work,
     output_files=f'{{"{output_file}": {output_file_size}}}',
     input_files=str(input_file).replace("'", '"'),
-    with_flowcept=True,
+    with_flowcept=bool(workflow_id),
     silent=False,
     debug=False,
     rundir=None,
