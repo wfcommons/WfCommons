@@ -107,6 +107,16 @@ class SnakemakeLogsParser(LogsParser):
         # Parse the sqlite db for to identify tasks
         self._create_tasks()
 
+        # Set the workflow's makespan
+        workflow_start_time = math.inf
+        workflow_end_time = 0
+        for task in self.workflow.tasks.values():
+            task_start_time = datetime.fromisoformat(task.start_time).timestamp()
+            task_end_time = task_start_time + task.runtime
+            workflow_start_time = min(task_start_time, workflow_start_time)
+            workflow_end_time = max(task_end_time, workflow_end_time)
+        self.workflow.makespan = workflow_end_time - workflow_start_time
+
         return self.workflow
 
     def _build_task_map(self):
