@@ -223,7 +223,7 @@ def run_workflow_makeflow(container, num_tasks, str_dirpath):
 
 def run_workflow_snakemake(container, num_tasks, str_dirpath):
     # Run the workflow (with full logging)
-    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1 --logger snkmt --logger-snkmt-db ./snkmt.sqlite"],
+    exit_code, output = container.exec_run(cmd=["bash", "-c", "snakemake -s ./workflow.smk --cores 1 --logger snkmt --logger-snkmt-db ./snkmt.sqlite --no-temp "],
                                            user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     assert (exit_code == 0)
