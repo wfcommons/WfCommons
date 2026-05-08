@@ -72,6 +72,7 @@ class SnakemakeLogsParser(LogsParser):
         self.file_map = {}
         self.file_objects = {}
         self.task_map = {}
+        self.task_shell = {}
         self.task_input_files = {}
         self.task_output_files = {}
         self.file_input_output = {}
@@ -98,7 +99,7 @@ class SnakemakeLogsParser(LogsParser):
                                  runtime_system_name=self.wms_name,
                                  runtime_system_url=self.wms_url)
 
-        # Parse the sqlite db for to identify task
+        # Parse the sqlite db for to identify rules
         self._build_task_map()
 
         # Parse the sqlite db for to identify files
@@ -122,16 +123,35 @@ class SnakemakeLogsParser(LogsParser):
     def _build_task_map(self):
         conn = sqlite3.connect(self.snkmt_db)
         cursor = conn.cursor()
+        # Deal with rules
+        rules = {}
         cursor.execute("SELECT * FROM rules")
         rows = cursor.fetchall()
         for row in rows:
-            idx = row[0]
-            task_name = row[1]
-            if task_name in self.rules_to_ignore:
+            rule_idx = row[0]
+            rule_name = row[1]
+            if rule_name in self.rules_to_ignore:
                 continue
-            self.task_map[idx] = task_name
-            self.task_input_files[idx] = []
-            self.task_output_files[idx] = []
+            rules[rule_idx] = rule_name
+
+        # Deal with tasks
+        cursor.execute("SELECT * FROM jobs")
+        rows = cursor.fetchall()
+        for row in rows:
+            task_idx = row[0]
+            rule_idx = row[3]
+            # Shell command
+            if row[8]:
+                command_list = [x.rstrip().lstrip() for x in row[8].lstrip().rstrip().split('\n')]
+                shell_cmd = "; ".join(command_list)
+            else:
+                shell_cmd = None
+            if rule_idx in self.rules_to_ignore:
+                continue
+            self.task_map[task_idx] = rules[rule_idx] + "_" + str(task_idx)
+            self.task_shell[task_idx] = shell_cmd
+            self.task_input_files[task_idx] = []
+            self.task_output_files[task_idx] = []
 
     def _build_file_map(self):
         conn = sqlite3.connect(self.snkmt_db)
@@ -181,6 +201,13 @@ class SnakemakeLogsParser(LogsParser):
             input_files = [self.file_objects[path] for path in self.task_input_files[idx]]
             output_files = [self.file_objects[path] for path in self.task_output_files[idx]]
 
+            if self.task_shell[idx]:
+                program_name = self.task_shell[idx].split(' ')[0]
+                program_args = self.task_shell[idx].split(' ')[0:]
+            else:
+                program_name = "n/a"
+                program_args = []
+
             task = Task(name=self.task_map[idx],
                         task_id=self.task_map[idx],
                         task_type=TaskType.COMPUTE,
@@ -188,6 +215,8 @@ class SnakemakeLogsParser(LogsParser):
                         executed_at=start_date,
                         input_files=input_files,
                         output_files=output_files,
+                        program=program_name,
+                        args=program_args,
                         logger=self.logger)
             self.workflow.add_task(task)
 
