@@ -146,7 +146,7 @@ class SnakemakeLogsParser(LogsParser):
                 shell_cmd = "; ".join(command_list)
             else:
                 shell_cmd = None
-            if rule_idx in self.rules_to_ignore:
+            if rule_idx not in rules:
                 continue
             self.task_map[task_idx] = rules[rule_idx] + "_" + str(task_idx)
             self.task_shell[task_idx] = shell_cmd
