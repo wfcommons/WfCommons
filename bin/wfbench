@@ -358,7 +358,7 @@ def get_parser() -> argparse.ArgumentParser:
                                                "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
     parser.add_argument("--input-files", help="Input files names as a JSON array "
                                               "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
-    parser.add_argument("--silent", action="store_true", help="Disable all log messages.")
+    parser.add_argument("--verbose", action="store_true", help="Enable all log messages.")
     parser.add_argument("--debug", action="store_true", help="Enable debug log messages.")
     parser.add_argument("--with-flowcept", action="store_true", default=False, help="Enable Flowcept monitoring.")
     parser.add_argument("--workflow_id", default=None, help="Id to group tasks in a workflow.")
@@ -412,7 +412,7 @@ def kill_current_handles(handles: list[ProcessHandle]):
             handle.terminate_along_with_children()
 
 
-def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path_cores,
+def run(workflow_id, name, with_flowcept, verbose, debug, rundir, path_lock, path_cores,
         time_limit, cpu_work, percent_cpu, mem, gpu_work, num_chunks,
         input_files, output_files):
     """Main function."""
@@ -423,7 +423,7 @@ def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path
         flowcept = None
         flowcept_task = None
 
-    if silent:
+    if verbose:
         logging.getLogger().setLevel(logging.NOTSET)
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
