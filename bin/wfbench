@@ -387,7 +387,7 @@ def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
     # Compute the (feasible number of chunks)
     min_chunk_size_time = 1 # At least 1 second per chunk, if we're doing time-based
     # TODO: Pick reasonable factors below so that a chunk takes about min_chunk_size_time sec on a reasonable machine
-    min_chunk_size_cpu_work = 200 * min_chunk_size_time  # 1s on my MacBook Pro
+    min_chunk_size_cpu_work = 2500 * min_chunk_size_time  # 1s on Henri's MacBook Pro
     min_chunk_size_gpu_work = 2000 * min_chunk_size_time # unknown.....
 
     if time_limit:
