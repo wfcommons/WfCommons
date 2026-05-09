@@ -87,7 +87,7 @@ cpu_threads = int(10 * percent_cpu)
 output_file = "%s"
 output_file_size = int(%i)
 dep = %i
-workflow_id = "%s"
+workflow_id = "%s".strip()
 task_id = f"{workflow_id}_{task_name}"
 
 if 'workflow_id':
