@@ -612,6 +612,9 @@ def main():
     if not args.time_limit and (not args.cpu_work and not args.gpu_work):
         log_error("At least one of --time-limit, --cpu-work, or --gpu-work should be provided.")
         sys.exit(1)
+    if args.time_limit and (not args.cpu_work and not args.gpu_work):
+        log_error("In addition to --time-limit, at least one of --cpu-work or --gpu-work must be provided (to specify which kind of work should be done).")
+        sys.exit(1)
 
     run(**vars(args))
     
