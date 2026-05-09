@@ -396,12 +396,18 @@ def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
         if cpu_work:
             num_chunks_cpu = min(num_chunks, cpu_work // min_chunk_size_cpu_work)
         else:
-            num_chunks_cpu = 1
+            num_chunks_cpu = None
         if gpu_work:
             num_chunks_gpu = min(num_chunks, gpu_work // min_chunk_size_gpu_work)
         else:
-            num_chunks_gpu = 1
-        num_chunks = min(num_chunks_cpu, num_chunks_gpu)
+            num_chunks_gpu = None
+
+        if num_chunks_cpu is None:
+            num_chunks = num_chunks_gpu
+        elif num_chunks_gpu is None:
+            num_chunks = num_chunks_cpu
+        else:
+            num_chunks = min(num_chunks_cpu, num_chunks_gpu)
 
     num_chunks = max(num_chunks, 1)  # The above computations may say "zero"
     return num_chunks
