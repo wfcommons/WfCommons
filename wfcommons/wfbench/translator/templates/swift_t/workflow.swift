@@ -123,7 +123,7 @@ mod.run(
     output_files=f'{{"{output_file}": {output_file_size}}}',
     input_files=str(input_file).replace("'", '"'),
     with_flowcept=bool(workflow_id),
-    silent=False,
+    verbose=False,
     debug=False,
     rundir=None,
     path_lock=None,
