@@ -90,7 +90,7 @@ dep = %i
 workflow_id = "%s".strip()
 task_id = f"{workflow_id}_{task_name}"
 
-if 'workflow_id':
+if workflow_id:
     __import__("logging").info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     fc = Flowcept(workflow_id=workflow_id,
@@ -134,7 +134,7 @@ mod.run(
 
 __import__("logging").info(f"Benchmark {task_name} completed!")
 
-if 'workflow_id':
+if workflow_id:
     fc_task.end()
     fc.stop()
 """;
