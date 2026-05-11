@@ -29,7 +29,7 @@ float getElapsedTime(const cudaEvent_t &gpu_start, cudaEvent_t &gpu_stop) {
 // Function to run the GPU benchmark with no time limit
 void runBenchmark(long max_work) {
   uint32_t n = 256 * 256;
-  uint64_t m = max_work * 16384 / n;
+  uint64_t m = (max_work + n - 1) / n;
 
   unsigned long long int *d_count;
   curandState *d_state;
@@ -88,7 +88,7 @@ void runBenchmark(long max_work) {
 void runBenchmarkTime(long max_work, int runtime_in_seconds) {
 
   uint32_t n = 256 * 256;
-  uint64_t m = max_work * 16384 / n;
+  uint64_t m = (max_work + n - 1) / n;
 
   // allocate memory
   unsigned long long int *d_count;
