@@ -20,6 +20,7 @@ import json
 import logging
 import pandas as pd
 import psutil
+import shutil
 
 from io import StringIO
 from filelock import FileLock
@@ -230,11 +231,21 @@ class GPUBenchmark:
 
     @staticmethod
     def get_available_gpus():
-        proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        stdout, _ = proc.communicate()
-        df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
-        return df[df["utilization.gpu"] <= 5].index.to_list()
+        if shutil.which("nvidia-smi") is not None:
+            proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdout, _ = proc.communicate()
+            df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
+            return df[df["utilization.gpu"] <= 5].index.to_list()
+        elif shutil.which("amd-smi") is not None:
+            proc = subprocess.Popen(["amd-smi", "monitor", "-u", "--csv"], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdout, _ = proc.communicate()
+            df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=",")
+            return df[df["gfx"] <= 5].index.to_list()
+        else:
+            log_error("No supported GPU monitoring tool found.")
+            return []
 
     def __init__(self):
         self.work = None
