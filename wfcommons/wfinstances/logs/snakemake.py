@@ -163,6 +163,8 @@ class SnakemakeLogsParser(LogsParser):
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
                 continue
             full_path = row[1]
+            # clean path
+            full_path = full_path.split(" (access:")[0].strip()
             if self.path_prefix_rewrite:
                 full_path = full_path.replace(self.path_prefix_rewrite[0], self.path_prefix_rewrite[1])
             file_size = os.path.getsize(f"{full_path}")
