@@ -162,6 +162,10 @@ class SnakemakeLogsParser(LogsParser):
         cursor.execute("SELECT * FROM files")
         rows = cursor.fetchall()
         for row in rows:
+            file_type = row[2]
+            # Skip snakemake's BENCHMARK files (and besides snkmt doesn't deal with them correctly!)
+            if file_type == "BENCHMARK":
+                continue
             task_idx = row[3]
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
                 continue
