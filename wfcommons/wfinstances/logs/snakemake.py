@@ -164,7 +164,8 @@ class SnakemakeLogsParser(LogsParser):
         for row in rows:
             file_type = row[2]
             # Skip snakemake's BENCHMARK files (and besides snkmt doesn't deal with them correctly!)
-            if file_type == "BENCHMARK":
+            # and LOG files (which sometimes are missing anyway)
+            if file_type == "BENCHMARK" or file_type == "LOG":
                 continue
             task_idx = row[3]
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
