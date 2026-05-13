@@ -73,6 +73,7 @@ class SnakemakeLogsParser(LogsParser):
         self.file_objects = {}
         self.task_map = {}
         self.task_shell = {}
+        self.task_threads = {}
         self.task_input_files = {}
         self.task_output_files = {}
         self.file_input_output = {}
@@ -140,6 +141,7 @@ class SnakemakeLogsParser(LogsParser):
         for row in rows:
             task_idx = row[0]
             rule_idx = row[3]
+            threads = int(row[9])
             # Shell command
             if row[8]:
                 command_list = [x.rstrip().lstrip() for x in row[8].lstrip().rstrip().split('\n')]
@@ -150,6 +152,7 @@ class SnakemakeLogsParser(LogsParser):
                 continue
             self.task_map[task_idx] = rules[rule_idx] + "_" + str(task_idx)
             self.task_shell[task_idx] = shell_cmd
+            self.task_threads[task_idx] = threads
             self.task_input_files[task_idx] = []
             self.task_output_files[task_idx] = []
 
@@ -159,10 +162,17 @@ class SnakemakeLogsParser(LogsParser):
         cursor.execute("SELECT * FROM files")
         rows = cursor.fetchall()
         for row in rows:
+            file_type = row[2]
+            # Skip snakemake's BENCHMARK files (and besides snkmt doesn't deal with them correctly!)
+            # and LOG files (which sometimes are missing anyway)
+            if file_type == "BENCHMARK" or file_type == "LOG":
+                continue
             task_idx = row[3]
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
                 continue
             full_path = row[1]
+            # clean path
+            full_path = full_path.split(" (access:")[0].split(" (cached)")[0].strip()
             if self.path_prefix_rewrite:
                 full_path = full_path.replace(self.path_prefix_rewrite[0], self.path_prefix_rewrite[1])
             file_size = os.path.getsize(f"{full_path}")
@@ -216,6 +226,7 @@ class SnakemakeLogsParser(LogsParser):
                         input_files=input_files,
                         output_files=output_files,
                         program=program_name,
+                        cores=self.task_threads[idx],
                         args=program_args,
                         logger=self.logger)
             self.workflow.add_task(task)
