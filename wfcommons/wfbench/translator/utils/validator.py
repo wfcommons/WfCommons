@@ -118,6 +118,7 @@ def _suffix_for_skill(skill: Skill) -> str:
         "bash": ".sh",
         "airflow": ".py",
         "radical_pilot": ".py",
+        "rhapsody": ".py",
         "pegasus": ".py",
         "parsl": ".py",
         "dask": ".py",

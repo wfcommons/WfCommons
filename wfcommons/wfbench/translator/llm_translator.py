@@ -48,6 +48,10 @@ class LLMTranslator(Translator):
     :type models_file: str or pathlib.Path, optional
     :param context_examples: List of example WMS scripts/files to include as style reference.
     :type context_examples: List[str], optional
+    :param target_options: Per-target configuration values rendered into the prompt as a
+        ``TARGET OPTIONS`` block (e.g. ``{"backend": "concurrent"}`` for Rhapsody).
+        Skills decide how to interpret these.
+    :type target_options: dict, optional
     :param examples_instances: WfInstances queries to fetch WfFormat examples as LLM context.
         Accepts application names (``"blast"``), specific instance filenames
         (``"blast-chameleon-small-001"``), or full repo paths (``"makeflow/blast"``).
@@ -68,6 +72,7 @@ class LLMTranslator(Translator):
                  model_name: Optional[str] = None,
                  models_file: Optional[Union[str, pathlib.Path]] = None,
                  context_examples: Optional[List[str]] = None,
+                 target_options: Optional[dict] = None,
                  examples_instances: Optional[Union[str, List[str]]] = None,
                  num_examples: int = 3,
                  system_prompt: Optional[str] = None,
@@ -88,6 +93,7 @@ class LLMTranslator(Translator):
         self.llm = llm_client
         self.target_system = target_system.lower()
         self.context_examples = context_examples or []
+        self.target_options = target_options or {}
         if isinstance(examples_instances, str):
             examples_instances = [examples_instances]
         self.examples_instances = examples_instances
@@ -202,6 +208,12 @@ class LLMTranslator(Translator):
 
         prompt += f"=== TARGET SYSTEM: {self.target_system.upper()} ===\n\n"
 
+        if self.target_options:
+            prompt += "=== TARGET OPTIONS ===\n"
+            for k, v in self.target_options.items():
+                prompt += f"{k}={v}\n"
+            prompt += "\n"
+
         # Include WfInstances examples so the LLM sees real WfFormat structures
         if wf_examples:
             prompt += "=== REFERENCE WFFORMAT INSTANCES (from WfInstances) ===\n"
@@ -303,6 +315,7 @@ class LLMTranslator(Translator):
             "pycompss": "run_workflow.py",
             "taskvine": "run_workflow.py",
             "radical_pilot": "run_workflow.py",
+            "rhapsody": "run_workflow.py",
         }
         return extensions.get(self.target_system, f"workflow.{self.target_system}")
 
