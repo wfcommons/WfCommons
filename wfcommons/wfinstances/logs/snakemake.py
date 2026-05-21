@@ -13,6 +13,7 @@ import itertools
 import math
 import os
 import pathlib
+import shlex
 
 from datetime import datetime, timezone
 from logging import Logger
@@ -213,7 +214,8 @@ class SnakemakeLogsParser(LogsParser):
 
             if self.task_shell[idx]:
                 program_name = self.task_shell[idx].split(' ')[0]
-                program_args = self.task_shell[idx].split(' ')[0:]
+                # program_args = self.task_shell[idx].split(' ')[0:]
+                program_args = shlex.split(self.task_shell[idx], posix=False)
             else:
                 program_name = "n/a"
                 program_args = []
