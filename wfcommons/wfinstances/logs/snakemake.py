@@ -13,6 +13,7 @@ import itertools
 import math
 import os
 import pathlib
+import shlex
 
 from datetime import datetime, timezone
 from logging import Logger
@@ -213,22 +214,29 @@ class SnakemakeLogsParser(LogsParser):
 
             if self.task_shell[idx]:
                 program_name = self.task_shell[idx].split(' ')[0]
-                program_args = self.task_shell[idx].split(' ')[0:]
+                program_args = shlex.split(self.task_shell[idx], posix=False)
+                task = Task(name=self.task_map[idx],
+                            task_id=self.task_map[idx],
+                            task_type=TaskType.COMPUTE,
+                            runtime=elapsed,
+                            executed_at=start_date,
+                            input_files=input_files,
+                            output_files=output_files,
+                            program=program_name,
+                            cores=self.task_threads[idx],
+                            args=program_args,
+                            logger=self.logger)
             else:
-                program_name = "n/a"
-                program_args = []
+                task = Task(name=self.task_map[idx],
+                            task_id=self.task_map[idx],
+                            task_type=TaskType.COMPUTE,
+                            runtime=elapsed,
+                            executed_at=start_date,
+                            input_files=input_files,
+                            output_files=output_files,
+                            cores=self.task_threads[idx],
+                            logger=self.logger)
 
-            task = Task(name=self.task_map[idx],
-                        task_id=self.task_map[idx],
-                        task_type=TaskType.COMPUTE,
-                        runtime=elapsed,
-                        executed_at=start_date,
-                        input_files=input_files,
-                        output_files=output_files,
-                        program=program_name,
-                        cores=self.task_threads[idx],
-                        args=program_args,
-                        logger=self.logger)
             self.workflow.add_task(task)
 
         # File dependencies
