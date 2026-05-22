@@ -111,13 +111,16 @@ class SnakemakeLogsParser(LogsParser):
         self._create_tasks()
 
         # Set the workflow's makespan
-        workflow_start_time = math.inf
-        workflow_end_time = 0
-        for task in self.workflow.tasks.values():
-            task_start_time = datetime.fromisoformat(task.start_time).timestamp()
-            task_end_time = task_start_time + task.runtime
-            workflow_start_time = min(task_start_time, workflow_start_time)
-            workflow_end_time = max(task_end_time, workflow_end_time)
+        conn = sqlite3.connect(self.snkmt_db)
+        cursor = conn.cursor()
+        # Deal with rules
+        entries = {}
+        cursor.execute("SELECT * FROM entries")
+        rows = cursor.fetchall()
+        if len(rows) != 1:
+            raise SystemError("The SQLite database has more than one entry in the workflows table")
+        workflow_start_time = datetime.fromisoformat(rows[0][2]).timestamp()
+        workflow_end_time = datetime.fromisoformat(rows[0][4]).timestamp()
         self.workflow.makespan = workflow_end_time - workflow_start_time
 
         return self.workflow
