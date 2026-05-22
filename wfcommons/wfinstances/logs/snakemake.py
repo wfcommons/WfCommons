@@ -118,9 +118,7 @@ class SnakemakeLogsParser(LogsParser):
         # Set the workflow's makespan
         conn = sqlite3.connect(self.snkmt_db)
         cursor = conn.cursor()
-        # Deal with rules
-        entries = {}
-        cursor.execute("SELECT * FROM entries")
+        cursor.execute("SELECT * FROM workflows")
         rows = cursor.fetchall()
         if len(rows) != 1:
             raise SystemError("The SQLite database has more than one entry in the workflows table")
