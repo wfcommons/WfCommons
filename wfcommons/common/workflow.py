@@ -71,7 +71,7 @@ class Workflow(nx.DiGraph):
         self.created_at: str = str(datetime.now().astimezone().isoformat())
         self.schema_version: str = f"{__schema_version__}"
         self.runtime_system_name: Optional[str] = "WfCommons" if not runtime_system_name else runtime_system_name
-        self.runtime_system_version: Optional[str] = str(__version__) if not runtime_system_version else runtime_system_version
+        self.runtime_system_version: Optional[str] = "unknown" if not runtime_system_version else runtime_system_version
         self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
         self.executed_at: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
         self.makespan: Optional[float] = makespan
