@@ -33,7 +33,8 @@ class TestWorkflow:
         return Workflow(
             name="Workflow Test",
             makespan=100.0,
-            executed_at=str(datetime.now().astimezone().isoformat())
+            executed_at=str(datetime.now().astimezone().isoformat()),
+            runtime_system_name="WfCommons",
         )
 
     @pytest.mark.unit
@@ -62,7 +63,7 @@ class TestWorkflow:
             },
             "runtimeSystem": {
                 "name": "WfCommons",
-                "version": f"{__version__}",
+                "version": f"unknown",
                 "url": f"https://docs.wfcommons.org/en/v{__version__}/"
             }
         }

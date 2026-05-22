@@ -47,6 +47,8 @@ class SnakemakeLogsParser(LogsParser):
     :param path_prefix_rewrite: A tuple that specifies that a file path prefix(for the workflow data files)
        should be replaced by another prefix (this is useful when the workflow execution was on a
        different machine than the log parsing)
+    :param snakemake_version: The Snakemake version (e.g., "9.20.0")
+    :type snakemake_version: str
     """
 
     def __init__(self,
@@ -55,7 +57,8 @@ class SnakemakeLogsParser(LogsParser):
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
                  rules_to_ignore: Optional[list[str]] = None,
-                 path_prefix_rewrite: Optional[tuple[str, str]] = None
+                 path_prefix_rewrite: Optional[tuple[str, str]] = None,
+                 snakemake_version: Optional[str] = "unknown"
                  ) -> None:
         """Create an object of the Snakemake parser."""
 
@@ -69,6 +72,7 @@ class SnakemakeLogsParser(LogsParser):
 
         self.execution_dir : pathlib.Path = execution_dir
         self.snkmt_db: pathlib.Path = snkmt_db
+        self.snakemake_version: str = snakemake_version
 
         self.file_map = {}
         self.file_objects = {}
@@ -99,6 +103,7 @@ class SnakemakeLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
+                                 runtime_system_version=self.snakemake_version,
                                  runtime_system_url=self.wms_url)
 
         # Parse the sqlite db for to identify rules
@@ -111,13 +116,14 @@ class SnakemakeLogsParser(LogsParser):
         self._create_tasks()
 
         # Set the workflow's makespan
-        workflow_start_time = math.inf
-        workflow_end_time = 0
-        for task in self.workflow.tasks.values():
-            task_start_time = datetime.fromisoformat(task.start_time).timestamp()
-            task_end_time = task_start_time + task.runtime
-            workflow_start_time = min(task_start_time, workflow_start_time)
-            workflow_end_time = max(task_end_time, workflow_end_time)
+        conn = sqlite3.connect(self.snkmt_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflows")
+        rows = cursor.fetchall()
+        if len(rows) != 1:
+            raise SystemError("The SQLite database has more than one entry in the workflows table")
+        workflow_start_time = datetime.fromisoformat(rows[0][2]).timestamp()
+        workflow_end_time = datetime.fromisoformat(rows[0][4]).timestamp()
         self.workflow.makespan = workflow_end_time - workflow_start_time
 
         return self.workflow
