@@ -29,9 +29,6 @@ float getElapsedTime(const cudaEvent_t &gpu_start, cudaEvent_t &gpu_stop) {
 
 // Function to run the GPU benchmark for a specified time
 void runBenchmarkTime(long max_work, std::optional<int> runtime_in_seconds) {
-
-  max_work *= 1000000;
-
   uint32_t n = 256 * 256;
   uint64_t m = (max_work + n - 1) / n;
 
