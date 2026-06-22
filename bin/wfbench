@@ -231,7 +231,11 @@ class GPUBenchmark:
 
     @staticmethod
     def get_available_gpus():
-        if shutil.which("nvidia-smi") is not None:
+        if "CUDA_VISIBLE_DEVICES" in os.environ:
+            return [int(i) for i in os.environ["CUDA_VISIBLE_DEVICES"].split(",")]
+        elif "ROCR_VISIBLE_DEVICES" in os.environ:
+            return [int(i) for i in os.environ["ROCR_VISIBLE_DEVICES"].split(",")]
+        elif shutil.which("nvidia-smi") is not None:
             proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             stdout, _ = proc.communicate()
