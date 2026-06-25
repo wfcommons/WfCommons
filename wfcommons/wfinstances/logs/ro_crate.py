@@ -138,8 +138,7 @@ class ROCrateLogsParser(LogsParser):
 
         for create_action in create_actions:
             # Handle overall workflow create_action then skip
-            if ("Run of workflow" in create_action["name"] or
-                    "workflow run" in create_action["name"]):
+            if create_action["name"] == f"Run of workflow/{main_workflow_id}":
                 self._process_main_workflow(create_action)
                 continue
 
