@@ -46,7 +46,6 @@ from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
 from wfcommons.wfinstances.logs import SnakemakeLogsParser
-from wfcommons.wfinstances.logs import NextflowLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
