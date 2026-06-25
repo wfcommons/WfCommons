@@ -92,6 +92,9 @@ class NextflowTranslator(Translator):
         else:
             self._translate_single_file(output_folder, sorted_tasks)
 
+        # Create the config file for the nf-prov plugin
+        self._write_nf_prov_plugin_config_file(output_folder)
+
         # Create the README file
         self._write_readme_file(output_folder, self.use_subworkflows)
 
@@ -257,6 +260,24 @@ class NextflowTranslator(Translator):
         code += "}\n\n"
 
         return code
+
+    def _write_nf_prov_plugin_config_file(selfself, output_folder: pathlib.Path):
+        nf_prov_plugin_config_file = output_folder.joinpath("plugin.config")
+        with open(nf_prov_plugin_config_file, "w") as out:
+            out.write("""plugins {
+    id 'nf-prov'
+}
+
+prov {
+    enabled = true
+    formats {
+        wrroc {
+            file = 'ro-crate-metadata.json'
+            overwrite = true
+        }
+    }
+}
+""")
 
     def _write_readme_file(self, output_folder: pathlib.Path, use_subworkflows: bool) -> None:
         """

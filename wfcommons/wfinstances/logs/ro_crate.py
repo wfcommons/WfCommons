@@ -123,9 +123,10 @@ class ROCrateLogsParser(LogsParser):
             if item["@type"] != "File":
                 continue
             id = item["@id"]
-            if "alternateName" not in item:
-                continue
-            alternate_name = item["alternateName"]
+            #if "alternateName" not in item:
+            #    continue
+            #alternate_name = item["alternateName"]
+            alternate_name = item.get("alternateName", id)
             self.data_file_id_name_map[id] = alternate_name
 
 
@@ -137,7 +138,8 @@ class ROCrateLogsParser(LogsParser):
 
         for create_action in create_actions:
             # Handle overall workflow create_action then skip
-            if create_action["name"] == f"Run of workflow/{main_workflow_id}":
+            if ("Run of workflow" in create_action["name"] or
+                    "workflow run" in create_action["name"]):
                 self._process_main_workflow(create_action)
                 continue
 
@@ -154,8 +156,8 @@ class ROCrateLogsParser(LogsParser):
                 continue
 
             # Get all input & output for the create_action
-            input = [obj['@id'] for obj in create_action['object']]
-            output = [obj['@id'] for obj in create_action['result']]
+            input = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['object']]
+            output = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['result']]
 
             # Filter for actual files
             input_files = self._filter_file_ids(input)
@@ -166,8 +168,8 @@ class ROCrateLogsParser(LogsParser):
                         # task_id=create_action['name'],
                         task_id=create_action['name'] + "_" + create_action['@id'],
                         task_type=TaskType.COMPUTE,
-                        runtime=self._time_diff(create_action['startTime'], create_action['endTime']),
-                        executed_at=create_action['startTime'],
+                        runtime=self._time_diff(create_action.get('startTime'), create_action.get('endTime')),
+                        executed_at=create_action.get('startTime',''),
                         input_files=self._get_file_objects(input_files),
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
@@ -193,10 +195,11 @@ class ROCrateLogsParser(LogsParser):
                 files[outfile]['out'].append(create_action['@id'])
 
             # For each task, track which 'instrument' it uses
-            instrument = create_action['instrument']['@id']
-            if instrument not in instruments:
-                instruments[instrument] = []
-            instruments[instrument].append(create_action['@id'])
+            if create_action.get('instrument'):
+                instrument = create_action['instrument']['@id']
+                if instrument not in instruments:
+                    instruments[instrument] = []
+                instruments[instrument].append(create_action['@id'])
 
         self._add_dependencies(files, instruments)
 
@@ -231,6 +234,8 @@ class ROCrateLogsParser(LogsParser):
                         self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
     def _time_diff(self, start_time, end_time):
+        if not start_time or not end_time:
+            return 0.0
         diff = datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
         return diff.total_seconds()
 
@@ -239,19 +244,38 @@ class ROCrateLogsParser(LogsParser):
         output = []
         for file in files:
             if file not in self.file_objects:
-                self.file_objects[file] = File(file_id=self.data_file_id_name_map[file],
-                                               size=os.path.getsize(f"{self.crate_dir}/{file}"),
-                                               logger=self.logger)
+                #self.file_objects[file] = File(file_id=self.data_file_id_name_map[file],
+                #                               size=os.path.getsize(f"{self.crate_dir}/{file}"),
+                #                               logger=self.logger)
+                if file not in self.data_file_id_name_map:
+                    # File is referenced but not in the map — use its @id as the name
+                    self.logger.warning(f"File not in data_file_id_name_map, using @id as name: {file}") if self.logger else None
+                    file_name = file
+                else:
+                    file_name = self.data_file_id_name_map[file]
+                try:
+                    size = os.path.getsize(f"{self.crate_dir}/{file}")
+                except (OSError, ValueError):
+                    size = 0  # file:// absolute paths won't resolve relative to crate_dir
+                self.file_objects[file] = File(file_id=file_name,
+                                            size=size,
+                                            logger=self.logger)
             output.append(self.file_objects[file])
         return output
 
     def _filter_file_ids(self, ids):
 
-        file_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'File', ids))
-        property_value_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'PropertyValue', ids))
+        file_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') == 'File', ids))
+        # Ignore the files that start with http:// or https://
+        file_ids = [x for x in file_ids if not x.startswith("http://")]
+        file_ids = [x for x in file_ids if not x.startswith("https://")]
+        property_value_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') == 'PropertyValue', ids))
         for property_value_id in property_value_ids:
             property_values = self.lookup.get(property_value_id)['value']
-            if isinstance(property_values, dict):
+            # If the lookup fails, ignore
+            if not property_values:
+                    continue
+            if not isinstance(property_values, list):
                 property_values = [property_values]
 
             # Filter out values without "@id"s (i.e. int values, etc.)

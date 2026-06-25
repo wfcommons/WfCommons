@@ -45,6 +45,7 @@ class NextflowLogsParser(LogsParser):
 
         self.execution_dir = execution_dir
         self.files_map = {}
+        self.tasknames_to_taskids = {}
         self.text_files = None
         self.line_count = None
 
@@ -74,7 +75,7 @@ class NextflowLogsParser(LogsParser):
 
     def _parse_execution_report_file(self) -> None:
         """Parse the Nextflow execution report file and gather the tasks information."""
-        trace_data = self._read_data('execution_report_*.html')
+        trace_data = self._read_data('execution_report*.html')
 
         for t in trace_data['trace']:
             task_id = "ID{:06d}".format(int(t['task_id']))
@@ -96,11 +97,12 @@ class NextflowLogsParser(LogsParser):
                             (int(_parse_number(t['wchar'])) + int(_parse_number(t['write_bytes']))) / 1024),
                         memory=round(int(_parse_number(t['rss'])) / 1024),
                         logger=self.logger)
-            self.workflow.add_node(task_name, task=task)
+            self.workflow.add_task(task)
+            self.tasknames_to_taskids[task_name] = task_id
 
     def _parse_execution_timeline_file(self) -> None:
         """Parse the Nextflow execution timeline file and build the workflow structure."""
-        timeline_data = self._read_data('execution_timeline_*.html')
+        timeline_data = self._read_data('execution_timeline*.html')
         tasks_map = {}
         max_index = 0
 
@@ -116,7 +118,7 @@ class NextflowLogsParser(LogsParser):
             if index > 0:
                 for c in tasks_map[index]:
                     for p in tasks_map[index - 1]:
-                        self.workflow.add_edge(p, c)
+                        self.workflow.add_edge(self.tasknames_to_taskids[p], self.tasknames_to_taskids[c])
 
         self.workflow.makespan = float(
             (int(timeline_data['endingMillis']) - int(timeline_data['beginningMillis'])) / 1000)
@@ -133,7 +135,7 @@ class NextflowLogsParser(LogsParser):
         """
         files = glob.glob(f'{self.execution_dir}/{file_format}')
         if len(files) == 0:
-            raise OSError(f'Unable to find {self.execution_dir} file in: {file_format}')
+            raise OSError(f'Unable to find {file_format} in {self.execution_dir}')
 
         data = None
 

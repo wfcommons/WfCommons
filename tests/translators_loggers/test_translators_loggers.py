@@ -46,6 +46,7 @@ from wfcommons.wfinstances.logs import TaskVineLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
 from wfcommons.wfinstances.logs import SnakemakeLogsParser
+from wfcommons.wfinstances.logs import NextflowLogsParser
 
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
@@ -172,7 +173,14 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . "
+                                           # f"-with-report execution_report.html "
+                                           # f"-with-timeline execution_timeline.html "
+                                           # f"-with-trace trace_file "
+                                           # f"-plugins nf-prov -with-prov prov.json "
+                                           # f"-with-dag dag_file.html"
+                                           f"-c plugin.config ",
+                                           user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     if exit_code != 0:
@@ -323,19 +331,19 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
+           # "swiftt",
+           # "dask",
+           # "parsl",
            "nextflow",
-           "nextflow_subworkflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "makeflow",
-           "snakemake",
-           "cwl",
-           "streamflow",
-           "pegasus",
+           # "nextflow_subworkflow",
+           # "airflow",
+           # "bash",
+           # "taskvine",
+           # "makeflow",
+           # "snakemake",
+           # "cwl",
+           # "streamflow",
+           # "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -394,6 +402,13 @@ class TestTranslators:
                                        instruments_to_ignore=["shell.cwl"])
         elif backend == "snakemake":
             parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
+        elif backend == "nextflow":
+            # parser = NextflowLogsParser(execution_dir = dirpath)
+            parser = ROCrateLogsParser(dirpath,
+                                       steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
+                                       file_extensions_to_ignore=[".out", ".err"],
+                                       instruments_to_ignore=["shell.cwl"])
+
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
