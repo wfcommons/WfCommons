@@ -214,7 +214,7 @@ def draw(g: nx.DiGraph,
         for src, dst in g.edges
     ]
     # cmap = cm.get_cmap('rainbow', len(type_set))
-    cmap = colormaps.get_cmap('rainbow', len(type_set))
+    cmap = colormaps.get_cmap('rainbow')
     nx.draw(g, pos, node_size=node_size, node_color=node_color, edgecolors=edgecolors, edge_color=edge_color,
             linewidths=linewidths, cmap=cmap, ax=ax, with_labels=with_labels)
     color_lines = [mpatches.Patch(color=cmap(types[t]), label=t) for t in type_set]
