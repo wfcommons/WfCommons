@@ -176,7 +176,7 @@ def run_workflow_nextflow(container, num_tasks, str_dirpath):
     exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . "
                                            # f"-with-report execution_report.html "
                                            # f"-with-timeline execution_timeline.html "
-                                           # f"-with-trace trace_file "
+                                           #f"-with-trace trace_file "
                                            # f"-plugins nf-prov -with-prov prov.json "
                                            # f"-with-dag dag_file.html"
                                            f"-c plugin.config ",
@@ -331,19 +331,19 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           # "swiftt",
-           # "dask",
-           # "parsl",
+           "swiftt",
+           "dask",
+           "parsl",
            "nextflow",
-           # "nextflow_subworkflow",
-           # "airflow",
-           # "bash",
-           # "taskvine",
-           # "makeflow",
-           # "snakemake",
-           # "cwl",
-           # "streamflow",
-           # "pegasus",
+           "nextflow_subworkflow",
+           "airflow",
+           "bash",
+           "taskvine",
+           "makeflow",
+           "snakemake",
+           "cwl",
+           "streamflow",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -402,12 +402,6 @@ class TestTranslators:
                                        instruments_to_ignore=["shell.cwl"])
         elif backend == "snakemake":
             parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
-        elif backend == "nextflow":
-            # parser = NextflowLogsParser(execution_dir = dirpath)
-            parser = ROCrateLogsParser(dirpath,
-                                       steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
-                                       file_extensions_to_ignore=[".out", ".err"],
-                                       instruments_to_ignore=["shell.cwl"])
 
 
         if parser is not None:
