@@ -281,7 +281,7 @@ class GPUBenchmark:
                     f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
             else:
                 gpu_prog = [
-                    f"HIP_DEVICE_ORDER=PCI_BUS_ID HIP_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
+                    f"HIP_DEVICE_ORDER=PCI_BUS_ID ROCR_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
         else:
             log_debug(f"Running GPU benchmark for {self.work} units of work")
             if shutil.which("nvidia-smi") is not None:
@@ -289,7 +289,7 @@ class GPUBenchmark:
                     f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
             else:
                 gpu_prog = [
-                    f"HIP_DEVICE_ORDER=PCI_BUS_ID HIP_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
+                    f"HIP_DEVICE_ORDER=PCI_BUS_ID ROCR_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
         p = subprocess.Popen(gpu_prog, shell=True)
         return ProcessHandle(p)
 
