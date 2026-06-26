@@ -202,9 +202,10 @@ class ROCrateLogsParser(LogsParser):
             if not start_time or not end_time:
                 start_time, end_time = self.nextflow_trace_times.get(create_action['name'], (None, None))
 
+            task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
             task = Task(name=create_action['name'],
                         # task_id=create_action['name'],
-                        task_id=create_action['name'] + "_" + create_action['@id'],
+                        task_id=task_id,
                         task_type=TaskType.COMPUTE,
                         runtime=self._time_diff(start_time, end_time),
                         executed_at=create_action.get('startTime',''),
@@ -214,7 +215,7 @@ class ROCrateLogsParser(LogsParser):
 
             self.workflow.add_task(task)
             # self.task_id_name_map[create_action['@id']] = create_action['name']
-            self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
+            self.task_id_name_map[create_action['@id']] = task_id
 
             # For each file, track which task(s) it is in/output for
             for infile in input_files:
@@ -424,6 +425,10 @@ class ROCrateLogsParser(LogsParser):
         if work_path.exists():
             return work_path
         return None
+
+    def _sanitize_task_id(self, task_id: str) -> str:
+        """Replace characters not allowed in WfCommons task IDs."""
+        return task_id.replace(' ', '_').replace('(', '_').replace(')', '_')
 
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])
