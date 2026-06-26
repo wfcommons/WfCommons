@@ -139,6 +139,11 @@ class ROCrateLogsParser(LogsParser):
         for create_action in create_actions:
             # Handle overall workflow create_action then skip
             if create_action["name"] == f"Run of workflow/{main_workflow_id}":
+                # Streamflow-generated RO-Crate
+                self._process_main_workflow(create_action)
+                continue
+            elif "Nextflow workflow run" in create_action["name"]:
+                # Nextflow-generated RO-Crate
                 self._process_main_workflow(create_action)
                 continue
 
@@ -264,7 +269,7 @@ class ROCrateLogsParser(LogsParser):
 
     def _filter_file_ids(self, ids):
 
-        file_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') == 'File', ids))
+        file_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') in ('File','CreativeWork'), ids))
         # Ignore the files that start with http:// or https://
         file_ids = [x for x in file_ids if not x.startswith("http://")]
         file_ids = [x for x in file_ids if not x.startswith("https://")]
