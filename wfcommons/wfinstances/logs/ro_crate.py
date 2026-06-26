@@ -12,7 +12,9 @@ import json
 import itertools
 import math
 import os
+import glob
 import pathlib
+import csv
 
 from datetime import datetime, timezone
 from logging import Logger
@@ -62,13 +64,21 @@ class ROCrateLogsParser(LogsParser):
         # Sanity check
         if not crate_dir.is_dir():
             raise OSError(f'The provided path does not exist or is not a folder: {crate_dir}')
+        self.crate_dir: pathlib.Path = crate_dir
 
+        # Find the metadata file
         metadata: pathlib.Path = crate_dir / 'ro-crate-metadata.json'
         if not metadata.is_file():
-            raise OSError(f'Unable to find ro-crate-metadata.json file in: {crate_dir}')
+            raise OSError(f'Unable to find ro-crate-metadata.json file in: {self.crate_dir}')
         self.metadata = metadata
 
-        self.crate_dir: pathlib.Path = crate_dir
+        # Find the Nextflow execution trace if any
+        nextflow_execution_trace_files = list(self.crate_dir.glob("results/*/pipeline_info/execution_trace_*.txt"))
+        if len(nextflow_execution_trace_files) == 1:
+            self.nextflow_execution_trace_file : pathlib.Path = nextflow_execution_trace_files[0]
+        else:
+            self.nextflow_execution_trace_file = None
+
 
         self.file_objects = {}
 
@@ -107,6 +117,11 @@ class ROCrateLogsParser(LogsParser):
 
         # Dictionary of application data files
         self._construct_data_file_id_name_map()
+
+        # Task runtime dictionary in case there was a Nextflow trace file
+        self.nextflow_trace_times = {}
+        if self.nextflow_execution_trace_file:
+            self.nextflow_trace_times = self._load_trace(self.nextflow_execution_trace_file)
 
         # Find id of the main workflow
         overview = self.lookup.get("./")
@@ -167,16 +182,22 @@ class ROCrateLogsParser(LogsParser):
             input_files = self._filter_file_ids(input)
             output_files = self._filter_file_ids(output)
 
+            # Figure out start/end times for the task
+            start_time = create_action.get('startTime')
+            end_time = create_action.get('endTime')
+            if not start_time or not end_time:
+                start_time, end_time = self.nextflow_trace_times.get(create_action['name'], (None, None))
 
             task = Task(name=create_action['name'],
                         # task_id=create_action['name'],
                         task_id=create_action['name'] + "_" + create_action['@id'],
                         task_type=TaskType.COMPUTE,
-                        runtime=self._time_diff(create_action.get('startTime'), create_action.get('endTime')),
+                        runtime=self._time_diff(start_time, end_time),
                         executed_at=create_action.get('startTime',''),
                         input_files=self._get_file_objects(input_files),
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
+
             self.workflow.add_task(task)
             # self.task_id_name_map[create_action['@id']] = create_action['name']
             self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
@@ -304,6 +325,49 @@ class ROCrateLogsParser(LogsParser):
                 to_return.append(file_id)
 
         return to_return
+
+    import csv
+    from datetime import datetime, timedelta
+
+    def _load_trace(self, trace_file: pathlib.Path) -> dict:
+        """
+        Parse a Nextflow execution trace file.
+        Returns dict of task_name -> (start_iso, end_iso).
+        """
+        times = {}
+        with open(trace_file, newline='') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                name = row['name'].strip()
+                submit_str = row['submit'].strip()
+                duration_str = row['duration'].strip()
+                if not submit_str or not duration_str:
+                    continue
+                try:
+                    start = datetime.strptime(submit_str, '%Y-%m-%d %H:%M:%S.%f')
+                    duration_sec = self._parse_duration(duration_str)
+                    end = start + timedelta(seconds=duration_sec)
+                    # Store as ISO strings to match _time_diff expectations
+                    times[name] = (start.isoformat(), end.isoformat())
+                except Exception:
+                    continue
+        return times
+
+    def _parse_duration(self, duration_str: str) -> float:
+        """Parse Nextflow duration strings like '2m 40s', '519ms', '1h 3m 2s'."""
+        import re
+        total = 0.0
+        for value, unit in re.findall(r'(\d+(?:\.\d+)?)\s*(h|m|s|ms)', duration_str):
+            value = float(value)
+            if unit == 'h':
+                total += value * 3600
+            elif unit == 'm':
+                total += value * 60
+            elif unit == 's':
+                total += value
+            elif unit == 'ms':
+                total += value / 1000
+        return total
 
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])
