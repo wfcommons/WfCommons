@@ -16,7 +16,7 @@ import glob
 import pathlib
 import csv
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from logging import Logger
 from typing import List, Optional
 
@@ -160,6 +160,10 @@ class ROCrateLogsParser(LogsParser):
             elif "Nextflow workflow run" in create_action["name"]:
                 # Nextflow-generated RO-Crate
                 self._process_main_workflow(create_action)
+                continue
+
+            # Ignore all (Nextflow-generated) publish tasks if any
+            if create_action['@id'].startswith('#publish/'):
                 continue
 
             create_action['name'] = create_action['name'].removeprefix("Run of workflow/")
