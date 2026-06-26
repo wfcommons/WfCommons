@@ -122,6 +122,16 @@ class ROCrateLogsParser(LogsParser):
         self.nextflow_trace_times = {}
         if self.nextflow_execution_trace_file:
             self.nextflow_trace_times = self._load_trace(self.nextflow_execution_trace_file)
+        
+        # File size directory in case this was a Nextflow-generated RO-Crate
+        self.nextflow_publish_map = {}
+        for item in self.graph_data:
+            if item.get('@type') == 'CreateAction' and item['@id'].startswith('#publish/'):
+                obj = item['object']
+                res = item['result']
+                obj_id = obj['@id'] if isinstance(obj, dict) else obj[0]['@id']
+                res_id = res['@id'] if isinstance(res, dict) else res[0]['@id']
+                self.nextflow_publish_map[obj_id] = res_id
 
         # Find id of the main workflow
         overview = self.lookup.get("./")
@@ -282,10 +292,35 @@ class ROCrateLogsParser(LogsParser):
                     file_name = file
                 else:
                     file_name = self.data_file_id_name_map[file]
+
+                # Figure out the file size
+
+                # Straight from the RO-Crate?
                 try:
-                    size = os.path.getsize(f"{self.crate_dir}/{file}")
+                    obj = self.lookup.get(file, {})
+                    size = int(obj.get('contentSize', 0))
                 except (OSError, ValueError):
-                    size = 0  # file:// absolute paths won't resolve relative to crate_dir
+                    size = 0
+                    
+                # From the Nextflow-specific "#publish" tasks?
+                if not size:
+                    resolved = self.nextflow_publish_map.get(file, file)
+                    try:
+                        size = os.path.getsize(self.crate_dir / resolved)
+                    except (OSError, ValueError):
+                        work_path = self._resolve_task_file_path(file)
+                        size = os.path.getsize(work_path) if work_path else 0
+
+                # Perhaps a (Nextflow-specific) absolute path?
+                if not size:
+                    if file.startswith('file://'):
+                        abs_path = pathlib.Path(file[len('file://'):])
+                        try:
+                            size = os.path.getsize(abs_path)
+                        except (OSError, ValueError):
+                            size = 0
+
+                # Create the file object
                 self.file_objects[file] = File(file_id=file_name,
                                             size=size,
                                             logger=self.logger)
@@ -372,6 +407,23 @@ class ROCrateLogsParser(LogsParser):
             elif unit == 'ms':
                 total += value / 1000
         return total
+    
+    def _resolve_task_file_path(self, file_id: str) -> Optional[pathlib.Path]:
+        """Resolve a #task/<hash>/<filename> id to its work/ directory path."""
+        if not file_id.startswith('#task/'):
+            return None
+        # Strip '#task/'
+        rest = file_id[len('#task/'):]
+        # rest is now '<hash>/<filename>'
+        hash_and_name = rest.split('/', 1)
+        if len(hash_and_name) != 2:
+            return None
+        task_hash, filename = hash_and_name
+        # Nextflow work dir structure: work/<first2chars>/<rest>/
+        work_path = self.crate_dir / 'work' / task_hash[:2] / task_hash[2:] / filename
+        if work_path.exists():
+            return work_path
+        return None
 
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])
