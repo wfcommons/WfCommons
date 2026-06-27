@@ -74,8 +74,9 @@ class ROCrateLogsParser(LogsParser):
 
         # Find the Nextflow execution trace if any
         nextflow_execution_trace_files = list(self.crate_dir.glob("results/*/pipeline_info/execution_trace_*.txt"))
-        if len(nextflow_execution_trace_files) == 1:
-            self.nextflow_execution_trace_file : pathlib.Path = nextflow_execution_trace_files[0]
+        if len(nextflow_execution_trace_files) >= 1:
+            # Use the latest one
+            self.nextflow_execution_trace_file : pathlib.Path = max(nextflow_execution_trace_files, key=lambda p: p.stat().st_mtime)
         else:
             self.nextflow_execution_trace_file = None
 
@@ -121,7 +122,7 @@ class ROCrateLogsParser(LogsParser):
         # Task runtime dictionary in case there was a Nextflow trace file
         self.nextflow_trace_times = {}
         if self.nextflow_execution_trace_file:
-            self.nextflow_trace_times = self._load_trace(self.nextflow_execution_trace_file)
+            self.nextflow_trace_times = self._load_nextflow_trace(self.nextflow_execution_trace_file)
         
         # File size directory in case this was a Nextflow-generated RO-Crate
         self.nextflow_publish_map = {}
@@ -200,9 +201,11 @@ class ROCrateLogsParser(LogsParser):
             start_time = create_action.get('startTime')
             end_time = create_action.get('endTime')
             if not start_time or not end_time:
+                print(f"LOOKING UP {create_action['name']}")
                 start_time, end_time = self.nextflow_trace_times.get(create_action['name'], (None, None))
 
             task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
+
             task = Task(name=create_action['name'],
                         # task_id=create_action['name'],
                         task_id=task_id,
@@ -369,7 +372,7 @@ class ROCrateLogsParser(LogsParser):
     import csv
     from datetime import datetime, timedelta
 
-    def _load_trace(self, trace_file: pathlib.Path) -> dict:
+    def _load_nextflow_trace(self, trace_file: pathlib.Path) -> dict:
         """
         Parse a Nextflow execution trace file.
         Returns dict of task_name -> (start_iso, end_iso).
