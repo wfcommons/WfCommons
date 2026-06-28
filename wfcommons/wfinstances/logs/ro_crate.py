@@ -251,6 +251,9 @@ class ROCrateLogsParser(LogsParser):
         property_value_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'PropertyValue', ids))
         for property_value_id in property_value_ids:
             property_values = self.lookup.get(property_value_id)['value']
+            # Skip scalar values (bool, int, str) that can't contain file references
+            if not isinstance(property_values, (dict, list)):
+                continue
             if isinstance(property_values, dict):
                 property_values = [property_values]
 

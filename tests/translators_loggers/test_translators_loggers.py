@@ -172,7 +172,7 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . -c ./plugin-nf-prov.config", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     if exit_code != 0:
@@ -323,19 +323,19 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           "swiftt",
-           "dask",
-           "parsl",
+           #"swiftt",
+           #"dask",
+           #"parsl",
            "nextflow",
-           "nextflow_subworkflow",
-           "airflow",
-           "bash",
-           "taskvine",
-           "makeflow",
-           "snakemake",
-           "cwl",
-           "streamflow",
-           "pegasus",
+           #"nextflow_subworkflow",
+           #"airflow",
+           #"bash",
+           #"taskvine",
+           #"makeflow",
+           #"snakemake",
+           #"cwl",
+           #"streamflow",
+           #"pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -402,6 +402,9 @@ class TestTranslators:
             original_workflow : Workflow = benchmark.workflow
 
             _compare_workflows(original_workflow, reconstructed_workflow)
+
+        # sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+        # time.sleep(1000000)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)

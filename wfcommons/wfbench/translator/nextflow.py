@@ -92,6 +92,9 @@ class NextflowTranslator(Translator):
         else:
             self._translate_single_file(output_folder, sorted_tasks)
 
+        # Create the plugin-nf-prov.config file
+        self._write_plugin_config_file(output_folder)
+
         # Create the README file
         self._write_readme_file(output_folder, self.use_subworkflows)
 
@@ -135,6 +138,7 @@ class NextflowTranslator(Translator):
         :type task: Task
         """
         code = "#!/bin/bash\n\n"
+        code += "WORKFLOW_DIR=$(dirname $(dirname $(realpath $0)))\n\n"
 
         # Generate input spec
         input_spec = "'\\["
@@ -148,7 +152,7 @@ class NextflowTranslator(Translator):
             output_spec += f"\"{self.output_folder.absolute()}/data/{f.file_id}\":{str(f.size)},"
         output_spec = output_spec[:-1] + "\\}'"
 
-        code += f"{self.output_folder.absolute()}/bin/{task.program} "
+        code += f"$WORKFLOW_DIR/bin/{task.program} "
 
         for a in task.args:
             if "--output-files" in a:
@@ -181,57 +185,38 @@ class NextflowTranslator(Translator):
                "        \"\"\"\n" \
                "}\n\n"
 
-    def _generate_task_process(self, task: Task) -> str:
-        """
-        Generate the code for a task, as a Nextflow process.
-
-        :param task: The task.
-        :type task: Task
-        :return: The code.
-        :rtype: str
-        """
+    def _generate_task_process(self, task: Task) -> tuple[str, str]:
         function_name = task.task_id.replace(".", "_")
         code = f"process {function_name}()" + "{\n"
-
-        # File variables
-        if self._find_children(task.task_id):
-            for f in task.output_files:
-                code += f"\tdef {f.file_id} = " + "\"${pwd}/data/" + f.file_id + "\"\n"
+        code += "\tstoreDir \"${params.pwd_abs}/data\"\n"
 
         # Input declaration
-        code += f"\tinput:\n"
-        if self._find_parents(task.task_id):
-            code += f"\t\tval {task.task_id}_ifs\n"
+        has_parents = self._find_parents(task.task_id)
+        if has_parents:
+            code += "\tinput:\n"
+            if len(task.input_files) > 1:
+                # Fan-in: accept a collected list under a single path alias
+                code += "\tpath \"input_files\"\n"
+            else:
+                # Single input: one path variable
+                code += "\tpath input_file\n"
 
         # Output declaration
-        code += f"\toutput:\n"
-        if self._find_children(task.task_id):
-            code += "\t\tval([\n"
-            for f in task.output_files:
-                code += f"\t\t\t{f.file_id},\n"
-            code = code[:-2]
-            code += "\n\t\t])\n"
+        if len(task.output_files) > 0:
+            code += "\toutput:\n"
+            for output_file in task.output_files:
+                code += f"\t\tpath \"{output_file.file_id}\"\n"
+        # code += "\t\tstdout\n"
 
         # Script
         code += "\tscript:\n"
-        # Input convenience vars
-        if self._find_parents(task.task_id):
-            counter = 0
-            for f in task.input_files:
-                code += f"\t\tdef {f.file_id} = {task.task_id}_ifs[{counter}]\n"
-                counter += 1
-            code += "\n"
-
-        # Generate output variables
-        if self._find_children(task.task_id):
-            for f in task.output_files:
-                code += "\t\t" + f.file_id + " = \"${pwd}/data/" + f.file_id + "\"\n"
-
         code += "\t\t\"\"\"\n"
-        code += "\t\t${params.simulate ? 'sleep 1' : \"bash ${pwd}/bin/script_" + task.task_id + ".sh\"}\n"
+        code += f"\t\t${{params.simulate ? 'sleep 1' : \"bash ${{params.pwd_abs}}/bin/script_{task.task_id}.sh\"}}\n"
+        for f in task.output_files:
+            code += f"\t\techo -n \"${{params.pwd_abs}}/data/{f.file_id}\"\n"
         code += "\t\t\"\"\"\n"
         code += "}\n\n"
-        return code
+        return function_name, code
 
     def _generate_task_function(self, task: Task) -> str:
         """
@@ -270,11 +255,35 @@ class NextflowTranslator(Translator):
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
-            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd`\n\n")
+            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./plugin-nf-prov.config\n\n")
             if use_subworkflows:
                 out.write(f"This workflow has been split into {len(self.subworkflows)} module file(s), ")
                 out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
                 out.write(f"\nModule files are located in the 'modules/' directory.\n")
+
+    def _write_plugin_config_file(self, output_folder: pathlib.Path) -> None:
+        """
+        Write the plugin config file.
+
+        :param output_folder: The path of the output folder.
+        :type output_folder: pathlib.Path
+        """
+        file_path = output_folder.joinpath("plugin-nf-prov.config")
+        with open(file_path, "w") as out:
+            out.write("""plugins {
+    id 'nf-prov'
+}
+
+prov {
+    enabled = true
+    formats {
+        wrroc {
+            file = 'ro-crate-metadata.json'
+            overwrite = true
+        }
+    }
+}
+""")
 
     # =========================================================================
     # Single-file mode methods
@@ -289,6 +298,11 @@ class NextflowTranslator(Translator):
         :param sorted_tasks: Tasks in topological order.
         :type sorted_tasks: List[Task]
         """
+
+        # Create modules directory
+        self.modules_dir = output_folder.joinpath("modules")
+        self.modules_dir.mkdir(exist_ok=True)
+
         self.script = ""
 
         # Add Flowcept code if enabled
@@ -297,7 +311,8 @@ class NextflowTranslator(Translator):
 
         # Output the code for each task
         for task in sorted_tasks:
-            self.script += self._generate_task_process(task)
+            function_code = self._generate_task_function(task)
+            self.script += function_code + "\n"
 
         # Output the code for the workflow
         self.script += self._generate_single_file_workflow_code(sorted_tasks)
@@ -326,7 +341,13 @@ class NextflowTranslator(Translator):
 
         # Generate all task functions
         for task in sorted_tasks:
-            code += self._generate_task_function(task)
+            function_name, generated_code = self._generate_task_process(task)
+            with open(self.modules_dir / f"{function_name}.nf", "w") as out:
+                out.write(generated_code)
+            code += f"include {{ {function_name} }} from './modules/{function_name}.nf'\n"
+            # function_code = self._generate_task_function(task)
+            # code += function_code
+        code += "\n"
 
         # Generate workflow function
         code += "workflow {\n"
@@ -339,141 +360,6 @@ class NextflowTranslator(Translator):
         code += "}\n"
         return code
 
-    # =========================================================================
-    # Subworkflow mode methods
-    # =========================================================================
-
-    def _translate_with_subworkflows(self, output_folder: pathlib.Path, sorted_tasks: List[Task]) -> None:
-        """
-        Generate a multi-file Nextflow workflow with module files.
-
-        :param output_folder: The output folder path.
-        :type output_folder: pathlib.Path
-        :param sorted_tasks: Tasks in topological order.
-        :type sorted_tasks: List[Task]
-        """
-        # Split tasks into chunks for separate files
-        self._split_into_subworkflows(sorted_tasks)
-        self.logger.info(f"Split workflow into {len(self.subworkflows)} module file(s)")
-
-        # Create modules directory
-        modules_dir = output_folder.joinpath("modules")
-        modules_dir.mkdir(exist_ok=True)
-
-        # Create each module file (processes + orchestrating function)
-        for idx, subworkflow_tasks in enumerate(self.subworkflows):
-            module_code = self._generate_module_file(idx, subworkflow_tasks)
-            self._write_output_file(
-                module_code,
-                modules_dir.joinpath(f"tasks_{idx}.nf")
-            )
-
-        # Create the main Nextflow workflow script
-        main_workflow_code = self._generate_main_workflow()
-        self._write_output_file(main_workflow_code, output_folder.joinpath("workflow.nf"))
-
-    def _split_into_subworkflows(self, sorted_tasks: List[Task]) -> None:
-        """
-        Split the sorted tasks into chunks for separate files.
-
-        Tasks with more than max_parents_threshold parents are placed in their own
-        subworkflow to avoid generating overly long channel mixing code.
-
-        :param sorted_tasks: The topologically sorted list of tasks.
-        :type sorted_tasks: List[Task]
-        """
-        self.subworkflows = []
-        current_chunk = []
-
-        for task in sorted_tasks:
-            num_parents = len(self._find_parents(task.task_id))
-
-            # If task has many parents, put it in its own subworkflow
-            if num_parents > self.max_parents_threshold:
-                # First, save the current chunk if not empty
-                if current_chunk:
-                    self.subworkflows.append(current_chunk)
-                    current_chunk = []
-                # Add this task as its own subworkflow
-                self.subworkflows.append([task])
-            else:
-                current_chunk.append(task)
-                # If chunk is full, start a new one
-                if len(current_chunk) >= self.max_tasks_per_subworkflow:
-                    self.subworkflows.append(current_chunk)
-                    current_chunk = []
-
-        # Don't forget the last chunk
-        if current_chunk:
-            self.subworkflows.append(current_chunk)
-
-    def _generate_module_file(self, module_idx: int, tasks: List[Task]) -> str:
-        """
-        Generate a module .nf file containing processes and an orchestrating function.
-
-        Each module file contains:
-        - Process definitions (private to the file)
-        - A single exported function that orchestrates those processes
-
-        Using a function instead of a workflow block allows passing Maps of channels
-        between modules without Nextflow channel type casting issues.
-
-        :param module_idx: The index of this module.
-        :type module_idx: int
-        :param tasks: The tasks in this module.
-        :type tasks: List[Task]
-        :return: The complete module file content.
-        :rtype: str
-        """
-        code = f"// Module {module_idx} - Tasks file\n"
-        code += "// Auto-generated by WfCommons NextflowTranslator\n\n"
-
-        # Define pwd variable from params (modules can't access main workflow variables)
-        code += "// Resolve working directory from params\n"
-        code += "def pwd = params.pwd ? file(params.pwd).toAbsolutePath().toString() : null\n\n"
-
-        # Generate process definitions for each task (private to this file)
-        for task in tasks:
-            code += self._generate_task_process(task)
-
-        # Generate the function that orchestrates these tasks
-        code += self._generate_module_function(module_idx, tasks)
-
-        return code
-
-    def _generate_module_function(self, module_idx: int, tasks: List[Task]) -> str:
-        """
-        Generate a Groovy function that orchestrates a set of tasks.
-
-        Using a function instead of a workflow block allows passing Maps of channels
-        between modules without Nextflow channel type casting issues.
-
-        :param module_idx: The index of this module.
-        :type module_idx: int
-        :param tasks: The tasks in this module.
-        :type tasks: List[Task]
-        :return: The function code.
-        :rtype: str
-        """
-        code = f"// Function to execute tasks in module {module_idx}\n"
-        code += f"def run_module_{module_idx}(Map inputs) {{\n"
-        code += "\tdef results = inputs.clone()\n\n"
-
-        # Call each task's process
-        for task in tasks:
-            function_name = task.task_id.replace(".", "_")
-            code += self._generate_task_call(
-                task=task,
-                function_name=function_name,
-                inputs_var="results",
-                results_var="results",
-                include_comment=True,
-            )
-
-        code += "\treturn results\n"
-        code += "}\n\n"
-
-        return code
 
     def _generate_task_call(self,
                             task: Task,
@@ -481,43 +367,37 @@ class NextflowTranslator(Translator):
                             inputs_var: str,
                             results_var: str,
                             include_comment: bool) -> str:
-        """
-        Generate the code to call a task's process and map outputs into a results map.
-
-        :param task: The task.
-        :type task: Task
-        :param function_name: The sanitized function name.
-        :type function_name: str
-        :param inputs_var: The variable name containing input channels.
-        :type inputs_var: str
-        :param results_var: The variable name to update with outputs.
-        :type results_var: str
-        :param include_comment: Whether to include a task comment.
-        :type include_comment: bool
-        :return: The code.
-        :rtype: str
-        """
         code = ""
         has_parents = self._find_parents(task.task_id)
+        has_children = self._find_children(task.task_id)
 
         if include_comment:
             root_suffix = " (root)" if not has_parents else ""
             code += f"\t// Task: {task.task_id}{root_suffix}\n"
 
         if has_parents:
-            code += f"\tdef {function_name}_input = Channel.empty()\n"
-            for f in task.input_files:
-                code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id})\n"
-            code += f"\tdef {function_name}_input_future = {function_name}_input.collect()\n"
-            code += f"\tdef {function_name}_output = {function_name}({function_name}_input_future)\n"
+            if len(task.input_files) > 1:
+                # Fan-in: mix all inputs into one channel, then collect
+                code += f"\tdef {function_name}_input = Channel.empty()\n"
+                for f in task.input_files:
+                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id})\n"
+                code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
+            else:
+                # Single input: pass the channel directly, no collect()
+                input_file_id = task.input_files[0].file_id
+                code += f"\tdef {function_name}_output = {function_name}({inputs_var}.{input_file_id})\n"
         else:
+            # Root task: no inputs
             code += f"\tdef {function_name}_output = {function_name}()\n"
 
-        if self._find_children(task.task_id):
-            counter = 0
-            for f in task.output_files:
-                code += f"\t{results_var}.{f.file_id} = {function_name}_output.map{{it[{counter}]}}\n"
-                counter += 1
+        # Capture outputs only if this task has children
+        if has_children:
+            output_files = task.output_files
+            if len(output_files) == 1:
+                code += f"\t{results_var}.{output_files[0].file_id} = {function_name}_output\n"
+            else:
+                for i, f in enumerate(output_files):
+                    code += f"\t{results_var}.{f.file_id} = {function_name}_output.map{{it[{i}]}}\n"
         code += "\n"
 
         return code
