@@ -73,7 +73,7 @@ class ROCrateLogsParser(LogsParser):
         self.metadata = metadata
 
         # Find the Nextflow execution trace if any
-        nextflow_execution_trace_files = list(self.crate_dir.glob("results/*/pipeline_info/execution_trace_*.txt"))
+        nextflow_execution_trace_files = list(self.crate_dir.rglob("execution_trace_*.txt"))
         if len(nextflow_execution_trace_files) >= 1:
             # Use the latest one
             self.nextflow_execution_trace_file : pathlib.Path = max(nextflow_execution_trace_files, key=lambda p: p.stat().st_mtime)
@@ -201,7 +201,6 @@ class ROCrateLogsParser(LogsParser):
             start_time = create_action.get('startTime')
             end_time = create_action.get('endTime')
             if not start_time or not end_time:
-                print(f"LOOKING UP {create_action['name']}")
                 start_time, end_time = self.nextflow_trace_times.get(create_action['name'], (None, None))
 
             task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
