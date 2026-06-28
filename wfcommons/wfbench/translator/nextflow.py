@@ -93,7 +93,7 @@ class NextflowTranslator(Translator):
             self._translate_single_file(output_folder, sorted_tasks)
 
         # Create the plugin-nf-prov.config file
-        self._write_plugin_config_file(output_folder)
+        self._write_nf_config_file(output_folder)
 
         # Create the README file
         self._write_readme_file(output_folder, self.use_subworkflows)
@@ -255,20 +255,20 @@ class NextflowTranslator(Translator):
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
-            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./plugin-nf-prov.config\n\n")
+            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./nextflow-wfcommons.config\n\n")
             if use_subworkflows:
                 out.write(f"This workflow has been split into {len(self.subworkflows)} module file(s), ")
                 out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
                 out.write(f"\nModule files are located in the 'modules/' directory.\n")
 
-    def _write_plugin_config_file(self, output_folder: pathlib.Path) -> None:
+    def _write_nf_config_file(self, output_folder: pathlib.Path) -> None:
         """
         Write the plugin config file.
 
         :param output_folder: The path of the output folder.
         :type output_folder: pathlib.Path
         """
-        file_path = output_folder.joinpath("plugin-nf-prov.config")
+        file_path = output_folder.joinpath("nextflow-wfcommons.config")
         with open(file_path, "w") as out:
             out.write("""plugins {
     id 'nf-prov'
@@ -282,6 +282,12 @@ prov {
             overwrite = true
         }
     }
+}
+
+trace {
+    enabled = true
+    file = "results/pipeline_info/execution_trace_${new java.util.Date().format('yyyy-MM-dd_HH-mm-ss')}.txt"
+    overwrite = true
 }
 """)
 

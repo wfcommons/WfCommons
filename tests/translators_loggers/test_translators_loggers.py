@@ -172,7 +172,7 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . -c ./plugin-nf-prov.config", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . -c ./nextflow-wfcommons.config", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     if exit_code != 0:
