@@ -22,6 +22,8 @@ class LogsParser(ABC):
 
     :param wms_name: Name of the workflow system.
     :type wms_name: str
+    :param wms_version: Version of the workflow system.
+    :type wms_version: Optional[str]
     :param wms_url: URL for the workflow system.
     :type wms_url: Optional[str]
     :param description: Workflow instance description.
@@ -32,6 +34,7 @@ class LogsParser(ABC):
 
     def __init__(self,
                  wms_name: str,
+                 wms_version: Optional[str] = None,
                  wms_url: Optional[str] = None,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
@@ -39,6 +42,7 @@ class LogsParser(ABC):
         self.logger: Optional[Logger] = logger if logger else logging.getLogger(__name__)
         self.description: Optional[str] = description
         self.wms_name: str = wms_name
+        self.wms_version: Optional[str] = wms_version
         self.wms_url: Optional[str] = wms_url
         self.workflow = None
         self.workflow_name = None
