@@ -57,7 +57,7 @@ class ROCrateLogsParser(LogsParser):
     def __init__(self,
                  crate_dir: pathlib.Path,
                  wms_name: str,
-                 wms_version: str,
+                 wms_version: Optional[str] = "unknown",
                  wms_url: Optional[str] = None,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
@@ -201,7 +201,7 @@ class ROCrateLogsParser(LogsParser):
             start_time = create_action.get('startTime')
             end_time = create_action.get('endTime')
             if not start_time or not end_time:
-                start_time, end_time = self.nextflow_trace_times.get(create_action['name'], (None, None))
+                start_time, end_time = self.task_runtimes.get(create_action['name'], (None, None))
 
             task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
 
