@@ -105,7 +105,11 @@ class NextflowLogsParser(LogsParser):
 
         # Create an RO-Create parser
         from wfcommons.wfinstances import ROCrateLogsParser
-        ro_crate_parser = ROCrateLogsParser(self.execution_dir, self.description, self.logger,
+        ro_crate_parser = ROCrateLogsParser(self.execution_dir,
+                                            wms_name="Nextflow",
+                                            wms_version=self.wms_version,
+                                            wms_url=self.wms_url,
+                                            description=self.description, logger=self.logger,
                                             steps_to_ignore=None,
                                             file_extensions_to_ignore=None,
                                             instruments_to_ignore=None,

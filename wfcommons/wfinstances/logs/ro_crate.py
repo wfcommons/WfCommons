@@ -56,6 +56,9 @@ class ROCrateLogsParser(LogsParser):
 
     def __init__(self,
                  crate_dir: pathlib.Path,
+                 wms_name: str,
+                 wms_version: str,
+                 wms_url: Optional[str] = None,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
                  steps_to_ignore: Optional[list[str]] = None,
@@ -66,7 +69,7 @@ class ROCrateLogsParser(LogsParser):
                  ) -> None:
         """Create an object of the RO crate parser."""
 
-        super().__init__('Streamflow-ROCrate', 'https://w3id.org/workflowhub/workflow-ro-crate/1.0', description, logger)
+        super().__init__(wms_name=wms_name, wms_version=wms_version, wms_url=wms_url, description=description, logger=logger)
 
         # Sanity check
         if not crate_dir.is_dir():

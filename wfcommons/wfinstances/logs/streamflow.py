@@ -13,6 +13,7 @@ import pathlib
 from logging import Logger
 from typing import List, Optional
 
+from docutils.nodes import description
 
 from .abstract_logs_parser import LogsParser
 from ...common.file import File
@@ -76,10 +77,15 @@ class StreamflowLogsParser(LogsParser):
 
         # Create an RO-Create parser
         from wfcommons.wfinstances import ROCrateLogsParser
-        ro_crate_parser = ROCrateLogsParser(self.crate_dir, self.description, self.logger,
-                                            self.steps_to_ignore,
-                                            self.file_extensions_to_ignore,
-                                            self.instruments_to_ignore)
+        ro_crate_parser = ROCrateLogsParser(crate_dir=self.crate_dir,
+                                            wms_name="Streamflow",
+                                            wms_version=self.wms_version,
+                                            wms_url=self.wms_url,
+                                            description=self.description,
+                                            logger=self.logger,
+                                            steps_to_ignore=self.steps_to_ignore,
+                                            file_extensions_to_ignore=self.file_extensions_to_ignore,
+                                            instruments_to_ignore=self.instruments_to_ignore)
 
         return ro_crate_parser.build_workflow(workflow_name)
 
