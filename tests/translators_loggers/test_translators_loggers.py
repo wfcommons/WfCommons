@@ -323,19 +323,19 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           #"swiftt",
-           #"dask",
-           #"parsl",
+           "swiftt",
+           "dask",
+           "parsl",
            "nextflow",
            "nextflow_subworkflow",
-           #"airflow",
-           #"bash",
-           #"taskvine",
-           #"makeflow",
-           #"snakemake",
-           #"cwl",
+           "airflow",
+           "bash",
+           "taskvine",
+           "makeflow",
+           "snakemake",
+           "cwl",
            "streamflow",
-           #"pegasus",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -415,5 +415,5 @@ class TestTranslators:
         _shutdown_docker_container_and_remove_image(container)
 
         # Remove the created local directory
- #       _remove_local_dir_if_it_exists(str_dirpath)
+        _remove_local_dir_if_it_exists(str_dirpath)
 
