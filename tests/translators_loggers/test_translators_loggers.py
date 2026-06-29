@@ -172,14 +172,7 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . "
-                                           # f"-with-report execution_report.html "
-                                           # f"-with-timeline execution_timeline.html "
-                                           #f"-with-trace trace_file "
-                                           # f"-plugins nf-prov -with-prov prov.json "
-                                           # f"-with-dag dag_file.html"
-                                           f"-c plugin.config ",
-                                           user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . -c ./nextflow-wfcommons.config", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     if exit_code != 0:
@@ -334,7 +327,7 @@ class TestTranslators:
            #"dask",
            #"parsl",
            "nextflow",
-           #"nextflow_subworkflow",
+           "nextflow_subworkflow",
            #"airflow",
            #"bash",
            #"taskvine",
@@ -411,9 +404,12 @@ class TestTranslators:
 
             _compare_workflows(original_workflow, reconstructed_workflow)
 
+#        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+#        time.sleep(1000000)
+
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)
 
         # Remove the created local directory
-        _remove_local_dir_if_it_exists(str_dirpath)
+ #       _remove_local_dir_if_it_exists(str_dirpath)
 

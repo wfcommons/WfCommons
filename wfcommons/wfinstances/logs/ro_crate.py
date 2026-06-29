@@ -344,7 +344,9 @@ class ROCrateLogsParser(LogsParser):
             # If the lookup fails, ignore
             if not property_values:
                     continue
-            if not isinstance(property_values, list):
+            if not isinstance(property_values, (dict, list)):
+                continue
+            if isinstance(property_values, dict):
                 property_values = [property_values]
 
             # Filter out values without "@id"s (i.e. int values, etc.)
