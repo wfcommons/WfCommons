@@ -326,7 +326,7 @@ class TestTranslators:
            #"swiftt",
            #"dask",
            #"parsl",
-           #"nextflow",
+           "nextflow",
            "nextflow_subworkflow",
            #"airflow",
            #"bash",
@@ -334,7 +334,7 @@ class TestTranslators:
            #"makeflow",
            #"snakemake",
            #"cwl",
-           #"streamflow",
+           "streamflow",
            #"pegasus",
         ])
     @pytest.mark.unit
@@ -403,12 +403,12 @@ class TestTranslators:
 
             _compare_workflows(original_workflow, reconstructed_workflow)
 
-        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
-        time.sleep(1000000)
+#        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+#        time.sleep(1000000)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)
 
         # Remove the created local directory
-        _remove_local_dir_if_it_exists(str_dirpath)
+ #       _remove_local_dir_if_it_exists(str_dirpath)
 
