@@ -177,6 +177,7 @@ class ROCrateLogsParser(LogsParser):
             if create_action['@id'].startswith('#publish/'):
                 continue
 
+            # The prefix is "streamflow specific"
             create_action['name'] = create_action['name'].removeprefix("Run of workflow/")
             # print("***************************************")
             # print("DEALING WITH TASK:", create_action['name'])
