@@ -41,8 +41,8 @@ from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
-from wfcommons.wfinstances import PegasusLogsParser
-from wfcommons.wfinstances.logs import TaskVineLogsParser
+from wfcommons.wfinstances import PegasusLogsParser, NextflowLogsParser
+from wfcommons.wfinstances.logs import TaskVineLogsParser, StreamflowLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
 from wfcommons.wfinstances.logs import SnakemakeLogsParser
@@ -388,10 +388,14 @@ class TestTranslators:
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         elif backend == "streamflow":
-            parser = ROCrateLogsParser(dirpath / "RO-Crate",
+            parser = StreamflowLogsParser(dirpath / "RO-Crate",
+                                       streamflow_version="whatever",
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
                                        file_extensions_to_ignore=[".out", ".err"],
                                        instruments_to_ignore=["shell.cwl"])
+        elif backend == "nextflow" or backend == "nextflow_subworkflow":
+            parser = NextflowLogsParser(dirpath,
+                                         nextflow_version="whatever")
         elif backend == "snakemake":
             parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
 

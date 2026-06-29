@@ -145,7 +145,7 @@ class ROCrateLogsParser(LogsParser):
 
     def _construct_data_file_id_name_map(self):
         for item in self.graph_data:
-            if item["@type"] != "File":
+            if item["@type"] != "File" and item["@type"] != "CreativeWork":
                 continue
             id = item["@id"]
             #if "alternateName" not in item:
@@ -153,7 +153,6 @@ class ROCrateLogsParser(LogsParser):
             #alternate_name = item["alternateName"]
             alternate_name = item.get("alternateName", id)
             self.data_file_id_name_map[id] = alternate_name
-
 
     def _create_tasks(self, create_actions, main_workflow_id):
         # Object to track dependencies between tasks based on files
@@ -293,7 +292,7 @@ class ROCrateLogsParser(LogsParser):
                 else:
                     file_name = self.data_file_id_name_map[file]
 
-                # Figure out the file size
+                # Figure out the file size:
 
                 # Straight from the RO-Crate?
                 try:
@@ -302,8 +301,10 @@ class ROCrateLogsParser(LogsParser):
                 except (OSError, ValueError):
                     size = 0
 
+
                 # If this was Nextflow-generated, we may still get lucky
-                if not size and len(self.nextflow_publish_map) != 0:
+                # if not size and len(self.nextflow_publish_map) != 0:
+                if not size:
                     size = self._determine_nextflow_file_size(file)
 
                 # Create the file object

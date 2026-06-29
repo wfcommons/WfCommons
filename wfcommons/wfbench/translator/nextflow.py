@@ -191,15 +191,16 @@ class NextflowTranslator(Translator):
         code += "\tstoreDir \"${params.pwd_abs}/data\"\n"
 
         # Input declaration
-        has_parents = self._find_parents(task.task_id)
-        if has_parents:
-            code += "\tinput:\n"
-            if len(task.input_files) > 1:
-                # Fan-in: accept a collected list under a single path alias
-                code += "\tpath \"input_files\"\n"
-            else:
-                # Single input: one path variable
-                code += "\tpath input_file\n"
+        # has_parents = self._find_parents(task.task_id)
+        # if has_parents:
+        if len(task.input_files) > 1:
+            # Fan-in: accept a collected list under a single path alias
+            code += "input:\n"
+            code += "\tpath \"input_files\"\n"
+        elif len(task.input_files) == 1:
+            # Single input: one path variable
+            code += "input:\n"
+            code += "\tpath input_file\n"
 
         # Output declaration
         if len(task.output_files) > 0:
@@ -212,8 +213,8 @@ class NextflowTranslator(Translator):
         code += "\tscript:\n"
         code += "\t\t\"\"\"\n"
         code += f"\t\t${{params.simulate ? 'sleep 1' : \"bash ${{params.pwd_abs}}/bin/script_{task.task_id}.sh\"}}\n"
-        for f in task.output_files:
-            code += f"\t\techo -n \"${{params.pwd_abs}}/data/{f.file_id}\"\n"
+        # for f in task.output_files:
+        #     code += f"\t\techo -n \"${{params.pwd_abs}}/data/{f.file_id}\"\n"
         code += "\t\t\"\"\"\n"
         code += "}\n\n"
         return function_name, code
@@ -244,7 +245,7 @@ class NextflowTranslator(Translator):
         return code
 
     def _write_nf_prov_plugin_config_file(selfself, output_folder: pathlib.Path):
-        nf_prov_plugin_config_file = output_folder.joinpath("plugin.config")
+        nf_prov_plugin_config_file = output_folder.joinpath("nextflow-wfcommons.config")
         with open(nf_prov_plugin_config_file, "w") as out:
             out.write("""plugins {
     id 'nf-prov'
@@ -258,6 +259,12 @@ prov {
             overwrite = true
         }
     }
+}
+
+trace {
+            enabled = true
+            file = "results/pipeline_info/execution_trace_${new java.util.Date().format('yyyy-MM-dd_HH-mm-ss')}.txt"
+            overwrite = true
 }
 """)
 
@@ -401,17 +408,27 @@ trace {
 
         if has_parents:
             if len(task.input_files) > 1:
-                # Fan-in: mix all inputs into one channel, then collect
                 code += f"\tdef {function_name}_input = Channel.empty()\n"
                 for f in task.input_files:
                     code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id})\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
             else:
-                # Single input: pass the channel directly, no collect()
                 input_file_id = task.input_files[0].file_id
                 code += f"\tdef {function_name}_output = {function_name}({inputs_var}.{input_file_id})\n"
+        elif len(task.input_files) > 0:
+            # Root task with workflow-level input files: create channels from params
+            if len(task.input_files) > 1:
+                code += f"\tdef {function_name}_input = Channel.of(\n"
+                for f in task.input_files:
+                    code += f"\t\tfile(params.pwd_abs + '/data/{f.file_id}'),\n"
+                code += f"\t).collect()\n"
+                code += f"\tdef {function_name}_output = {function_name}({function_name}_input)\n"
+            else:
+                f = task.input_files[0]
+                code += f"\tdef {function_name}_input = Channel.of(file(params.pwd_abs + '/data/{f.file_id}'))\n"
+                code += f"\tdef {function_name}_output = {function_name}({function_name}_input)\n"
         else:
-            # Root task: no inputs
+            # Root task with no input files at all
             code += f"\tdef {function_name}_output = {function_name}()\n"
 
         # Capture outputs only if this task has children
