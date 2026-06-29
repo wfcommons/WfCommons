@@ -277,12 +277,6 @@ prov {
         }
     }
 }
-
-trace {
-    enabled = true
-    file = "results/pipeline_info/execution_trace_${new java.util.Date().format('yyyy-MM-dd_HH-mm-ss')}.txt"
-    overwrite = true
-}
 """)
 
     def _write_readme_file(self, output_folder: pathlib.Path, use_subworkflows: bool) -> None:

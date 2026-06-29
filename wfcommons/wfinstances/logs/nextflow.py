@@ -11,6 +11,9 @@
 import glob
 import json
 import pathlib
+from datetime import datetime, timedelta
+import csv
+
 
 from logging import Logger
 from typing import Dict, Optional
@@ -21,14 +24,42 @@ from ...common.workflow import Workflow
 
 
 class NextflowLogsParser(LogsParser):
-    """
-    Parse Nextflow submit directory to generate workflow trace. The workflow execution
-    must have been done with two features enabled: 1) the use of the nf-prov plugin and 2)
-    the creation of an execution trace. This can be done, for instance, be creating locally
-    a file config-
+    """"
+    Parse Nextflow execution directory to generate a workflow trace. The workflow
+    must have been executed with two features enabled: 1) the nf-prov plugin, and
+    2) execution tracing. This can be achieved by invoking Nextflow with a config
+    file, e.g.::
+
+        nextflow run -c nextflow-wfcommons.config ...
+
+    where ``nextflow-wfcommons.config`` contains:
+
+    .. code-block:: groovy
+
+        plugins {
+            id 'nf-prov'
+        }
+
+        prov {
+            enabled = true
+            formats {
+                wrroc {
+                    file = 'ro-crate-metadata.json'
+                    overwrite = true
+                }
+            }
+        }
+
+        trace {
+            enabled = true
+            file = "results/pipeline_info/execution_trace_${new java.util.Date().format('yyyy-MM-dd_HH-mm-ss')}.txt"
+            overwrite = true
+        }
 
     :param execution_dir: Nextflow's execution directory.
     :type execution_dir: pathlib.Path
+    :param nextflow_version: The Nextflow version used to execute the workflow
+    :type nextflow_version: str
     :param description: Workflow instance description.
     :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
@@ -37,10 +68,91 @@ class NextflowLogsParser(LogsParser):
 
     def __init__(self,
                  execution_dir: pathlib.Path,
+                 nextflow_version: str,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the nextflow log parser."""
-        super().__init__('Nextflow', 'https://www.nextflow.io', description, logger)
+        super().__init__('Nextflow', wms_version=nextflow_version, wms_url='https://www.nextflow.io',
+                         description=description, logger=logger)
+
+        self.execution_dir = execution_dir
+
+        # Load the Nextflow execution trace, and create a task runtime dictionary
+        nextflow_execution_trace_files = list(self.execution_dir.rglob("execution_trace_*.txt"))
+        if len(nextflow_execution_trace_files) == 0:
+            raise FileNotFoundError("No execution_trace_*.txt file found in Nextflow execution directory.")
+
+
+    def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
+        """
+        Create workflow instance based on the workflow execution logs.
+
+        :param workflow_name: The workflow name.
+        :type workflow_name: Optional[str]
+
+        :return: A workflow instance object.
+        :rtype: Workflow
+        """
+
+        # Parse the Nextflow execution trace to create a dict of task runtimes
+        nextflow_execution_trace_files = list(self.execution_dir.rglob("execution_trace_*.txt"))
+        if len(nextflow_execution_trace_files) == 0:
+            raise FileNotFoundError("No execution_trace_*.txt file found in Nextflow execution directory.")
+        nextflow_execution_trace_file: pathlib.Path = max(nextflow_execution_trace_files,
+                                                          key=lambda p: p.stat().st_mtime)
+        nextflow_task_runtimes = self._load_nextflow_trace(nextflow_execution_trace_file)
+
+
+        # Create an RO-Create parser
+        from wfcommons.wfinstances import ROCrateLogsParser
+        ro_crate_parser = ROCrateLogsParser(self.execution_dir, self.description, self.logger,
+                                            steps_to_ignore=None,
+                                            file_extensions_to_ignore=None,
+                                            instruments_to_ignore=None,
+                                            task_runtimes=nextflow_task_runtimes)
+
+        return ro_crate_parser.build_workflow(workflow_name)
+
+
+    def _load_nextflow_trace(self, trace_file: pathlib.Path) -> dict[str, tuple[str, str]]:
+        """
+        Parse a Nextflow execution trace file.
+        Returns dict of task_name -> (start_iso, end_iso).
+        """
+        times = {}
+        with open(trace_file, newline='') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                name = row['name'].strip()
+                submit_str = row['submit'].strip()
+                duration_str = row['duration'].strip()
+                if not submit_str or not duration_str:
+                    continue
+                try:
+                    start = datetime.strptime(submit_str, '%Y-%m-%d %H:%M:%S.%f')
+                    duration_sec = self._parse_duration(duration_str)
+                    end = start + timedelta(seconds=duration_sec)
+                    # Store as ISO strings to match _time_diff expectations
+                    times[name] = (start.isoformat(), end.isoformat())
+                except Exception:
+                    continue
+        return times
+
+    def _parse_duration(self, duration_str: str) -> float:
+        """Parse Nextflow duration strings like '2m 40s', '519ms', '1h 3m 2s'."""
+        import re
+        total = 0.0
+        for value, unit in re.findall(r'(\d+(?:\.\d+)?)\s*(h|m|s|ms)', duration_str):
+            value = float(value)
+            if unit == 'h':
+                total += value * 3600
+            elif unit == 'm':
+                total += value * 60
+            elif unit == 's':
+                total += value
+            elif unit == 'ms':
+                total += value / 1000
+        return total
 
 #     def __init__(self,
 #                  execution_dir: pathlib.Path,

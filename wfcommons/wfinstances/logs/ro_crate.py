@@ -47,6 +47,11 @@ class ROCrateLogsParser(LogsParser):
     :type file_extensions_to_ignore: Optional[list[str]]
     :param instruments_to_ignore: Names of instruments that should be ignored in the translation
     :type instruments_to_ignore: Optional[list[str]]
+    :param task_runtimes: A dictionary of task start/end times, keyed by task name (this can be passed
+                          in when the ro-crate-metadata.json file does not record task execution time stamps
+    :type task_runtimes: dict[str, tuple[str, str]
+    :param file_sizes: A dictionary of file sizes, keyed by file name (this can be passed in when the ro-crate-metadata.json
+                          file does not record file sizes)
     """
 
     def __init__(self,
@@ -56,6 +61,8 @@ class ROCrateLogsParser(LogsParser):
                  steps_to_ignore: Optional[list[str]] = None,
                  file_extensions_to_ignore: Optional[list[str]] = None,
                  instruments_to_ignore: Optional[list[str]] = None,
+                 task_runtimes: Optional[dict[str, tuple[str, str]]] = None,
+                 file_sizes: Optional[dict[str, int]] = None,
                  ) -> None:
         """Create an object of the RO crate parser."""
 
@@ -72,15 +79,6 @@ class ROCrateLogsParser(LogsParser):
             raise OSError(f'Unable to find ro-crate-metadata.json file in: {self.crate_dir}')
         self.metadata = metadata
 
-        # Find the Nextflow execution trace if any
-        nextflow_execution_trace_files = list(self.crate_dir.rglob("execution_trace_*.txt"))
-        if len(nextflow_execution_trace_files) >= 1:
-            # Use the latest one
-            self.nextflow_execution_trace_file : pathlib.Path = max(nextflow_execution_trace_files, key=lambda p: p.stat().st_mtime)
-        else:
-            self.nextflow_execution_trace_file = None
-
-
         self.file_objects = {}
 
         self.task_id_name_map: dict[str, str] = {}
@@ -89,6 +87,8 @@ class ROCrateLogsParser(LogsParser):
         self.steps_to_ignore : list[str] = steps_to_ignore or []
         self.file_extensions_to_ignore : list[str] = file_extensions_to_ignore or []
         self.instruments_to_ignore : list[str] = instruments_to_ignore or []
+        self.task_runtimes : dict[str, tuple[str, str]] = task_runtimes or {}
+        self.file_sizes : dict[str, int] = file_sizes or {}
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -119,12 +119,8 @@ class ROCrateLogsParser(LogsParser):
         # Dictionary of application data files
         self._construct_data_file_id_name_map()
 
-        # Task runtime dictionary in case there was a Nextflow trace file
-        self.nextflow_trace_times = {}
-        if self.nextflow_execution_trace_file:
-            self.nextflow_trace_times = self._load_nextflow_trace(self.nextflow_execution_trace_file)
-        
-        # File size directory in case this was a Nextflow-generated RO-Crate
+        # In Nextflow-generated RO-Crates, special #publish tasks much be used to find
+        # out file sizes
         self.nextflow_publish_map = {}
         for item in self.graph_data:
             if item.get('@type') == 'CreateAction' and item['@id'].startswith('#publish/'):
@@ -287,9 +283,6 @@ class ROCrateLogsParser(LogsParser):
         output = []
         for file in files:
             if file not in self.file_objects:
-                #self.file_objects[file] = File(file_id=self.data_file_id_name_map[file],
-                #                               size=os.path.getsize(f"{self.crate_dir}/{file}"),
-                #                               logger=self.logger)
                 if file not in self.data_file_id_name_map:
                     # File is referenced but not in the map — use its @id as the name
                     self.logger.warning(f"File not in data_file_id_name_map, using @id as name: {file}") if self.logger else None
@@ -305,24 +298,10 @@ class ROCrateLogsParser(LogsParser):
                     size = int(obj.get('contentSize', 0))
                 except (OSError, ValueError):
                     size = 0
-                    
-                # From the Nextflow-specific "#publish" tasks?
-                if not size:
-                    resolved = self.nextflow_publish_map.get(file, file)
-                    try:
-                        size = os.path.getsize(self.crate_dir / resolved)
-                    except (OSError, ValueError):
-                        work_path = self._resolve_task_file_path(file)
-                        size = os.path.getsize(work_path) if work_path else 0
 
-                # Perhaps a (Nextflow-specific) absolute path?
-                if not size:
-                    if file.startswith('file://'):
-                        abs_path = pathlib.Path(file[len('file://'):])
-                        try:
-                            size = os.path.getsize(abs_path)
-                        except (OSError, ValueError):
-                            size = 0
+                # If this was Nextflow-generated, we may still get lucky
+                if not size and len(self.nextflow_publish_map) != 0:
+                    size = self._determine_nextflow_file_size(file)
 
                 # Create the file object
                 self.file_objects[file] = File(file_id=file_name,
@@ -331,8 +310,27 @@ class ROCrateLogsParser(LogsParser):
             output.append(self.file_objects[file])
         return output
 
-    def _filter_file_ids(self, ids):
 
+    def _determine_nextflow_file_size(self, file):
+        resolved = self.nextflow_publish_map.get(file, file)
+        try:
+            size = os.path.getsize(self.crate_dir / resolved)
+        except (OSError, ValueError):
+            work_path = self._resolve_nextflow_task_file_path(file)
+            size = os.path.getsize(work_path) if work_path else 0
+
+        # Perhaps a (Nextflow-specific) absolute path?
+        if not size:
+            if file.startswith('file://'):
+                abs_path = pathlib.Path(file[len('file://'):])
+                try:
+                    size = os.path.getsize(abs_path)
+                except (OSError, ValueError):
+                    size = 0
+        return size
+
+
+    def _filter_file_ids(self, ids):
         file_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') in ('File','CreativeWork'), ids))
         # Ignore the files that start with http:// or https://
         file_ids = [x for x in file_ids if not x.startswith("http://")]
@@ -369,50 +367,8 @@ class ROCrateLogsParser(LogsParser):
 
         return to_return
 
-    import csv
-    from datetime import datetime, timedelta
-
-    def _load_nextflow_trace(self, trace_file: pathlib.Path) -> dict:
-        """
-        Parse a Nextflow execution trace file.
-        Returns dict of task_name -> (start_iso, end_iso).
-        """
-        times = {}
-        with open(trace_file, newline='') as f:
-            reader = csv.DictReader(f, delimiter='\t')
-            for row in reader:
-                name = row['name'].strip()
-                submit_str = row['submit'].strip()
-                duration_str = row['duration'].strip()
-                if not submit_str or not duration_str:
-                    continue
-                try:
-                    start = datetime.strptime(submit_str, '%Y-%m-%d %H:%M:%S.%f')
-                    duration_sec = self._parse_duration(duration_str)
-                    end = start + timedelta(seconds=duration_sec)
-                    # Store as ISO strings to match _time_diff expectations
-                    times[name] = (start.isoformat(), end.isoformat())
-                except Exception:
-                    continue
-        return times
-
-    def _parse_duration(self, duration_str: str) -> float:
-        """Parse Nextflow duration strings like '2m 40s', '519ms', '1h 3m 2s'."""
-        import re
-        total = 0.0
-        for value, unit in re.findall(r'(\d+(?:\.\d+)?)\s*(h|m|s|ms)', duration_str):
-            value = float(value)
-            if unit == 'h':
-                total += value * 3600
-            elif unit == 'm':
-                total += value * 60
-            elif unit == 's':
-                total += value
-            elif unit == 'ms':
-                total += value / 1000
-        return total
     
-    def _resolve_task_file_path(self, file_id: str) -> Optional[pathlib.Path]:
+    def _resolve_nextflow_task_file_path(self, file_id: str) -> Optional[pathlib.Path]:
         """Resolve a #task/<hash>/<filename> id to its work/ directory path."""
         if not file_id.startswith('#task/'):
             return None
@@ -429,9 +385,11 @@ class ROCrateLogsParser(LogsParser):
             return work_path
         return None
 
-    def _sanitize_task_id(self, task_id: str) -> str:
+    @staticmethod
+    def _sanitize_task_id(task_id: str) -> str:
         """Replace characters not allowed in WfCommons task IDs."""
         return task_id.replace(' ', '_').replace('(', '_').replace(')', '_')
+
 
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])

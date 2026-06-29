@@ -8,19 +8,11 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-import json
-import itertools
-import math
-import os
-import glob
 import pathlib
-import csv
 
-from datetime import datetime, timezone, timedelta
 from logging import Logger
 from typing import List, Optional
 
-from wfcommons.wfinstances import ROCrateLogsParser
 
 from .abstract_logs_parser import LogsParser
 from ...common.file import File
@@ -64,7 +56,8 @@ class StreamflowLogsParser(LogsParser):
                  ) -> None:
         """Create an object of the RO crate parser."""
 
-        super().__init__('Streamflow', streamflow_version, wms_url = 'https://w3id.org/workflowhub/workflow-ro-crate/1.0', description = description, logger = logger)
+        super().__init__('Streamflow', wms_version=streamflow_version, wms_url = 'https://w3id.org/workflowhub/workflow-ro-crate/1.0',
+                         description=description, logger=logger)
         self.crate_dir = crate_dir
         self.steps_to_ignore: list[str] = steps_to_ignore or []
         self.file_extensions_to_ignore: list[str] = file_extensions_to_ignore or []
@@ -82,6 +75,7 @@ class StreamflowLogsParser(LogsParser):
         """
 
         # Create an RO-Create parser
+        from wfcommons.wfinstances import ROCrateLogsParser
         ro_crate_parser = ROCrateLogsParser(self.crate_dir, self.description, self.logger,
                                             self.steps_to_ignore,
                                             self.file_extensions_to_ignore,
