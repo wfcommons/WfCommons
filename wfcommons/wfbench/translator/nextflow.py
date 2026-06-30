@@ -179,7 +179,7 @@ class NextflowTranslator(Translator):
                "}\n\n"
 
     def _generate_task_process(self, task: Task) -> tuple[str, str]:
-        function_name = task.task_id.replace(".", "_").replace("-", "_")
+        function_name = self._sanitize_string(task.task_id)
         code = f"process {function_name}()" + "{\n"
         code += "\tstoreDir \"${params.pwd_abs}/data\"\n"
 
@@ -303,7 +303,8 @@ trace {
             if len(task.input_files) > 1:
                 code += f"\tdef {function_name}_input = Channel.empty()\n"
                 for f in task.input_files:
-                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id.replace(".","_").replace("-","_")})\n"
+                    sanitized_file_id = self._sanitize_string(f.file_id)
+                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{sanitized_file_id})\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
             else:
                 input_file_id = task.input_files[0].file_id
@@ -493,7 +494,7 @@ trace {
 
         # Call each task's process
         for task in tasks:
-            function_name = task.task_id.replace(".", "_").replace("-", "_")
+            function_name = self._sanitize_string(task.task_id)
             code += self._generate_task_call(
                 task=task,
                 function_name=function_name,
@@ -506,6 +507,9 @@ trace {
         code += "}\n\n"
 
         return code
+
+    def _sanitize_string(self, string: str) -> str:
+        return string.replace(".", "_").replace("-", "_")
 
     # =========================================================================
     # Single-file mode methods
@@ -521,7 +525,7 @@ trace {
     #     :rtype: str
     #     """
     #     code = f"// Function to call task {task.task_id}\n"
-    #     function_name = task.task_id.replace(".", "_").replace("-", "_")
+    #     function_name = self._sanitize_string(task.task_id)
     #     code += f"def function_{function_name}(Map inputs) " + "{\n"
     #     code += "\tdef outputs = inputs.clone()\n"
     #     code += self._generate_task_call(
@@ -602,7 +606,7 @@ trace {
     #         code += "\tflowcept()\n"
     #     code += "\tresults = bootstrap()\n"
     #     for task in sorted_tasks:
-    #         function_name = task.task_id.replace(".", "_").replace("-", "_")
+    #         function_name = self._sanitize_string(task.task_id)
     #         code += f"\tresults = function_{function_name}(results)\n"
     #     code += "}\n"
     #     return code
