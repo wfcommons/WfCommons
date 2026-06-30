@@ -30,9 +30,7 @@ class NextflowTranslator(Translator):
 
     :param workflow: Workflow benchmark object or path to the workflow benchmark JSON instance.
     :type workflow: Union[Workflow, pathlib.Path]
-    :param use_subworkflows: Whether to split the workflow into multiple module files.
-    :type use_subworkflows: bool
-    :param max_tasks_per_subworkflow: Maximum number of tasks per module file when using subworkflows.
+    :param max_tasks_per_subworkflow: Maximum number of tasks per module file when using subworkflows (default: 500).
     :type max_tasks_per_subworkflow: int
     :param max_parents_threshold: Tasks with more parents than this get their own module (default: 100).
     :type max_parents_threshold: int
@@ -43,14 +41,12 @@ class NextflowTranslator(Translator):
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 use_subworkflows: bool = False,
-                 max_tasks_per_subworkflow: int = 1000,
+                 max_tasks_per_subworkflow: int = 500,
                  max_parents_threshold: Optional[int] = 100,
                  slurm: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the translator."""
         super().__init__(workflow, logger)
-        self.use_subworkflows = use_subworkflows
         self.max_tasks_per_subworkflow = max_tasks_per_subworkflow
         self.max_parents_threshold = max_parents_threshold
         self.slurm = slurm
@@ -87,16 +83,13 @@ class NextflowTranslator(Translator):
         for task in sorted_tasks:
             self._create_task_script(task)
 
-        if self.use_subworkflows:
-            self._translate_with_subworkflows(output_folder, sorted_tasks)
-        else:
-            self._translate_single_file(output_folder, sorted_tasks)
+        self._translate_with_subworkflows(output_folder, sorted_tasks)
 
         # Create the config file for the nf-prov plugin
         self._write_nf_prov_plugin_config_file(output_folder)
 
         # Create the README file
-        self._write_readme_file(output_folder, self.use_subworkflows)
+        self._write_readme_file(output_folder)
 
     # =========================================================================
     # Common methods
@@ -219,30 +212,7 @@ class NextflowTranslator(Translator):
         code += "}\n\n"
         return function_name, code
 
-    def _generate_task_function(self, task: Task) -> str:
-        """
-        Generate the code for starting a task's Nextflow process, as a Nextflow function.
 
-        :param task: The task.
-        :type task: Task
-        :return: The code.
-        :rtype: str
-        """
-        code = f"// Function to call task {task.task_id}\n"
-        function_name = task.task_id.replace(".", "_").replace("-", "_")
-        code += f"def function_{function_name}(Map inputs) " + "{\n"
-        code += "\tdef outputs = inputs.clone()\n"
-        code += self._generate_task_call(
-            task=task,
-            function_name=function_name,
-            inputs_var="inputs",
-            results_var="outputs",
-            include_comment=False,
-        )
-        code += "\treturn outputs\n"
-        code += "}\n\n"
-
-        return code
 
     def _write_nf_prov_plugin_config_file(selfself, output_folder: pathlib.Path):
         nf_prov_plugin_config_file = output_folder.joinpath("nextflow-wfcommons.config")
@@ -268,23 +238,20 @@ trace {
 }
 """)
 
-    def _write_readme_file(self, output_folder: pathlib.Path, use_subworkflows: bool) -> None:
+    def _write_readme_file(self, output_folder: pathlib.Path) -> None:
         """
         Write the README file.
 
         :param output_folder: The path of the output folder.
         :type output_folder: pathlib.Path
-        :param use_subworkflows: Whether subworkflows were used.
-        :type use_subworkflows: bool
         """
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
             out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
             out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./nextflow-wfcommons.config\n\n")
-            if use_subworkflows:
-                out.write(f"This workflow has been split into {len(self.subworkflows)} module file(s), ")
-                out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
-                out.write(f"\nModule files are located in the 'modules/' directory.\n")
+            out.write(f"This workflow has been split into {len(self.subworkflows)} module file(s), ")
+            out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
+            out.write(f"\nModule files are located in the 'modules/' directory.\n")
 
     def _write_nf_config_file(self, output_folder: pathlib.Path) -> None:
         """
@@ -316,80 +283,6 @@ trace {
 }
 """)
 
-    # =========================================================================
-    # Single-file mode methods
-    # =========================================================================
-
-    def _translate_single_file(self, output_folder: pathlib.Path, sorted_tasks: List[Task]) -> None:
-        """
-        Generate a single-file Nextflow workflow.
-
-        :param output_folder: The output folder path.
-        :type output_folder: pathlib.Path
-        :param sorted_tasks: Tasks in topological order.
-        :type sorted_tasks: List[Task]
-        """
-
-        # Create modules directory
-        self.modules_dir = output_folder.joinpath("modules")
-        self.modules_dir.mkdir(exist_ok=True)
-
-        self.script = ""
-
-        # Add Flowcept code if enabled
-        if self.workflow.workflow_id:
-            self.script += self._generate_flowcept_code()
-
-        # Output the code for each task
-        for task in sorted_tasks:
-            function_code = self._generate_task_function(task)
-            self.script += function_code + "\n"
-
-        # Output the code for the workflow
-        self.script += self._generate_single_file_workflow_code(sorted_tasks)
-
-        # Merge with template and write
-        run_workflow_code = self._merge_codelines("templates/nextflow/workflow.nf", self.script)
-        self._write_output_file(run_workflow_code, output_folder.joinpath("workflow.nf"))
-
-    def _generate_single_file_workflow_code(self, sorted_tasks: List[Task]) -> str:
-        """
-        Generate the workflow code for single-file mode.
-
-        :param sorted_tasks: The tasks in topological order.
-        :type sorted_tasks: List[Task]
-        :return: The code.
-        :rtype: str
-        """
-        code = ""
-
-        # Generate bootstrap function
-        code += ("// Bootstrap function\n"
-                 "def bootstrap() {\n"
-                 "\tdef outputs = [:]\n"
-                 "\treturn outputs\n"
-                 "}\n\n")
-
-        # Generate all task functions
-        for task in sorted_tasks:
-            function_name, generated_code = self._generate_task_process(task)
-            with open(self.modules_dir / f"{function_name}.nf", "w") as out:
-                out.write(generated_code)
-            code += f"include {{ {function_name} }} from './modules/{function_name}.nf'\n"
-            # function_code = self._generate_task_function(task)
-            # code += function_code
-        code += "\n"
-
-        # Generate workflow function
-        code += "workflow {\n"
-        if self.workflow.workflow_id:
-            code += "\tflowcept()\n"
-        code += "\tresults = bootstrap()\n"
-        for task in sorted_tasks:
-            function_name = task.task_id.replace(".", "_").replace("-", "_")
-            code += f"\tresults = function_{function_name}(results)\n"
-        code += "}\n"
-        return code
 
 
     def _generate_task_call(self,
@@ -613,3 +506,103 @@ trace {
         code += "}\n\n"
 
         return code
+
+    # =========================================================================
+    # Single-file mode methods
+    # =========================================================================
+
+    # def _generate_task_function(self, task: Task) -> str:
+    #     """
+    #     Generate the code for starting a task's Nextflow process, as a Nextflow function.
+    #
+    #     :param task: The task.
+    #     :type task: Task
+    #     :return: The code.
+    #     :rtype: str
+    #     """
+    #     code = f"// Function to call task {task.task_id}\n"
+    #     function_name = task.task_id.replace(".", "_").replace("-", "_")
+    #     code += f"def function_{function_name}(Map inputs) " + "{\n"
+    #     code += "\tdef outputs = inputs.clone()\n"
+    #     code += self._generate_task_call(
+    #         task=task,
+    #         function_name=function_name,
+    #         inputs_var="inputs",
+    #         results_var="outputs",
+    #         include_comment=False,
+    #     )
+    #     code += "\treturn outputs\n"
+    #     code += "}\n\n"
+    #
+    #     return code
+
+    # def _translate_single_file(self, output_folder: pathlib.Path, sorted_tasks: List[Task]) -> None:
+    #     """
+    #     Generate a single-file Nextflow workflow.
+    #
+    #     :param output_folder: The output folder path.
+    #     :type output_folder: pathlib.Path
+    #     :param sorted_tasks: Tasks in topological order.
+    #     :type sorted_tasks: List[Task]
+    #     """
+    #
+    #     # Create modules directory
+    #     self.modules_dir = output_folder.joinpath("modules")
+    #     self.modules_dir.mkdir(exist_ok=True)
+    #
+    #     self.script = ""
+    #
+    #     # Add Flowcept code if enabled
+    #     if self.workflow.workflow_id:
+    #         self.script += self._generate_flowcept_code()
+    #
+    #     # Output the code for each task
+    #     for task in sorted_tasks:
+    #         function_code = self._generate_task_function(task)
+    #         self.script += function_code + "\n"
+    #
+    #     # Output the code for the workflow
+    #     self.script += self._generate_single_file_workflow_code(sorted_tasks)
+    #
+    #     # Merge with template and write
+    #     run_workflow_code = self._merge_codelines("templates/nextflow/workflow.nf", self.script)
+    #     self._write_output_file(run_workflow_code, output_folder.joinpath("workflow.nf"))
+
+    # def _generate_single_file_workflow_code(self, sorted_tasks: List[Task]) -> str:
+    #     """
+    #     Generate the workflow code for single-file mode.
+    #
+    #     :param sorted_tasks: The tasks in topological order.
+    #     :type sorted_tasks: List[Task]
+    #     :return: The code.
+    #     :rtype: str
+    #     """
+    #     code = ""
+    #
+    #     # Generate bootstrap function
+    #     code += ("// Bootstrap function\n"
+    #              "def bootstrap() {\n"
+    #              "\tdef outputs = [:]\n"
+    #              "\treturn outputs\n"
+    #              "}\n\n")
+    #
+    #     # Generate all task functions
+    #     for task in sorted_tasks:
+    #         function_name, generated_code = self._generate_task_process(task)
+    #         with open(self.modules_dir / f"{function_name}.nf", "w") as out:
+    #             out.write(generated_code)
+    #         code += f"include {{ {function_name} }} from './modules/{function_name}.nf'\n"
+    #         # function_code = self._generate_task_function(task)
+    #         # code += function_code
+    #     code += "\n"
+    #
+    #     # Generate workflow function
+    #     code += "workflow {\n"
+    #     if self.workflow.workflow_id:
+    #         code += "\tflowcept()\n"
+    #     code += "\tresults = bootstrap()\n"
+    #     for task in sorted_tasks:
+    #         function_name = task.task_id.replace(".", "_").replace("-", "_")
+    #         code += f"\tresults = function_{function_name}(results)\n"
+    #     code += "}\n"
+    #     return code
