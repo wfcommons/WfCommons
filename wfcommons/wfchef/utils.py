@@ -11,12 +11,12 @@
 import json
 import pathlib
 
+import matplotlib as mpl
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from hashlib import sha256
-from matplotlib import colormaps
 from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -213,8 +213,7 @@ def draw(g: nx.DiGraph,
         node_border_colors.get(src) if node_border_colors.get(src, -1) == node_border_colors.get(dst, 1) else "black"
         for src, dst in g.edges
     ]
-    # cmap = cm.get_cmap('rainbow', len(type_set))
-    cmap = colormaps.get_cmap('rainbow')
+    cmap = mpl.colormaps['rainbow'].resampled(len(type_set))
     nx.draw(g, pos, node_size=node_size, node_color=node_color, edgecolors=edgecolors, edge_color=edge_color,
             linewidths=linewidths, cmap=cmap, ax=ax, with_labels=with_labels)
     color_lines = [mpatches.Patch(color=cmap(types[t]), label=t) for t in type_set]
