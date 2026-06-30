@@ -186,7 +186,7 @@ class NextflowTranslator(Translator):
                "}\n\n"
 
     def _generate_task_process(self, task: Task) -> tuple[str, str]:
-        function_name = task.task_id.replace(".", "_")
+        function_name = task.task_id.replace(".", "_").replace("-", "_")
         code = f"process {function_name}()" + "{\n"
         code += "\tstoreDir \"${params.pwd_abs}/data\"\n"
 
@@ -600,7 +600,7 @@ trace {
 
         # Call each task's process
         for task in tasks:
-            function_name = task.task_id.replace(".", "_")
+            function_name = task.task_id.replace(".", "_").replace("-", "_")
             code += self._generate_task_call(
                 task=task,
                 function_name=function_name,
