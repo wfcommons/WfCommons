@@ -229,7 +229,7 @@ class NextflowTranslator(Translator):
         :rtype: str
         """
         code = f"// Function to call task {task.task_id}\n"
-        function_name = task.task_id.replace(".", "_")
+        function_name = task.task_id.replace(".", "_").replace("-", "_")
         code += f"def function_{function_name}(Map inputs) " + "{\n"
         code += "\tdef outputs = inputs.clone()\n"
         code += self._generate_task_call(
@@ -386,7 +386,7 @@ trace {
             code += "\tflowcept()\n"
         code += "\tresults = bootstrap()\n"
         for task in sorted_tasks:
-            function_name = task.task_id.replace(".", "_")
+            function_name = task.task_id.replace(".", "_").replace("-", "_")
             code += f"\tresults = function_{function_name}(results)\n"
         code += "}\n"
         return code
