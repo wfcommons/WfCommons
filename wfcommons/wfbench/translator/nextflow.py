@@ -410,7 +410,7 @@ trace {
             if len(task.input_files) > 1:
                 code += f"\tdef {function_name}_input = Channel.empty()\n"
                 for f in task.input_files:
-                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id})\n"
+                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{f.file_id.replace(".","_").replace("-","_")})\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
             else:
                 input_file_id = task.input_files[0].file_id
