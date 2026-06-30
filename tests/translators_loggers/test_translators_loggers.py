@@ -41,8 +41,8 @@ from wfcommons.wfbench import StreamflowTranslator
 from wfcommons.wfbench import PegasusTranslator
 from wfcommons.wfbench import SwiftTTranslator
 
-from wfcommons.wfinstances import PegasusLogsParser
-from wfcommons.wfinstances.logs import TaskVineLogsParser
+from wfcommons.wfinstances import PegasusLogsParser, NextflowLogsParser
+from wfcommons.wfinstances.logs import TaskVineLogsParser, StreamflowLogsParser
 from wfcommons.wfinstances.logs import MakeflowLogsParser
 from wfcommons.wfinstances.logs import ROCrateLogsParser
 from wfcommons.wfinstances.logs import SnakemakeLogsParser
@@ -135,7 +135,6 @@ additional_setup_methods = {
     "dask": noop,
     "parsl": noop,
     "nextflow": noop,
-    "nextflow_subworkflow": noop,
     "airflow": noop,
     "bash": noop,
     "taskvine": _additional_setup_taskvine,
@@ -172,7 +171,7 @@ def run_workflow_parsl(container, num_tasks, str_dirpath):
 
 def run_workflow_nextflow(container, num_tasks, str_dirpath):
     # Run the workflow!
-    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd .", user="wfcommons", stdout=True, stderr=True)
+    exit_code, output = container.exec_run(f"nextflow run ./workflow.nf --pwd . -c ./nextflow-wfcommons.config", user="wfcommons", stdout=True, stderr=True)
     ignored, task_exit_codes = container.exec_run("find . -name .exitcode -exec cat {} \;", user="wfcommons", stdout=True, stderr=True)
     # Check sanity
     if exit_code != 0:
@@ -289,7 +288,6 @@ run_workflow_methods = {
     "dask": run_workflow_dask,
     "parsl": run_workflow_parsl,
     "nextflow": run_workflow_nextflow,
-    "nextflow_subworkflow": run_workflow_nextflow,
     "airflow": run_workflow_airflow,
     "bash": run_workflow_bash,
     "taskvine": run_workflow_taskvine,
@@ -305,7 +303,6 @@ translator_classes = {
     "dask": DaskTranslator,
     "parsl": ParslTranslator,
     "nextflow": NextflowTranslator,
-    "nextflow_subworkflow": NextflowTranslator,
     "airflow": AirflowTranslator,
     "bash": BashTranslator,
     "taskvine": TaskVineTranslator,
@@ -327,7 +324,6 @@ class TestTranslators:
            "dask",
            "parsl",
            "nextflow",
-           "nextflow_subworkflow",
            "airflow",
            "bash",
            "taskvine",
@@ -351,10 +347,7 @@ class TestTranslators:
 
         # Perform the translation
         sys.stderr.write(f"\n[{backend}] Translating workflow...\n")
-        if backend == "nextflow_subworkflow":
-            translator = translator_classes[backend](benchmark.workflow, use_subworkflows=True, max_tasks_per_subworkflow=10)
-        else:
-            translator = translator_classes[backend](benchmark.workflow)
+        translator = translator_classes[backend](benchmark.workflow)
         translator.translate(output_folder=dirpath)
 
         # Make the directory that holds the translation world-writable,
@@ -362,7 +355,7 @@ class TestTranslators:
         _recursive_chmod(dirpath, 0o777)
 
         # Start the Docker container
-        container = _start_docker_container(backend if backend != "nextflow_subworkflow" else "nextflow", str_dirpath, str_dirpath, str_dirpath + "bin/")
+        container = _start_docker_container(backend, str_dirpath, str_dirpath, str_dirpath + "bin/")
 
         # Do whatever necessary setup
         additional_setup_methods[backend](container)
@@ -388,12 +381,16 @@ class TestTranslators:
         elif backend == "makeflow":
             parser = MakeflowLogsParser(execution_dir = dirpath, resource_monitor_logs_dir = dirpath / "monitor_data/")
         elif backend == "streamflow":
-            parser = ROCrateLogsParser(dirpath / "RO-Crate",
+            parser = StreamflowLogsParser(dirpath / "RO-Crate",
+                                       streamflow_version="whatever",
                                        steps_to_ignore=["main.cwl#compile_output_files", "main.cwl#compile_log_files"],
                                        file_extensions_to_ignore=[".out", ".err"],
                                        instruments_to_ignore=["shell.cwl"])
+        elif backend == "nextflow":
+            parser = NextflowLogsParser(dirpath, nextflow_version="whatever")
         elif backend == "snakemake":
             parser = SnakemakeLogsParser(dirpath, snkmt_db=dirpath / "snkmt.sqlite", rules_to_ignore=["all_wfbench_tasks"])
+
 
         if parser is not None:
             sys.stderr.write(f"[{backend}] Parsing the logs...\n")
@@ -402,6 +399,9 @@ class TestTranslators:
             original_workflow : Workflow = benchmark.workflow
 
             _compare_workflows(original_workflow, reconstructed_workflow)
+
+#        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+#        time.sleep(1000000)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)

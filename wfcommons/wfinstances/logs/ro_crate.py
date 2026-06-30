@@ -12,9 +12,11 @@ import json
 import itertools
 import math
 import os
+import glob
 import pathlib
+import csv
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from logging import Logger
 from typing import List, Optional
 
@@ -45,30 +47,40 @@ class ROCrateLogsParser(LogsParser):
     :type file_extensions_to_ignore: Optional[list[str]]
     :param instruments_to_ignore: Names of instruments that should be ignored in the translation
     :type instruments_to_ignore: Optional[list[str]]
+    :param task_runtimes: A dictionary of task start/end times, keyed by task name (this can be passed
+                          in when the ro-crate-metadata.json file does not record task execution time stamps
+    :type task_runtimes: dict[str, tuple[str, str]
+    :param file_sizes: A dictionary of file sizes, keyed by file name (this can be passed in when the ro-crate-metadata.json
+                          file does not record file sizes)
     """
 
     def __init__(self,
                  crate_dir: pathlib.Path,
+                 wms_name: str,
+                 wms_version: Optional[str] = "unknown",
+                 wms_url: Optional[str] = None,
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
                  steps_to_ignore: Optional[list[str]] = None,
                  file_extensions_to_ignore: Optional[list[str]] = None,
                  instruments_to_ignore: Optional[list[str]] = None,
+                 task_runtimes: Optional[dict[str, tuple[str, str]]] = None,
+                 file_sizes: Optional[dict[str, int]] = None,
                  ) -> None:
         """Create an object of the RO crate parser."""
 
-        super().__init__('Streamflow-ROCrate', 'https://w3id.org/workflowhub/workflow-ro-crate/1.0', description, logger)
+        super().__init__(wms_name=wms_name, wms_version=wms_version, wms_url=wms_url, description=description, logger=logger)
 
         # Sanity check
         if not crate_dir.is_dir():
             raise OSError(f'The provided path does not exist or is not a folder: {crate_dir}')
+        self.crate_dir: pathlib.Path = crate_dir
 
+        # Find the metadata file
         metadata: pathlib.Path = crate_dir / 'ro-crate-metadata.json'
         if not metadata.is_file():
-            raise OSError(f'Unable to find ro-crate-metadata.json file in: {crate_dir}')
+            raise OSError(f'Unable to find ro-crate-metadata.json file in: {self.crate_dir}')
         self.metadata = metadata
-
-        self.crate_dir: pathlib.Path = crate_dir
 
         self.file_objects = {}
 
@@ -78,6 +90,8 @@ class ROCrateLogsParser(LogsParser):
         self.steps_to_ignore : list[str] = steps_to_ignore or []
         self.file_extensions_to_ignore : list[str] = file_extensions_to_ignore or []
         self.instruments_to_ignore : list[str] = instruments_to_ignore or []
+        self.task_runtimes : dict[str, tuple[str, str]] = task_runtimes or {}
+        self.file_sizes : dict[str, int] = file_sizes or {}
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -108,6 +122,17 @@ class ROCrateLogsParser(LogsParser):
         # Dictionary of application data files
         self._construct_data_file_id_name_map()
 
+        # In Nextflow-generated RO-Crates, special #publish tasks much be used to find
+        # out file sizes
+        self.nextflow_publish_map = {}
+        for item in self.graph_data:
+            if item.get('@type') == 'CreateAction' and item['@id'].startswith('#publish/'):
+                obj = item['object']
+                res = item['result']
+                obj_id = obj['@id'] if isinstance(obj, dict) else obj[0]['@id']
+                res_id = res['@id'] if isinstance(res, dict) else res[0]['@id']
+                self.nextflow_publish_map[obj_id] = res_id
+
         # Find id of the main workflow
         overview = self.lookup.get("./")
         main_workflow_id = overview.get("mainEntity").get("@id")
@@ -120,14 +145,14 @@ class ROCrateLogsParser(LogsParser):
 
     def _construct_data_file_id_name_map(self):
         for item in self.graph_data:
-            if item["@type"] != "File":
+            if item["@type"] != "File" and item["@type"] != "CreativeWork":
                 continue
             id = item["@id"]
-            if "alternateName" not in item:
-                continue
-            alternate_name = item["alternateName"]
+            #if "alternateName" not in item:
+            #    continue
+            #alternate_name = item["alternateName"]
+            alternate_name = item.get("alternateName", id)
             self.data_file_id_name_map[id] = alternate_name
-
 
     def _create_tasks(self, create_actions, main_workflow_id):
         # Object to track dependencies between tasks based on files
@@ -138,9 +163,19 @@ class ROCrateLogsParser(LogsParser):
         for create_action in create_actions:
             # Handle overall workflow create_action then skip
             if create_action["name"] == f"Run of workflow/{main_workflow_id}":
+                # Streamflow-generated RO-Crate
+                self._process_main_workflow(create_action)
+                continue
+            elif "Nextflow workflow run" in create_action["name"]:
+                # Nextflow-generated RO-Crate
                 self._process_main_workflow(create_action)
                 continue
 
+            # Ignore all (Nextflow-generated) publish tasks if any
+            if create_action['@id'].startswith('#publish/'):
+                continue
+
+            # The prefix is "streamflow specific"
             create_action['name'] = create_action['name'].removeprefix("Run of workflow/")
             # print("***************************************")
             # print("DEALING WITH TASK:", create_action['name'])
@@ -154,26 +189,34 @@ class ROCrateLogsParser(LogsParser):
                 continue
 
             # Get all input & output for the create_action
-            input = [obj['@id'] for obj in create_action['object']]
-            output = [obj['@id'] for obj in create_action['result']]
+            input = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['object']]
+            output = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['result']]
 
             # Filter for actual files
             input_files = self._filter_file_ids(input)
             output_files = self._filter_file_ids(output)
 
+            # Figure out start/end times for the task
+            start_time = create_action.get('startTime')
+            end_time = create_action.get('endTime')
+            if not start_time or not end_time:
+                start_time, end_time = self.task_runtimes.get(create_action['name'], (None, None))
+
+            task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
 
             task = Task(name=create_action['name'],
                         # task_id=create_action['name'],
-                        task_id=create_action['name'] + "_" + create_action['@id'],
+                        task_id=task_id,
                         task_type=TaskType.COMPUTE,
-                        runtime=self._time_diff(create_action['startTime'], create_action['endTime']),
-                        executed_at=create_action['startTime'],
+                        runtime=self._time_diff(start_time, end_time),
+                        executed_at=create_action.get('startTime',''),
                         input_files=self._get_file_objects(input_files),
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
+
             self.workflow.add_task(task)
             # self.task_id_name_map[create_action['@id']] = create_action['name']
-            self.task_id_name_map[create_action['@id']] = create_action['name'] + "_" + create_action['@id']
+            self.task_id_name_map[create_action['@id']] = task_id
 
             # For each file, track which task(s) it is in/output for
             for infile in input_files:
@@ -193,10 +236,11 @@ class ROCrateLogsParser(LogsParser):
                 files[outfile]['out'].append(create_action['@id'])
 
             # For each task, track which 'instrument' it uses
-            instrument = create_action['instrument']['@id']
-            if instrument not in instruments:
-                instruments[instrument] = []
-            instruments[instrument].append(create_action['@id'])
+            if create_action.get('instrument'):
+                instrument = create_action['instrument']['@id']
+                if instrument not in instruments:
+                    instruments[instrument] = []
+                instruments[instrument].append(create_action['@id'])
 
         self._add_dependencies(files, instruments)
 
@@ -231,6 +275,8 @@ class ROCrateLogsParser(LogsParser):
                         self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
     def _time_diff(self, start_time, end_time):
+        if not start_time or not end_time:
+            return 0.0
         diff = datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
         return diff.total_seconds()
 
@@ -239,18 +285,68 @@ class ROCrateLogsParser(LogsParser):
         output = []
         for file in files:
             if file not in self.file_objects:
-                self.file_objects[file] = File(file_id=self.data_file_id_name_map[file],
-                                               size=os.path.getsize(f"{self.crate_dir}/{file}"),
-                                               logger=self.logger)
+                if file not in self.data_file_id_name_map:
+                    # File is referenced but not in the map — use its @id as the name
+                    self.logger.warning(f"File not in data_file_id_name_map, using @id as name: {file}") if self.logger else None
+                    file_name = file
+                else:
+                    file_name = self.data_file_id_name_map[file]
+
+                # Figure out the file size:
+
+                # Straight from the RO-Crate?
+                try:
+                    obj = self.lookup.get(file, {})
+                    size = int(obj.get('contentSize', 0))
+                except (OSError, ValueError):
+                    size = 0
+
+
+                # If this was Nextflow-generated, we may still get lucky
+                # if not size and len(self.nextflow_publish_map) != 0:
+                if not size:
+                    size = self._determine_nextflow_file_size(file)
+
+                # Create the file object
+                self.file_objects[file] = File(file_id=file_name,
+                                            size=size,
+                                            logger=self.logger)
             output.append(self.file_objects[file])
         return output
 
-    def _filter_file_ids(self, ids):
 
-        file_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'File', ids))
-        property_value_ids = list(filter(lambda x: self.lookup.get(x)['@type'] == 'PropertyValue', ids))
+    def _determine_nextflow_file_size(self, file):
+        resolved = self.nextflow_publish_map.get(file, file)
+        try:
+            size = os.path.getsize(self.crate_dir / resolved)
+        except (OSError, ValueError):
+            work_path = self._resolve_nextflow_task_file_path(file)
+            size = os.path.getsize(work_path) if work_path else 0
+
+        # Perhaps a (Nextflow-specific) absolute path?
+        if not size:
+            if file.startswith('file://'):
+                abs_path = pathlib.Path(file[len('file://'):])
+                try:
+                    size = os.path.getsize(abs_path)
+                except (OSError, ValueError):
+                    size = 0
+        return size
+
+
+    def _filter_file_ids(self, ids):
+        file_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') in ('File','CreativeWork'), ids))
+        # Ignore the files that start with http:// or https://
+        file_ids = [x for x in file_ids if not x.startswith("http://")]
+        file_ids = [x for x in file_ids if not x.startswith("https://")]
+        property_value_ids = list(filter(lambda x: (self.lookup.get(x) or {}).get('@type') == 'PropertyValue', ids))
         for property_value_id in property_value_ids:
             property_values = self.lookup.get(property_value_id)['value']
+            # If the lookup fails, ignore
+            if not property_values:
+                    continue
+            if not isinstance(property_values, (dict, list)):
+                continue
             if isinstance(property_values, dict):
                 property_values = [property_values]
 
@@ -276,6 +372,30 @@ class ROCrateLogsParser(LogsParser):
                 to_return.append(file_id)
 
         return to_return
+
+    
+    def _resolve_nextflow_task_file_path(self, file_id: str) -> Optional[pathlib.Path]:
+        """Resolve a #task/<hash>/<filename> id to its work/ directory path."""
+        if not file_id.startswith('#task/'):
+            return None
+        # Strip '#task/'
+        rest = file_id[len('#task/'):]
+        # rest is now '<hash>/<filename>'
+        hash_and_name = rest.split('/', 1)
+        if len(hash_and_name) != 2:
+            return None
+        task_hash, filename = hash_and_name
+        # Nextflow work dir structure: work/<first2chars>/<rest>/
+        work_path = self.crate_dir / 'work' / task_hash[:2] / task_hash[2:] / filename
+        if work_path.exists():
+            return work_path
+        return None
+
+    @staticmethod
+    def _sanitize_task_id(task_id: str) -> str:
+        """Replace characters not allowed in WfCommons task IDs."""
+        return task_id.replace(' ', '_').replace('(', '_').replace(')', '_')
+
 
     def _process_main_workflow(self, main_workflow):
         self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])

@@ -30,9 +30,9 @@ def validateParams() {
     if (params.pwd == null) {
         printUsage(msg = "Missing required parameter: --pwd", exit_code=1)
     }
-    pwd = file(params.pwd).toAbsolutePath().toString()
-    if (!file(pwd).exists()) {
-        printUsage(msg = "Directory not found: ${pwd}", exit_code=1)
+    params.pwd_abs = file(params.pwd).toAbsolutePath().toString()
+    if (!file(params.pwd_abs).exists()) {
+        printUsage(msg = "Directory not found: ${params.pwd_abs}", exit_code=1)
     }
 }
 
