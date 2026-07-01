@@ -377,9 +377,11 @@ def get_parser() -> argparse.ArgumentParser:
                                                      "Is only approximate since I/O time may make the overall time longer.")
     parser.add_argument("--mem", type=float, default=None, help="Maximum memory consumption (in MB).")
     parser.add_argument("--output-files", help="Output file names with sizes in bytes as a JSON dictionary "
-                                               "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
+                                               "(e.g., --output-files \"{\\\"file1\\\": 1024, \\\"file2\\\": 2048}\") OR "
+                                               "a path to a .json file that contains that dictionary.")
     parser.add_argument("--input-files", help="Input files names as a JSON array "
-                                              "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
+                                              "(e.g., --input-files \"[\\\"file3\\\", \\\"file4\\\"]\") OR "
+                                              "a path to a .json file that contains that array.")
     parser.add_argument("--verbose", action="store_true", help="Enable all log messages.")
     parser.add_argument("--debug", action="store_true", help="Enable debug log messages.")
     parser.add_argument("--with-flowcept", action="store_true", default=False, help="Enable Flowcept monitoring.")
@@ -497,11 +499,26 @@ def run(workflow_id, name, with_flowcept, verbose, debug, rundir, path_lock, pat
     # is read/written all at once at the beginning/end
 
     # Augment I/O read benchmarks for each input file
-    cleaned_input = "{}" if input_files is None else re.sub(r'\\+', '', input_files)
-    try:
-        input_files = json.loads(cleaned_input)
-    except json.JSONDecodeError as e:
-        log_error(f"Failed to decode --input-files JSON string argument: {e}")
+
+    if input_files and input_files.endswith(".json"):
+        try:
+            with open(input_files, "r") as f:
+                input_files = json.load(f)
+        except FileNotFoundError as e:
+            log_error(f"--input-files JSON file not found: {e}")
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode JSON in file '{input_files}': {e}")
+            sys.exit(1)
+    else:
+        cleaned_input = "[]" if input_files is None else re.sub(r'\\+', '', input_files)
+        try:
+            input_files = json.loads(cleaned_input)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode --input-files JSON string argument: {e}")
+            sys.exit(1)
+    if not isinstance(input_files, list):
+        log_error(f"--input-files must be a list JSON object, got {type(input_files).__name__}")
         sys.exit(1)
 
     for file_path in input_files:
@@ -520,11 +537,25 @@ def run(workflow_id, name, with_flowcept, verbose, debug, rundir, path_lock, pat
             steps[step]["io_read_benchmark"].add_read_operation(file_path, opened_file, num_bytes)
 
     # Augment I/O write benchmarks for each output file
-    cleaned_output = "{}" if output_files is None else re.sub(r'\\+', '', output_files)
-    try:
-        output_files = json.loads(cleaned_output)
-    except json.JSONDecodeError as e:
-        log_error(f"Failed to decode --output-files JSON string argument: {e}")
+    if output_files and output_files.endswith(".json"):
+        try:
+            with open(output_files, "r") as f:
+                output_files = json.load(f)
+        except FileNotFoundError as e:
+            log_error(f"--output-files JSON file not found: {e}")
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode JSON in file '{output_files}': {e}")
+            sys.exit(1)
+    else:
+        cleaned_output = "{}" if output_files is None else re.sub(r'\\+', '', output_files)
+        try:
+            output_files = json.loads(cleaned_output)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode --output-files JSON string argdument: {e}")
+            sys.exit(1)
+    if not isinstance(output_files, dict):
+        log_error(f"--output-files must be a dict JSON object, got {type(input_files).__name__}")
         sys.exit(1)
 
     for file_path, file_size in output_files.items():
