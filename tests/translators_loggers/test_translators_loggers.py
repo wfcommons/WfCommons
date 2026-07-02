@@ -400,8 +400,8 @@ class TestTranslators:
 
             _compare_workflows(original_workflow, reconstructed_workflow)
 
-        # sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
-        # time.sleep(1000000)
+        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+        time.sleep(1000000)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)

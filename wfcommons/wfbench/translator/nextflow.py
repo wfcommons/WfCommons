@@ -309,8 +309,6 @@ trace {
 }
 """)
 
-
-
     def _generate_task_call(self,
                             task: Task,
                             function_name: str,
@@ -327,16 +325,20 @@ trace {
 
         if has_parents:
             if len(task.input_files) > 1:
-                code += f"\tdef {function_name}_input = Channel.empty()\n"
-                for f in task.input_files:
-                    sanitized_file_id = self._sanitize_string(f.file_id)
-                    code += f"\t{function_name}_input = {function_name}_input.mix({inputs_var}.{sanitized_file_id})\n"
+                # Fan-in: write dependency keys to a text file and load them at
+                # runtime instead of unrolling one .mix() statement per parent.
+                # This keeps run_module_N's compiled bytecode size independent of
+                # fan-in width, avoiding Groovy's "method too long" (64KB) error.
+                deps_file = self._write_deps_file(function_name, task.input_files)
+                code += (f"\tdef {function_name}_deps = "
+                         f"file(\"${{params.pwd_abs}}/deps/{deps_file.name}\").readLines()\n")
+                code += (f"\tdef {function_name}_input = Channel.empty()"
+                         f".mix(*{function_name}_deps.collect {{ {inputs_var}[it] }})\n")
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
             else:
                 input_file_id = task.input_files[0].file_id
                 code += f"\tdef {function_name}_output = {function_name}({inputs_var}.{input_file_id})\n"
         elif len(task.input_files) > 0:
-            # Root task with workflow-level input files: create channels from params
             if len(task.input_files) > 1:
                 code += f"\tdef {function_name}_input = Channel.of(\n"
                 for f in task.input_files:
@@ -348,10 +350,8 @@ trace {
                 code += f"\tdef {function_name}_input = Channel.of(file(params.pwd_abs + '/data/{f.file_id}'))\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input)\n"
         else:
-            # Root task with no input files at all
             code += f"\tdef {function_name}_output = {function_name}()\n"
 
-        # Capture outputs only if this task has children
         if has_children:
             output_files = task.output_files
             if len(output_files) == 1:
@@ -362,6 +362,27 @@ trace {
         code += "\n"
 
         return code
+
+    def _write_deps_file(self, function_name: str, input_files: List) -> pathlib.Path:
+        """
+        Write the list of a fan-in task's dependency keys to a sidecar text file,
+        one raw file_id per line, so the module .nf file can load it with
+        readLines() at runtime instead of embedding thousands of statements.
+
+        :param function_name: The sanitized task/process name (used as the filename).
+        :type function_name: str
+        :param input_files: The task's input files.
+        :type input_files: List
+        :return: Path to the written deps file.
+        :rtype: pathlib.Path
+        """
+        deps_dir = self.output_folder.joinpath("deps")
+        deps_dir.mkdir(parents=True, exist_ok=True)
+        deps_file = deps_dir.joinpath(f"{function_name}.txt")
+        with open(deps_file, "w") as out:
+            for f in input_files:
+                out.write(f"{f.file_id}\n")
+        return deps_file
 
     def _generate_main_workflow(self) -> str:
         """
