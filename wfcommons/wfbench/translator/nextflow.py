@@ -17,6 +17,7 @@ from typing import List, Optional, Union
 from .abstract_translator import Translator
 from ...common import Workflow
 from ...common.task import Task
+import json
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -41,7 +42,7 @@ class NextflowTranslator(Translator):
     """
     def __init__(self,
                  workflow: Union[Workflow, pathlib.Path],
-                 max_tasks_per_subworkflow: int = 500,
+                 max_tasks_per_subworkflow: int = 100,
                  max_parents_threshold: Optional[int] = 100,
                  slurm: Optional[bool] = False,
                  logger: Optional[Logger] = None) -> None:
@@ -130,28 +131,37 @@ class NextflowTranslator(Translator):
         :param task: The task.
         :type task: Task
         """
-        code = "#!/bin/bash\n\n"
-        code += "WORKFLOW_DIR=$(dirname $(dirname $(realpath $0)))\n\n"
 
-        # Generate input spec
-        input_spec = "'\\["
-        for f in task.input_files:
-            input_spec += f"\"{self.output_folder.absolute()}/data/{f.file_id}\","
-        input_spec = input_spec[:-1] + "\\]'"
+        file_count_threshold = 10
 
-        # Generate output spec
-        output_spec = "'\\{"
-        for f in task.output_files:
-            output_spec += f"\"{self.output_folder.absolute()}/data/{f.file_id}\":{str(f.size)},"
-        output_spec = output_spec[:-1] + "\\}'"
+        input_files_list = [
+            f"{self.output_folder.absolute()}/data/{f.file_id}" for f in task.input_files
+        ]
+        output_files_dict = {
+            f"{self.output_folder.absolute()}/data/{f.file_id}": f.size for f in task.output_files
+        }
+
+        code = "#!/bin/bash\n"
+        code += "set -euo pipefail\n\n"
+        code += "WORKFLOW_DIR=$(dirname $(dirname $(realpath $0)))\n"
+        code += "TMP_FILES=()\n"
+        code += 'cleanup() { for f in "${TMP_FILES[@]}"; do rm -f "$f"; done; }\n'
+        # code += "trap cleanup EXIT\n\n"
+
+        input_arg, input_setup = self._build_spec_arg(
+            "input_files", input_files_list, file_count_threshold
+        )
+        output_arg, output_setup = self._build_spec_arg(
+            "output_files", output_files_dict, file_count_threshold
+        )
+        code += input_setup + output_setup
 
         code += f"$WORKFLOW_DIR/bin/{task.program} "
-
         for a in task.args:
             if "--output-files" in a:
-                code += f"--output-files {output_spec} "
+                code += f"--output-files {output_arg} "
             elif "--input-files" in a:
-                code += f"--input-files {input_spec} "
+                code += f"--input-files {input_arg} "
             else:
                 code += f"{a} "
         code += "\n"
@@ -159,6 +169,22 @@ class NextflowTranslator(Translator):
         script_file_path = self.output_folder.joinpath(f"bin/script_{task.task_id}.sh")
         with open(script_file_path, "w") as out:
             out.write(code)
+
+    def _build_spec_arg(self, name, data, threshold):
+        """Returns (arg_string_for_command_line, setup_code_to_prepend)."""
+        count = len(data)
+        if count > threshold:
+            var = name.upper()
+            setup = f"{var}=$(mktemp /tmp/{name}_XXXXXX.json)\n"
+            setup += f'TMP_FILES+=("${var}")\n'
+            setup += f'cat > "${var}" <<'"'"'EOF'"'"'\n'
+            setup += json.dumps(data) + "\n"
+            setup += "EOF\n\n"
+            return f'"${var}"', setup
+        else:
+            # inline, shell-quoted
+            arg = "'" + json.dumps(data) + "'"
+            return arg, ""
 
     def _generate_flowcept_code(self) -> str:
         """
