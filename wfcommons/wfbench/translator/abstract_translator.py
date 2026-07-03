@@ -94,6 +94,15 @@ class Translator(ABC):
         bin_folder.mkdir(exist_ok=True)
 
         shutil.copy(shutil.which("wfbench"), bin_folder)
+        # Fix the shebang in wfbench
+        with open(bin_folder / "wfbench", "r") as f:
+            lines = f.readlines()
+
+        if lines and lines[0].startswith("#!"):
+            lines[0] = "#!/usr/bin/env python3\n"
+            with open(bin_folder / "wfbench", "w") as f:
+                f.writelines(lines)
+
 
     def _generate_input_files(self, output_folder: pathlib.Path) -> None:
         """

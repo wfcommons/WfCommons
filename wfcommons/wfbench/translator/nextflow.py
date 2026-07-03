@@ -20,6 +20,7 @@ from ...common.task import Task
 import json
 
 this_dir = pathlib.Path(__file__).resolve().parent
+nextflow_config_file_name = "nextflow-wfcommons.config"
 
 
 class NextflowTranslator(Translator):
@@ -87,7 +88,7 @@ class NextflowTranslator(Translator):
         self._translate_with_subworkflows(output_folder, sorted_tasks)
 
         # Create the config file for the nf-prov plugin
-        self._write_nf_prov_plugin_config_file(output_folder)
+        self._write_nextflow_config_file(output_folder)
 
         # Create the README file
         self._write_readme_file(output_folder)
@@ -240,10 +241,11 @@ class NextflowTranslator(Translator):
 
 
 
-    def _write_nf_prov_plugin_config_file(selfself, output_folder: pathlib.Path):
-        nf_prov_plugin_config_file = output_folder.joinpath("nextflow-wfcommons.config")
+    def _write_nextflow_config_file(selfself, output_folder: pathlib.Path):
+        nf_prov_plugin_config_file = output_folder.joinpath(nextflow_config_file_name)
         with open(nf_prov_plugin_config_file, "w") as out:
-            out.write("""plugins {
+            out.write("""// nf-prov plugin setup
+plugins {
     id 'nf-prov'
 }
 
@@ -257,10 +259,29 @@ prov {
     }
 }
 
+// execution trace configuration
 trace {
             enabled = true
             file = "results/pipeline_info/execution_trace_${new java.util.Date().format('yyyy-MM-dd_HH-mm-ss')}.txt"
             overwrite = true
+}
+
+// Local executor configuration, which meant for testing and imposes several scalability limits
+// (adjust to suit your needs)
+executor {
+        $local {
+                cpus         = 8        // max concurrent OS-level task processes
+                memory       = '16 GB'  // total pool the scheduler budgets against
+                queueSize    = 50       // how many tasks the executor will pool/dispatch at once
+                pollInterval = '5 sec'
+                submitRateLimit = '20/1sec'  // throttle how fast new tasks get submitted
+        }
+}
+
+// limiting concurrency for testing scalability
+// (adjust to suit your needs)
+process {
+        cpus = 1   // default, but needed for executor.$local.cpus to actually gate concurrency
 }
 """)
 
@@ -273,9 +294,22 @@ trace {
         """
         readme_file_path = output_folder.joinpath("README")
         with open(readme_file_path, "w") as out:
-            out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n")
-            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./nextflow-wfcommons.config\n\n")
-            out.write(f"This workflow has been split into {len(self.subworkflows)} module file(s), ")
+            out.write(f"Run the workflow in directory {str(output_folder)} using the following command:\n\n")
+            out.write(f"\tnextflow run ./workflow.nf --pwd `pwd` -c ./{nextflow_config_file_name}\n\n")
+
+            out.write(f"Executions of large workflows can lead to large numbers of concurrent tasks, \n")
+            out.write(f"which can hit system concurrency limits and/or lead to out-of-memory errors in the JVM that runs\n")
+            out.write(f"the Nextflow engine. The f{nextflow_config_file_name} configuration file in this directory\n")
+            out.write(f"has settings to impose (pretty stringent) limits on concurrency and memory usage. These settings\n")
+            out.write(f"many not be appropriate for your purposes, you should INSPECT AND MODIFY settings in that file.\n\n")
+
+            out.write(f"If hitting JVM out-of-memory errors one possible solution, up to a point,\n")
+            out.write(f"is to define the NXF_OPTS environment variable, e.g.:\n")
+
+            out.write(f"\texport NXF_OPTS='-Xms2g -Xmx24g'\n\n")
+
+
+            out.write(f"Note that the workflow has been split into {len(self.subworkflows)} module file(s), ")
             out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
             out.write(f"\nModule files are located in the 'modules/' directory.\n")
 
@@ -286,7 +320,7 @@ trace {
         :param output_folder: The path of the output folder.
         :type output_folder: pathlib.Path
         """
-        file_path = output_folder.joinpath("nextflow-wfcommons.config")
+        file_path = output_folder.joinpath(nextflow_config_file_name)
         with open(file_path, "w") as out:
             out.write("""plugins {
     id 'nf-prov'
