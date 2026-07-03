@@ -50,7 +50,7 @@ from wfcommons.wfinstances.logs import SnakemakeLogsParser
 
 def _create_workflow_benchmark() -> (WorkflowBenchmark, int):
     # Create a workflow benchmark object to generate specifications based on a recipe (in /tmp/, whatever)
-    desired_num_tasks = 2000
+    desired_num_tasks = 45
     benchmark_full_path = f"/tmp/blast-benchmark-{desired_num_tasks}.json"
     # benchmark_full_path = f"/tmp/epigenomics-benchmark-{desired_num_tasks}.json"
     # benchmark_full_path = f"/tmp/bwa-benchmark-{desired_num_tasks}.json"
@@ -320,18 +320,18 @@ class TestTranslators:
     @pytest.mark.parametrize(
         "backend",
         [
-           #"swiftt",
-           #"dask",
-           #"parsl",
+           "swiftt",
+           "dask",
+           "parsl",
            "nextflow",
-           #"airflow",
-           #"bash",
-           #"taskvine",
-           #"makeflow",
-           #"snakemake",
-           #"cwl",
-           #"streamflow",
-           #"pegasus",
+           "airflow",
+           "bash",
+           "taskvine",
+           "makeflow",
+           "snakemake",
+           "cwl",
+           "streamflow",
+           "pegasus",
         ])
     @pytest.mark.unit
     # @pytest.mark.skip(reason="tmp")
@@ -400,8 +400,8 @@ class TestTranslators:
 
             _compare_workflows(original_workflow, reconstructed_workflow)
 
-        sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
-        time.sleep(1000000)
+        # sys.stderr.write("** SLEEPING INFINITY FOR DEBUGGING PURPOSES **\n")
+        # time.sleep(1000000)
 
         # Shutdown the container (weirdly, container is already shutdown by now... not sure how)
         _shutdown_docker_container_and_remove_image(container)
