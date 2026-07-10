@@ -25,8 +25,9 @@ from ...common.workflow import Workflow
 
 class NextflowLogsParser(LogsParser):
     """"
-    Parse Nextflow execution directory to generate a workflow trace. The workflow
-    must have been executed with two features enabled: 1) the nf-prov plugin, and
+    Parse Nextflow execution directory to generate a workflow trace. Note that the workflow
+    reconstruction is not perfect, and will likely only capture file-based data dependencies.
+    The workflow must have been executed with two features enabled: 1) the nf-prov plugin, and
     2) execution tracing. This can be achieved by invoking Nextflow with a config
     file, e.g.::
 
@@ -60,6 +61,8 @@ class NextflowLogsParser(LogsParser):
     :type execution_dir: pathlib.Path
     :param nextflow_version: The Nextflow version used to execute the workflow
     :type nextflow_version: str
+    :param trace_file_name_pattern: The trace file name pattern to find the trace file (default: "*trace*.txt")
+    :type trace_file_name_pattern: str
     :param description: Workflow instance description.
     :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
@@ -69,6 +72,7 @@ class NextflowLogsParser(LogsParser):
     def __init__(self,
                  execution_dir: pathlib.Path,
                  nextflow_version: str,
+                 trace_file_name_pattern: Optional[str] = "*trace*.txt",
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the nextflow log parser."""
@@ -78,8 +82,8 @@ class NextflowLogsParser(LogsParser):
         self.execution_dir = execution_dir
 
         # Load the Nextflow execution trace, and create a task runtime dictionary
-        nextflow_execution_trace_files = list(self.execution_dir.rglob("execution_trace_*.txt"))
-        if len(nextflow_execution_trace_files) == 0:
+        self.nextflow_execution_trace_files = list(self.execution_dir.rglob(trace_file_name_pattern))
+        if len(self.nextflow_execution_trace_files) == 0:
             raise FileNotFoundError("No execution_trace_*.txt file found in Nextflow execution directory.")
 
 
@@ -94,11 +98,8 @@ class NextflowLogsParser(LogsParser):
         :rtype: Workflow
         """
 
-        # Parse the Nextflow execution trace to create a dict of task runtimes
-        nextflow_execution_trace_files = list(self.execution_dir.rglob("execution_trace_*.txt"))
-        if len(nextflow_execution_trace_files) == 0:
-            raise FileNotFoundError("No execution_trace_*.txt file found in Nextflow execution directory.")
-        nextflow_execution_trace_file: pathlib.Path = max(nextflow_execution_trace_files,
+        # Parse the Nextflow (most recent) execution trace file to create a dict of task runtimes
+        nextflow_execution_trace_file: pathlib.Path = max(self.nextflow_execution_trace_files,
                                                           key=lambda p: p.stat().st_mtime)
         nextflow_task_runtimes = self._load_nextflow_trace(nextflow_execution_trace_file)
 

@@ -299,19 +299,20 @@ process {
 
             out.write(f"Executions of large workflows can lead to large numbers of concurrent tasks, \n")
             out.write(f"which can hit system concurrency limits and/or lead to out-of-memory errors in the JVM that runs\n")
-            out.write(f"the Nextflow engine. The f{nextflow_config_file_name} configuration file in this directory\n")
+            out.write(f"the Nextflow engine. The {nextflow_config_file_name} configuration file in this directory\n")
             out.write(f"has settings to impose (pretty stringent) limits on concurrency and memory usage. These settings\n")
-            out.write(f"many not be appropriate for your purposes, you should INSPECT AND MODIFY settings in that file.\n\n")
+            out.write(f"many not be appropriate for your purposes, you should INSPECT AND MODIFY the settings in that file.\n\n")
 
-            out.write(f"If hitting JVM out-of-memory errors one possible solution, up to a point,\n")
-            out.write(f"is to define the NXF_OPTS environment variable, e.g.:\n")
+            out.write(f"If hitting JVM out-of-memory errors one possible solution, up to a point, it to define\n")
+            out.write(f"the NXF_OPTS environment variable, e.g.:\n\n")
 
             out.write(f"\texport NXF_OPTS='-Xms2g -Xmx24g'\n\n")
 
 
-            out.write(f"Note that the workflow has been split into {len(self.subworkflows)} module file(s), ")
-            out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks.\n")
-            out.write(f"\nModule files are located in the 'modules/' directory.\n")
+            out.write(f"Note that the Nextflow workflow has been split into {len(self.subworkflows)} module file(s), ")
+            out.write(f"each containing a maximum of {self.max_tasks_per_subworkflow} tasks. \n")
+            out.write(f"This is to avoid the 'code too long' limit of Groovy. ")
+            out.write(f"Module files are located in the 'modules/' directory.\n")
 
     def _write_nf_config_file(self, output_folder: pathlib.Path) -> None:
         """
