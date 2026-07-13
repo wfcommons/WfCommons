@@ -115,8 +115,8 @@ void memoryBenchmarkTime(long max_work, std::optional<int> runtime_in_seconds) {
   CUDA_CHECK(cudaEventCreate(&gpu_stop));
 
   // set kernel
-  dim3 gridSize = n;
-  dim3 blockSize = m;
+  dim3 gridSize = m;
+  dim3 blockSize = n;
 
   std::cout << n << " " << m << std::endl;
 
