@@ -1,4 +1,5 @@
 #include "kernels.h"
+#include "zero_one.h"
 #include <hipcub/hipcub.hpp>
 
 #include <chrono>
@@ -100,6 +101,90 @@ void runBenchmark(long max_work) {
   runBenchmarkTime(max_work, std::nullopt);
 }
 
+// Function to run the GPU benchmark for a specified time
+void memoryBenchmarkTime(long max_work, std::optional<int> runtime_in_seconds) {
+  uint32_t n = 512;
+  uint64_t m = (max_work + n - 1) / n;
+
+  // allocate memory
+  unsigned long long int *d_tmp;
+  HIP_CHECK(hipMalloc((void **)&d_tmp, max_work * sizeof(unsigned long long int)));
+
+  // set up timing stuff
+  hipEvent_t gpu_start, gpu_stop;
+  HIP_CHECK(hipEventCreate(&gpu_start));
+  HIP_CHECK(hipEventCreate(&gpu_stop));
+
+  // set kernel
+  dim3 gridSize = m;
+  dim3 blockSize = n;
+
+  std::cout << n << " " << m << std::endl;
+
+  // allocate memory
+  unsigned long long int *d_count;
+  HIP_CHECK(hipMalloc((void **)&d_count, m * sizeof(unsigned long long int)));
+  HIP_CHECK(hipMemset(d_count, 0, m * sizeof(unsigned long long int)));
+
+  // monte carlo kernel
+  HIP_CHECK(hipEventRecord(gpu_start, 0));
+
+  int iteration = 0;
+  if (!runtime_in_seconds.has_value()) {
+    HIP_CHECK(hipMemset(d_tmp, 0, max_work * sizeof(unsigned long long int)));
+    stress_vm_zero<<<gridSize, blockSize>>>(d_tmp, d_count, max_work);
+    HIP_CHECK(hipMemset(d_tmp, 0xff, max_work * sizeof(unsigned long long int)));
+    stress_vm_one<<<gridSize, blockSize>>>(d_tmp, d_count, max_work);
+    HIP_CHECK(hipDeviceSynchronize());
+    iteration++;
+  } else {
+    // Run the workload loop until the specified runtime is reached
+    while (getElapsedTime(gpu_start, gpu_stop) < runtime_in_seconds) {
+      HIP_CHECK(hipMemset(d_tmp, 0, max_work * sizeof(unsigned long long int)));
+      stress_vm_zero<<<gridSize, blockSize>>>(d_tmp, d_count, max_work);
+      HIP_CHECK(hipMemset(d_tmp, 0xff, max_work * sizeof(unsigned long long int)));
+      stress_vm_one<<<gridSize, blockSize>>>(d_tmp, d_count, max_work);
+      HIP_CHECK(hipDeviceSynchronize()); // Ensure the kernel has finished executing
+      iteration++;
+    }
+  }
+
+  float gpu_elapsed_time = getElapsedTime(gpu_start, gpu_stop);
+  HIP_CHECK(hipEventDestroy(gpu_start));
+  HIP_CHECK(hipEventDestroy(gpu_stop));
+
+  // copy results back to the host
+  // Allocate device output array
+  unsigned long long int *d_out = nullptr;
+  HIP_CHECK(hipMalloc((void **)&d_out, sizeof(unsigned long long int)));
+
+  // Request and allocate temporary storage
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, m));
+  HIP_CHECK(hipMalloc((void **)&d_temp_storage, temp_storage_bytes));
+
+  // Run
+  HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, d_count, d_out, m));
+
+  // copy results back to the host
+  unsigned long long int h_count = 0;
+  HIP_CHECK(hipMemcpy(&h_count, d_count, sizeof(unsigned long long int), hipMemcpyDeviceToHost));
+
+  // display results and timings for gpu
+  float pi = (float)h_count;
+  std::cout << "Approximate pi calculated on GPU is: " << pi << " and calculation took " << gpu_elapsed_time << "s\n";
+
+  HIP_CHECK(hipFree(d_tmp));
+  HIP_CHECK(hipFree(d_count));
+  HIP_CHECK(hipFree(d_temp_storage));
+}
+
+void memoryBenchmark(long max_work) {
+  memoryBenchmarkTime(max_work, std::nullopt);
+}
+
+
 int main(int argc, char *argv[]) {
   // Check for the correct number of command line arguments
   if (argc == 2) {
@@ -112,7 +197,7 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    runBenchmark(max_work);
+    memoryBenchmark(max_work);
 
   } else if (argc == 3) {
     // Parse the command line arguments
@@ -125,7 +210,7 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    runBenchmarkTime(max_work, runtime_in_seconds);
+    memoryBenchmarkTime(max_work, runtime_in_seconds);
 
   } else {
     std::cerr << "Usage: " << argv[0] << " <max_work> [runtime_in_seconds]" << std::endl;
