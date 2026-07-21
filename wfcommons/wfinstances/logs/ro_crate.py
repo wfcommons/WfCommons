@@ -205,7 +205,7 @@ class ROCrateLogsParser(LogsParser):
 
             # task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
             task_name = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
-            task_id = f"_ID{task_idx:07d}"
+            task_id = task_name
             task_idx += task_idx
 
             task = Task(#name=create_action['name'],
