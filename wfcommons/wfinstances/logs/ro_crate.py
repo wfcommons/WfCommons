@@ -204,6 +204,7 @@ class ROCrateLogsParser(LogsParser):
                 start_time, end_time = self.task_runtimes.get(create_action['name'], (None, None))
 
             # task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
+            # Using this name/id scheme below is WfChef-friendly
             task_name = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
             task_id = task_name
             task_idx += task_idx
