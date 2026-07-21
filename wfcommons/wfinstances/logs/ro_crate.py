@@ -160,6 +160,7 @@ class ROCrateLogsParser(LogsParser):
         # Object to track task's "instrument" for further dependencies
         instruments = {}
 
+        task_idx = 1
         for create_action in create_actions:
             # Handle overall workflow create_action then skip
             if create_action["name"] == f"Run of workflow/{main_workflow_id}":
@@ -202,7 +203,9 @@ class ROCrateLogsParser(LogsParser):
             if not start_time or not end_time:
                 start_time, end_time = self.task_runtimes.get(create_action['name'], (None, None))
 
-            task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
+            # task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
+            task_id = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
+            task_idx += task_idx
 
             task = Task(name=create_action['name'],
                         # task_id=create_action['name'],
