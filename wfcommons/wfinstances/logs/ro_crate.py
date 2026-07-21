@@ -204,10 +204,12 @@ class ROCrateLogsParser(LogsParser):
                 start_time, end_time = self.task_runtimes.get(create_action['name'], (None, None))
 
             # task_id = self._sanitize_task_id(create_action['name'] + "_" + create_action['@id'])
-            task_id = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
+            task_name = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
+            task_id = f"_ID{task_idx:07d}"
             task_idx += task_idx
 
-            task = Task(name=create_action['name'],
+            task = Task(#name=create_action['name'],
+                        name=task_name,
                         # task_id=create_action['name'],
                         task_id=task_id,
                         task_type=TaskType.COMPUTE,
