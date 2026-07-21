@@ -158,7 +158,7 @@ class SnakemakeLogsParser(LogsParser):
             if rule_idx not in rules:
                 continue
             # self.task_map[task_idx] = rules[rule_idx] + "_" + str(task_idx)
-            self.task_map[task_idx] = rules[rule_idx] + f"ID_{task_idx:07d}"
+            self.task_map[task_idx] = rules[rule_idx] + f"_ID{task_idx:07d}"
 
             self.task_shell[task_idx] = shell_cmd
             self.task_threads[task_idx] = threads
