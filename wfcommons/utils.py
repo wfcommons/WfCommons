@@ -64,12 +64,6 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
     
 
     normalized = (data - np.min(data)) / (np.max(data) - np.min(data)) if not np.min(data) == np.max(data) else np.min(data)
-    # Old broken code
-    # y, x = np.histogram(normalized, bins=bins)
-    # if np.max(y) - np.min(y) > 0:
-    #     y = (y - np.min(y)) / (np.max(y) - np.min(y))
-    # else:
-    #     y = np.zeros(len(y))
     # Compare a probability-density histogram against the fitted PDF.
     y, bin_edges = np.histogram(normalized, bins=bins, density=True)
     x = (bin_edges[:-1] + bin_edges[1:]) / 2
@@ -90,14 +84,10 @@ def best_fit_distribution(data: List[float], logger: Optional[Logger] = None) ->
         with warnings.catch_warnings():
             try:
                 distribution = getattr(scipy.stats, dist_name)
-                # params = distribution.fit(y)
-                # below: correct call to fit!
                 params = distribution.fit(normalized)
 
                 # calculate fitted PDF and error with fit in distribution
                 pdf = distribution.pdf(x, *params[:-2], loc=params[-2], scale=params[-1])
-                # sse = np.sum(np.power(y - pdf[0:bins], 2.0))
-                # below: corrected code
                 sse = np.sum(np.power(y - pdf, 2.0))
 
                 # identify if this distribution is better
