@@ -38,9 +38,12 @@ awaiting it before submitting the next.
 - **No pilot-sandbox staging**: Unlike RADICAL-Pilot's `pilot:///` / `task:///`
   schemes, Rhapsody tasks share the session's working directory (cwd by default).
   File dependencies between tasks are expressed by writing outputs to and reading
-  inputs from the **same shared `./data/` directory**. The translator's job is to
-  ensure that filenames are consistent across the producer's `output_files` and
-  the consumer's `input_files`.
+  inputs from the same shared cwd. wfbench in particular reads/writes the files
+  named in its `--input-files` / `--output-files` arguments relative to its own
+  cwd, so the translator must use bare file IDs (no directory prefix) on
+  `input_files` / `output_files`. The translator's job is to ensure the
+  producer's `output_files` and the consumer's `input_files` use identical
+  filenames.
 - **All code is async**: Top-level entrypoint must be `async def main()` invoked
   with `asyncio.run(main())`. Backend construction is awaited:
   `backend = await ConcurrentExecutionBackend()`.
@@ -60,6 +63,17 @@ awaiting it before submitting the next.
    levels. Level 0 = root tasks (no parents). Level N = tasks whose parents are
    all in levels < N.
 
+   **Emit one explicit `ComputeTask(...)` per workflow task.** Do NOT
+   collapse repeated tasks into a Python `for i in range(...)` loop, list
+   comprehension, or any other construct that hides the per-task identity. The
+   workflow's task IDs, file IDs, and argument values are not always strictly
+   sequential — looping over a range silently drops or duplicates tasks when
+   the IDs skip, when `arguments` differ per task, or when `input_files`/
+   `output_files` aren't a clean function of the index. If the source workflow
+   has 195 blastall tasks, the generated script must contain 195 distinct
+   `ComputeTask(...)` constructor calls. Yes, the file gets long. That's
+   acceptable; correctness over brevity.
+
 3. **Backend selection**: Look at the `TARGET OPTIONS` section of the prompt.
    - `backend=concurrent` (default): use `ConcurrentExecutionBackend()` and a
      plain `python script.py` launcher in the script's docstring/comment.
@@ -71,9 +85,37 @@ awaiting it before submitting the next.
      keep the WfFormat IDs for traceability).
    - `executable`: derive from `command.program`. If it's `wfbench`, use
      `"bin/wfbench"`. Otherwise prefer a path under `bin/` (e.g. `"bin/split_fasta"`).
-   - `arguments`: from `command.arguments`. Pass as `list[str]`.
-   - `input_files`: list of `"data/<file_id>"` strings, one per `inputFile`.
-   - `output_files`: list of `"data/<file_id>"` strings, one per `outputFile`.
+   - `arguments`: from `command.arguments`, **tokenized**. WfFormat stores each
+     argument as a single string that may contain a flag *and* its value joined
+     by whitespace (e.g. `"--name blastall_00000002"`, `"--cpu-work 500"`).
+     Rhapsody's executor invokes the binary directly (no shell), so these MUST
+     be split into separate list elements before passing. Apply
+     `shlex.split` semantics per argument:
+     - `"--name foo"`           → `"--name", "foo"`
+     - `"--cpu-work 500"`       → `"--cpu-work", "500"`
+     - `"--output-files {'a':1}"` → `"--output-files", '{"a":1}'`
+     Quoted/braced/bracketed values stay as one token after the flag — only the
+     first whitespace is the flag/value boundary. **Never** emit a single string
+     containing both a flag and its value.
+
+     **JSON quoting in --output-files / --input-files**: when WfFormat encodes
+     these values it uses Python repr (single quotes: `{'foo': 502513}`), but
+     wfbench's argparser passes them through `json.loads()`, which requires
+     strict JSON (double quotes). When tokenizing, convert single-quoted
+     dict/list literals to JSON:
+     - `"--output-files {'foo': 502513}"`
+       → `"--output-files", '{"foo": 502513}'`
+     - `"--input-files ['bar']"`
+       → `"--input-files", '["bar"]'`
+   - `input_files` / `output_files`: bare file IDs, **no directory prefix**.
+     wfbench's own `--input-files` / `--output-files` arguments (inside
+     `arguments=[...]`) contain bare filenames and wfbench reads/writes them
+     relative to its cwd. The task-level `input_files` / `output_files` on
+     `ComputeTask` are advisory metadata in Rhapsody — they don't relocate
+     files. The two lists must point at the same actual paths or the next
+     level's tasks won't find their inputs. So: use bare `<file_id>` strings
+     in both places. Run the generated script from a directory containing
+     `bin/wfbench` (or symlinked) — all workflow files land at cwd alongside it.
    - `capture_stdio=True`: include this so stdout/stderr are inspectable on each task.
    - Do NOT invent `cores_per_rank` / `gpus_per_rank` / `memory` top-level
      fields — they don't exist on `ComputeTask`. If `coreCount > 1` and the
@@ -106,6 +148,13 @@ awaiting it before submitting the next.
 - No `depends_on`, `parents`, `children`, `dependencies=` fields on `ComputeTask`.
 - No top-level `cores`, `runtime`, `resource` arguments — those belonged to
   `rp.PilotDescription`, not Rhapsody.
+- No `for i in range(...)` loops, list comprehensions, or generator
+  expressions to create `ComputeTask` instances in bulk. Each task is a
+  distinct constructor call. (You may use a list literal `[task_a, task_b, ...]`
+  to pass to `submit_tasks`, but the tasks themselves must be constructed
+  individually.)
+- No joined `"flag value"` strings inside `arguments`. Split every
+  whitespace-joined flag/value pair into two adjacent list elements.
 
 ## Examples
 
@@ -153,10 +202,10 @@ awaiting it before submitting the next.
     },
     "execution": {
       "tasks": [
-        {"id": "split_00", "command": {"program": "wfbench", "arguments": ["--task-name", "split"]}, "coreCount": 1},
-        {"id": "blast_00", "command": {"program": "wfbench", "arguments": ["--task-name", "blast"]}, "coreCount": 1},
-        {"id": "blast_01", "command": {"program": "wfbench", "arguments": ["--task-name", "blast"]}, "coreCount": 1},
-        {"id": "merge_00", "command": {"program": "wfbench", "arguments": ["--task-name", "merge"]}, "coreCount": 1}
+        {"id": "split_00", "command": {"program": "wfbench", "arguments": ["--name split_00", "--cpu-work 100"]}, "coreCount": 1},
+        {"id": "blast_00", "command": {"program": "wfbench", "arguments": ["--name blast_00", "--cpu-work 500"]}, "coreCount": 1},
+        {"id": "blast_01", "command": {"program": "wfbench", "arguments": ["--name blast_01", "--cpu-work 500"]}, "coreCount": 1},
+        {"id": "merge_00", "command": {"program": "wfbench", "arguments": ["--name merge_00", "--cpu-work 50"]}, "coreCount": 1}
       ]
     }
   }
@@ -182,9 +231,9 @@ async def main():
         split_00 = ComputeTask(
             uid="split_00",
             executable="bin/wfbench",
-            arguments=["--task-name", "split"],
-            input_files=["data/sequences.fasta"],
-            output_files=["data/chunk_0.fasta", "data/chunk_1.fasta"],
+            arguments=["--name", "split_00", "--cpu-work", "100"],
+            input_files=["sequences.fasta"],
+            output_files=["chunk_0.fasta", "chunk_1.fasta"],
             capture_stdio=True,
         )
         level_0 = [split_00]
@@ -195,17 +244,17 @@ async def main():
         blast_00 = ComputeTask(
             uid="blast_00",
             executable="bin/wfbench",
-            arguments=["--task-name", "blast"],
-            input_files=["data/chunk_0.fasta"],
-            output_files=["data/result_0.xml"],
+            arguments=["--name", "blast_00", "--cpu-work", "500"],
+            input_files=["chunk_0.fasta"],
+            output_files=["result_0.xml"],
             capture_stdio=True,
         )
         blast_01 = ComputeTask(
             uid="blast_01",
             executable="bin/wfbench",
-            arguments=["--task-name", "blast"],
-            input_files=["data/chunk_1.fasta"],
-            output_files=["data/result_1.xml"],
+            arguments=["--name", "blast_01", "--cpu-work", "500"],
+            input_files=["chunk_1.fasta"],
+            output_files=["result_1.xml"],
             capture_stdio=True,
         )
         level_1 = [blast_00, blast_01]
@@ -216,9 +265,9 @@ async def main():
         merge_00 = ComputeTask(
             uid="merge_00",
             executable="bin/wfbench",
-            arguments=["--task-name", "merge"],
-            input_files=["data/result_0.xml", "data/result_1.xml"],
-            output_files=["data/final_results.xml"],
+            arguments=["--name", "merge_00", "--cpu-work", "50"],
+            input_files=["result_0.xml", "result_1.xml"],
+            output_files=["final_results.xml"],
             capture_stdio=True,
         )
         level_2 = [merge_00]

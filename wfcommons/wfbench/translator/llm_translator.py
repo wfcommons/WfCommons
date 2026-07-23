@@ -316,6 +316,7 @@ class LLMTranslator(Translator):
             "taskvine": "run_workflow.py",
             "radical_pilot": "run_workflow.py",
             "rhapsody": "run_workflow.py",
+            "rose": "run_workflow.py",
         }
         return extensions.get(self.target_system, f"workflow.{self.target_system}")
 

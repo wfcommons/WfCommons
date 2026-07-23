@@ -39,7 +39,9 @@ class LLMClient:
     def __init__(self,
                  model: str = "gpt-4o-mini",
                  api_key: str | None = None,
-                 base_url: str | None = None):
+                 base_url: str | None = None,
+                 timeout: float = 1800.0,
+                 max_tokens: int | None = None):
         """
         Initialize the LLM client.
 
@@ -54,9 +56,19 @@ class LLMClient:
             Base URL for the API. Defaults to OpenAI's API.
             For Ollama: "http://localhost:11434/v1"
             For vLLM: "http://localhost:8000/v1"
+        timeout : float, optional
+            Request timeout in seconds. Defaults to 1800 (30 min) because large
+            workflow translations can produce long outputs that exceed the OpenAI
+            SDK's much shorter default. Override per-model in models.yaml via
+            the ``timeout`` field.
+        max_tokens : int, optional
+            Maximum tokens in the model's response. None lets the provider
+            apply its default (often much smaller than the model supports).
+            Override per-model in models.yaml via the ``max_tokens`` field.
         """
         self.model = model
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.max_tokens = max_tokens
+        self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
 
     def complete(self,
                  prompt: str,
@@ -84,6 +96,9 @@ class LLMClient:
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature
         }
+
+        if self.max_tokens is not None:
+            kwargs["max_tokens"] = self.max_tokens
 
         if response_format is not None:
             kwargs["response_format"] = response_format
@@ -129,11 +144,12 @@ def client_from_yaml(model_name: str,
         base_url = resolve_env(str(base_url))
     else:
         base_url = None
-    return LLMClient(
-        model=entry["model"],
-        api_key=api_key,
-        base_url=base_url,
-    )
+    kwargs = dict(model=entry["model"], api_key=api_key, base_url=base_url)
+    if "timeout" in entry:
+        kwargs["timeout"] = float(entry["timeout"])
+    if "max_tokens" in entry:
+        kwargs["max_tokens"] = int(entry["max_tokens"])
+    return LLMClient(**kwargs)
 
 
 def available_models(models_file: str | Path | None = None) -> list[str]:
