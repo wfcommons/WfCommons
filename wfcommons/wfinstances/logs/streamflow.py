@@ -13,8 +13,6 @@ import pathlib
 from logging import Logger
 from typing import List, Optional
 
-from docutils.nodes import description
-
 from .abstract_logs_parser import LogsParser
 from ...common.file import File
 from ...common.machine import Machine

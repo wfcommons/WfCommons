@@ -248,7 +248,7 @@ class Instance:
                 f"\'pygraphviz\' package not found: call to {type(self).__name__}.draw() ignored.")
             return
 
-        pos = nx.nx_pydot.graphviz_layout(self.workflow, prog='dot')
+        pos = nx.nx_agraph.graphviz_layout(self.workflow, prog='dot')
         nx.draw(self.workflow, pos=pos, with_labels=False)
         if not output_path:
             output_path = pathlib.Path(f"{self.name.lower()}.{extension}")
