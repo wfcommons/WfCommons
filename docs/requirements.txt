@@ -1,8 +1,8 @@
 sphinx>=5.3.0
 furo>=2024.5.6
-sphinx_rtd_theme>=1.2.0
-recommonmark>=0.7.1
-jsonschema~=3.2.0
+sphinx-design>=0.6.0
+sphinx-copybutton>=0.5.2
+jsonschema>=3.2.0
 matplotlib>=3.3.0
 networkx>=2.4
 numpy>=1.19.1
@@ -13,3 +13,5 @@ setuptools>=49.3.1
 pyyaml>=5.3.1
 pandas>=1.2.4
 filelock>=3.6.0
+shortuuid>=1.0.0
+tomli-w>=1.0.0

@@ -3,42 +3,53 @@
 WfInstances: Workflow Instances
 ===============================
 
-Workflow execution instances have been widely used to profile and characterize
-workflow executions, and to build distributions of workflow execution behaviors,
-which are used to evaluate methods and techniques in simulation or in real
-conditions.
+Workflow execution instances are widely used to profile and characterize
+workflow executions, and to build distributions of workflow execution
+behaviors, which are used to evaluate methods and techniques in simulation or
+in real conditions.
 
-The WfCommons project targets the analysis of actual workflow execution instances
-(i.e., the workflow execution profile data and characterizations)
-in order to build :ref:`workflow-recipe-label` of workflow applications.
-These recipes contain the necessary information for generating synthetic, yet
+The WfCommons project targets the analysis of actual workflow execution
+instances (i.e., the workflow execution profile data and characterizations) in
+order to build :ref:`workflow-recipe-label` of workflow applications. These
+recipes contain the necessary information for generating synthetic, yet
 realistic, workflow instances that resemble the structure and distribution of
 the original workflow executions.
 
+With the tools on this page you can:
+
+- **Load** any workflow instance in :ref:`json-format-label` and inspect its
+  task graph programmatically.
+- **Parse** execution logs from production workflow systems into WfFormat
+  instances.
+- **Analyze** collections of instances to obtain statistical characterizations
+  of task runtimes and data sizes.
+
 A `list of workflow execution instances <https://github.com/wfcommons/wfinstances>`_
 that are compatible with :ref:`json-format-label` is kept constantly updated
-in our project GitHub.
+in our project GitHub — you can start from those instead of running workflows
+yourself.
 
 .. _wfinstances-label:
 
-WfInstances
------------
+Loading Workflow Instances
+--------------------------
 
 A workflow execution instance represents an actual execution of a scientific
-workflow on a distributed platform (e.g., clouds, grids, HPC, etc.). In the
+workflow on a distributed platform (e.g., clouds, grids, HPC). In the
 WfCommons project, an instance is represented in a JSON file following the
-schema described in :ref:`json-format-label`. This Python package
-provides an *instance loader* tool for importing workflow execution instances
-for analysis. For instance, the code snippet below shows how an instance can
-be loaded using the :class:`~wfcommons.wfinstances.instance.Instance` class: ::
+schema described in :ref:`json-format-label`. This Python package provides an
+*instance loader* tool for importing workflow execution instances for
+analysis. The code snippet below shows how an instance can be loaded using the
+:class:`~wfcommons.wfinstances.instance.Instance` class: ::
 
     import pathlib
     from wfcommons import Instance
+
     input_instance = pathlib.Path('/path/to/instance/file.json')
     instance = Instance(input_instance=input_instance)
 
-The :class:`~wfcommons.wfinstances.instance.Instance` class provides a number of
-methods for interacting with the workflow instance, including:
+The :class:`~wfcommons.wfinstances.instance.Instance` class provides a number
+of methods for interacting with the workflow instance, including:
 
 - :meth:`~wfcommons.wfinstances.instance.Instance.draw`: produces an image or a pdf file representing the instance.
 - :meth:`~wfcommons.wfinstances.instance.Instance.leaves`: gets the leaves of the workflow (i.e., the tasks without any successors).
@@ -46,72 +57,72 @@ methods for interacting with the workflow instance, including:
 - :meth:`~wfcommons.wfinstances.instance.Instance.write_dot`: writes a dot file of the instance.
 
 .. note::
-    Although the analysis methods are inherently used by WfCommons (specifically
-    WfChef) for :ref:`generating-workflows-recipe-label`, they can also be used
-    in a standalone manner.
+    Although the analysis methods are inherently used by WfCommons
+    (specifically WfChef) for :ref:`generating-workflows-recipe-label`, they
+    can also be used in a standalone manner.
 
 Parsing Workflow Execution Logs
 -------------------------------
 
-The most common way for obtaining **workflow instances** from actual workflow
+The most common way of obtaining **workflow instances** from actual workflow
 executions is to parse execution logs. As part of the WfCommons project, we
-are constantly developing parsers for commonly used workflow management systems.
-The parsers provided in this Python package automatically scans execution logs
-to produce instances using :ref:`json-format-label`.
+are constantly developing parsers for commonly used workflow management
+systems. The parsers provided in this Python package automatically scan
+execution logs to produce instances using :ref:`json-format-label`.
 
 Each parser class is derived from the abstract
-:class:`~wfcommons.wfinstances.logs.abstract_logs_parser.LogsParser` class. Thus, each
-parser provides a
+:class:`~wfcommons.wfinstances.logs.abstract_logs_parser.LogsParser` class, and
+provides a
 :meth:`~wfcommons.wfinstances.logs.abstract_logs_parser.LogsParser.build_workflow`
-method.
+method that returns a :class:`~wfcommons.common.workflow.Workflow` object,
+which can then be written to a WfFormat JSON file with
+:meth:`~wfcommons.common.workflow.Workflow.write_json`.
 
 Supported log parsers
 +++++++++++++++++++++
 
-- :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser`
-- :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser`
-- :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
-- :class:`~wfcommons.wfinstances.logs.snakemake.SnakemakeLogsParser`
-- :class:`~wfcommons.wfinstances.logs.ro_create.ROCrateLogsParser`
-- :class:`~wfcommons.wfinstances.logs.taskvine.TaskVineLogsParser`
+.. list-table::
+   :header-rows: 1
+   :widths: 18 42 40
 
-Examples
-++++++++
+   * - System
+     - Parser class
+     - Main input
+   * - Makeflow
+     - :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser`
+     - Execution directory + Resource Monitor logs
+   * - Nextflow
+     - :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser`
+     - Execution directory with a trace file
+   * - Pegasus
+     - :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
+     - Submit directory
+   * - RO-Crate
+     - :class:`~wfcommons.wfinstances.logs.ro_crate.ROCrateLogsParser`
+     - RO-Crate directory
+   * - Snakemake
+     - :class:`~wfcommons.wfinstances.logs.snakemake.SnakemakeLogsParser`
+     - Execution directory + snkmt SQLite database
+   * - StreamFlow
+     - :class:`~wfcommons.wfinstances.logs.streamflow.StreamflowLogsParser`
+     - RO-Crate directory
+   * - TaskVine
+     - :class:`~wfcommons.wfinstances.logs.taskvine.TaskVineLogsParser`
+     - :code:`vine-logs` directory
 
-Below we give basic examples for using the log parsers. Review the specific documentation
-of each log parser for more details, such as additional parameters that configure the behavior
-of the log parser.
-
-..
-    Hierarchical Pegasus
-    ++++++++++++++++++++
-
-    This parser targets Pegasus submit directories that contain hierarchical workflows.
-    It recursively parses sub-workflows and rebuilds a coherent workflow instance::
-
-        import pathlib
-        from wfcommons.wfinstances import HierarchicalPegasusLogsParser
-
-        submit_dir = pathlib.Path('/path/to/pegasus/hierarchical/submit/dir/')
-        parser = HierarchicalPegasusLogsParser(submit_dir=submit_dir)
-        workflow = parser.build_workflow('pegasus-hierarchical-workflow-test')
-        workflow.write_json(pathlib.Path('./pegasus-hierarchical-workflow.json'))
+Below we give basic examples for using the log parsers. Review the API
+documentation of each log parser for additional parameters that configure its
+behavior.
 
 Makeflow
 ++++++++
 
-`Makeflow <http://ccl.cse.nd.edu/software/makeflow/>`_ is a workflow system for
-executing large complex workflows on clusters, clouds, and grids. The Makeflow
-language is similar to traditional "Make", so if you can write a Makefile, then you
-can write a Makeflow. A workflow can be just a few commands chained together, or
-it can be a complex application consisting of thousands of tasks. It can have an
-arbitrary DAG structure and is not limited to specific patterns. Makeflow is used
-on a daily basis to execute complex scientific applications in fields such as data
-mining, high energy physics, image processing, and bioinformatics. It has run on
-campus clusters, the Open Science Grid, NSF XSEDE machines, NCSA Blue Waters, and
-Amazon Web Services. Makeflow logs provide time-stamped event instances from these
-executions. The following example shows the analysis of Makeflow execution logs,
-stored in a local folder (:code:`execution_dir`), for a workflow execution using the
+`Makeflow <http://ccl.cse.nd.edu/software/makeflow/>`_ is a workflow system
+for executing large complex workflows on clusters, clouds, and grids. The
+Makeflow language is similar to traditional "Make", and a workflow can be just
+a few commands chained together or a complex application consisting of
+thousands of tasks. The following example shows the analysis of Makeflow
+execution logs, stored in a local folder (:code:`execution_dir`), using the
 :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class: ::
 
     import pathlib
@@ -127,62 +138,55 @@ stored in a local folder (:code:`execution_dir`), for a workflow execution using
     workflow = parser.build_workflow('makeflow-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow_path = pathlib.Path('./makeflow-workflow.json')
-    workflow.write_json(workflow_path)
+    workflow.write_json(pathlib.Path('./makeflow-workflow.json'))
 
 .. note::
-    The :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class requires
-    that Makeflow workflows to run with the
+    The :class:`~wfcommons.wfinstances.logs.makeflow.MakeflowLogsParser` class
+    requires that Makeflow workflows run with the
     `Resource Monitor <https://cctools.readthedocs.io/en/latest/resource_monitor/>`_
-    tool (e.g., execute the workflow using the :code:`--monitor=logs`).
+    tool (e.g., execute the workflow using :code:`--monitor=logs`).
 
 Nextflow
 ++++++++
 
-`Nextflow <https://nextflow.io>`_ is a reactive workflow framework and a programming DSL
-that eases the writing of data-intensive computational pipelines. It is designed around
-the idea that the Linux platform is the lingua franca of data science. Linux provides
-many simple but powerful command-line and scripting tools that, when chained together,
-facilitate complex data manipulations. Nextflow extends this approach, adding the ability
-to define complex program interactions and a high-level parallel computational environment
-based on the dataflow programming model. The following example shows the analysis of
-Nextflow execution logs, stored in a local folder (:code:`execution_dir`), for a workflow
-execution using the :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class: ::
+`Nextflow <https://nextflow.io>`_ is a reactive workflow framework and a
+programming DSL that eases the writing of data-intensive computational
+pipelines. The following example shows the analysis of Nextflow execution
+logs, stored in a local folder (:code:`execution_dir`), using the
+:class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class: ::
 
     import pathlib
     from wfcommons.wfinstances import NextflowLogsParser
 
     # creating the parser for the Nextflow workflow
     execution_dir = pathlib.Path('/path/to/nextflow/execution/dir/')
-    parser = NextflowLogsParser(execution_dir=execution_dir)
+    parser = NextflowLogsParser(execution_dir=execution_dir,
+                                nextflow_version='24.10.0')
 
     # generating the workflow instance object
     workflow = parser.build_workflow('nextflow-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow_path = pathlib.Path('./nextflow-workflow.json')
-    workflow.write_json(workflow_path)
+    workflow.write_json(pathlib.Path('./nextflow-workflow.json'))
 
 .. note::
-    The :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class assumes
-    that workflow executions will produce an :code:`execution_report_*.html` and an
-    :code:`execution_timeline_*.html` files.
+    The :class:`~wfcommons.wfinstances.logs.nextflow.NextflowLogsParser` class
+    expects the execution directory to contain a Nextflow trace file (by
+    default, any file matching :code:`*trace*.txt`, as produced by running
+    Nextflow with the :code:`-with-trace` option or with tracing enabled in
+    the configuration).
 
 Pegasus
 +++++++
 
-`Pegasus <http://pegasus.isi.edu>`_ is being used in production to execute workflows
-for dozens of high-profile applications in a wide range of scientific domains. Pegasus
-provides the necessary abstractions for scientists to create workflows and allows for
-transparent execution of these workflows on a range of compute platforms including
-clusters, clouds, and national cyberinfrastructures. Workflow execution with Pegasus
-includes data management, monitoring, and failure handling, and is managed by HTCondor
-DAGMan. Individual workflow tasks are managed by a workload management framework,
-HTCondor, which supervises task executions on local and remote resources. Pegasus
-logs provide time-stamped event instances from these executions. The following example shows
-the analysis of Pegasus execution logs, stored in a local folder (:code:`submit_dir`), for a
-workflow execution using the :class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser`
-class: ::
+`Pegasus <http://pegasus.isi.edu>`_ is used in production to execute workflows
+for dozens of high-profile applications in a wide range of scientific domains.
+It provides the necessary abstractions for scientists to create workflows and
+allows for transparent execution of these workflows on a range of compute
+platforms, with execution managed by HTCondor DAGMan. The following example
+shows the analysis of Pegasus execution logs, stored in a local submit
+directory, using the
+:class:`~wfcommons.wfinstances.logs.pegasus.PegasusLogsParser` class: ::
 
     import pathlib
     from wfcommons.wfinstances import PegasusLogsParser
@@ -195,92 +199,112 @@ class: ::
     workflow = parser.build_workflow('pegasus-workflow-test')
 
     # writing the workflow instance to a JSON file
-    workflow_path = pathlib.Path('./pegasus-workflow.json')
-    workflow.write_json(workflow_path)
-
-
+    workflow.write_json(pathlib.Path('./pegasus-workflow.json'))
 
 RO-Crate
-+++++++++
-`RO-Crate <https://www.researchobject.org/ro-crate/>`_ is a format for packaging research data so as to promote
-open and reproducible science. The RO-Crate logs parses processes RO-Crate artifacts created by executing workflows
-using the `Streamflow <https://streamflow.di.unito.it/>`_ workflow management system. It may work
-for RO-Crate generated using other systems, but has not been tested.
-It takes as input the path of the RO-Crate directory, which contains the `ro-crate-metadata.json` file. It
-generates workflow instances compatible with :ref:`json-format-label`::
+++++++++
 
-   import pathlib
+`RO-Crate <https://www.researchobject.org/ro-crate/>`_ is a format for
+packaging research data so as to promote open and reproducible science. The
+RO-Crate logs parser processes RO-Crate artifacts created by executing
+workflows (e.g., with the `StreamFlow <https://streamflow.di.unito.it/>`_
+workflow management system). It takes as input the path to the RO-Crate
+directory, which contains the :code:`ro-crate-metadata.json` file, and the
+name of the workflow system that produced the crate: ::
+
+    import pathlib
     from wfcommons.wfinstances import ROCrateLogsParser
 
-    execution_dir = pathlib.Path('/path/to/snakemake/execution/dir/')
-    parser = ROCrateLogsParser(execution_dir=execution_dir)
+    crate_dir = pathlib.Path('/path/to/ro-crate/dir/')
+    parser = ROCrateLogsParser(crate_dir=crate_dir, wms_name='streamflow')
     workflow = parser.build_workflow('ro-crate-workflow-test')
     workflow.write_json(pathlib.Path('./ro-crate-workflow.json'))
 
 Snakemake
 +++++++++
-`Snakemake <https://snakemake.readthedocs.io>`_ is a popular and easy-to-use workflow system.
-The Snakemake logs parser processes execution logs generated by the Snakemake
-`snkmt plugin <https://snakemake.github.io/snakemake-plugin-catalog/plugins/logger/snkmt.html>`_.
-It takes as input the path of the directory where all workflow data files reside (input and output
-of workflow tasks), and the path of the sqlite database created by the snkmt plugin. It
-generates workflow instances compatible with :ref:`json-format-label`::
 
-   import pathlib
+`Snakemake <https://snakemake.readthedocs.io>`_ is a popular and easy-to-use
+workflow system. The Snakemake logs parser processes execution logs generated
+by the Snakemake
+`snkmt plugin <https://snakemake.github.io/snakemake-plugin-catalog/plugins/logger/snkmt.html>`_.
+It takes as input the path of the directory where all workflow data files
+reside (input and output of workflow tasks), and the path of the SQLite
+database created by the snkmt plugin: ::
+
+    import pathlib
     from wfcommons.wfinstances import SnakemakeLogsParser
 
     execution_dir = pathlib.Path('/path/to/snakemake/execution/dir/')
-    snkmt_db = pathlib.Path('/path/to/snkmt/sqlite/databasefile/')
+    snkmt_db = pathlib.Path('/path/to/snkmt/sqlite/database/file')
     parser = SnakemakeLogsParser(execution_dir=execution_dir, snkmt_db=snkmt_db)
     workflow = parser.build_workflow('snakemake-workflow-test')
     workflow.write_json(pathlib.Path('./snakemake-workflow.json'))
 
+StreamFlow
+++++++++++
+
+`StreamFlow <https://streamflow.di.unito.it/>`_ is a container-native workflow
+management system. The StreamFlow logs parser processes the RO-Crate archive
+produced by a StreamFlow execution: ::
+
+    import pathlib
+    from wfcommons.wfinstances import StreamflowLogsParser
+
+    crate_dir = pathlib.Path('/path/to/streamflow/ro-crate/dir/')
+    parser = StreamflowLogsParser(crate_dir=crate_dir,
+                                  streamflow_version='0.2.0')
+    workflow = parser.build_workflow('streamflow-workflow-test')
+    workflow.write_json(pathlib.Path('./streamflow-workflow.json'))
+
 TaskVine
 ++++++++
 
-`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler for
-data-intensive dynamic workflows. The TaskVine logs parser translates TaskVine
-execution logs into workflow instances compatible with :ref:`json-format-label`::
+`TaskVine <https://ccl.cse.nd.edu/software/taskvine/>`_ is a task scheduler
+for data-intensive dynamic workflows. The TaskVine logs parser translates the
+logs found in a TaskVine :code:`vine-logs` directory into workflow instances
+compatible with :ref:`json-format-label`: ::
 
     import pathlib
     from wfcommons.wfinstances import TaskVineLogsParser
 
-    execution_dir = pathlib.Path('/path/to/taskvine/execution/dir/')
-    parser = TaskVineLogsParser(execution_dir=execution_dir)
+    vine_logs_dir = pathlib.Path('/path/to/taskvine/vine-logs/dir/')
+    parser = TaskVineLogsParser(vine_logs_dir=vine_logs_dir)
     workflow = parser.build_workflow('taskvine-workflow-test')
     workflow.write_json(pathlib.Path('./taskvine-workflow.json'))
 
 The Instance Analyzer
 ---------------------
 
-The :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer` class provides
-a number of tools for analyzing collection of workflow execution instances. The
-goal of the :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer` is to
-perform analyzes of one or multiple workflow execution instances, and build
-summaries of the analyzes per workflow' task type prefix.
+The :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer` class
+provides a number of tools for analyzing collections of workflow execution
+instances. Its goal is to analyze one or multiple workflow execution instances
+and build summaries of the analysis per workflow task type prefix. These
+summaries are what allows WfChef recipes — and thus WfGen's synthetic
+workflows — to be *realistic* rather than merely random.
 
 .. warning::
 
-    Although any workflow execution instance represented as a
-    :class:`~wfcommons.wfinstances.instance.Instance` object (i.e., compatible with
-    :ref:`json-format-label`) can be appended to the
-    :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer`, we strongly
-    recommend that only instances of a single workflow application type be
-    appended to an analyzer object. You may though create several analyzer
-    objects per workflow application.
+    Although any workflow execution instance represented as an
+    :class:`~wfcommons.wfinstances.instance.Instance` object (i.e., compatible
+    with :ref:`json-format-label`) can be appended to the
+    :class:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer`, we
+    strongly recommend that only instances of a single workflow application
+    type be appended to an analyzer object. You may, though, create several
+    analyzer objects per workflow application.
 
-The :meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.append_instance` method
-allows you to include instances for analysis. The
-:meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.build_summary` method
-processes all appended instances. The method applies probability distributions fitting
-to a series of data to find the *best* (i.e., minimizes the mean square error)
-probability distribution that represents the analyzed data. The method returns
-a summary of the analysis of instances in the form of a Python dictionary object in
-which keys are task prefixes (provided when invoking the method) and values
-describe the best probability distribution fit for tasks' runtime, and input and
-output data file sizes. The code excerpt below shows an example of an analysis
-summary showing the best fit probability distribution for runtime of the
-:code:`individuals` tasks (1000Genome workflow): ::
+The :meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.append_instance`
+method allows you to include instances for analysis. The
+:meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.build_summary`
+method processes all appended instances. It applies probability distribution
+fitting to a series of data to find the *best* probability distribution
+representing the analyzed data (i.e., the one that minimizes the mean square
+error). The method returns a summary of the analysis of instances in the form
+of a Python dictionary object, in which keys are task prefixes (provided when
+invoking the method) and values describe the best probability distribution fit
+for tasks' runtime and input and output data file sizes. The code excerpt
+below shows an example of an analysis summary showing the best-fit probability
+distribution for the runtime of the :code:`individuals` tasks (1000Genome
+workflow): ::
 
     "individuals": {
         "runtime": {
@@ -298,24 +322,25 @@ summary showing the best fit probability distribution for runtime of the
         ...
     }
 
-Workflow analysis summaries are used by WfChef to develop :ref:`workflow-recipe-label`,
-in which themselves are used to :ref:`generate realistic synthetic workflow instances
-<generating-workflows-label>`.
+Workflow analysis summaries are used by WfChef to develop
+:ref:`workflow-recipe-label`, which in turn are used to :ref:`generate
+realistic synthetic workflow instances <generating-workflows-label>`.
 
 Probability distribution fits can also be plotted by using the
 :meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.generate_fit_plots` or
 :meth:`~wfcommons.wfinstances.instance_analyzer.InstanceAnalyzer.generate_all_fit_plots`
-methods -- plots will be saved as :code:`png` files.
+methods — plots will be saved as :code:`png` files.
 
-Examples
---------
+Example: analyzing a set of Seismology instances
+++++++++++++++++++++++++++++++++++++++++++++++++
 
-The following example shows the analysis of a set of instances, stored in a local folder,
-of a Seismology workflow. In this example, we seek for finding the best probability
-distribution fitting for task *prefixes* of the Seismology workflow
-(:code:`sG1IterDecon`, and :code:`wrapper_siftSTFByMisfit`), and generate all fit
-plots (runtime, and input and output files) into the :code:`fits` folder using
-:code:`seismology` as a prefix for each generated plot: ::
+The following example shows the analysis of a set of instances, stored in a
+local folder, of a Seismology workflow. In this example, we seek the best
+probability distribution fitting for task *prefixes* of the Seismology
+workflow (:code:`sG1IterDecon` and :code:`wrapper_siftSTFByMisfit`), and
+generate all fit plots (runtime, and input and output files) into the
+:code:`fits` folder using :code:`seismology` as a prefix for each generated
+plot: ::
 
     import pathlib
     from wfcommons import Instance, InstanceAnalyzer
