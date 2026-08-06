@@ -130,7 +130,7 @@ class MakeflowLogsParser(LogsParser):
                 elif '\t' in line:
                     # task execution command (likely olf here)
                     prefix = line.replace('./', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "ID{:07d}".format(task_id_counter)
+                    task_name = "{}_ID{:07d}".format(prefix, task_id_counter)
 
                     # create list of input and output files
                     output_files = self._create_files(outputs, "output", task_name)
