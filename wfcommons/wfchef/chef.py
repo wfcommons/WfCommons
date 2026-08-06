@@ -24,7 +24,6 @@ import traceback
 import sys
 
 from typing import Dict, Optional, Union, Type
-from stringcase import capitalcase
 from wfcommons.wfchef.wfchef_abstract_recipe import WfChefWorkflowRecipe
 
 from .duplicate import duplicate, NoMicrostructuresError
@@ -334,13 +333,10 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
             "Install it with: pip install tomli-w"
         )
 
-    # Import these from your actual modules
-    from stringcase import capitalcase
-
     # Note: You'll need to define these paths in your actual code
     # skeleton_path = pathlib.Path(__file__).parent.joinpath("skeleton")
 
-    camelname = capitalcase(wf_name)
+    camelname = wf_name[:1].upper() + wf_name[1:]
 
     # Create a standalone package name
     package_name = f"wfchef-recipe-{wf_name}"
