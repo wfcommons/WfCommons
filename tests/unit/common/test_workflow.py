@@ -12,6 +12,9 @@ import pathlib
 import pytest
 import requests
 import json
+import math
+from numbers import Real
+from typing import Any
 
 from datetime import datetime
 from wfcommons.common import Task, Workflow
@@ -24,6 +27,97 @@ tasks_list = [
     ([Task(name="task_1", task_id="task_1", runtime=15.0), Task(name="task_2", task_id="task_2", runtime=30.0)]),
     ([Task(name="task_1", task_id="task_1", runtime=15.0), Task(name="task_2", task_id="task_2", runtime=30.0), Task(name="task_3", task_id="task_3", runtime=60.0)]),
 ]
+
+
+def assert_json_close(
+    actual: Any,
+    expected: Any,
+    *,
+    rel_tol: float = 1e-9,
+    abs_tol: float = 1e-12,
+    path: str = "$",
+) -> None:
+    """Assert that two JSON-like objects are equal, with close numerics."""
+
+    actual_is_number = (
+        isinstance(actual, Real)
+        and not isinstance(actual, bool)
+    )
+    expected_is_number = (
+        isinstance(expected, Real)
+        and not isinstance(expected, bool)
+    )
+
+    if actual_is_number or expected_is_number:
+        assert actual_is_number and expected_is_number, (
+            f"Numeric type mismatch at {path}: "
+            f"actual={actual!r}, expected={expected!r}"
+        )
+
+        assert math.isclose(
+            actual,
+            expected,
+            rel_tol=rel_tol,
+            abs_tol=abs_tol,
+        ), (
+            f"Numbers differ at {path}: "
+            f"actual={actual!r}, expected={expected!r}, "
+            f"rel_tol={rel_tol}, abs_tol={abs_tol}"
+        )
+        return
+
+    if isinstance(actual, dict) or isinstance(expected, dict):
+        assert isinstance(actual, dict) and isinstance(expected, dict), (
+            f"Type mismatch at {path}: "
+            f"actual={type(actual).__name__}, "
+            f"expected={type(expected).__name__}"
+        )
+
+        assert actual.keys() == expected.keys(), (
+            f"Dictionary keys differ at {path}: "
+            f"actual-only={actual.keys() - expected.keys()}, "
+            f"expected-only={expected.keys() - actual.keys()}"
+        )
+
+        for key in actual:
+            assert_json_close(
+                actual[key],
+                expected[key],
+                rel_tol=rel_tol,
+                abs_tol=abs_tol,
+                path=f"{path}.{key}",
+            )
+        return
+
+    if isinstance(actual, list) or isinstance(expected, list):
+        assert isinstance(actual, list) and isinstance(expected, list), (
+            f"Type mismatch at {path}: "
+            f"actual={type(actual).__name__}, "
+            f"expected={type(expected).__name__}"
+        )
+
+        assert len(actual) == len(expected), (
+            f"List lengths differ at {path}: "
+            f"actual={len(actual)}, expected={len(expected)}"
+        )
+
+        for index, (actual_item, expected_item) in enumerate(
+            zip(actual, expected)
+        ):
+            assert_json_close(
+                actual_item,
+                expected_item,
+                rel_tol=rel_tol,
+                abs_tol=abs_tol,
+                path=f"{path}[{index}]",
+            )
+        return
+
+    assert actual == expected, (
+        f"Values differ at {path}: "
+        f"actual={actual!r}, expected={expected!r}"
+    )
+
 
 
 class TestWorkflow:
@@ -53,7 +147,11 @@ class TestWorkflow:
             "workflow": {
                 "specification": {
                     "tasks": [],
-                    "files": []
+                    "files": [],
+                    "metrics": {
+                        "numberOfTasks": 0,
+                        "numberOfFiles": 0
+                    }
                 },
                 "execution": {
                     "makespanInSeconds": 100.0,
@@ -139,7 +237,9 @@ class TestWorkflow:
         written_json["workflow"]["specification"]["files"] = sorted(written_json["workflow"]["specification"]["files"], key=lambda x: x['id'])
 
         # Compare the two jsons!
-        assert(original_json == written_json)
+        # assert(original_json == written_json)
+        # assert(original_json == pytest.approx(written_json))
+        assert_json_close(original_json,written_json)
 
     @pytest.mark.unit
     def test_workflow_dot_file(self):

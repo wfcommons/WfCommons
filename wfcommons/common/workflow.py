@@ -19,7 +19,7 @@ from typing import Optional, List
 from ..common.task import Task, TaskType
 from ..version import __version__, __schema_version__
 
-from ..wfchef.utils import create_graph
+from ..wfchef.utils import create_graph, create_graph_from_json_object
 import tempfile
 
 
@@ -210,6 +210,75 @@ class Workflow(nx.DiGraph):
 
         self.workflow_json = workflow_json
 
+        # Augment the workflow_json with the metrics
+        specification_metrics, execution_metrics = self.compute_metrics(workflow_json)
+        if specification_metrics != {}:
+            self.workflow_json["workflow"]["specification"]["metrics"] = specification_metrics
+        if execution_metrics != {}:
+            self.workflow_json["workflow"]["execution"]["metrics"] = execution_metrics
+
+
+    def compute_metrics(self, workflow_json: json) -> json:
+        """
+        Compute workflow specification and execution metrics.
+        :param workflow_json: Workflow instance as a JSON object.
+        :type workflow_json: json
+
+        :return: specification and execution metrics.
+        :rtype: json
+        """
+
+        # Specification metrics
+        specification_metrics : json = {}
+        specification_metrics["numberOfTasks"] = len(workflow_json["workflow"]["specification"]["tasks"])
+        if "files" in workflow_json["workflow"]["specification"]:
+            number_of_files = len(workflow_json["workflow"]["specification"]["files"])
+            specification_metrics["numberOfFiles"] = number_of_files
+            if number_of_files > 0:
+                specification_metrics["sumOfFileSizesInBytes"] = sum(
+                    file.get("sizeInBytes", 0)
+                    for file in workflow_json["workflow"]["specification"]["files"]
+                )
+        graph = create_graph_from_json_object(workflow_json)
+        levels = [
+            tuple(generation)
+            for generation in nx.topological_generations(graph)
+        ][1:-1] # Remove the fictitious SRC and DST levels
+
+        if len(levels) > 0:
+            widths = [len(level) for level in levels]  # Remove the fictitious SRC and DST levels
+
+            specification_metrics["numberOfLevels"] = len(widths)
+            specification_metrics["minimumWidth"] = min(widths)
+            specification_metrics["maximumWidth"] = max(widths)
+
+        # Execution metrics
+        execution_metrics : json = {}
+        if "execution" in workflow_json["workflow"]:
+            total_runtime_in_seconds = sum(
+                task.get("runtimeInSeconds", 0)
+                for task in workflow_json["workflow"]["execution"]["tasks"]
+            )
+            if total_runtime_in_seconds > 0:
+                execution_metrics["sumTaskRuntimesInSeconds"] = total_runtime_in_seconds
+
+            total_read_bytes = sum(
+                task.get("readBytes", 0)
+                for task in workflow_json["workflow"]["execution"]["tasks"]
+            )
+            if total_runtime_in_seconds > 0:
+                execution_metrics["totalNumBytesRead"] = total_read_bytes
+
+            total_written_bytes = sum(
+                task.get("writtenBytes", 0)
+                for task in workflow_json["workflow"]["execution"]["tasks"]
+            )
+            if total_written_bytes > 0:
+                execution_metrics["totalNumBytesWritten"] = total_written_bytes
+
+        return specification_metrics, execution_metrics
+
+
     def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:
         """
         Write a dot file of the workflow instance.
@@ -264,3 +333,8 @@ class Workflow(nx.DiGraph):
 
     def leaves(self) -> List[str]:
         return [n for n,d in self.out_degree() if d==0]
+
+
+
+
+
