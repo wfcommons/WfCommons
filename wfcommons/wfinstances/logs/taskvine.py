@@ -276,7 +276,8 @@ class TaskVineLogsParser(LogsParser):
         # Create all tasks
         task_map = {}
         for task_id in self.known_task_ids:
-            task_name = "Task_%d" % task_id
+            task_name = "Task_ID{:07d}".format(task_id)
+            print(f"DEBUGHERE: {task_name} ")
             task = Task(name=task_name,
                         task_id=task_name,
                         task_type=TaskType.COMPUTE,

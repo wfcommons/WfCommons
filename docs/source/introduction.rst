@@ -80,6 +80,6 @@ machines on which the workflow was executed.
 WfFormat uses a JSON schema available in the
 `WfFormat Schema GitHub <https://github.com/wfcommons/WfFormat>`_ repository.
 The current version of the WfCommons Python package uses schema version
-:code:`1.5`. The schema repository provides a detailed explanation of WfFormat
+:code:`1.6`. The schema repository provides a detailed explanation of WfFormat
 (including required fields) and a validator script for verifying the
 compatibility of instances.
