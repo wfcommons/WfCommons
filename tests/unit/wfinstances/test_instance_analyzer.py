@@ -23,7 +23,7 @@ class TestInstanceAnalyzer:
             "name": "workflow_test",
             "description": "Instance generate for WfCommons Test",
             "createdAt": "2020-12-30T02:19:01.238077",
-            "schemaVersion": "1.5",
+            "schemaVersion": "1.6",
             "author": {
                 "name": "wfcommons",
                 "email": "support@wfcommons.org"
