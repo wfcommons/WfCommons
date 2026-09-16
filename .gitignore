@@ -60,3 +60,5 @@ bin/gpu_benchmark
 coverage.xml
 
 test/
+llmtests/
+scratch/
