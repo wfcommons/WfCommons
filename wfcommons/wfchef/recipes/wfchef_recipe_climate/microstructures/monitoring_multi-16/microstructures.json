@@ -1,0 +1,74 @@
+{
+  "microstructure_ae83fe80241183b67d9c7c216954d525a11f5e0c62a73a40227cf3f83327b476": {
+    "name": "microstructure_ae83fe80241183b67d9c7c216954d525a11f5e0c62a73a40227cf3f83327b476",
+    "nodes": [
+      [
+        "ActionExecutorPE5_ID0000000"
+      ],
+      [
+        "ActionExecutorPE5_ID0000001"
+      ]
+    ],
+    "frequency": 2
+  },
+  "microstructure_a7cbe697702ad96b3287348fe89582dd45344b6c6230844d7aa14710baace270": {
+    "name": "microstructure_a7cbe697702ad96b3287348fe89582dd45344b6c6230844d7aa14710baace270",
+    "nodes": [
+      [
+        "DecisionMergePE3_ID0000003"
+      ],
+      [
+        "DecisionMergePE3_ID0000002"
+      ]
+    ],
+    "frequency": 2
+  },
+  "microstructure_aba021eb0f4094b69bf4ce626644d3d59d563f6f61e5a56da7fcae77e7090dc7": {
+    "name": "microstructure_aba021eb0f4094b69bf4ce626644d3d59d563f6f61e5a56da7fcae77e7090dc7",
+    "nodes": [
+      [
+        "ParallelLLMSensorAgentPE4_ID0000011"
+      ],
+      [
+        "ParallelLLMSensorAgentPE4_ID0000013"
+      ],
+      [
+        "ParallelLLMSensorAgentPE4_ID0000010"
+      ],
+      [
+        "ParallelLLMSensorAgentPE4_ID0000012"
+      ]
+    ],
+    "frequency": 4
+  },
+  "microstructure_8cbdeab02321b0753b3ee7dbf5859e81d1390b463a3e6d0c24f05fa0881cbe99": {
+    "name": "microstructure_8cbdeab02321b0753b3ee7dbf5859e81d1390b463a3e6d0c24f05fa0881cbe99",
+    "nodes": [
+      [
+        "DeterministicPrecheckPE2_ID0000006"
+      ],
+      [
+        "DeterministicPrecheckPE2_ID0000004"
+      ],
+      [
+        "DeterministicPrecheckPE2_ID0000005"
+      ]
+    ],
+    "frequency": 3
+  },
+  "microstructure_8ec01859d4300e0f35330f90d6c87ef526e8dbda46b115db5bb2a399e9330b24": {
+    "name": "microstructure_8ec01859d4300e0f35330f90d6c87ef526e8dbda46b115db5bb2a399e9330b24",
+    "nodes": [
+      [
+        "NormalizeDataPE1_ID0000009"
+      ],
+      [
+        "NormalizeDataPE1_ID0000007"
+      ],
+      [
+        "NormalizeDataPE1_ID0000008"
+      ]
+    ],
+    "frequency": 3
+  }
+}

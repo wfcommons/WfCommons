@@ -1,0 +1,34 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wfchef-recipe-climate"
+version = "0.1.0"
+description = "WfChef recipe for climate workflow"
+authors = [
+    { name = "Workflow Chef", email = "workflow@example.com" },
+]
+requires-python = ">=3.8"
+dependencies = [
+    "wfcommons>=1.0.0",
+    "pandas",
+    "numpy",
+]
+readme = "README.md"
+
+[project.entry-points.workflow_recipes]
+climate_recipe = "wfchef_recipe_climate:ClimateRecipe"
+
+[tool.setuptools]
+packages = [
+    "wfchef_recipe_climate",
+]
+
+[tool.setuptools.package-data]
+wfchef_recipe_climate = [
+    "**/*",
+]

@@ -62,3 +62,4 @@ coverage.xml
 test/
 llmtests/
 scratch/
+dispel_create_recipe.py
