@@ -10,8 +10,9 @@
 
 from .makeflow import MakeflowLogsParser
 from .taskvine import TaskVineLogsParser
-from .nextflow import NextflowLogsParser
 from .pegasus import PegasusLogsParser
 from .pegasusrec import HierarchicalPegasusLogsParser
 from .ro_crate import ROCrateLogsParser
+from .nextflow import NextflowLogsParser
+from .streamflow import StreamflowLogsParser
 from .snakemake import SnakemakeLogsParser

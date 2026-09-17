@@ -1,99 +1,34 @@
+/*
+ * WfCommons documentation — light-only design.
+ *
+ * The furo color palettes are pinned to identical light values in conf.py
+ * (light_css_variables == dark_css_variables), so the page never renders
+ * dark. This stylesheet enforces a light color scheme at the browser level,
+ * hides the theme toggle, and applies layout/typography polish.
+ */
+
+:root,
+html[data-theme="light"],
+html[data-theme="dark"],
+html[data-theme="auto"] {
+  color-scheme: light;
+}
+
 :root {
-  --content-max-width: 72rem;
-  --sidebar-width: 18rem;
-  --color-background-primary: #f7f6f2;
-  --color-background-secondary: #f0efe9;
-  --color-sidebar-background: #f0efe9;
-  --color-background-hover: #e9ecf2;
-  --color-background-border: #e1e4ee;
-  --color-brand-primary: #1f5eff;
-  --color-brand-content: #1a55e6;
-  --color-foreground-primary: #16181d;
-  --color-foreground-secondary: #4b5563;
-  --accent-warm: #ff7a59;
-  --accent-mint: #22c997;
-  --accent-sky: #4cc9f0;
-  --accent-violet: #9b5de5;
-  color-scheme: light;
+  --content-max-width: 54em;
+  --sidebar-width: 17em;
 }
 
-article h1 {
-  letter-spacing: -0.01em;
-}
-
-article h2 {
-  letter-spacing: -0.005em;
-}
-
+/* Furo hardcodes a white code foreground for dark mode; since the code
+ * background is always light here, pin the foreground to dark as well. */
 body {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
-    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
-    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
-    var(--color-background-primary);
+  --color-code-foreground: black !important;
 }
 
-.sidebar-drawer,
-.sidebar-container,
-.toc-drawer,
-.page-sidebar,
-.sidebar-tree {
-  background: var(--color-sidebar-background);
-}
-
-.content {
-  background: transparent;
-}
-
-/* Ensure any theme variant still uses the light palette. */
-html[data-theme="dark"],
-html[data-theme="auto"],
-body[data-theme="dark"],
-body[data-theme="auto"] {
-  color-scheme: light;
-}
-
-html[data-theme="dark"],
-html[data-theme="auto"],
-body[data-theme="dark"],
-body[data-theme="auto"] {
-  --color-background-primary: #f7f6f2;
-  --color-background-secondary: #f0efe9;
-  --color-sidebar-background: #f0efe9;
-  --color-background-hover: #e9ecf2;
-  --color-background-border: #e1e4ee;
-  --color-brand-primary: #1f5eff;
-  --color-brand-content: #1a55e6;
-  --color-foreground-primary: #16181d;
-  --color-foreground-secondary: #4b5563;
-  --accent-warm: #ff7a59;
-  --accent-mint: #22c997;
-  --accent-sky: #4cc9f0;
-  --accent-violet: #9b5de5;
-}
-
-body[data-theme="dark"],
-body[data-theme="auto"] {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
-    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
-    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
-    var(--color-background-primary);
-}
-
-body[data-theme="dark"] .sidebar-drawer,
-body[data-theme="auto"] .sidebar-drawer,
-body[data-theme="dark"] .sidebar-container,
-body[data-theme="auto"] .sidebar-container,
-body[data-theme="dark"] .toc-drawer,
-body[data-theme="auto"] .toc-drawer,
-body[data-theme="dark"] .page-sidebar,
-body[data-theme="auto"] .page-sidebar,
-body[data-theme="dark"] .sidebar-tree,
-body[data-theme="auto"] .sidebar-tree,
-body[data-theme="dark"] .mobile-header,
-body[data-theme="auto"] .mobile-header {
-  background: var(--color-sidebar-background);
+/* Hide the light/dark toggle: the docs are light-only by design. */
+.theme-toggle,
+.theme-toggle-container {
+  display: none !important;
 }
 
 /* Never show dark-only elements. */
@@ -101,148 +36,111 @@ body[data-theme="auto"] .mobile-header {
   display: none !important;
 }
 
-article {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.92));
-  border: 1px solid var(--color-background-border);
-  border-radius: 20px;
-  box-shadow: 0 24px 48px rgba(19, 25, 39, 0.08);
-  padding: 2.25rem 2.5rem;
-}
+/* ---- Typography ---------------------------------------------------------- */
 
 article h1 {
-  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 article h1::after {
   content: "";
   display: block;
-  width: 72px;
-  height: 6px;
-  margin-top: 0.5rem;
+  width: 64px;
+  height: 4px;
+  margin-top: 0.4rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-warm), var(--accent-sky), var(--accent-mint));
+  background: var(--color-brand-primary);
 }
 
 article h2 {
-  color: #1e293b;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  border-bottom: 1px solid var(--color-background-border);
+  padding-bottom: 0.3rem;
 }
 
-article h3 {
-  color: #1f2937;
-}
-
-article a {
-  color: var(--color-brand-primary);
-  font-weight: 600;
-}
-
-article a:hover {
-  color: var(--accent-violet);
-}
-
-code,
-pre {
-  background: #eef2ff;
-  border-color: #d8def2;
-}
-
-pre {
-  box-shadow: inset 0 0 0 1px rgba(26, 85, 230, 0.08);
-}
-
-.sidebar-tree .current > a {
-  background: rgba(26, 85, 230, 0.08);
-  border-radius: 8px;
-}
-
-.sidebar-tree a:hover {
-  background: rgba(34, 201, 151, 0.12);
-  border-radius: 8px;
-}
-
-.toc-drawer .toc-tree li > a,
-.toc-tree li > a {
-  border-radius: 8px;
-}
-
-.toc-tree li > a:hover {
-  background: rgba(76, 201, 240, 0.14);
-}
-
-table {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-}
-
-th {
-  background: rgba(31, 94, 255, 0.08);
-}
-
-hr {
-  border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(31, 94, 255, 0.3), transparent);
-}
-
-/* Hide heading link glyphs while keeping the anchor element. */
-.headerlink {
-  color: transparent !important;
-  text-decoration: none !important;
-  font-size: 0 !important;
-  width: 0;
-  margin-left: 0;
-}
-
-.headerlink::before {
-  content: "";
-}
-
-/* Force light palette even if the theme requests dark mode. */
-html[data-theme="dark"],
-html[data-theme="dark"] body,
-html[data-theme="auto"],
-html[data-theme="auto"] body {
-  --color-background-primary: #f7f6f2;
-  --color-background-secondary: #f0efe9;
-  --color-sidebar-background: #f0efe9;
-  --color-background-hover: #e9ecf2;
-  --color-background-border: #e1e4ee;
-  --color-brand-primary: #1f5eff;
-  --color-brand-content: #1a55e6;
-  --color-foreground-primary: #16181d;
-  --color-foreground-secondary: #4b5563;
-  --accent-warm: #ff7a59;
-  --accent-mint: #22c997;
-  --accent-sky: #4cc9f0;
-  --accent-violet: #9b5de5;
-  color-scheme: light;
-}
-
-html[data-theme="dark"] body,
-html[data-theme="auto"] body {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(155, 93, 229, 0.12), transparent 60%),
-    radial-gradient(900px 500px at 90% -15%, rgba(76, 201, 240, 0.15), transparent 55%),
-    radial-gradient(700px 400px at 50% 110%, rgba(34, 201, 151, 0.12), transparent 60%),
-    var(--color-background-primary);
-}
-
-/* Hide the theme toggle UI entirely. */
-.theme-toggle,
-.theme-toggle-container,
-.theme-toggle-container button {
-  display: none !important;
-}
-
-/* Hide project title text in the sidebar, keep the logo visible. */
-.sidebar-brand-text,
-.sidebar-brand .brand-text,
-.sidebar-brand .title {
-  display: none !important;
-}
-
+/* The index logo uses :align: left; keep it in the flow instead of floating. */
 article .align-left {
-  float: none !important
+  float: none !important;
+}
+
+/* ---- Code blocks and inline code ---------------------------------------- */
+
+pre {
+  border: 1px solid var(--color-background-border);
+  border-radius: 8px;
+}
+
+code.literal {
+  border: 1px solid var(--color-background-border);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+
+/* ---- Tables -------------------------------------------------------------- */
+
+article table.docutils {
+  border: 1px solid var(--color-background-border);
+  border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+article table.docutils th {
+  background: var(--color-background-secondary);
+  text-align: left;
+}
+
+article table.docutils th,
+article table.docutils td {
+  border: none;
+  border-bottom: 1px solid var(--color-background-border);
+  padding: 0.5em 0.75em;
+}
+
+article table.docutils tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---- Landing-page cards (sphinx-design) ---------------------------------- */
+
+.sd-card {
+  border: 1px solid var(--color-background-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(26, 34, 51, 0.06);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  height: 100%;
+}
+
+.sd-card:hover {
+  box-shadow: 0 4px 12px rgba(26, 34, 51, 0.12);
+  transform: translateY(-2px);
+}
+
+.sd-card .sd-card-title {
+  color: var(--color-brand-primary);
+  font-weight: 650;
+}
+
+/* ---- Sidebar and navigation ---------------------------------------------- */
+
+.sidebar-tree .current-page > .reference {
+  font-weight: 650;
+}
+
+.sidebar-tree .reference:hover,
+.toc-tree .reference:hover {
+  background: var(--color-background-hover);
+  border-radius: 6px;
+}
+
+/* ---- Admonitions ---------------------------------------------------------- */
+
+.admonition {
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1px solid var(--color-background-border);
 }

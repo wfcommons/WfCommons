@@ -1,18 +1,13 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# For the full list of options see:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-
 import os.path
 import sys
+
 # Fetch the version
 exec(open('../../wfcommons/version.py').read())
 
@@ -22,7 +17,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'WfCommons'
-copyright = '2020-2023, WfCommons Team'
+copyright = '2020-2026, WfCommons Team'
 author = 'WfCommons Team'
 
 # The short X.Y version
@@ -32,42 +27,62 @@ release = str(__version__)
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
-    'recommonmark',
-    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinx_copybutton',
+    'sphinx_design',
 ]
 
-# Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-# The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+source_suffix = {".rst": "restructuredtext"}
 
-# The master toctree document.
 master_doc = "index"
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_*.rst"]
+
+autodoc_member_order = 'bysource'
+
+# Strip prompts when copying code blocks so pasted commands run as-is.
+copybutton_prompt_text = r'\$ |>>> |\.\.\. '
+copybutton_prompt_is_regexp = True
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
 html_theme = 'furo'
 html_favicon = 'favicon.png'
 html_logo = 'images/wfcommons-horizontal.png'
 html_title = 'WfCommons'
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+# The documentation uses a light background only: both furo palettes are set
+# to the same light values so system/browser dark mode never produces a dark
+# page, and custom.css hides the theme toggle.
+_light_palette = {
+    "color-brand-primary": "#1c53b0",
+    "color-brand-content": "#1c53b0",
+    "color-background-primary": "#ffffff",
+    "color-background-secondary": "#f6f8fb",
+    "color-background-hover": "#eef2f8",
+    "color-background-border": "#e3e8f0",
+    "color-sidebar-background": "#f6f8fb",
+    "color-sidebar-background-border": "#e3e8f0",
+    "color-foreground-primary": "#1a2233",
+    "color-foreground-secondary": "#49556b",
+    "color-foreground-muted": "#6b7689",
+    "color-inline-code-background": "#f2f5fa",
+    "color-highlight-on-target": "#fff8dd",
+    "color-admonition-background": "#f6f8fb",
+}
+
+html_theme_options = {
+    "light_css_variables": _light_palette,
+    "dark_css_variables": _light_palette,
+    "sidebar_hide_name": True,
+}
+
+pygments_style = "friendly"
+pygments_dark_style = "friendly"
+
 html_static_path = ['_static']
 html_css_files = ['css/custom.css']

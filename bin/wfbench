@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021-2025 The WfCommons Team.
+# Copyright (c) 2021-2026 The WfCommons Team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ import json
 import logging
 import pandas as pd
 import psutil
+import shutil
 
 from io import StringIO
 from filelock import FileLock
@@ -230,11 +231,25 @@ class GPUBenchmark:
 
     @staticmethod
     def get_available_gpus():
-        proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        stdout, _ = proc.communicate()
-        df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
-        return df[df["utilization.gpu"] <= 5].index.to_list()
+        if "CUDA_VISIBLE_DEVICES" in os.environ:
+            return [int(i) for i in os.environ["CUDA_VISIBLE_DEVICES"].split(",")]
+        elif "ROCR_VISIBLE_DEVICES" in os.environ:
+            return [int(i) for i in os.environ["ROCR_VISIBLE_DEVICES"].split(",")]
+        elif shutil.which("nvidia-smi") is not None:
+            proc = subprocess.Popen(["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv"], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdout, _ = proc.communicate()
+            df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=" ")
+            return df[df["utilization.gpu"] <= 5].index.to_list()
+        elif shutil.which("amd-smi") is not None:
+            proc = subprocess.Popen(["amd-smi", "monitor", "-u", "--csv"], stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdout, _ = proc.communicate()
+            df = pd.read_csv(StringIO(stdout.decode("utf-8")), sep=",")
+            return df[df["gfx"] <= 5].index.to_list()
+        else:
+            log_error("No supported GPU monitoring tool found.")
+            return []
 
     def __init__(self):
         self.work = None
@@ -250,7 +265,7 @@ class GPUBenchmark:
         log_debug(f"GPU benchmark instantiated for device {self.device}")
 
     def set_work(self, work: int):
-        self.work = work
+        self.work = 1000000 * work
 
     def set_time(self, duration: float):
         self.duration = duration
@@ -261,13 +276,20 @@ class GPUBenchmark:
 
         if self.duration is not None:
             log_debug(f"Running GPU benchmark for {self.duration} seconds")
-            gpu_prog = [
-                f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
+            if shutil.which("nvidia-smi") is not None:
+                gpu_prog = [
+                    f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
+            else:
+                gpu_prog = [
+                    f"HIP_DEVICE_ORDER=PCI_BUS_ID ROCR_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work} {self.duration}"]
         else:
             log_debug(f"Running GPU benchmark for {self.work} units of work")
-            gpu_prog = [
-                f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
-
+            if shutil.which("nvidia-smi") is not None:
+                gpu_prog = [
+                    f"CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
+            else:
+                gpu_prog = [
+                    f"HIP_DEVICE_ORDER=PCI_BUS_ID ROCR_VISIBLE_DEVICES={self.device} {this_dir.joinpath('./gpu_benchmark')} {self.work}"]
         p = subprocess.Popen(gpu_prog, shell=True)
         return ProcessHandle(p)
 
@@ -355,10 +377,12 @@ def get_parser() -> argparse.ArgumentParser:
                                                      "Is only approximate since I/O time may make the overall time longer.")
     parser.add_argument("--mem", type=float, default=None, help="Maximum memory consumption (in MB).")
     parser.add_argument("--output-files", help="Output file names with sizes in bytes as a JSON dictionary "
-                                               "(e.g., --output-files {\\\"file1\\\": 1024, \\\"file2\\\": 2048}).")
+                                               "(e.g., --output-files \"{\\\"file1\\\": 1024, \\\"file2\\\": 2048}\") OR "
+                                               "a path to a .json file that contains that dictionary.")
     parser.add_argument("--input-files", help="Input files names as a JSON array "
-                                              "(e.g., --input-files [\\\"file3\\\", \\\"file4\\\"]).")
-    parser.add_argument("--silent", action="store_true", help="Disable all log messages.")
+                                              "(e.g., --input-files \"[\\\"file3\\\", \\\"file4\\\"]\") OR "
+                                              "a path to a .json file that contains that array.")
+    parser.add_argument("--verbose", action="store_true", help="Enable all log messages.")
     parser.add_argument("--debug", action="store_true", help="Enable debug log messages.")
     parser.add_argument("--with-flowcept", action="store_true", default=False, help="Enable Flowcept monitoring.")
     parser.add_argument("--workflow_id", default=None, help="Id to group tasks in a workflow.")
@@ -387,8 +411,8 @@ def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
     # Compute the (feasible number of chunks)
     min_chunk_size_time = 1 # At least 1 second per chunk, if we're doing time-based
     # TODO: Pick reasonable factors below so that a chunk takes about min_chunk_size_time sec on a reasonable machine
-    min_chunk_size_cpu_work = 3000000 * min_chunk_size_time  # 1s on my MacBook Pro
-    min_chunk_size_gpu_work = 30000000 * min_chunk_size_time # unknown.....
+    min_chunk_size_cpu_work = 2500 * min_chunk_size_time  # 1s on Henri's MacBook Pro
+    min_chunk_size_gpu_work = 2000 * min_chunk_size_time # unknown.....
 
     if time_limit:
         num_chunks = min(num_chunks, time_limit // min_chunk_size_time)
@@ -396,12 +420,18 @@ def compute_num_chunks(time_limit, cpu_work, gpu_work, num_chunks):
         if cpu_work:
             num_chunks_cpu = min(num_chunks, cpu_work // min_chunk_size_cpu_work)
         else:
-            num_chunks_cpu = 1
+            num_chunks_cpu = None
         if gpu_work:
             num_chunks_gpu = min(num_chunks, gpu_work // min_chunk_size_gpu_work)
         else:
-            num_chunks_gpu = 1
-        num_chunks = min(num_chunks_cpu, num_chunks_gpu)
+            num_chunks_gpu = None
+
+        if num_chunks_cpu is None:
+            num_chunks = num_chunks_gpu
+        elif num_chunks_gpu is None:
+            num_chunks = num_chunks_cpu
+        else:
+            num_chunks = min(num_chunks_cpu, num_chunks_gpu)
 
     num_chunks = max(num_chunks, 1)  # The above computations may say "zero"
     return num_chunks
@@ -412,7 +442,7 @@ def kill_current_handles(handles: list[ProcessHandle]):
             handle.terminate_along_with_children()
 
 
-def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path_cores,
+def run(workflow_id, name, with_flowcept, verbose, debug, rundir, path_lock, path_cores,
         time_limit, cpu_work, percent_cpu, mem, gpu_work, num_chunks,
         input_files, output_files):
     """Main function."""
@@ -423,7 +453,7 @@ def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path
         flowcept = None
         flowcept_task = None
 
-    if silent:
+    if verbose:
         logging.getLogger().setLevel(logging.NOTSET)
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -469,11 +499,26 @@ def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path
     # is read/written all at once at the beginning/end
 
     # Augment I/O read benchmarks for each input file
-    cleaned_input = "{}" if input_files is None else re.sub(r'\\+', '', input_files)
-    try:
-        input_files = json.loads(cleaned_input)
-    except json.JSONDecodeError as e:
-        log_error(f"Failed to decode --input-files JSON string argument: {e}")
+
+    if input_files and input_files.endswith(".json"):
+        try:
+            with open(input_files, "r") as f:
+                input_files = json.load(f)
+        except FileNotFoundError as e:
+            log_error(f"--input-files JSON file not found: {e}")
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode JSON in file '{input_files}': {e}")
+            sys.exit(1)
+    else:
+        cleaned_input = "[]" if input_files is None else re.sub(r'\\+', '', input_files)
+        try:
+            input_files = json.loads(cleaned_input)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode --input-files JSON string argument: {e}")
+            sys.exit(1)
+    if not isinstance(input_files, list):
+        log_error(f"--input-files must be a list JSON object, got {type(input_files).__name__}")
         sys.exit(1)
 
     for file_path in input_files:
@@ -492,11 +537,25 @@ def run(workflow_id, name, with_flowcept, silent, debug, rundir, path_lock, path
             steps[step]["io_read_benchmark"].add_read_operation(file_path, opened_file, num_bytes)
 
     # Augment I/O write benchmarks for each output file
-    cleaned_output = "{}" if output_files is None else re.sub(r'\\+', '', output_files)
-    try:
-        output_files = json.loads(cleaned_output)
-    except json.JSONDecodeError as e:
-        log_error(f"Failed to decode --output-files JSON string argument: {e}")
+    if output_files and output_files.endswith(".json"):
+        try:
+            with open(output_files, "r") as f:
+                output_files = json.load(f)
+        except FileNotFoundError as e:
+            log_error(f"--output-files JSON file not found: {e}")
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode JSON in file '{output_files}': {e}")
+            sys.exit(1)
+    else:
+        cleaned_output = "{}" if output_files is None else re.sub(r'\\+', '', output_files)
+        try:
+            output_files = json.loads(cleaned_output)
+        except json.JSONDecodeError as e:
+            log_error(f"Failed to decode --output-files JSON string argdument: {e}")
+            sys.exit(1)
+    if not isinstance(output_files, dict):
+        log_error(f"--output-files must be a dict JSON object, got {type(input_files).__name__}")
         sys.exit(1)
 
     for file_path, file_size in output_files.items():
@@ -605,6 +664,9 @@ def main():
     # Sanity checks
     if not args.time_limit and (not args.cpu_work and not args.gpu_work):
         log_error("At least one of --time-limit, --cpu-work, or --gpu-work should be provided.")
+        sys.exit(1)
+    if args.time_limit and (not args.cpu_work and not args.gpu_work):
+        log_error("In addition to --time-limit, at least one of --cpu-work or --gpu-work must be provided (to specify which kind of work should be done).")
         sys.exit(1)
 
     run(**vars(args))

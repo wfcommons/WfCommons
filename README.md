@@ -61,6 +61,11 @@ python3 -m pip install .
 
 ### Optional Requirements
 
+Visualization support (workflow task graph drawings) is available as an extra:
+```
+python3 -m pip install wfcommons[viz]
+```
+
 #### Graphviz
 WfCommons uses _pygraphviz_ for generating visualizations for the workflow task graph.
 If you want to enable this feature, you will have to install the

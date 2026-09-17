@@ -3,41 +3,77 @@
 WfGen: Generating Workflows
 ===========================
 
-WfGen is a component of WfCommons project that targets the generation of realistic
-synthetic workflow instances with a variety of characteristics. The
-:class:`~wfcommons.wfgen.generator.WorkflowGenerator` class uses recipes
-of workflows (as described in :ref:`workflow-recipe-generator-label`) 
-for creating the realistic synthetic instances. The resulting workflows are represented in the 
-:ref:`json-format-label`, which is already supported by simulation frameworks such as
-`WRENCH <https://wrench-project.org>`_.
+WfGen is the WfCommons component that targets the generation of realistic
+synthetic workflow instances with a variety of characteristics. Because the
+generated workflows preserve the structure and performance distributions of
+real executions, you can run experiments at scales (and in quantities) that
+would be impossible to obtain from production systems alone.
+
+The :class:`~wfcommons.wfgen.generator.WorkflowGenerator` class uses workflow
+recipes (as described in :ref:`workflow-recipe-generator-label`) for creating
+realistic synthetic instances. The resulting workflows are represented in the
+:ref:`json-format-label`, which is already supported by simulation frameworks
+such as `WRENCH <https://wrench-project.org>`_.
 
 .. _recipes-list:
 
-WfCommons Workflows Recipes
----------------------------
+Bundled Workflow Recipes
+------------------------
 
-This Python package provides several *workflow recipes* for generating realistic
-synthetic workflow instances. The current list of available workflow recipes include:
+This Python package provides *workflow recipes* for ten scientific
+applications, covering bioinformatics, astronomy, seismology, and
+agroecosystem domains:
 
-- :class:`~wfcommons.wfchef.recipes.blast.recipe.BlastRecipe`: :code:`from wfcommons.wfchef.recipes import BlastRecipe`
-- :class:`~wfcommons.wfchef.recipes.bwa.recipe.BwaRecipe`: :code:`from wfcommons.wfchef.recipes import BwaRecipe`
-- :class:`~wfcommons.wfchef.recipes.cycles.recipe.CyclesRecipe`: :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
-- :class:`~wfcommons.wfchef.recipes.epigenomics.recipe.EpigenomicsRecipe`: :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
-- :class:`~wfcommons.wfchef.recipes.genome.recipe.GenomeRecipe`: :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
-- :class:`~wfcommons.wfchef.recipes.montage.recipe.MontageRecipe`: :code:`from wfcommons.wfchef.recipes import MontageRecipe`
-- :class:`~wfcommons.wfchef.recipes.rnaseq.recipe.RnaseqRecipe`: :code:`from wfcommons.wfchef.recipes import RnaseqRecipe`
-- :class:`~wfcommons.wfchef.recipes.seismology.recipe.SeismologyRecipe`: :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
-- :class:`~wfcommons.wfchef.recipes.soykb.recipe.SoykbRecipe`: :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
-- :class:`~wfcommons.wfchef.recipes.srasearch.recipe.SrasearchRecipe`: :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
+.. list-table::
+   :header-rows: 1
+   :widths: 22 38 40
+
+   * - Application
+     - Domain
+     - Import
+   * - BLAST
+     - Bioinformatics (sequence alignment)
+     - :code:`from wfcommons.wfchef.recipes import BlastRecipe`
+   * - BWA
+     - Bioinformatics (read mapping)
+     - :code:`from wfcommons.wfchef.recipes import BwaRecipe`
+   * - Cycles
+     - Agroecosystem simulation
+     - :code:`from wfcommons.wfchef.recipes import CyclesRecipe`
+   * - Epigenomics
+     - Bioinformatics (DNA methylation)
+     - :code:`from wfcommons.wfchef.recipes import EpigenomicsRecipe`
+   * - 1000Genome
+     - Bioinformatics (population genomics)
+     - :code:`from wfcommons.wfchef.recipes import GenomeRecipe`
+   * - Montage
+     - Astronomy (image mosaics)
+     - :code:`from wfcommons.wfchef.recipes import MontageRecipe`
+   * - RNA-seq
+     - Bioinformatics (transcriptomics)
+     - :code:`from wfcommons.wfchef.recipes import RnaseqRecipe`
+   * - Seismology
+     - Seismic cross-correlation
+     - :code:`from wfcommons.wfchef.recipes import SeismologyRecipe`
+   * - SoyKB
+     - Bioinformatics (soybean knowledge base)
+     - :code:`from wfcommons.wfchef.recipes import SoykbRecipe`
+   * - SRA Search
+     - Bioinformatics (sequence read archive)
+     - :code:`from wfcommons.wfchef.recipes import SrasearchRecipe`
+
+You can also :ref:`create your own recipe
+<workflow-recipe-generator-label>` from real instances of any other
+application.
 
 The Workflow Instances Generator
 --------------------------------
 
 Synthetic workflow instances are generated using the
 :class:`~wfcommons.wfgen.generator.WorkflowGenerator` class. This class takes
-as input a :class:`~wfcommons.wfgen.abstract_recipe.WorkflowRecipe`
-object (see in :ref:`workflow-recipe-generator-label`), and provides two methods
-for generating synthetic workflow instances:
+as input a :class:`~wfcommons.wfgen.abstract_recipe.WorkflowRecipe` object
+(see :ref:`workflow-recipe-generator-label`), and provides two methods for
+generating synthetic workflow instances:
 
 - :meth:`~wfcommons.wfgen.generator.WorkflowGenerator.build_workflow`: generates a single synthetic workflow
   instance based on the workflow recipe used to instantiate the generator.
@@ -45,47 +81,55 @@ for generating synthetic workflow instances:
   instances based on the workflow recipe used to instantiate the generator.
 
 The build methods use the workflow recipe for generating realistic synthetic
-workflow instances, in which the workflow structure follows workflow composition
-rules defined in the workflow recipe, and tasks runtime, and input and output
-data sizes are generated according to distributions obtained from actual workflow
-execution instances (see :ref:`instances-label`).
+workflow instances, in which the workflow structure follows workflow
+composition rules defined in the recipe, and task runtimes and input and
+output data sizes are generated according to distributions obtained from
+actual workflow execution instances (see :ref:`instances-label`).
 
-Each generated instance is represented as a :class:`~wfcommons.common.workflow.Workflow`
-object (which in itself is an extension of the
-`NetworkX DiGraph <https://networkx.github.io/documentation/stable/reference/classes/digraph.html>`_
-class). The :class:`~wfcommons.common.workflow.Workflow` class provides two
-methods for writing the generated workflow instance into files:
+All workflow recipes provide a common constructor, :code:`from_num_tasks`,
+that defines the lower bound for the total number of tasks in the generated
+synthetic workflow.
 
+Each generated instance is represented as a
+:class:`~wfcommons.common.workflow.Workflow` object (which is itself an
+extension of the `NetworkX DiGraph
+<https://networkx.github.io/documentation/stable/reference/classes/digraph.html>`_
+class — all NetworkX graph algorithms work on it directly). The
+:class:`~wfcommons.common.workflow.Workflow` class provides two methods for
+writing the generated workflow instance to files:
+
+- :meth:`~wfcommons.common.workflow.Workflow.write_json`: write a JSON file of a workflow instance (:ref:`json-format-label`).
 - :meth:`~wfcommons.common.workflow.Workflow.write_dot`: write a DOT file of a workflow instance.
-- :meth:`~wfcommons.common.workflow.Workflow.write_json`: write a JSON file of a workflow instance.
 
-All workflow recipes provide a common method, :code:`from_num_tasks`, that defines the lower
-bound for the total number of tasks in the generated synthetic workflow.
+Scaling Runtimes and File Sizes
+-------------------------------
 
-Increasing/Reducing Runtime and File Sizes
-******************************************
+Workflow recipes also allow the generation of synthetic workflows with
+increased/reduced runtimes and/or file sizes, determined by user-provided
+factors — useful for what-if experiments (e.g., "what if the input data were
+50% larger?"):
 
-Workflow recipes also allow the generation of synthetic workflows with increased/reduced
-runtimes and/or files sizes determined by a factor provided by the user:
+- :code:`runtime_factor`: the factor by which task runtimes are increased/decreased.
+- :code:`input_file_size_factor`: the factor by which task input file sizes are increased/decreased.
+- :code:`output_file_size_factor`: the factor by which task output file sizes are increased/decreased.
 
-- :code:`runtime_factor`: The factor of which tasks runtime will be increased/decreased.
-- :code:`input_file_size_factor`: The factor of which tasks input files size will be increased/decreased.
-- :code:`output_file_size_factor`: The factor of which tasks output files size will be increased/decreased.
-
-The following example shows how to create a Seismology workflow recipe in which task
-runtime is increased by 10%, input files by 50%, and output files reduced by 20%: ::
+The following example creates a Seismology workflow recipe in which task
+runtime is increased by 10%, input files by 50%, and output files reduced by
+20%: ::
 
     from wfcommons.wfchef.recipes import SeismologyRecipe
 
     # creating a Seismology workflow recipe with increased/decreased runtime and file sizes
-    recipe = SeismologyRecipe.from_num_tasks(num_tasks=100, runtime_factor=1.1, input_file_size_factor=1.5, output_file_size_factor=0.8)
+    recipe = SeismologyRecipe.from_num_tasks(num_tasks=100,
+                                             runtime_factor=1.1,
+                                             input_file_size_factor=1.5,
+                                             output_file_size_factor=0.8)
 
 Examples
 --------
 
 The following example generates a *Seismology* synthetic workflow instance
-os 300 tasks, builds a synthetic workflow instance, and writes the
-synthetic instance to a JSON file. ::
+of 250 tasks and writes it to a JSON file: ::
 
     import pathlib
     from wfcommons.wfchef.recipes import SeismologyRecipe
@@ -95,9 +139,8 @@ synthetic instance to a JSON file. ::
     workflow = generator.build_workflow()
     workflow.write_json(pathlib.Path('seismology-workflow.json'))
 
-
-The example below generates a number of 10 *Blast* synthetic
-workflow instances for every size defined in the array :code:`num_tasks`: ::
+The example below generates 10 *Blast* synthetic workflow instances for every
+size defined in the array :code:`num_tasks` — 40 workflows in total: ::
 
     import pathlib
     from wfcommons.wfchef.recipes import BlastRecipe
@@ -112,10 +155,8 @@ workflow instances for every size defined in the array :code:`num_tasks`: ::
         for i, workflow in enumerate(workflows):
             workflow.write_json(pathlib.Path(f'blast-workflow-{task}-{i}.json'))
 
-
 The following example generates 10 *Epigenomics* synthetic workflow instances
-based on the number of tasks entered by the user (1000), builds the synthetic
-workflow instances, and writes the synthetic instances to JSON files. ::
+with (at least) 1000 tasks each, and writes them to JSON files: ::
 
     import pathlib
     from wfcommons.wfchef.recipes import EpigenomicsRecipe
@@ -125,9 +166,8 @@ workflow instances, and writes the synthetic instances to JSON files. ::
     for i, workflow in enumerate(generator.build_workflows(10)):
         workflow.write_json(pathlib.Path(f'epigenomics-workflow-{i}.json'))
 
-The example below generates a *Cycles* (agroecosystem) synthetic workflow instance
-based on the number of tasks entered by the user (250), builds the synthetic workflow
-instance, and writes the synthetic instance to a JSON file. ::
+The example below generates a *Cycles* (agroecosystem) synthetic workflow
+instance with 250 tasks and writes it to a JSON file: ::
 
     import pathlib
     from wfcommons.wfchef.recipes import CyclesRecipe

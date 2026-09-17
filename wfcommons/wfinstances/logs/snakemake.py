@@ -13,6 +13,7 @@ import itertools
 import math
 import os
 import pathlib
+import shlex
 
 from datetime import datetime, timezone
 from logging import Logger
@@ -46,6 +47,8 @@ class SnakemakeLogsParser(LogsParser):
     :param path_prefix_rewrite: A tuple that specifies that a file path prefix(for the workflow data files)
        should be replaced by another prefix (this is useful when the workflow execution was on a
        different machine than the log parsing)
+    :param snakemake_version: The Snakemake version (e.g., "9.20.0")
+    :type snakemake_version: str
     """
 
     def __init__(self,
@@ -54,7 +57,8 @@ class SnakemakeLogsParser(LogsParser):
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None,
                  rules_to_ignore: Optional[list[str]] = None,
-                 path_prefix_rewrite: Optional[tuple[str, str]] = None
+                 path_prefix_rewrite: Optional[tuple[str, str]] = None,
+                 snakemake_version: Optional[str] = "unknown"
                  ) -> None:
         """Create an object of the Snakemake parser."""
 
@@ -68,10 +72,13 @@ class SnakemakeLogsParser(LogsParser):
 
         self.execution_dir : pathlib.Path = execution_dir
         self.snkmt_db: pathlib.Path = snkmt_db
+        self.snakemake_version: str = snakemake_version
 
         self.file_map = {}
         self.file_objects = {}
         self.task_map = {}
+        self.task_shell = {}
+        self.task_threads = {}
         self.task_input_files = {}
         self.task_output_files = {}
         self.file_input_output = {}
@@ -96,9 +103,10 @@ class SnakemakeLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
+                                 runtime_system_version=self.snakemake_version,
                                  runtime_system_url=self.wms_url)
 
-        # Parse the sqlite db for to identify task
+        # Parse the sqlite db for to identify rules
         self._build_task_map()
 
         # Parse the sqlite db for to identify files
@@ -108,13 +116,14 @@ class SnakemakeLogsParser(LogsParser):
         self._create_tasks()
 
         # Set the workflow's makespan
-        workflow_start_time = math.inf
-        workflow_end_time = 0
-        for task in self.workflow.tasks.values():
-            task_start_time = datetime.fromisoformat(task.start_time).timestamp()
-            task_end_time = task_start_time + task.runtime
-            workflow_start_time = min(task_start_time, workflow_start_time)
-            workflow_end_time = max(task_end_time, workflow_end_time)
+        conn = sqlite3.connect(self.snkmt_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflows")
+        rows = cursor.fetchall()
+        if len(rows) != 1:
+            raise SystemError("The SQLite database has more than one entry in the workflows table")
+        workflow_start_time = datetime.fromisoformat(rows[0][2]).timestamp()
+        workflow_end_time = datetime.fromisoformat(rows[0][4]).timestamp()
         self.workflow.makespan = workflow_end_time - workflow_start_time
 
         return self.workflow
@@ -122,16 +131,39 @@ class SnakemakeLogsParser(LogsParser):
     def _build_task_map(self):
         conn = sqlite3.connect(self.snkmt_db)
         cursor = conn.cursor()
+        # Deal with rules
+        rules = {}
         cursor.execute("SELECT * FROM rules")
         rows = cursor.fetchall()
         for row in rows:
-            idx = row[0]
-            task_name = row[1]
-            if task_name in self.rules_to_ignore:
+            rule_idx = row[0]
+            rule_name = row[1]
+            if rule_name in self.rules_to_ignore:
                 continue
-            self.task_map[idx] = task_name
-            self.task_input_files[idx] = []
-            self.task_output_files[idx] = []
+            rules[rule_idx] = rule_name
+
+        # Deal with tasks
+        cursor.execute("SELECT * FROM jobs")
+        rows = cursor.fetchall()
+        for row in rows:
+            task_idx = row[0]
+            rule_idx = row[3]
+            threads = int(row[9])
+            # Shell command
+            if row[8]:
+                command_list = [x.rstrip().lstrip() for x in row[8].lstrip().rstrip().split('\n')]
+                shell_cmd = "; ".join(command_list)
+            else:
+                shell_cmd = None
+            if rule_idx not in rules:
+                continue
+            # self.task_map[task_idx] = rules[rule_idx] + "_" + str(task_idx)
+            self.task_map[task_idx] = rules[rule_idx] + f"_ID{task_idx:07d}"
+
+            self.task_shell[task_idx] = shell_cmd
+            self.task_threads[task_idx] = threads
+            self.task_input_files[task_idx] = []
+            self.task_output_files[task_idx] = []
 
     def _build_file_map(self):
         conn = sqlite3.connect(self.snkmt_db)
@@ -139,10 +171,17 @@ class SnakemakeLogsParser(LogsParser):
         cursor.execute("SELECT * FROM files")
         rows = cursor.fetchall()
         for row in rows:
+            file_type = row[2]
+            # Skip snakemake's BENCHMARK files (and besides snkmt doesn't deal with them correctly!)
+            # and LOG files (which sometimes are missing anyway)
+            if file_type == "BENCHMARK" or file_type == "LOG":
+                continue
             task_idx = row[3]
             if task_idx not in self.task_input_files and task_idx not in self.task_output_files:
                 continue
             full_path = row[1]
+            # clean path
+            full_path = full_path.split(" (access:")[0].split(" (cached)")[0].strip()
             if self.path_prefix_rewrite:
                 full_path = full_path.replace(self.path_prefix_rewrite[0], self.path_prefix_rewrite[1])
             file_size = os.path.getsize(f"{full_path}")
@@ -181,14 +220,31 @@ class SnakemakeLogsParser(LogsParser):
             input_files = [self.file_objects[path] for path in self.task_input_files[idx]]
             output_files = [self.file_objects[path] for path in self.task_output_files[idx]]
 
-            task = Task(name=self.task_map[idx],
-                        task_id=self.task_map[idx],
-                        task_type=TaskType.COMPUTE,
-                        runtime=elapsed,
-                        executed_at=start_date,
-                        input_files=input_files,
-                        output_files=output_files,
-                        logger=self.logger)
+            if self.task_shell[idx]:
+                program_name = self.task_shell[idx].split(' ')[0]
+                program_args = shlex.split(self.task_shell[idx], posix=False)
+                task = Task(name=self.task_map[idx],
+                            task_id=self.task_map[idx],
+                            task_type=TaskType.COMPUTE,
+                            runtime=elapsed,
+                            executed_at=start_date,
+                            input_files=input_files,
+                            output_files=output_files,
+                            program=program_name,
+                            cores=self.task_threads[idx],
+                            args=program_args,
+                            logger=self.logger)
+            else:
+                task = Task(name=self.task_map[idx],
+                            task_id=self.task_map[idx],
+                            task_type=TaskType.COMPUTE,
+                            runtime=elapsed,
+                            executed_at=start_date,
+                            input_files=input_files,
+                            output_files=output_files,
+                            cores=self.task_threads[idx],
+                            logger=self.logger)
+
             self.workflow.add_task(task)
 
         # File dependencies

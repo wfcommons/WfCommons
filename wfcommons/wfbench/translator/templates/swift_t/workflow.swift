@@ -87,10 +87,10 @@ cpu_threads = int(10 * percent_cpu)
 output_file = "%s"
 output_file_size = int(%i)
 dep = %i
-workflow_id = "%s"
+workflow_id = "%s".strip()
 task_id = f"{workflow_id}_{task_name}"
 
-if 'workflow_id':
+if workflow_id:
     __import__("logging").info("Running with Flowcept.")
     from flowcept import Flowcept, FlowceptTask
     fc = Flowcept(workflow_id=workflow_id,
@@ -123,7 +123,7 @@ mod.run(
     output_files=f'{{"{output_file}": {output_file_size}}}',
     input_files=str(input_file).replace("'", '"'),
     with_flowcept=bool(workflow_id),
-    silent=False,
+    verbose=False,
     debug=False,
     rundir=None,
     path_lock=None,
@@ -134,7 +134,7 @@ mod.run(
 
 __import__("logging").info(f"Benchmark {task_name} completed!")
 
-if 'workflow_id':
+if workflow_id:
     fc_task.end()
     fc.stop()
 """;

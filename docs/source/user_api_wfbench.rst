@@ -39,7 +39,7 @@ wfcommons.wfbench.translator.cwl
    :show-inheritance:
 
 wfcommons.wfbench.translator.streamflow
---------------------------------
+---------------------------------------
 
 .. automodule:: wfcommons.wfbench.translator.streamflow
    :members:

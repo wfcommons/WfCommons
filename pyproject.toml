@@ -9,7 +9,7 @@ description = "A Framework for Enabling Scientific Workflow Research and Educati
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -22,11 +22,10 @@ classifiers = [
     "Topic :: Documentation :: Sphinx",
     "Topic :: System :: Distributed Computing"
 ]
-license = {text = "GNU General Public License v3 (GPLv3)"}
+license = {text = "GNU Lesser General Public License v3 (LGPLv3)"}
 dependencies = [
     "jsonschema",
     "matplotlib",
-    "pygraphviz",
     "networkx",
     "numpy",
     "pandas",
@@ -35,9 +34,7 @@ dependencies = [
     "requests",
     "scipy>=1.16.1",
     "pyyaml",
-    "pandas",
     "shortuuid",
-    "stringcase",
     "filelock",
     "pathos",
     "tomli-w"
@@ -51,8 +48,9 @@ Documentation = "https://docs.wfcommons.org"
 Tracker = "https://github.com/wfcommons/WfCommons/issues"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "docker"]
 flowcept = ["flowcept"]
+viz = ["pygraphviz", "pydot"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}

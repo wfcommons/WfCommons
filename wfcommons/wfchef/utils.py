@@ -11,12 +11,12 @@
 import json
 import pathlib
 
+import matplotlib as mpl
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from hashlib import sha256
-from matplotlib import cm
 from typing import Iterable, Union, Set, Optional, Tuple, Hashable
 
 this_dir = pathlib.Path(__file__).resolve().parent
@@ -47,42 +47,54 @@ def create_graph(path: pathlib.Path) -> nx.DiGraph:
     path = pathlib.Path(path)
     with path.open() as fp:
         content = json.load(fp)
+        return create_graph_from_json_object(content)
 
-        graph = nx.DiGraph()
 
-        # Add src/dst nodes
-        graph.add_node("SRC", label="SRC", type="SRC", id="SRC")
-        graph.add_node("DST", label="DST", type="DST", id="DST")
+def create_graph_from_json_object(workflow_instance: dict) -> nx.DiGraph:
+    """
+    Creates a networkX DiGraph from a JSON file in the WfFormat.
 
-        id_count = 0
+    :param workflow_instance: A workflow instance as a JSON object.
+    :type workflow_instance: json
 
-        for task in content["workflow"]["specification"]["tasks"]:
+    :return: graph.
+    :rtype: networkX DiGraph.
+    """
+    graph = nx.DiGraph()
 
-            # specific for epigenomics -- have to think about how to do it in general
-            if "genome-dax" in content["name"]:
-                _type, *_ = task["name"].split("_")
-                graph.add_node(task["name"], label=_type, type=_type, id=str(id_count))
-                id_count += 1
-            else:
-                try:
-                    _type, _id = task["name"].split("_ID")
-                except ValueError:
-                    _type, _id = task["name"].split("_0")
-                graph.add_node(task["name"], label=_type, type=_type, id=_id)
+    # Add src/dst nodes
+    graph.add_node("SRC", label="SRC", type="SRC", id="SRC")
+    graph.add_node("DST", label="DST", type="DST", id="DST")
 
-            for parent in task["parents"]:
-                graph.add_edge(parent, task["name"])
+    id_count = 0
 
-        for node in graph.nodes:
+    for task in workflow_instance["workflow"]["specification"]["tasks"]:
 
-            if node in ["SRC", "DST"]:
-                continue
-            if graph.in_degree(node) <= 0:
-                graph.add_edge("SRC", node)
-            if graph.out_degree(node) <= 0:
-                graph.add_edge(node, "DST")
+        # specific for epigenomics -- have to think about how to do it in general
+        if "genome-dax" in workflow_instance["name"]:
+            _type, *_ = task["name"].split("_")
+            graph.add_node(task["name"], label=_type, type=_type, id=str(id_count))
+            id_count += 1
+        else:
+            try:
+                _type, _id = task["id"].split("_ID")
+            except ValueError:
+                _type, _id = task["id"].split("_0")
+            graph.add_node(task["name"], label=_type, type=_type, id=_id)
 
-        return graph
+        for parent in task["parents"]:
+            graph.add_edge(parent, task["name"])
+
+    for node in graph.nodes:
+
+        if node in ["SRC", "DST"]:
+            continue
+        if graph.in_degree(node) <= 0:
+            graph.add_edge("SRC", node)
+        if graph.out_degree(node) <= 0:
+            graph.add_edge(node, "DST")
+
+    return graph
 
 
 def annotate(g: nx.DiGraph) -> None:
@@ -176,8 +188,6 @@ def draw(g: nx.DiGraph,
     :param subgraph: nodes that were added by replication and will be colored green.
     :type subgraph: Set[str].
 
-    
-
     :return: the figure and the axis used.
     :rtype:  Tuple[plt.Figure, plt.Axes].
     """
@@ -213,7 +223,7 @@ def draw(g: nx.DiGraph,
         node_border_colors.get(src) if node_border_colors.get(src, -1) == node_border_colors.get(dst, 1) else "black"
         for src, dst in g.edges
     ]
-    cmap = cm.get_cmap('rainbow', len(type_set))
+    cmap = mpl.colormaps['rainbow'].resampled(len(type_set))
     nx.draw(g, pos, node_size=node_size, node_color=node_color, edgecolors=edgecolors, edge_color=edge_color,
             linewidths=linewidths, cmap=cmap, ax=ax, with_labels=with_labels)
     color_lines = [mpatches.Patch(color=cmap(types[t]), label=t) for t in type_set]
