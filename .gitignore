@@ -63,3 +63,8 @@ test/
 llmtests/
 scratch/
 dispel_create_recipe.py
+models.yaml
+.env 
+blast_translated
+blast_batch* 
+RHAPSODY-HOWTO.md

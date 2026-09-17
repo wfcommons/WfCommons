@@ -44,6 +44,7 @@ graft wfcommons/wfchef/recipes/bwa/microstructures/**
 graft wfcommons/wfchef/recipes/bwa/microstructures
 graft wfcommons/wfchef/recipes/bwa
 graft wfcommons/wfbench/translator/templates
+graft wfcommons/wfbench/translator/skills
 include Makefile
 include bin/cpu-benchmark.cpp
 include bin/wfbench

@@ -21,3 +21,5 @@ from .swift_t import SwiftTTranslator
 from .taskvine import TaskVineTranslator
 from .makeflow import MakeflowTranslator
 from .snakemake import SnakemakeTranslator
+from .llm_translator import LLMTranslator
+from .llm_backward_translator import LLMBackwardTranslator

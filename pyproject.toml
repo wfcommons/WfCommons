@@ -37,7 +37,8 @@ dependencies = [
     "shortuuid",
     "filelock",
     "pathos",
-    "tomli-w"
+    "tomli-w",
+    "python-dotenv",
 ]
 dynamic = ["version", "entry-points", "scripts"]
 
@@ -51,6 +52,9 @@ Tracker = "https://github.com/wfcommons/WfCommons/issues"
 test = ["pytest", "pytest-cov", "docker"]
 flowcept = ["flowcept"]
 viz = ["pygraphviz", "pydot"]
+
+[tool.setuptools.package-data]
+"wfcommons.wfbench.translator.skills" = ["*.md"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wfcommons.version.__version__"}
