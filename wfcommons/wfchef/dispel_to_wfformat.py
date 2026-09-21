@@ -7,6 +7,23 @@ workflow instances consumable by WfCommons / WfChef.
 
 Granularity: one WfFormat task per PE *instance* (``pe_id@rank``).
 
+dispel4py is a streaming system: PEs exchange in-memory data over named
+connections rather than files. Each connection name recorded in the trace
+(``graph.connect(pe, "output", other, "input")``) becomes a WfFormat "file"
+entry, one per *producing* (instance, output connection) pair -- a PE instance
+writing to one of its output ports produces exactly one stream, which every
+downstream instance wired to that port consumes. That matches dispel4py's
+default ShuffleCommunication, where the ranks of the destination PE pull items
+off one shared stream rather than each receiving a copy.
+
+Streams carry ``sizeInBytes: 0``: dispel4py's monitoring records timings and
+item counts, never data volumes, so any other size would be invented.
+
+Only the middle of the workflow streams, though -- the first PE still reads a
+real file and the last one still writes one. Those paths never reach the trace
+(they arrive as dispel4py root inputs or module constants), so name them with
+``--input-file`` / ``--output-file``; their sizes are read off disk.
+
 Inputs read from a monitoring directory:
   monitor_concrete_shape_run<id>.json  instance-level DAG (nodes + edges)
   monitor_shape_run<id>.json           abstract PE-level DAG (fallback for edges)
@@ -22,10 +39,19 @@ import pathlib
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from wfcommons.common.file import File
 from wfcommons.common.task import Task, TaskType
 from wfcommons.common.workflow import Workflow
 
 logger = logging.getLogger(__name__)
+
+# Connection names to assume when a trace predates the *_connection fields.
+_DEFAULT_OUT_CONNECTION = "output"
+_DEFAULT_IN_CONNECTION = "input"
+
+# An instance edge, carrying the connection (stream) names at both ends:
+# (source instance, destination instance, source port, destination port).
+InstanceEdge = Tuple[str, str, str, str]
 
 # dispel4py writes run ids as a compact ISO-ish stamp, e.g. 20260916T183613549171Z
 _RUN_ID_RE = re.compile(r"_run(?P<run_id>[^.]+)\.(?:json|csv|png)$")
@@ -74,21 +100,85 @@ def _read_instances(path: pathlib.Path) -> Dict[str, Dict[str, Any]]:
     return rows
 
 
+def _connections(edge: Dict[str, Any]) -> Tuple[str, str]:
+    """Return an edge's (source port, destination port) connection names."""
+    return (edge.get("from_connection") or _DEFAULT_OUT_CONNECTION,
+            edge.get("to_connection") or _DEFAULT_IN_CONNECTION)
+
+
+def _concrete_edges(concrete: Dict[str, Any]) -> List[InstanceEdge]:
+    """Read instance-level edges, with their port names, off the concrete shape."""
+    edges = []
+    for edge in concrete.get("edges", []):
+        from_connection, to_connection = _connections(edge)
+        edges.append((edge["from"], edge["to"], from_connection, to_connection))
+    return sorted(set(edges))
+
+
 def _expand_abstract_edges(
     abstract: Dict[str, Any],
     instances_by_pe: Dict[str, List[str]],
-) -> List[Tuple[str, str]]:
+) -> List[InstanceEdge]:
     """
     Fall back to the abstract shape: connect every instance of the source PE to
     every instance of the destination PE (dispel4py's default all-to-all
-    grouping). Used only when the concrete shape carries no edges.
+    grouping). Used only when the concrete shape carries no edges. Port names
+    are PE-level, so they survive the expansion unchanged.
     """
     edges = []
     for edge in abstract.get("edges", []):
+        from_connection, to_connection = _connections(edge)
         for src in instances_by_pe.get(edge["from"], []):
             for dst in instances_by_pe.get(edge["to"], []):
-                edges.append((src, dst))
+                edges.append((src, dst, from_connection, to_connection))
     return sorted(set(edges))
+
+
+def _data_file(name: str, monitoring_dir: pathlib.Path) -> File:
+    """
+    Resolve a real on-disk file the workflow reads or writes.
+
+    dispel4py never records these in the trace -- the path reaches the PE as a
+    root input or a module constant -- so the caller names them. Sizes are read
+    off disk, looking beside the monitoring directory as well, which is where
+    dispel4py leaves them when it runs from the workflow's directory.
+    """
+    given = pathlib.Path(name)
+    for candidate in (given, monitoring_dir / given, monitoring_dir.parent / given):
+        if candidate.is_file():
+            return File(file_id=given.name, size=candidate.stat().st_size)
+    logger.warning("%s not found on disk; recording it with size 0", name)
+    return File(file_id=given.name, size=0)
+
+
+def _stream_id(instance_id: str, connection: str) -> str:
+    """
+    Name the in-memory stream a PE instance writes to one of its output ports.
+
+    WfFormat file ids must match ``^[0-9a-zA-Z-_./:#]*$``, which excludes the
+    "@" dispel4py uses between PE and rank, so ``read0@0`` becomes ``read0:0``.
+    """
+    return f"{instance_id.replace('@', ':')}.{connection}"
+
+
+def _build_streams(edges: List[InstanceEdge]) -> Dict[str, Dict[str, Any]]:
+    """
+    Map each stream id to its single producing instance and its consumers.
+
+    One stream per (producer, output port): a fan-out across the destination
+    PE's ranks is one stream with several consumers, not one stream per rank.
+    Keeping a single producer per id also matches what WfCommons' translators
+    assume -- they key their file maps by file id, so a second producer would
+    silently overwrite the first.
+    """
+    streams: Dict[str, Dict[str, Any]] = {}
+    for src, dst, from_connection, _ in edges:
+        stream = streams.setdefault(
+            _stream_id(src, from_connection), {"producer": src, "consumers": []}
+        )
+        if dst not in stream["consumers"]:
+            stream["consumers"].append(dst)
+    return streams
 
 
 def _break_cycles(edges: List[Tuple[str, str]], order: List[str]) -> List[Tuple[str, str]]:
@@ -127,6 +217,8 @@ def build_workflow(
     prefix: str = "monitor",
     run_id: Optional[str] = None,
     mapping: Optional[str] = None,
+    input_files: Optional[List[str]] = None,
+    output_files: Optional[List[str]] = None,
 ) -> Workflow:
     """
     Build a WfFormat Workflow from one dispel4py monitoring run.
@@ -137,6 +229,13 @@ def build_workflow(
     :param run_id: which run to convert; defaults to the only/latest one present.
     :param mapping: dispel4py mapping that produced the trace, recorded as the
                     runtime system version (e.g. "timed_multi").
+    :param input_files: real files the workflow reads (e.g.
+                        "sensor_data_parallel_100.json"), attached to every
+                        source task. The trace does not record them: the path
+                        reaches the reading PE as a dispel4py root input.
+    :param output_files: real files the workflow writes (e.g.
+                         "agentic_parallel_results.jsonl"), attached to every
+                         sink task.
     """
     monitoring_dir = pathlib.Path(monitoring_dir)
     if not monitoring_dir.is_dir():
@@ -178,16 +277,58 @@ def build_workflow(
         instances_by_pe.setdefault(node["pe_id"], []).append(node["instance_id"])
 
     # --- edges -------------------------------------------------------------
-    concrete_edges = [(e["from"], e["to"]) for e in concrete.get("edges", [])]
-    if concrete_edges:
-        edges = sorted(set(concrete_edges))
+    instance_edges = _concrete_edges(concrete)
+    if instance_edges:
         edge_source = "concrete shape"
     else:
-        edges = _expand_abstract_edges(abstract, instances_by_pe)
+        instance_edges = _expand_abstract_edges(abstract, instances_by_pe)
         edge_source = "abstract shape (expanded across ranks)"
     logger.info("instance edges derived from %s", edge_source)
 
-    edges = _break_cycles(edges, concrete.get("topological_order", []))
+    edges = _break_cycles(
+        sorted({(src, dst) for src, dst, _, _ in instance_edges}),
+        concrete.get("topological_order", []),
+    )
+    # Streams follow the dependencies that survived cycle breaking, so a dropped
+    # back-edge takes its stream with it.
+    kept = set(edges)
+    streams = _build_streams(
+        [edge for edge in instance_edges if (edge[0], edge[1]) in kept]
+    )
+    logger.info("%d in-memory stream(s) named from connection names", len(streams))
+
+    # Streams are shared objects: one File per id, so the producer and every
+    # consumer reference the same entry in the workflow's file table.
+    stream_files = {
+        stream_id: File(file_id=stream_id, size=0) for stream_id in streams
+    }
+    outputs_of: Dict[str, List[File]] = {}
+    inputs_of: Dict[str, List[File]] = {}
+    for stream_id, stream in sorted(streams.items()):
+        outputs_of.setdefault(stream["producer"], []).append(stream_files[stream_id])
+        for consumer in stream["consumers"]:
+            inputs_of.setdefault(consumer, []).append(stream_files[stream_id])
+
+    # --- real files --------------------------------------------------------
+    # Streaming is only the middle of the workflow: the first PE still reads a
+    # file off disk and the last one still writes one. Sources and sinks are
+    # whatever the streams left unconnected, computed before the real files are
+    # attached so they do not mask each other.
+    all_instances = [node["instance_id"] for node in node_rows]
+    sources = [i for i in all_instances if not inputs_of.get(i)]
+    sinks = [i for i in all_instances if not outputs_of.get(i)]
+    for name in input_files or []:
+        data_file = _data_file(name, monitoring_dir)
+        logger.info("%s (%d bytes) read by %s",
+                    data_file.file_id, data_file.size, ", ".join(sources))
+        for instance_id in sources:
+            inputs_of.setdefault(instance_id, []).append(data_file)
+    for name in output_files or []:
+        data_file = _data_file(name, monitoring_dir)
+        logger.info("%s (%d bytes) written by %s",
+                    data_file.file_id, data_file.size, ", ".join(sinks))
+        for instance_id in sinks:
+            outputs_of.setdefault(instance_id, []).append(data_file)
 
     # --- workflow ----------------------------------------------------------
     workflow = Workflow(
@@ -236,6 +377,8 @@ def build_workflow(
                 program=pe_id,
                 args=[instance_id],
                 task_type=TaskType.COMPUTE,
+                input_files=inputs_of.get(instance_id, []),
+                output_files=outputs_of.get(instance_id, []),
             )
         )
 
@@ -254,13 +397,43 @@ def _pe_of(instance_id: str, node_rows: List[Dict[str, Any]]) -> str:
     return instance_id.split("@")[0]
 
 
+def _files_for(
+    spec: Optional[List[str] | Dict[str, List[str]]],
+    monitoring_dir: pathlib.Path,
+) -> List[str]:
+    """
+    Pick one directory's real input (or output) files out of ``spec``.
+
+    A plain list applies to every directory being converted; a dict keyed by
+    directory name or path lets runs of the same workflow over different data
+    declare their own (monitoring_simple reads sensor_data_agentic.json while
+    monitoring_multi reads sensor_data_parallel_100.json).
+    """
+    if not spec:
+        return []
+    if isinstance(spec, dict):
+        for key in (monitoring_dir.name, str(monitoring_dir)):
+            if key in spec:
+                return spec[key]
+        return []
+    return spec
+
+
 def convert(
     monitoring_dirs: List[pathlib.Path | str],
     output_dir: pathlib.Path | str,
     workflow_name: Optional[str] = None,
     prefix: str = "monitor",
+    input_files: Optional[List[str] | Dict[str, List[str]]] = None,
+    output_files: Optional[List[str] | Dict[str, List[str]]] = None,
 ) -> List[pathlib.Path]:
-    """Convert one or more monitoring directories into WfFormat JSON files."""
+    """
+    Convert one or more monitoring directories into WfFormat JSON files.
+
+    :param input_files: real files the workflows read, either as a list applied
+                        to every directory or as a {directory: [files]} dict.
+    :param output_files: real files the workflows write, same forms.
+    """
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -273,6 +446,8 @@ def convert(
             workflow_name=workflow_name or monitoring_dir.name,
             prefix=prefix,
             mapping=mapping,
+            input_files=_files_for(input_files, monitoring_dir),
+            output_files=_files_for(output_files, monitoring_dir),
         )
         # wfchef groups instances by size, so encode the task count in the name.
         out = output_dir / f"{workflow.name}-{len(workflow.tasks)}.json"
@@ -295,6 +470,15 @@ def main() -> None:
                         help="workflow name (defaults to each directory's name)")
     parser.add_argument("--prefix", default="monitor",
                         help="dispel4py --timing-prefix used for the run")
+    parser.add_argument("-i", "--input-file", action="append", dest="input_files",
+                        metavar="FILE",
+                        help="real file the workflow reads, attached to every source "
+                             "task (repeatable). Not recorded in the trace, so it has "
+                             "to be named here, e.g. sensor_data_parallel_100.json")
+    parser.add_argument("--output-file", action="append", dest="output_files",
+                        metavar="FILE",
+                        help="real file the workflow writes, attached to every sink "
+                             "task (repeatable), e.g. agentic_parallel_results.jsonl")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -302,7 +486,9 @@ def main() -> None:
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(levelname)s %(message)s",
     )
-    for path in convert(args.monitoring_dirs, args.out, args.name, args.prefix):
+    for path in convert(args.monitoring_dirs, args.out, args.name, args.prefix,
+                        input_files=args.input_files,
+                        output_files=args.output_files):
         print(path)
 
 

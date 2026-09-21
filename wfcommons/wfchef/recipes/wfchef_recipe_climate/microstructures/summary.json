@@ -1,33 +1,63 @@
 {
   "frequencies": {
+    "microstructure_5f2a2e0a40345ad6168315fcb16275cafd36d9b27b181ef5978fabf9a44905d4": [
+      [
+        15,
+        2
+      ],
+      [
+        33,
+        5
+      ]
+    ],
     "microstructure_ae83fe80241183b67d9c7c216954d525a11f5e0c62a73a40227cf3f83327b476": [
       [
-        18,
+        15,
         2
+      ],
+      [
+        33,
+        5
       ]
     ],
     "microstructure_a7cbe697702ad96b3287348fe89582dd45344b6c6230844d7aa14710baace270": [
       [
-        18,
+        15,
         2
+      ],
+      [
+        33,
+        5
       ]
     ],
     "microstructure_aba021eb0f4094b69bf4ce626644d3d59d563f6f61e5a56da7fcae77e7090dc7": [
       [
-        18,
-        4
+        15,
+        2
+      ],
+      [
+        33,
+        5
       ]
     ],
     "microstructure_8cbdeab02321b0753b3ee7dbf5859e81d1390b463a3e6d0c24f05fa0881cbe99": [
       [
-        18,
-        3
+        15,
+        2
+      ],
+      [
+        33,
+        5
       ]
     ],
     "microstructure_8ec01859d4300e0f35330f90d6c87ef526e8dbda46b115db5bb2a399e9330b24": [
       [
-        18,
-        3
+        15,
+        2
+      ],
+      [
+        33,
+        5
       ]
     ]
   },
@@ -36,9 +66,13 @@
       "size": 9,
       "order": 9
     },
-    "monitoring_multi-16": {
-      "size": 46,
-      "order": 18
+    "monitoring_multi_16-13": {
+      "size": 29,
+      "order": 15
+    },
+    "monitoring_multi_32-31": {
+      "size": 161,
+      "order": 33
     }
   }
 }

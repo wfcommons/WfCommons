@@ -39,6 +39,8 @@ dependencies = [
     "pathos",
     "tomli-w",
     "python-dotenv",
+    "openai>=1.0",
+    "pydantic>=2",
 ]
 dynamic = ["version", "entry-points", "scripts"]
 
