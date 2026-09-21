@@ -53,3 +53,13 @@ __global__ void stress_vm_one(
       count[blockIdx.x] += aggregate;
 	}
 }
+
+__global__ void touch_pages(void *buf, const size_t n_pages, const size_t page_size) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= n_pages)
+    return;
+  char *buffer = reinterpret_cast<char *>(buf) + tid * page_size;
+  (*buffer)++;
+  // cudaDeviceSynchronize();
+  (*buffer)--;
+}

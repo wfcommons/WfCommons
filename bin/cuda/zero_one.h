@@ -7,4 +7,6 @@ __global__ void stress_vm_zero(unsigned long long int *buf,
 __global__ void stress_vm_one(unsigned long long int *buf,
                               unsigned long long int *count,
                               const size_t sz);
+
+__global__ void touch_pages(void *buf, const size_t n_pages, const size_t page_size);
 #endif

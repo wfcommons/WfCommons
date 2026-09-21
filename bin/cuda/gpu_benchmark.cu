@@ -120,6 +120,23 @@ void memoryBenchmarkTime(long max_work, std::optional<int> runtime_in_seconds) {
 
   std::cout << n << " " << m << std::endl;
 
+  // Initialize Driver API
+  // cuInit(0);
+  // CUdevice device;
+  // cuDeviceGet(&device, 0);
+
+  // Specify device allocation properties
+  CUmemAllocationProp prop = {};
+  prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
+  prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+  prop.location.id = 0;
+
+  size_t granularity = 0;
+  // Query the minimum allocation granularity (typically 2MB)
+  cuMemGetAllocationGranularity(&granularity, &prop, CU_MEM_ALLOC_GRANULARITY_MINIMUM);
+
+  std::cout << "GPU Virtual Memory Page Size: " << granularity / (1024 * 1024) << " MiB\n";
+
   // allocate memory
   unsigned long long int *d_count;
   CUDA_CHECK(cudaMalloc((void **)&d_count, m * sizeof(unsigned long long int)));
