@@ -8,20 +8,9 @@ workflow instances consumable by WfCommons / WfChef.
 Granularity: one WfFormat task per PE *instance* (``pe_id@rank``).
 
 dispel4py is a streaming system: PEs exchange in-memory data over named
-connections rather than files. Each connection name recorded in the trace
-(``graph.connect(pe, "output", other, "input")``) becomes a WfFormat "file"
-entry, one per *producing* (instance, output connection) pair -- a PE instance
-writing to one of its output ports produces exactly one stream, which every
-downstream instance wired to that port consumes. That matches dispel4py's
-default ShuffleCommunication, where the ranks of the destination PE pull items
-off one shared stream rather than each receiving a copy.
-
-Streams carry ``sizeInBytes: 0``: dispel4py's monitoring records timings and
-item counts, never data volumes, so any other size would be invented.
-
-Only the middle of the workflow streams, though -- the first PE still reads a
-real file and the last one still writes one. Those paths never reach the trace
-(they arrive as dispel4py root inputs or module constants), so name them with
+connections rather than files. The first PE still reads a real file and the last one 
+still writes one. Those paths never reach the trace (they arrive as dispel4py root 
+inputs or module constants), so name them with 
 ``--input-file`` / ``--output-file``; their sizes are read off disk.
 
 Inputs read from a monitoring directory:
