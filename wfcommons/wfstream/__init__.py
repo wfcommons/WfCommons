@@ -17,3 +17,7 @@ registry calls; the other modules are the individual steps.
 
 from .dispel_fwd_converter import build_workflow, convert
 from .pipeline import on_new_size_run, on_new_workflow
+
+# `simulate` and the other steps stay module-level: exporting the function here
+# would shadow the module of the same name for `from wfcommons.wfstream import
+# simulate`.
