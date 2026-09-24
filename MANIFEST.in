@@ -43,6 +43,9 @@ graft wfcommons/wfchef/recipes/blast
 graft wfcommons/wfchef/recipes/bwa/microstructures/**
 graft wfcommons/wfchef/recipes/bwa/microstructures
 graft wfcommons/wfchef/recipes/bwa
+graft wfcommons/wfchef/recipes/wfchef_recipe_climate/microstructures/**
+graft wfcommons/wfchef/recipes/wfchef_recipe_climate/microstructures
+graft wfcommons/wfchef/recipes/wfchef_recipe_climate
 graft wfcommons/wfbench/translator/templates
 graft wfcommons/wfbench/translator/skills
 include Makefile

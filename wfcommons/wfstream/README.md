@@ -129,6 +129,35 @@ climate: 500 processes, 10,000 items
       will not help unless LLMSensorAgentPE4 gets more of them.
 ```
 
+### Making a cooked recipe discoverable
+
+`create_recipe` writes a `pyproject.toml` at the build directory's root that
+declares the recipe as a `workflow_recipes` entry point — but nothing installs
+it, so the recipe stays invisible to `wfchef ls` and to `get_recipe`, which is
+how the rest of WfCommons finds a recipe.
+
+`register()` closes that gap:
+
+```python
+from wfcommons.wfstream import build_recipe
+
+cooked = build_recipe.cook(corpus, build_dir, "climate")
+build_recipe.register(build_dir)        # -> pip install; 'climate_recipe'
+```
+
+or `python -m wfcommons.wfstream.build_recipe --register`, or
+`on_new_workflow(..., register=True)`.
+
+Once registered, the recipe behaves like a built-in: `wfchef ls` lists it, and
+`load_recipe` resolves it through its entry point rather than a hardcoded path —
+so it works in a fresh environment that only pip-installed the package.
+
+`install()` is the faster alternative that skips pip: it copies the data over
+whichever copy of the recipe actually resolves. Use it to refresh a recipe that
+is already in place, and `register()` for one that is not.
+
+### Scoring
+
 Case B scores itself. Before a new run is folded into the statistics, the model
 has never seen it — so predicting it then is a genuine held-out test. Each result
 is appended to `accuracy.jsonl`, and the accuracy record builds up on its own as

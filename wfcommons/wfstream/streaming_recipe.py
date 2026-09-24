@@ -11,13 +11,15 @@ means more instances of a PE.
 import importlib
 import itertools
 import logging
+import pathlib
 import pickle
 
 import networkx as nx
 
+from wfcommons.wfchef.chef import get_recipe
 from wfcommons.wfchef.duplicate import duplicate_nodes
 
-from .config import RECIPE_NAME, recipe_dir
+from .config import RECIPE_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +27,41 @@ FICTITIOUS = ("SRC", "DST")   # WfChef bookends; not tasks
 
 
 def load_recipe(name: str = RECIPE_NAME):
-    """Import the installed WfChef recipe class for ``name``."""
-    module = importlib.import_module(
-        f"wfcommons.wfchef.recipes.wfchef_recipe_{name}.recipe")
+    """The WfChef recipe class for ``name``.
+
+    A registered recipe is resolved through its entry point, the same way
+    WfChef resolves a built-in, so a recipe cooked by wfstream and installed
+    with `build_recipe.register` is found wherever it happens to live. The
+    in-tree module is the fallback for a recipe that was only copied into the
+    package without being registered.
+    """
+    recipe = get_recipe(f"{name}_recipe")
+    if recipe is not None:
+        return recipe
+    try:
+        module = importlib.import_module(
+            f"wfcommons.wfchef.recipes.wfchef_recipe_{name}.recipe")
+    except ModuleNotFoundError as error:
+        raise SystemExit(
+            f"no recipe {name!r}: it is not registered as {name}_recipe and "
+            f"there is no wfchef_recipe_{name} package inside wfcommons. Cook "
+            f"it, then install it with build_recipe.register()."
+        ) from error
+    logger.info("%s is not registered as an entry point; using the copy inside "
+                "wfcommons. Run build_recipe.register() to make `wfchef ls` "
+                "show it.", name)
     return getattr(module, f"{name.capitalize()}Recipe")
+
+
+def recipe_path(name: str = RECIPE_NAME) -> pathlib.Path:
+    """The directory the resolved recipe's data lives in.
+
+    Derived from wherever the recipe class was actually loaded from, rather than
+    assumed: a registered recipe sits in site-packages, an unregistered one in
+    the wfcommons tree, and its microstructures are beside it either way.
+    """
+    module = importlib.import_module(load_recipe(name).__module__)
+    return pathlib.Path(module.__file__).resolve().parent
 
 
 def _tasks(graph) -> list:
@@ -37,9 +70,9 @@ def _tasks(graph) -> list:
 
 def base_graphs(name: str = RECIPE_NAME) -> dict:
     """Every base graph in a recipe, by name."""
-    root = recipe_dir(name) / "microstructures"
+    root = recipe_path(name) / "microstructures"
     if not root.is_dir():
-        raise SystemExit(f"no installed recipe for {name!r} at {recipe_dir(name)}")
+        raise SystemExit(f"recipe {name!r} has no microstructures at {root}")
     graphs = {}
     for directory in sorted(root.iterdir()):
         pickled = directory / "base_graph.pickle"

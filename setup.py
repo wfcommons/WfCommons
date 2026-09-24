@@ -70,6 +70,7 @@ setup(
             'blast_recipe = wfcommons.wfchef.recipes:BlastRecipe',
             'bwa_recipe = wfcommons.wfchef.recipes:BwaRecipe',
             'rnaseq_recipe = wfcommons.wfchef.recipes:RnaseqRecipe',
+            'climate_recipe = wfcommons.wfchef.recipes.wfchef_recipe_climate:ClimateRecipe',
         ]
     },
 )

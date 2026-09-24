@@ -72,6 +72,7 @@ def on_new_workflow(trace_dirs,
                     output_files=None,
                     grow_from: str = None,
                     stats_path: pathlib.Path = None,
+                    register: bool = False,
                     simulate: bool = True) -> dict:
     """Bring a workflow the registry has not seen before up to a prediction.
 
@@ -87,6 +88,10 @@ def on_new_workflow(trace_dirs,
         know it.
     :param stats_path: where to write the learned CPU/memory statistics;
         defaults to resource_stats.json beside the corpus.
+    :param register: pip-install the cooked recipe so it becomes a WfChef entry
+        point, visible to ``wfchef ls`` and to `get_recipe` in a fresh
+        environment. Off by default because it shells out to pip; the faster
+        path copies the data into the already-installed recipe instead.
     :param simulate: predict runtime, CPU and memory for the generated instance.
     :return: {"instances", "recipe", "synthetic", "stats", "simulation"}
     """
@@ -106,7 +111,12 @@ def on_new_workflow(trace_dirs,
             "be able to scale", len(instances), counts)
 
     cooked = build_recipe.cook(wfformat_dir, build_dir, name)
-    build_recipe.install(cooked)
+    if register:
+        # pip-installs the cooked package, so the recipe becomes a WfChef entry
+        # point and `wfchef ls` shows it like any built-in one
+        build_recipe.register(build_dir)
+    else:
+        build_recipe.install(cooked, name=name)
 
     # Time, CPU and memory per PE, learned straight from the monitoring CSVs.
     # WfChef's own statistics cover runtime only, so this is kept alongside.
@@ -180,7 +190,7 @@ def on_new_size_run(trace_dirs,
                     handle.write(json.dumps(check, default=str) + "\n")
 
     cooked = build_recipe.cook(wfformat_dir, build_dir, name)
-    build_recipe.install(cooked)
+    build_recipe.install(cooked, name=name)
 
     # A real run at a new size sharpens the cost model as well as the recipe.
     stats = resource_stats.learn(trace_dirs)
