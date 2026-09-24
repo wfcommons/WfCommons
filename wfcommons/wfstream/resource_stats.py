@@ -299,6 +299,38 @@ def learn(monitoring_dirs, prefix: str = "monitor") -> Dict[str, Any]:
             "pes": pes}
 
 
+def measured(monitoring_dir: pathlib.Path, prefix: str = "monitor") -> Dict[str, Any]:
+    """What a run actually did, per PE, for checking a prediction against it.
+
+    ``busiest_secs`` is the largest service time among a PE's instances, which is
+    what the simulator's ``stage_secs`` predicts: a stage is finished when its
+    slowest instance is, not when the average one is.
+    """
+    rows = _instance_rows(monitoring_dir, prefix)
+    by_run: Dict[str, List[dict]] = {}
+    for row in rows:
+        by_run.setdefault(row.get("run_id", ""), []).append(row)
+
+    runs = {}
+    for run_id, run_rows in by_run.items():
+        pes: Dict[str, Any] = {}
+        for row in run_rows:
+            pe = pes.setdefault(canonical_pe(row["pe_id"]),
+                                {"instances": 0, "items": 0.0, "work_secs": 0.0,
+                                 "cpu_secs": 0.0, "busiest_secs": 0.0})
+            pe["instances"] += 1
+            pe["items"] += _number(row, "total_count")
+            pe["work_secs"] += _number(row, "total_secs")
+            pe["cpu_secs"] += _number(row, "total_cpu_secs")
+            pe["busiest_secs"] = max(pe["busiest_secs"], _number(row, "total_secs"))
+        runs[run_id] = {
+            "pes": pes,
+            "shape": {pe: v["instances"] for pe, v in pes.items()},
+            "items": max((v["items"] for v in pes.values()), default=0.0),
+        }
+    return runs
+
+
 def save(stats: Dict[str, Any], path: pathlib.Path) -> pathlib.Path:
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

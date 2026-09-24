@@ -41,6 +41,7 @@ footprints, never raw RSS.
 """
 
 import collections
+import datetime
 import json
 import logging
 import math
@@ -105,10 +106,6 @@ def fill_drain(graph: Optional[nx.DiGraph], bottleneck: str, cost, pes) -> tuple
     slowest path *out of* it. Branches that run beside the bottleneck are
     excluded, because their work overlaps the bottleneck rather than queueing
     behind it, and where several branches converge only the slowest is charged.
-
-    Without a graph -- a caller who passed bare instance counts -- every other
-    stage is summed instead. That is right only for a chain, and overstates any
-    workflow with a branch that bypasses the bottleneck.
 
     :return: (seconds, how it was derived)
     """
@@ -239,6 +236,131 @@ def simulate(instance,
     }
 
 
+def _duration(seconds: float) -> str:
+    """Seconds as something a person reads without counting digits."""
+    if seconds < 1:
+        return f"{seconds*1000:.0f} ms"
+    if seconds < 90:
+        return f"{seconds:.1f} seconds"
+    if seconds < 5400:
+        return f"{seconds/60:.1f} minutes"
+    if seconds < 172800:
+        return f"{seconds/3600:.1f} hours"
+    return f"{seconds/86400:.1f} days"
+
+
+def summary(result: Dict[str, Any], name: str = None) -> str:
+    """The prediction in plain language, with the caveats that apply to it.
+
+    `report` is the table; this is what to show someone who wants the answer
+    rather than the working. Caveats are raised only when the prediction
+    actually rests on them.
+    """
+    pes, cpu, mem = result["pes"], result["cpu"], result["memory"]
+    lo, hi = result["makespan_range_secs"]
+    instances = sum(p["instances"] for p in pes.values())
+    bottleneck, slowest = result["bottleneck"], pes[result["bottleneck"]]
+    share = slowest["stage_secs"] / result["makespan_secs"] if result["makespan_secs"] else 0
+
+    lines = [f"{name or 'Workflow'}: {instances} processes, "
+             f"{result['items']:,.0f} items"]
+    lines.append("")
+    lines.append(f"  Runtime    {_duration(result['makespan_secs'])}"
+                 f"   (between {_duration(lo)} and {_duration(hi)})")
+    lines.append(f"  CPU        {cpu['mean_cores']:.1f} cores on average, "
+                 f"{cpu['core_seconds']:,.0f} core-seconds in total")
+    lines.append(f"  Memory     {mem['total_bytes']/1e9:.1f} GB across "
+                 f"{mem['processes']} processes")
+    lines.append("")
+    lines.append(f"  The time goes almost entirely to {bottleneck} "
+                 f"({share*100:.0f}% of it), which handles "
+                 f"{slowest['items']:,.0f} of the {result['items']:,.0f} items "
+                 f"across {slowest['instances']} processes.")
+
+    notes = []
+    if cpu["mean_cores"] < instances * 0.25:
+        notes.append(f"Processes are mostly idle -- {cpu['mean_cores']:.1f} cores "
+                     f"busy out of {instances}. Adding processes will not help "
+                     f"unless {bottleneck} gets more of them.")
+    unmeasured = [p for p, v in pes.items() if not v["measured_memory"]]
+    if unmeasured:
+        notes.append(f"Memory for {', '.join(unmeasured)} is the process "
+                     f"baseline only; the traces could not attribute it.")
+    if result.get("fill_basis") != "critical path":
+        notes.append("Startup cost assumes a straight chain, because no "
+                     "dataflow graph was supplied. It is an overestimate for a "
+                     "branching workflow.")
+    if result.get("unknown_pes"):
+        notes.append(f"Left out of the prediction entirely: "
+                     f"{', '.join(result['unknown_pes'])} -- no measurements.")
+    spread = hi / lo if lo else 1.0
+    if spread > 1.4:
+        notes.append(f"The runs this was learned from varied by {spread:.1f}x "
+                     f"among themselves, so treat the range as the answer "
+                     f"rather than the single number.")
+    if notes:
+        lines.append("")
+        lines.append("  Worth knowing:")
+        lines.extend(f"    - {note}" for note in notes)
+    return "\n".join(lines)
+
+
+def save(result: Dict[str, Any],
+         path: pathlib.Path,
+         name: str = None,
+         **provenance) -> pathlib.Path:
+    """Write a prediction, with what it was made from, as JSON.
+
+    Without this a prediction lives only in the caller's memory, so there is
+    nothing to compare against when the workflow is eventually run for real.
+    """
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    record = {
+        "name": name,
+        "predicted_at": datetime.datetime.now().astimezone().isoformat(),
+        **{k: str(v) for k, v in provenance.items()},
+        "prediction": result,
+    }
+    path.write_text(json.dumps(record, indent=2, default=str))
+    return path
+
+
+def compare(result: Dict[str, Any], observed: Dict[str, Any]) -> Dict[str, Any]:
+    """Check a prediction against what a run actually did.
+
+    Only per-stage figures can be checked: dispel4py's monitoring records service
+    time per PE, never the workflow's wall clock, so predicted makespan has
+    nothing to be compared with. The bottleneck stage is the closest proxy and is
+    reported as ``bottleneck_ratio``.
+
+    :param observed: one run from `resource_stats.measured`.
+    :return: per-PE ratios plus a headline for the bottleneck.
+    """
+    rows = {}
+    for pe_id, predicted in result["pes"].items():
+        actual = observed["pes"].get(pe_id)
+        if not actual:
+            continue
+        rows[pe_id] = {
+            "predicted_secs": predicted["stage_secs"],
+            "measured_secs": actual["busiest_secs"],
+            "secs_ratio": (predicted["stage_secs"] / actual["busiest_secs"]
+                           if actual["busiest_secs"] else None),
+            "predicted_cpu_secs": predicted["cpu_secs"],
+            "measured_cpu_secs": actual["cpu_secs"],
+            "cpu_ratio": (predicted["cpu_secs"] / actual["cpu_secs"]
+                          if actual["cpu_secs"] else None),
+        }
+    bottleneck = result["bottleneck"]
+    return {
+        "items": result["items"],
+        "bottleneck": bottleneck,
+        "bottleneck_ratio": rows.get(bottleneck, {}).get("secs_ratio"),
+        "pes": rows,
+    }
+
+
 def report(result: Dict[str, Any]) -> str:
     """Render a prediction as a table."""
     lines = []
@@ -289,12 +411,23 @@ def main() -> None:
                         help="items to push through (default: the widest run)")
     parser.add_argument("--shared-process", action="store_true",
                         help="timed_simple: every PE shares one process")
+    parser.add_argument("-n", "--name", default=None, help="workflow name")
+    parser.add_argument("-o", "--out", type=pathlib.Path, default=None,
+                        help="save the prediction as JSON")
+    parser.add_argument("--table", action="store_true",
+                        help="also print the per-PE breakdown")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
     result = simulate(args.instance, args.stats, args.items,
                       processes_per_instance=0 if args.shared_process else 1)
-    print(report(result))
+    print(summary(result, args.name or args.instance.stem))
+    if args.table:
+        print()
+        print(report(result))
+    if args.out:
+        print("\nwrote", save(result, args.out, name=args.name,
+                              instance=args.instance, stats=args.stats))
 
 
 if __name__ == "__main__":

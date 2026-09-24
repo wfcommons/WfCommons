@@ -110,6 +110,30 @@ result["simulation"]   # runtime, CPU, memory, per PE and overall
 on_new_size_run([new_trace_dir])
 ```
 
+Case A writes three things beside the synthetic instance: the instance itself,
+`*.prediction.json` (the full result, and what it was predicted from), and
+`*.summary.txt` — the plain-language version:
+
+```
+climate: 500 processes, 10,000 items
+
+  Runtime    70.3 seconds   (between 69.8 seconds and 70.9 seconds)
+  CPU        5.5 cores on average, 388 core-seconds in total
+  Memory     38.0 GB across 500 processes
+
+  The time goes almost entirely to LLMSensorAgentPE4 (100% of it), which
+  handles 500 of the 10,000 items across 83 processes.
+
+  Worth knowing:
+    - Processes are mostly idle -- 5.5 cores busy out of 500. Adding processes
+      will not help unless LLMSensorAgentPE4 gets more of them.
+```
+
+Case B scores itself. Before a new run is folded into the statistics, the model
+has never seen it — so predicting it then is a genuine held-out test. Each result
+is appended to `accuracy.jsonl`, and the accuracy record builds up on its own as
+runs arrive.
+
 Every step is also its own module and CLI:
 
 ```bash
