@@ -179,10 +179,9 @@ class Instance:
                 program=command.get('program', None) if command else None,
                 args=command.get('arguments', None) if command else None,
                 launch_dir=t.get('launchDir', None),
+                executed_at=t.get('executedAt', None),
                 logger=self.logger
             ))
-            # do not make up a start time for tasks that do not provide one
-            self.workflow.tasks[task['id']].start_time = t.get('executedAt', None)
 
         for task in specification["tasks"]:
             for parent in task['parents']:

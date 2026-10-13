@@ -10,7 +10,6 @@
 
 import logging
 
-from datetime import datetime
 from typing import Dict, List, Optional
 from logging import Logger
 
@@ -63,6 +62,8 @@ class Task:
     :type avg_power: Optional[float]
     :param priority: Task priority.
     :type priority: Optional[int]
+    :param executed_at: Task start timestamp in the ISO 8601 format.
+    :type executed_at: Optional[str]
     :param task_type: The type of the task.
     :type task_type: TaskType
     :param logger: The logger where to log information/warning or errors.
@@ -114,7 +115,8 @@ class Task:
         self.priority: Optional[int] = priority
         self.type: Optional[TaskType] = task_type
         self.launch_dir: Optional[str] = launch_dir
-        self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
+        # the start time is optional in WfFormat, and is not made up when unknown
+        self.start_time: Optional[str] = executed_at if executed_at else None
         self.logger.debug(
             f"created task {self.task_id}: runtime => {self.runtime} seconds.")
 
