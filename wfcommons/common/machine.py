@@ -57,7 +57,7 @@ class Machine:
 
     def __init__(self,
                  name: str,
-                 cpu: Dict[str, Union[int, str]],
+                 cpu: Optional[Dict[str, Union[int, str]]] = None,
                  system: Optional[MachineSystem] = None,
                  architecture: Optional[str] = None,
                  memory: Optional[int] = None,
@@ -74,10 +74,12 @@ class Machine:
         self.release: str = release
         self.hashcode = hashcode
 
-        self.cpu_cores: int = cpu['coreCount']
-        self.cpu_speed: int = cpu['speedInMHz'] if 'speedInMHz' in cpu else 0
-        self.cpu_flops: int = cpu['coreCount'] * cpu['speedInMHz'] * 10 ^ 6 if 'speedInMHz' in cpu else 0
-        self.cpu_vendor: str = cpu['vendor'] if 'vendor' in cpu else None
+        # the CPU information is optional in WfFormat
+        cpu = cpu if cpu else {}
+        self.cpu_cores: Optional[int] = cpu.get('coreCount', None)
+        self.cpu_speed: int = cpu.get('speedInMHz', 0)
+        self.cpu_flops: int = self.cpu_cores * self.cpu_speed * 10 ** 6 if self.cpu_cores and self.cpu_speed else 0
+        self.cpu_vendor: Optional[str] = cpu.get('vendor', None)
 
         self.logger.debug(f"created machine: {self.name} with {self.cpu_cores} cores and {self.cpu_flops} FLOPS.")
 
@@ -96,10 +98,13 @@ class Machine:
             machine['memoryInBytes'] = self.memory
         if self.release:
             machine['release'] = self.release
+        cpu = {}
         if self.cpu_cores:
-            machine['cpu'] = {'coreCount': self.cpu_cores}
+            cpu['coreCount'] = self.cpu_cores
         if self.cpu_speed:
-            machine['cpu']['speedInMHz'] = self.cpu_speed
+            cpu['speedInMHz'] = self.cpu_speed
         if self.cpu_vendor:
-            machine['cpu']['vendor'] = self.cpu_vendor
+            cpu['vendor'] = self.cpu_vendor
+        if cpu:
+            machine['cpu'] = cpu
         return machine

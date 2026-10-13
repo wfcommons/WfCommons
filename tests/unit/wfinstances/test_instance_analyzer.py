@@ -34,7 +34,7 @@ class TestInstanceAnalyzer:
                         {
                             "name": "task_01",
                             "id": "task_01",
-                            "children": ["task_02", "task_03"],
+                            "children": [],
                             "inputFiles": ["input_01.txt", "input_02.txt"],
                             "outputFiles": ["output_01.txt"],
                             "parents": []

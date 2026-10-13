@@ -11,16 +11,32 @@
 import getpass
 import importlib
 import json
+import logging
 import networkx as nx
 import pathlib
 
 from datetime import datetime
-from typing import Optional, List
+from logging import Logger
+from typing import Any, Dict, Optional, List, Tuple
+from ..common.machine import Machine
 from ..common.task import Task, TaskType
+from ..utils import to_rfc3339
 from ..version import __version__, __schema_version__
 
-from ..wfchef.utils import create_graph, create_graph_from_json_object
+from ..wfchef.utils import create_graph
 import tempfile
+
+
+def _normalize_timestamp(timestamp: Any, logger: Logger) -> Any:
+    """
+    Convert a timestamp into the RFC 3339 date-time format required by WfFormat,
+    leaving it untouched if it cannot be parsed.
+    """
+    try:
+        return to_rfc3339(timestamp)
+    except (ValueError, OverflowError, TypeError):
+        logger.warning(f"Unable to convert timestamp '{timestamp}' into the RFC 3339 format.")
+        return timestamp
 
 
 class Workflow(nx.DiGraph):
@@ -50,6 +66,13 @@ class Workflow(nx.DiGraph):
     :type author_institution: Optional[str]
     :param author_country: Author country (preferably country code, ISO ALPHA-2 code).
     :type author_country: Optional[str]
+    :param created_at: Instance creation timestamp in the ISO 8601 format (defaults to now).
+    :type created_at: Optional[str]
+    :param include_execution: Whether the JSON instance includes the execution section
+                              (a WfFormat instance with only a specification is valid).
+    :type include_execution: Optional[bool]
+    :param logger: The logger where to log information/warning or errors.
+    :type logger: Optional[Logger]
     """
 
     def __init__(self,
@@ -63,22 +86,30 @@ class Workflow(nx.DiGraph):
                  author_name: Optional[str] = None,
                  author_email: Optional[str] = None,
                  author_institution: Optional[str] = None,
-                 author_country: Optional[str] = None
+                 author_country: Optional[str] = None,
+                 created_at: Optional[str] = None,
+                 include_execution: Optional[bool] = True,
+                 logger: Optional[Logger] = None
                  ) -> None:
         """Create an object of a workflow representation."""
+        self.logger: Logger = logging.getLogger(__name__) if logger is None else logger
+        name = name if name else "workflow"
         self.description: Optional[
             str] = description if description else "Instance generated with WfCommons - https://wfcommons.org"
-        self.created_at: str = str(datetime.now().astimezone().isoformat())
+        self.created_at: str = created_at if created_at else str(datetime.now().astimezone().isoformat())
         self.schema_version: str = f"{__schema_version__}"
         self.runtime_system_name: Optional[str] = "WfCommons" if not runtime_system_name else runtime_system_name
         self.runtime_system_version: Optional[str] = "unknown" if not runtime_system_version else runtime_system_version
         self.runtime_system_url: Optional[str] = f"https://docs.wfcommons.org/en/v{__version__}/" if not runtime_system_url else runtime_system_url
         self.executed_at: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
-        self.makespan: Optional[float] = makespan
+        self.makespan: Optional[float] = makespan if makespan is not None else 0.0
         self.author_name: Optional[str] = author_name if author_name else str(getpass.getuser())
         self.author_email: Optional[str] = author_email if author_email else "support@wfcommons.org"
-        self.author_institution: Optional[str] = None
-        self.author_country: Optional[str] = None
+        self.author_institution: Optional[str] = author_institution
+        self.author_country: Optional[str] = author_country
+        self.include_execution: bool = include_execution
+        # machines declared for the workflow, including the ones not used by any task
+        self.machines: Dict[str, Machine] = {}
         self.tasks: dict[str, Task] = {}
         self.tasks_parents = {}
         self.tasks_children = {}
@@ -134,38 +165,51 @@ class Workflow(nx.DiGraph):
         :return: A JSON representation of the workflow instance.
         :rtype: dict
         """
-        workflow_machines = []
-        machines_list = []
+        workflow_machines = [machine.as_dict() for machine in self.machines.values()]
+        machines_list = list(self.machines.keys())
         specification_tasks = []
         execution_tasks = []
-        files = set()
+        files = {}
 
-        workflow_json = {
-            "name": self.name,
-            "description": self.description,
-            "createdAt": self.created_at,
-            "schemaVersion": self.schema_version,
-            "author": {
+        # optional instance properties are omitted when not set
+        workflow_json = {"name": self.name}
+        if self.description:
+            workflow_json["description"] = self.description
+        if self.created_at:
+            workflow_json["createdAt"] = _normalize_timestamp(self.created_at, self.logger)
+        workflow_json["schemaVersion"] = self.schema_version
+        if self.author_name:
+            workflow_json["author"] = {
                 "name": self.author_name,
                 "email": self.author_email
-            },
-            "workflow": {
-                "specification": {
-                    "tasks": specification_tasks,
-                    "files": []
-                },
-                "execution": {
-                    "makespanInSeconds": self.makespan,
-                    "executedAt": self.executed_at,
-                    "tasks": execution_tasks
-                }
-            },
-            "runtimeSystem": {
-                "name": self.runtime_system_name,
-                "version": self.runtime_system_version,
-                "url": self.runtime_system_url
+            }
+            if self.author_institution:
+                workflow_json["author"]["institution"] = self.author_institution
+            if self.author_country:
+                workflow_json["author"]["country"] = self.author_country
+        workflow_json["workflow"] = {
+            "specification": {
+                "tasks": specification_tasks,
+                "files": []
             }
         }
+        if self.runtime_system_name:
+            workflow_json["runtimeSystem"] = {
+                "name": self.runtime_system_name,
+                "version": self.runtime_system_version
+            }
+            if self.runtime_system_url:
+                workflow_json["runtimeSystem"]["url"] = self.runtime_system_url
+        if self.include_execution:
+            workflow_json["workflow"]["execution"] = {
+                "makespanInSeconds": self.makespan if self.makespan is not None else 0.0,
+                "executedAt": _normalize_timestamp(self.executed_at, self.logger),
+                "tasks": execution_tasks
+            }
+
+        if len(self.nodes) == 0:
+            self.logger.warning("The workflow has no tasks: WfFormat requires at least one task, "
+                                "so the generated instance will not validate.")
 
         # generate tasks parents and children
         tasks_dependencies = {}
@@ -196,17 +240,20 @@ class Workflow(nx.DiGraph):
                         machines_list.append(machine.name)
                         workflow_machines.append(machine.as_dict())
 
-            # add files to the workflow json object (input and output)
-            for file in task.input_files:
-                files.add(file)
-            for file in task.output_files:
-                files.add(file)
+            # add files to the workflow json object (input and output); a file ID must
+            # be declared only once, even if tasks report different sizes for it
+            for file in task.input_files + task.output_files:
+                if file.file_id not in files:
+                    files[file.file_id] = file
+                elif files[file.file_id].size != file.size:
+                    self.logger.warning(f"File '{file.file_id}' has different sizes ({files[file.file_id].size} "
+                                        f"and {file.size}): keeping the first one.")
 
-        if workflow_machines:
+        if workflow_machines and self.include_execution:
             workflow_json["workflow"]["execution"]["machines"] = workflow_machines
 
-        if files and len(files) > 0:
-            workflow_json["workflow"]["specification"]["files"] = list(file.as_dict() for file in files)
+        if files:
+            workflow_json["workflow"]["specification"]["files"] = [file.as_dict() for file in files.values()]
 
         self.workflow_json = workflow_json
 
@@ -217,67 +264,67 @@ class Workflow(nx.DiGraph):
         if execution_metrics != {}:
             self.workflow_json["workflow"]["execution"]["metrics"] = execution_metrics
 
-
-    def compute_metrics(self, workflow_json: json) -> json:
+    def compute_metrics(self, workflow_json: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
-        Compute workflow specification and execution metrics.
+        Compute workflow specification and execution metrics, as defined by WfFormat.
+
         :param workflow_json: Workflow instance as a JSON object.
-        :type workflow_json: json
+        :type workflow_json: Dict[str, Any]
 
         :return: specification and execution metrics.
-        :rtype: json
+        :rtype: Tuple[Dict[str, Any], Dict[str, Any]]
         """
-
         # Specification metrics
-        specification_metrics : json = {}
-        specification_metrics["numberOfTasks"] = len(workflow_json["workflow"]["specification"]["tasks"])
-        if "files" in workflow_json["workflow"]["specification"]:
-            number_of_files = len(workflow_json["workflow"]["specification"]["files"])
-            specification_metrics["numberOfFiles"] = number_of_files
-            if number_of_files > 0:
-                specification_metrics["sumOfFileSizesInBytes"] = sum(
-                    file.get("sizeInBytes", 0)
-                    for file in workflow_json["workflow"]["specification"]["files"]
-                )
-        graph = create_graph_from_json_object(workflow_json)
-        levels = [
-            tuple(generation)
-            for generation in nx.topological_generations(graph)
-        ][1:-1] # Remove the fictitious SRC and DST levels
+        specification = workflow_json["workflow"]["specification"]
+        tasks = specification["tasks"]
+        specification_metrics = {"numberOfTasks": len(tasks)}
+        if "files" in specification:
+            files = specification["files"]
+            specification_metrics["numberOfFiles"] = len(files)
+            if len(files) > 0:
+                specification_metrics["sumOfFileSizesInBytes"] = sum(file.get("sizeInBytes", 0) for file in files)
 
-        if len(levels) > 0:
-            widths = [len(level) for level in levels]  # Remove the fictitious SRC and DST levels
+        # A task with no parents is at level 0, and every other task is at one plus the
+        # maximum level of any of its parents. The graph is keyed by task ID, since task
+        # names are arbitrary and may be shared by many tasks.
+        graph = nx.DiGraph()
+        graph.add_nodes_from(task["id"] for task in tasks)
+        for task in tasks:
+            graph.add_edges_from((parent, task["id"]) for parent in task.get("parents", [])
+                                 if parent in graph and parent != task["id"])
+        try:
+            widths = [len(level) for level in nx.topological_generations(graph)]
+        except nx.NetworkXUnfeasible:
+            self.logger.warning("The workflow graph contains a cycle: DAG level metrics are not computed.")
+            widths = []
 
+        if len(widths) > 0:
             specification_metrics["numberOfLevels"] = len(widths)
             specification_metrics["minimumWidth"] = min(widths)
             specification_metrics["maximumWidth"] = max(widths)
 
         # Execution metrics
-        execution_metrics : json = {}
+        execution_metrics = {}
         if "execution" in workflow_json["workflow"]:
-            total_runtime_in_seconds = sum(
-                task.get("runtimeInSeconds", 0)
-                for task in workflow_json["workflow"]["execution"]["tasks"]
-            )
+            execution_tasks = workflow_json["workflow"]["execution"]["tasks"]
+
+            total_runtime_in_seconds = sum(task.get("runtimeInSeconds", 0) for task in execution_tasks)
             if total_runtime_in_seconds > 0:
                 execution_metrics["sumTaskRuntimesInSeconds"] = total_runtime_in_seconds
 
-            total_read_bytes = sum(
-                task.get("readBytes", 0)
-                for task in workflow_json["workflow"]["execution"]["tasks"]
-            )
-            if total_runtime_in_seconds > 0:
-                execution_metrics["totalNumBytesRead"] = total_read_bytes
-
-            total_written_bytes = sum(
-                task.get("writtenBytes", 0)
-                for task in workflow_json["workflow"]["execution"]["tasks"]
-            )
-            if total_written_bytes > 0:
-                execution_metrics["totalNumBytesWritten"] = total_written_bytes
+            # byte totals are integers in WfFormat, while per-task byte counts may be fractional
+            for task_key, metric_key in (("readBytes", "totalNumBytesRead"),
+                                         ("writtenBytes", "totalNumBytesWritten")):
+                values = [task[task_key] for task in execution_tasks if task_key in task]
+                if values:
+                    total = sum(values)
+                    if float(total).is_integer() and total >= 0:
+                        execution_metrics[metric_key] = int(total)
+                    else:
+                        self.logger.debug(f"Metric '{metric_key}' not computed: {total} is not a "
+                                          f"non-negative integer.")
 
         return specification_metrics, execution_metrics
-
 
     def write_dot(self, dot_file_path: Optional[pathlib.Path] = None) -> None:
         """
