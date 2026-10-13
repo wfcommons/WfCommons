@@ -12,16 +12,27 @@ import json
 import itertools
 import math
 import pathlib
+import re
 
 from datetime import datetime, timezone
 from logging import Logger
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .abstract_logs_parser import LogsParser
 from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
+from ...utils import sanitize_wfformat_id
+
+# Makeflow variable assignment (e.g., "OUTPUT=data/out.txt") and reference (e.g., "$(OUTPUT)" or "${OUTPUT}")
+_VARIABLE_ASSIGNMENT = re.compile(r'^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$')
+_VARIABLE_REFERENCE = re.compile(r'\$(?:\(([A-Za-z_][A-Za-z0-9_]*)\)|\{([A-Za-z_][A-Za-z0-9_]*)\})')
+
+# Resource Monitor units (cctools uses binary multiples)
+_BYTES_UNITS = {'B': 1, 'kB': 1024, 'KB': 1024, 'KiB': 1024, 'MB': 1024 ** 2, 'MiB': 1024 ** 2,
+                'GB': 1024 ** 3, 'GiB': 1024 ** 3, 'TB': 1024 ** 4, 'TiB': 1024 ** 4}
+_SECONDS_UNITS = {'us': 1e-6, 'ms': 1e-3, 's': 1, 'm': 60, 'h': 3600}
 
 
 class MakeflowLogsParser(LogsParser):
@@ -44,7 +55,8 @@ class MakeflowLogsParser(LogsParser):
                  description: Optional[str] = None,
                  logger: Optional[Logger] = None) -> None:
         """Create an object of the makeflow log parser."""
-        super().__init__('Makeflow', 'http://ccl.cse.nd.edu/software/makeflow/', description, logger)
+        super().__init__('Makeflow', wms_url='https://ccl.cse.nd.edu/software/makeflow/', description=description,
+                         logger=logger)
 
         # Sanity checks
         if not execution_dir.is_dir():
@@ -78,6 +90,8 @@ class MakeflowLogsParser(LogsParser):
         self._resource_monitor_logs_dir: pathlib.Path = resource_monitor_logs_dir
         self._files_map = {}
         self._args_map = {}
+        self._variables: Dict[str, str] = {}
+        self._machines: Dict[str, Machine] = {}
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
         """
@@ -95,6 +109,7 @@ class MakeflowLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
+                                 runtime_system_version=self.wms_version,
                                  runtime_system_url=self.wms_url)
 
         # parse workflow file
@@ -119,9 +134,15 @@ class MakeflowLogsParser(LogsParser):
                 # print(f"Processing line: {line}")
                 if line.lstrip().startswith('#'):
                     continue
+                if '\t' not in line and _VARIABLE_ASSIGNMENT.match(line):
+                    # variable assignment
+                    match = _VARIABLE_ASSIGNMENT.match(line)
+                    self._variables[match.group(1)] = self._expand_variables(match.group(2).strip().strip('"'))
+                    continue
                 if ':' in line and '\t' not in line:
-                    outputs = line.split(':')[0].split()
-                    inputs = line.split(':')[1].split()
+                    line = self._expand_variables(line)
+                    outputs = [self._get_file_name(file) for file in line.split(':')[0].split()]
+                    inputs = [self._get_file_name(file) for file in line.split(':')[1].split()]
 
                     for file in itertools.chain(outputs, inputs):
                         if file not in self._files_map:
@@ -129,8 +150,9 @@ class MakeflowLogsParser(LogsParser):
 
                 elif '\t' in line:
                     # task execution command (likely olf here)
+                    line = self._expand_variables(line)
                     prefix = line.replace('./', '').strip().split()[1 if 'LOCAL' in line else 0]
-                    task_name = "{}_ID{:07d}".format(prefix, task_id_counter)
+                    task_name = "{}_ID{:07d}".format(sanitize_wfformat_id(prefix), task_id_counter)
 
                     # create list of input and output files
                     output_files = self._create_files(outputs, "output", task_name)
@@ -156,8 +178,39 @@ class MakeflowLogsParser(LogsParser):
         # adding edges
         for file in self._files_map:
             for child in self._files_map[file]['children']:
-                if self._files_map[file]['task_name']:
-                    self.workflow.add_edge(self._files_map[file]['task_name'], child)
+                parent = self._files_map[file]['task_name']
+                if parent and parent != child:
+                    self.workflow.add_dependency(parent, child)
+
+    def _expand_variables(self, line: str) -> str:
+        """
+        Expand the references to the Makeflow variables defined so far (e.g., $(VAR) or ${VAR}).
+
+        :param line: A line of the makeflow file.
+        :type line: str
+
+        :return: The line with the known variables expanded.
+        :rtype: str
+        """
+        def _replace(match: re.Match) -> str:
+            name = match.group(1) or match.group(2)
+            return self._variables.get(name, match.group(0))
+
+        return _VARIABLE_REFERENCE.sub(_replace, line)
+
+    @staticmethod
+    def _get_file_name(file: str) -> str:
+        """
+        Get the workflow-level name of a file from a makeflow rule, in which a file can be
+        renamed in the task sandbox (e.g., "local_name->remote_name").
+
+        :param file: The file as written in a makeflow rule.
+        :type file: str
+
+        :return: The workflow-level file name.
+        :rtype: str
+        """
+        return file.split('->')[0] if '->' in file and not file.startswith('->') else file
 
     def _create_files(self, files_list: List[str], input_or_output: str, task_name: str) -> List[File]:
         """
@@ -186,10 +239,10 @@ class MakeflowLogsParser(LogsParser):
                 elif file_path.is_file():
                     size = int(file_path.stat().st_size)
 
-                file_obj_in = File(file_id=file,
+                file_obj_in = File(file_id=self._make_file_id(file),
                                    size=size,
                                    logger=self.logger)
-                file_obj_out = File(file_id=file,
+                file_obj_out = File(file_id=self._make_file_id(file),
                                     size=size,
                                     logger=self.logger)
                 list_files.append(file_obj_in if input_or_output == "input" else file_obj_out)
@@ -219,7 +272,7 @@ class MakeflowLogsParser(LogsParser):
                     self.workflow.makespan = float('%.2f' % ((int(line.split()[2]) - start_time) / 1000000))
 
                 elif line.startswith('# FILE') and 'condorlog' not in line:
-                    file_name = line.split()[3]
+                    file_name = self._get_file_name(line.split()[3])
                     if file_name in self._files_map:
                         size = int(line.split()[5])
                         for file_obj in self._files_map[file_name]['file']:
@@ -232,16 +285,60 @@ class MakeflowLogsParser(LogsParser):
                 data = json.load(f)
 
                 # task
-                task = self._args_map[data['command'].replace('perl', '').strip()]
-                task.runtime = float(data['wall_time'][0])
-                task.cores = float(data['cores'][0])
-                task.memory = int(data['memory'][0])
-                task.bytes_read = int(data['bytes_read'][0])
-                task.bytes_written = int(data['bytes_written'][0])
-                task.avg_cpu = float('%.4f' % (float(data['cpu_time'][0]) / float(data['wall_time'][0]) * 100))
-                task.machine = Machine(name=data['host'],
-                                       cpu={'coreCount': int(data['machine_cpus'][0]), 'speedInMHz': 0, 'vendor': ''},
-                                       logger=self.logger)
+                command = data['command'].replace('perl', '').strip()
+                if command not in self._args_map:
+                    self.logger.warning(f'Unable to find the task of the resource monitor summary {file.name}: '
+                                        f'{command}')
+                    continue
+                task = self._args_map[command]
+                task.runtime = self._to_seconds(data['wall_time'])
+                if 'start' in data:
+                    start_time = datetime.fromtimestamp(self._to_seconds(data['start']), tz=timezone.utc)
+                    task.start_time = start_time.isoformat()
+                if 'cores' in data:
+                    # a task runs on at least one core (the peak number of cores may be rounded down to 0)
+                    task.cores = max(1, data['cores'][0] if isinstance(data['cores'], list) else data['cores'])
+                # resource monitor reports memory and I/O in MB
+                task.memory = self._to_bytes(data['memory'])
+                task.bytes_read = self._to_bytes(data['bytes_read'])
+                task.bytes_written = self._to_bytes(data['bytes_written'])
+                if task.runtime > 0:
+                    task.avg_cpu = float('%.4f' % (self._to_seconds(data['cpu_time']) / task.runtime * 100))
+                if data.get('host'):
+                    if data['host'] not in self._machines:
+                        cpu = {'coreCount': int(data['machine_cpus'][0])} if 'machine_cpus' in data else None
+                        self._machines[data['host']] = Machine(name=data['host'], cpu=cpu, logger=self.logger)
+                    task.machines = [self._machines[data['host']]]
 
-                # workflow
-                self.workflow.wms_version = data['monitor_version']
+                # workflow (resource monitor and makeflow are both part of cctools, e.g., "7.8.2 FINAL")
+                if data.get('monitor_version'):
+                    self.wms_version = str(data['monitor_version']).split()[0]
+                    self.workflow.runtime_system_version = self.wms_version
+
+    @staticmethod
+    def _to_bytes(measurement: Any) -> int:
+        """
+        Convert a resource monitor measurement (e.g., [12, "MB"]) into bytes.
+
+        :param measurement: A [value, unit] measurement (a value with no unit is assumed in MB).
+        :type measurement: Any
+
+        :return: The measurement in bytes.
+        :rtype: int
+        """
+        value, unit = (measurement[0], measurement[1]) if isinstance(measurement, list) else (measurement, 'MB')
+        return int(round(float(value) * _BYTES_UNITS.get(unit, _BYTES_UNITS['MB'])))
+
+    @staticmethod
+    def _to_seconds(measurement: Any) -> float:
+        """
+        Convert a resource monitor measurement (e.g., [1.25, "s"] or [1700000001000000, "us"]) into seconds.
+
+        :param measurement: A [value, unit] measurement (a value with no unit is assumed in seconds).
+        :type measurement: Any
+
+        :return: The measurement in seconds.
+        :rtype: float
+        """
+        value, unit = (measurement[0], measurement[1]) if isinstance(measurement, list) else (measurement, 's')
+        return float(value) * _SECONDS_UNITS.get(unit, 1)

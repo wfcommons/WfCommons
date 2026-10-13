@@ -12,9 +12,10 @@ import logging
 
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional
+from typing import Any, Dict, Hashable, Optional
 
 from ...common.workflow import Workflow
+from ...utils import sanitize_wfformat_id
 
 
 class LogsParser(ABC):
@@ -49,6 +50,37 @@ class LogsParser(ABC):
         self.schema_version = None
         self.executed_at = None
         self.makespan = None
+        # WfFormat file IDs, by file key (and the reverse mapping, to detect collisions)
+        self._file_ids: Dict[Hashable, str] = {}
+        self._file_keys: Dict[str, Hashable] = {}
+
+    def _make_file_id(self, file_name: Any, key: Optional[Hashable] = None) -> str:
+        """
+        Build a WfFormat-compliant file ID from a file name found in the logs. The same file
+        (identified by its key) always gets the same ID, while distinct files whose sanitized
+        names collide get distinct IDs (suffixed with "_2", "_3", etc.).
+
+        :param file_name: The file name found in the logs.
+        :type file_name: Any
+        :param key: A key that uniquely identifies the file in the logs (defaults to the file name).
+        :type key: Optional[Hashable]
+
+        :return: A file ID that matches the WfFormat ID pattern.
+        :rtype: str
+        """
+        key = str(file_name) if key is None else key
+        if key not in self._file_ids:
+            base_id = sanitize_wfformat_id(file_name)
+            file_id = base_id
+            suffix = 1
+            while file_id in self._file_keys:
+                suffix += 1
+                file_id = f"{base_id}_{suffix}"
+            if file_id != str(file_name):
+                self.logger.debug(f"File '{file_name}' is identified as '{file_id}'.")
+            self._file_ids[key] = file_id
+            self._file_keys[file_id] = key
+        return self._file_ids[key]
 
     @abstractmethod
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:

@@ -25,6 +25,7 @@ from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
+from ...utils import sanitize_wfformat_id
 
 
 class ROCrateLogsParser(LogsParser):
@@ -92,6 +93,7 @@ class ROCrateLogsParser(LogsParser):
         self.instruments_to_ignore : list[str] = instruments_to_ignore or []
         self.task_runtimes : dict[str, tuple[str, str]] = task_runtimes or {}
         self.file_sizes : dict[str, int] = file_sizes or {}
+        self._self_connected_instruments : set[str] = set()
 
 
     def build_workflow(self, workflow_name: Optional[str] = None) -> Workflow:
@@ -110,6 +112,7 @@ class ROCrateLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
+                                 runtime_system_version=self.wms_version,
                                  runtime_system_url=self.wms_url)
 
         with open(self.metadata, 'r') as f:
@@ -189,9 +192,9 @@ class ROCrateLogsParser(LogsParser):
             if create_action["name"] in self.steps_to_ignore:
                 continue
 
-            # Get all input & output for the create_action
-            input = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['object']]
-            output = [obj['@id'] if isinstance(obj, dict) else obj for obj in create_action['result']]
+            # Get all input & output for the create_action (a single object may not be in a list)
+            input = [obj['@id'] if isinstance(obj, dict) else obj for obj in self._as_list(create_action.get('object'))]
+            output = [obj['@id'] if isinstance(obj, dict) else obj for obj in self._as_list(create_action.get('result'))]
 
             # Filter for actual files
             input_files = self._filter_file_ids(input)
@@ -207,7 +210,7 @@ class ROCrateLogsParser(LogsParser):
             # Using this name/id scheme below is WfChef-friendly
             task_name = self._sanitize_task_id(create_action['name'] + f"_ID{task_idx:07d}")
             task_id = task_name
-            task_idx += task_idx
+            task_idx += 1
 
             task = Task(#name=create_action['name'],
                         name=task_name,
@@ -215,7 +218,7 @@ class ROCrateLogsParser(LogsParser):
                         task_id=task_id,
                         task_type=TaskType.COMPUTE,
                         runtime=self._time_diff(start_time, end_time),
-                        executed_at=create_action.get('startTime',''),
+                        executed_at=start_time,
                         input_files=self._get_file_objects(input_files),
                         output_files=self._get_file_objects(output_files),
                         logger=self.logger)
@@ -256,7 +259,9 @@ class ROCrateLogsParser(LogsParser):
         for file in files.values():
             for parent in file.get('out', []):
                 for child in file.get('in', []):
-                    self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
+                    # a task that reads and writes the same file does not depend on itself
+                    if parent != child:
+                        self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
 
         parameter_connections = list(filter((lambda x: x.get('@type') == "ParameterConnection"), self.graph_data))
         for parameter_connection in parameter_connections:
@@ -272,18 +277,58 @@ class ROCrateLogsParser(LogsParser):
                 target = parameter_connection["targetParameter"]["@id"]
                 target = target.rsplit("#", 1)[0]   # Trim to get instrument
 
-                if source in self.instruments_to_ignore or target in self.instruments_to_ignore:
+                if self._ignore_instrument(source) or self._ignore_instrument(target):
                     continue
                 # print("source", source, "----> target", target)
 
+                # A connection between two parameters of the same instrument does not tell which of
+                # the tasks that use this instrument depend on each other, and linking all of them
+                # would create cycles
+                if source == target:
+                    if source not in self._self_connected_instruments:
+                        self._self_connected_instruments.add(source)
+                        self.logger.warning(f"Ignoring the parameter connections of instrument '{source}' to "
+                                            f"itself (consider adding it to the instruments to ignore).")
+                    continue
+
                 for parent in instruments.get(source, []):
                     for child in instruments.get(target, []):
-                        self.workflow.add_dependency(self.task_id_name_map[parent], self.task_id_name_map[child])
+                        parent_id = self.task_id_name_map[parent]
+                        child_id = self.task_id_name_map[child]
+                        # skip dependencies that would create a self-loop or a 2-cycle
+                        if parent_id == child_id or self.workflow.has_edge(child_id, parent_id):
+                            continue
+                        self.workflow.add_dependency(parent_id, child_id)
+
+    def _ignore_instrument(self, instrument: str) -> bool:
+        """
+        Whether an instrument should be ignored, matching the instruments to ignore either by
+        their exact name or by their base name (e.g., "shell.cwl" matches "file:///wf/shell.cwl").
+
+        :param instrument: The instrument "@id".
+        :type instrument: str
+
+        :return: True if the instrument should be ignored.
+        :rtype: bool
+        """
+        return instrument in self.instruments_to_ignore or \
+            instrument.rstrip('/').rsplit('/', 1)[-1] in self.instruments_to_ignore
+
+    @staticmethod
+    def _as_list(value) -> list:
+        """Return a JSON-LD value as a list (a single value may not be in a list)."""
+        if value is None:
+            return []
+        return value if isinstance(value, list) else [value]
 
     def _time_diff(self, start_time, end_time):
         if not start_time or not end_time:
             return 0.0
-        diff = datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
+        try:
+            diff = datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
+        except (ValueError, TypeError) as e:
+            self.logger.warning(f"Unable to compute the time difference between {start_time} and {end_time}: {e}")
+            return 0.0
         return diff.total_seconds()
 
     def _get_file_objects(self, files):
@@ -313,8 +358,9 @@ class ROCrateLogsParser(LogsParser):
                 if not size:
                     size = self._determine_nextflow_file_size(file)
 
-                # Create the file object
-                self.file_objects[file] = File(file_id=file_name,
+                # Create the file object (two distinct crate files may share the same name, so
+                # the file ID is unique per crate "@id")
+                self.file_objects[file] = File(file_id=self._make_file_id(file_name, key=file),
                                             size=size,
                                             logger=self.logger)
             output.append(self.file_objects[file])
@@ -371,7 +417,7 @@ class ROCrateLogsParser(LogsParser):
         for file_id in file_ids:
             to_ignore = False
             for suffix in self.file_extensions_to_ignore:
-                if self.data_file_id_name_map[file_id].endswith(suffix):
+                if self.data_file_id_name_map.get(file_id, file_id).endswith(suffix):
                     to_ignore = True
                     break
             if not to_ignore:
@@ -400,9 +446,10 @@ class ROCrateLogsParser(LogsParser):
     @staticmethod
     def _sanitize_task_id(task_id: str) -> str:
         """Replace characters not allowed in WfCommons task IDs."""
-        return task_id.replace(' ', '_').replace('(', '_').replace(')', '_')
+        return sanitize_wfformat_id(task_id)
 
 
     def _process_main_workflow(self, main_workflow):
-        self.workflow.makespan = self._time_diff(main_workflow['startTime'], main_workflow['endTime'])
-        self.workflow.executed_at = main_workflow['startTime']
+        self.workflow.makespan = self._time_diff(main_workflow.get('startTime'), main_workflow.get('endTime'))
+        if main_workflow.get('startTime'):
+            self.workflow.executed_at = main_workflow['startTime']

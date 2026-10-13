@@ -25,6 +25,7 @@ from ...common.file import File
 from ...common.machine import Machine
 from ...common.task import Task, TaskType
 from ...common.workflow import Workflow
+from ...utils import to_rfc3339
 import sqlite3
 
 class SnakemakeLogsParser(LogsParser):
@@ -62,7 +63,8 @@ class SnakemakeLogsParser(LogsParser):
                  ) -> None:
         """Create an object of the Snakemake parser."""
 
-        super().__init__('Snakemake', 'https://snakemake.readthedocs.io/', description, logger)
+        super().__init__('Snakemake', wms_version=snakemake_version, wms_url='https://snakemake.readthedocs.io/',
+                         description=description, logger=logger)
 
         # Sanity checks
         if not execution_dir.is_dir():
@@ -82,6 +84,7 @@ class SnakemakeLogsParser(LogsParser):
         self.task_input_files = {}
         self.task_output_files = {}
         self.file_input_output = {}
+        self.last_task_end_time: Optional[datetime] = None
 
         self.rules_to_ignore : list[str] = rules_to_ignore or []
         self.path_prefix_rewrite : tuple[str, str] = path_prefix_rewrite or None
@@ -103,7 +106,7 @@ class SnakemakeLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
-                                 runtime_system_version=self.snakemake_version,
+                                 runtime_system_version=self.wms_version,
                                  runtime_system_url=self.wms_url)
 
         # Parse the sqlite db for to identify rules
@@ -115,18 +118,45 @@ class SnakemakeLogsParser(LogsParser):
         # Parse the sqlite db for to identify tasks
         self._create_tasks()
 
-        # Set the workflow's makespan
+        # Set the workflow's execution start time and makespan
         conn = sqlite3.connect(self.snkmt_db)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM workflows")
         rows = cursor.fetchall()
         if len(rows) != 1:
-            raise SystemError("The SQLite database has more than one entry in the workflows table")
-        workflow_start_time = datetime.fromisoformat(rows[0][2]).timestamp()
-        workflow_end_time = datetime.fromisoformat(rows[0][4]).timestamp()
-        self.workflow.makespan = workflow_end_time - workflow_start_time
+            raise SystemError(f"The SQLite database should have exactly one entry in the workflows table "
+                              f"(found {len(rows)})")
+        workflow_start_time = self._parse_time(rows[0][2])
+        workflow_end_time = self._parse_time(rows[0][4])
+        if workflow_end_time is None:
+            # the workflow did not complete: use the end of its last task
+            workflow_end_time = self.last_task_end_time
+        if workflow_start_time is not None:
+            self.workflow.executed_at = to_rfc3339(workflow_start_time)
+            if workflow_end_time is not None:
+                self.workflow.makespan = (workflow_end_time - workflow_start_time).total_seconds()
+        else:
+            self.logger.warning("Unable to determine the workflow execution start time.")
 
         return self.workflow
+
+    def _parse_time(self, timestamp: Optional[str]) -> Optional[datetime]:
+        """
+        Parse a timestamp from the snkmt database (e.g., "2025-03-01 10:00:00.000000").
+
+        :param timestamp: The timestamp.
+        :type timestamp: Optional[str]
+
+        :return: The timestamp as a datetime object, or None if it is missing or invalid.
+        :rtype: Optional[datetime]
+        """
+        if not timestamp:
+            return None
+        try:
+            return datetime.fromisoformat(str(timestamp))
+        except ValueError:
+            self.logger.warning(f"Unable to parse timestamp '{timestamp}'.")
+            return None
 
     def _build_task_map(self):
         conn = sqlite3.connect(self.snkmt_db)
@@ -184,7 +214,11 @@ class SnakemakeLogsParser(LogsParser):
             full_path = full_path.split(" (access:")[0].split(" (cached)")[0].strip()
             if self.path_prefix_rewrite:
                 full_path = full_path.replace(self.path_prefix_rewrite[0], self.path_prefix_rewrite[1])
-            file_size = os.path.getsize(f"{full_path}")
+            try:
+                file_size = os.path.getsize(f"{full_path}")
+            except OSError:
+                self.logger.warning(f"Unable to determine the size of file {full_path}: assuming zero bytes.")
+                file_size = 0
             input_or_output = row[2]
             if input_or_output == 'INPUT':
                 self.task_input_files[task_idx].append(full_path)
@@ -197,8 +231,9 @@ class SnakemakeLogsParser(LogsParser):
                     self.file_input_output[full_path] = [[],[]]
                 self.file_input_output[full_path][1].append(task_idx)
 
-            if full_path not in self.file_map:
-                self.file_objects[full_path] =  File(file_id=full_path, size=file_size)
+            if full_path not in self.file_objects:
+                self.file_objects[full_path] = File(file_id=self._make_file_id(full_path), size=file_size,
+                                                    logger=self.logger)
 
     def _create_tasks(self):
         conn = sqlite3.connect(self.snkmt_db)
@@ -210,12 +245,18 @@ class SnakemakeLogsParser(LogsParser):
             if idx not in self.task_map:  # One of the to-ignore ones
                 continue
             cmd_line = row[8]
-            start_date = row[12]
-            end_date = row[13]
-            fmt = "%Y-%m-%d %H:%M:%S.%f"  # adjust format to match your strings
-            t1 = datetime.strptime(start_date, fmt)
-            t2 = datetime.strptime(end_date, fmt)
-            elapsed = (t2 - t1).total_seconds()
+            t1 = self._parse_time(row[12])
+            t2 = self._parse_time(row[13])
+            start_date = to_rfc3339(t1) if t1 else None
+            if t1 is not None and t2 is not None:
+                elapsed = (t2 - t1).total_seconds()
+                if self.last_task_end_time is None or t2 > self.last_task_end_time:
+                    self.last_task_end_time = t2
+            else:
+                # e.g., a job that failed or did not complete
+                self.logger.warning(f"Job {idx} ({self.task_map[idx]}) has no start or end time: "
+                                    f"assuming a zero runtime.")
+                elapsed = 0.0
 
             input_files = [self.file_objects[path] for path in self.task_input_files[idx]]
             output_files = [self.file_objects[path] for path in self.task_output_files[idx]]

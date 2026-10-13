@@ -12,6 +12,7 @@ import json
 import itertools
 import math
 import pathlib
+import re
 import sys
 
 from datetime import datetime, timezone
@@ -30,6 +31,11 @@ from ...common.workflow import Workflow
 ## https://github.com/cooperative-computing-lab/taskvine-example-logs?tab=readme-ov-file
 ###
 
+# FILE file-meta-df1e8b0d0e056c4aedb917abe198a2ff "taskvine_poncho.tar.gz" 0
+# (the quoted file name may contain spaces)
+_TASKGRAPH_FILE_LINE = re.compile(r'^FILE\s+(\S+)\s+"(.*)"\s+(\S+)\s*$')
+
+
 class TaskVineLogsParser(LogsParser):
     """
     Parse TaskVine logs to generate workflow instance. This parser has some limitations in that
@@ -45,20 +51,25 @@ class TaskVineLogsParser(LogsParser):
                                 are input to tasks. This argument is the list of names of files that should be
                                 ignored in the reconstructed instances, which typically do not include such
                                 files at task input. For instance, if reconstructing a workflow from an execution
-                                of a WfBench-generated benchmark, one could pass ["wfbench", "stress-ng"]
+                                of a WfBench-generated benchmark, one could pass ["wfbench", "stress-ng"]. A file
+                                is ignored if its name, or its base name, is in this list.
     :type filenames_to_ignore: List[str]
     :param description: Workflow instance description.
     :type description: Optional[str]
     :param logger: The logger where to log information/warning or errors (optional).
     :type logger: Optional[Logger]
+    :param taskvine_version: The TaskVine (cctools) version used to execute the workflow (optional).
+    :type taskvine_version: Optional[str]
     """
     def __init__(self,
                  vine_logs_dir: pathlib.Path,
                  filenames_to_ignore: Optional[List[str]] = None,
                  description: Optional[str] = None,
-                 logger: Optional[Logger] = None) -> None:
-        """Create an object of the makeflow log parser."""
-        super().__init__('TaskVine', 'http://https://ccl.cse.nd.edu/software/taskvine/', description, logger)
+                 logger: Optional[Logger] = None,
+                 taskvine_version: Optional[str] = None) -> None:
+        """Create an object of the TaskVine log parser."""
+        super().__init__('TaskVine', wms_version=taskvine_version, wms_url='https://ccl.cse.nd.edu/software/taskvine/',
+                         description=description, logger=logger)
 
         # Sanity check
         if not vine_logs_dir.is_dir():
@@ -78,11 +89,12 @@ class TaskVineLogsParser(LogsParser):
         self.taskgraph_file: pathlib.Path = taskgraph_file
         self.transactions_file: pathlib.Path = transactions_file
 
-        self.filenames_to_ignore: set[str] = set(filenames_to_ignore) or set({})
+        self.filenames_to_ignore: set[str] = set(filenames_to_ignore or [])
 
         self.files_map = {}
         self.task_command_lines = {}
         self.task_runtimes = {}
+        self.task_start_times = {}
         self.task_input_files = {}
         self.task_output_files = {}
         self.known_task_ids = []
@@ -103,6 +115,7 @@ class TaskVineLogsParser(LogsParser):
         self.workflow = Workflow(name=self.workflow_name,
                                  description=self.description,
                                  runtime_system_name=self.wms_name,
+                                 runtime_system_version=self.wms_version,
                                  runtime_system_url=self.wms_url)
 
         # Construct the task command-line array
@@ -117,7 +130,7 @@ class TaskVineLogsParser(LogsParser):
         # sys.stderr.write("FILEMAP: " + str(self.files_map) + "\n")
         for file_key in self.files_map.keys():
             if not "size" in self.files_map[file_key]:
-                sys.stderr.write(f"Warning: Could not determine size for file with key {file_key}: assuming zero bytes.\n")
+                self.logger.warning(f"Could not determine size for file with key {file_key}: assuming zero bytes.")
                 self.files_map[file_key]["size"] = 0
         # sys.stderr.write(f"Identified {len(self.files_map)} valid files\n")
 
@@ -129,7 +142,7 @@ class TaskVineLogsParser(LogsParser):
         to_remove = []
         for task_id in self.known_task_ids:
             if task_id not in self.task_runtimes.keys():
-                sys.stderr.write(f"Warning: Ignoring task {task_id} because runtime could not be determined.\n")
+                self.logger.warning(f"Ignoring task {task_id} because runtime could not be determined.")
                 to_remove.append(task_id)
         for victim in to_remove:
             self.known_task_ids.remove(victim)
@@ -146,17 +159,34 @@ class TaskVineLogsParser(LogsParser):
 
 
     def _construct_task_command_lines(self) -> None:
+        previous_line = ""
         with open(self.debug_file) as f:
             for line in f:
                 if "state change: READY (1) to RUNNING (2)" in line:
                     [task_index] = line[line.find("Task ") + len("Task "):].split()[0:1]
                     command_line = previous_line[previous_line.find("busy on '") + len("busy on '"):-2]
                     self.task_command_lines[int(task_index)] = command_line
-                    executable = command_line.split()[0]
-                    # May not be full-proof in case of commands like "export A=b; executable ..." but
-                    # may help.....
-                    self.filenames_to_ignore.add(executable)
+                    if command_line.split():
+                        executable = command_line.split()[0]
+                        # May not be full-proof in case of commands like "export A=b; executable ..." but
+                        # may help..... (files are matched by their exact name or base name)
+                        self.filenames_to_ignore.add(executable)
+                        self.filenames_to_ignore.add(pathlib.PurePosixPath(executable).name)
                 previous_line = line
+
+    def _is_ignored(self, filename: str) -> bool:
+        """
+        Whether a file should be ignored, i.e., whether its name or base name is one of the
+        names of files to ignore (e.g., "wfbench" matches "bin/wfbench", but not "wfbench.txt").
+
+        :param filename: The file name.
+        :type filename: str
+
+        :return: True if the file should be ignored.
+        :rtype: bool
+        """
+        return filename in self.filenames_to_ignore or \
+            pathlib.PurePosixPath(filename).name in self.filenames_to_ignore
 
 
     def _construct_file_map(self) -> None:
@@ -169,12 +199,14 @@ class TaskVineLogsParser(LogsParser):
                 
                 if line.startswith("FILE"):
                     # FILE file-meta-df1e8b0d0e056c4aedb917abe198a2ff "taskvine_poncho.tar.gz" 0
-                    [ignore, file_key, filename, ignore] = line.split()[:4]
-                    if len(filename) > 1 and filename[0] == "\"" and filename[-1] == "\"":
-                        filename = filename[1:-1]
-                    if self.filenames_to_ignore and any(
-                        ignore_string in filename for ignore_string in self.filenames_to_ignore
-                    ):
+                    match = _TASKGRAPH_FILE_LINE.match(line.strip())
+                    if match:
+                        file_key, filename = match.group(1), match.group(2)
+                    else:
+                        [ignore, file_key, filename] = line.split()[:3]
+                        if len(filename) > 1 and filename[0] == "\"" and filename[-1] == "\"":
+                            filename = filename[1:-1]
+                    if self._is_ignored(filename):
                         continue
                     if file_key not in self.files_map:
                         self.files_map[file_key] = {"filename": filename}
@@ -199,19 +231,29 @@ class TaskVineLogsParser(LogsParser):
     def _construct_task_runtimes(self) -> None:
         task_start_times = {}
         task_end_times = {}
+        manager_start_time = None
+        manager_end_time = None
 
-        # This method consists only of
-
+        # Timestamps in the transactions log are in microseconds since the epoch
         with open(self.transactions_file) as f:
             for line in f:
                 if line[0] == "#":
                     continue
+                parts = line.split()
+                if len(parts) > 3 and parts[2] == "MANAGER":
+                    if "START" in parts[3:] and manager_start_time is None:
+                        manager_start_time = int(parts[0])
+                    elif "END" in parts[3:]:
+                        manager_end_time = int(parts[0])
+                    continue
+                if len(parts) < 4 or parts[2] != "TASK":
+                    continue
                 if "RUNNING" in line:
-                    [start_date, ignore, ignore, task_index] = line.split()[0:4]
+                    [start_date, ignore, ignore, task_index] = parts[0:4]
                     if int(task_index) in self.known_task_ids:
                         task_start_times[int(task_index)] = int(start_date)
                 elif "DONE" in line:
-                    [end_date, ignore, ignore, task_index] = line.split()[0:4]
+                    [end_date, ignore, ignore, task_index] = parts[0:4]
                     if int(task_index) in self.known_task_ids:
                         task_end_times[int(task_index)] = int(end_date)
 
@@ -219,6 +261,30 @@ class TaskVineLogsParser(LogsParser):
             if task_index in task_end_times:
                 self.task_runtimes[task_index] = (
                     float(task_end_times[task_index] - task_start_times[task_index]) / 1_000_000.0)
+                self.task_start_times[task_index] = self._to_datetime(task_start_times[task_index])
+
+        # Workflow execution start and makespan (from the manager start/end, or else from the tasks)
+        if manager_start_time is None and task_start_times:
+            manager_start_time = min(task_start_times.values())
+        if manager_end_time is None and task_end_times:
+            manager_end_time = max(task_end_times.values())
+        if manager_start_time is not None:
+            self.workflow.executed_at = self._to_datetime(manager_start_time)
+            if manager_end_time is not None and manager_end_time >= manager_start_time:
+                self.workflow.makespan = float(manager_end_time - manager_start_time) / 1_000_000.0
+
+    @staticmethod
+    def _to_datetime(timestamp: int) -> str:
+        """
+        Convert a transactions log timestamp (in microseconds since the epoch) into the RFC 3339 format.
+
+        :param timestamp: The timestamp in microseconds.
+        :type timestamp: int
+
+        :return: The timestamp in the RFC 3339 format.
+        :rtype: str
+        """
+        return datetime.fromtimestamp(timestamp / 1_000_000.0, tz=timezone.utc).isoformat()
 
     def _construct_task_input_output_files(self) -> None:
         # Initialize all entries
@@ -230,8 +296,11 @@ class TaskVineLogsParser(LogsParser):
             for line in f:               
                 if line.startswith("TASK"):
                     # TASK T23 "__vine_env_task-rnd-twtxpejwzsyiebf/bin/run_in_env" INPUTS task-rnd-twtxpejwzsyiebf file-meta-d7504c061a7afd9401c612b4ac7d6be6 file-meta-baab4e4516c4d93a8fcdcbba1a680af7 file-meta-693cb61fedd032b4ddec444b8cce6c89 file-rnd-fnrudlxsaqmlpqq OUTPUTS file-rnd-pdtdqayfmmxyxyp
+                    # (the quoted command line may contain spaces, so file keys are read after it)
                     parts = line.split()
                     task_key = parts[1]
+                    if '"' in line:
+                        parts = parts[:2] + line[line.rfind('"') + 1:].split()
                     if not task_key.startswith("T"):
                         continue
                     try:
@@ -269,7 +338,7 @@ class TaskVineLogsParser(LogsParser):
         for file_key in self.files_map:
             filename = self.files_map[file_key]["filename"]
             file_size = self.files_map[file_key]["size"]
-            file_object_map[filename] = File(file_id=filename,
+            file_object_map[filename] = File(file_id=self._make_file_id(filename),
                                     size=file_size,
                                     logger=self.logger)
 
@@ -277,11 +346,11 @@ class TaskVineLogsParser(LogsParser):
         task_map = {}
         for task_id in self.known_task_ids:
             task_name = "Task_ID{:07d}".format(task_id)
-            print(f"DEBUGHERE: {task_name} ")
             task = Task(name=task_name,
                         task_id=task_name,
                         task_type=TaskType.COMPUTE,
                         runtime=self.task_runtimes[task_id],
+                        executed_at=self.task_start_times.get(task_id),
                         program=self.task_command_lines[task_id].split()[0],
                         args=self.task_command_lines[task_id].split()[1:],
                         cores=1,
