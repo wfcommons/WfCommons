@@ -10,13 +10,12 @@
 
 import logging
 
-from datetime import datetime
 from typing import Dict, List, Optional
 from logging import Logger
 
 from .machine import Machine
 from .file import File
-from ..utils import NoValue
+from ..utils import NoValue, to_rfc3339
 
 
 class TaskType(NoValue):
@@ -63,6 +62,8 @@ class Task:
     :type avg_power: Optional[float]
     :param priority: Task priority.
     :type priority: Optional[int]
+    :param executed_at: Task start timestamp in the ISO 8601 format.
+    :type executed_at: Optional[str]
     :param task_type: The type of the task.
     :type task_type: TaskType
     :param logger: The logger where to log information/warning or errors.
@@ -114,7 +115,8 @@ class Task:
         self.priority: Optional[int] = priority
         self.type: Optional[TaskType] = task_type
         self.launch_dir: Optional[str] = launch_dir
-        self.start_time: Optional[str] = str(datetime.now().astimezone().isoformat()) if not executed_at else executed_at
+        # the start time is optional in WfFormat, and is not made up when unknown
+        self.start_time: Optional[str] = executed_at if executed_at else None
         self.logger.debug(
             f"created task {self.task_id}: runtime => {self.runtime} seconds.")
 
@@ -141,11 +143,14 @@ class Task:
         """
         task_obj = {
             'id': self.task_id,
-            'runtimeInSeconds': self.runtime,
-            'command': {}
+            'runtimeInSeconds': self.runtime
         }
+        command = {}
         if self.cores is not None:
-            task_obj['coreCount'] = self.cores
+            if self.cores >= 1:
+                task_obj['coreCount'] = self.cores
+            else:
+                self.logger.debug(f"Task {self.task_id}: coreCount {self.cores} is less than 1, omitting it.")
         if self.avg_cpu is not None:
             task_obj['avgCPU'] = self.avg_cpu
         if self.bytes_read is not None:
@@ -157,17 +162,25 @@ class Task:
         if self.energy is not None:
             task_obj['energyInKWh'] = self.energy
         if self.avg_power is not None:
-            task_obj['avgPowerInKWh'] = self.avg_power
+            task_obj['avgPowerInW'] = self.avg_power
         if self.priority is not None:
             task_obj['priority'] = self.priority
         if self.program is not None:
-            task_obj['command']['program'] = self.program
-        if self.args is not None:
-            task_obj['command']['arguments'] = self.args
+            command['program'] = self.program
+        if self.args:
+            # WfFormat task arguments are non-empty strings
+            command['arguments'] = [str(arg) for arg in self.args if arg is not None and str(arg) != ""]
+        if command:
+            task_obj['command'] = command
         if self.machines:
             task_obj['machines'] = [m.name for m in self.machines]               
         if self.start_time:
-            task_obj['executedAt'] = self.start_time
+            try:
+                task_obj['executedAt'] = to_rfc3339(self.start_time)
+            except (ValueError, OverflowError, TypeError):
+                self.logger.warning(f"Task {self.task_id}: unable to convert timestamp '{self.start_time}' "
+                                    f"into the RFC 3339 format.")
+                task_obj['executedAt'] = self.start_time
         if self.category is not None:
             task_obj['category'] = self.category
         if self.launch_dir:

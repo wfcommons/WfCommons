@@ -10,6 +10,7 @@
 
 import json
 import pathlib
+import re
 
 import matplotlib as mpl
 import matplotlib.patches as mpatches
@@ -50,6 +51,25 @@ def create_graph(path: pathlib.Path) -> nx.DiGraph:
         return create_graph_from_json_object(content)
 
 
+def _split_task_id(task_id: str) -> Optional[Tuple[str, str]]:
+    """
+    Split a WfChef-friendly task ID (e.g., ``mProject_ID0000001`` or ``mProject_00000001``)
+    into its task type and numeric suffix.
+
+    :param task_id: task ID.
+    :type task_id: str
+
+    :return: the task type and the numeric suffix, or None if the ID does not follow
+             the WfChef naming convention.
+    :rtype: Optional[Tuple[str, str]]
+    """
+    for separator in ("_ID", "_0"):
+        parts = task_id.split(separator)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+    return None
+
+
 def create_graph_from_json_object(workflow_instance: dict) -> nx.DiGraph:
     """
     Creates a networkX DiGraph from a JSON file in the WfFormat.
@@ -66,24 +86,34 @@ def create_graph_from_json_object(workflow_instance: dict) -> nx.DiGraph:
     graph.add_node("SRC", label="SRC", type="SRC", id="SRC")
     graph.add_node("DST", label="DST", type="DST", id="DST")
 
+    tasks = workflow_instance["workflow"]["specification"]["tasks"]
+    task_ids = {task["id"] for task in tasks}
     id_count = 0
 
-    for task in workflow_instance["workflow"]["specification"]["tasks"]:
+    for task in tasks:
+        # nodes are keyed by task ID, as task names are arbitrary and may be shared by many tasks
+        split_id = _split_task_id(task["id"])
 
         # specific for epigenomics -- have to think about how to do it in general
         if "genome-dax" in workflow_instance["name"]:
             _type, *_ = task["name"].split("_")
-            graph.add_node(task["name"], label=_type, type=_type, id=str(id_count))
-            id_count += 1
+            _id = str(id_count)
         else:
-            try:
-                _type, _id = task["id"].split("_ID")
-            except ValueError:
-                _type, _id = task["id"].split("_0")
-            graph.add_node(task["name"], label=_type, type=_type, id=_id)
+            if task["name"] != task["id"]:
+                # the task name holds the task type (possibly with a WfChef-friendly suffix)
+                _type = re.sub(r"_ID\d+$", "", task["name"])
+            elif split_id:
+                _type = split_id[0]
+            else:
+                _type = task["name"]
+            _id = split_id[1] if split_id else str(id_count)
+        id_count += 1
+        graph.add_node(task["id"], label=_type, type=_type, id=_id)
 
+    for task in tasks:
         for parent in task["parents"]:
-            graph.add_edge(parent, task["name"])
+            if parent in task_ids and parent != task["id"]:
+                graph.add_edge(parent, task["id"])
 
     for node in graph.nodes:
 

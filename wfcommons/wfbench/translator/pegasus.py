@@ -39,6 +39,15 @@ class PegasusTranslator(Translator):
         self.tasks_map = {}
         self.task_counter = 1
 
+        # Pegasus job IDs may only contain alphanumeric characters, '_', and '-', and job names
+        # (i.e., transformation names) are also used by Pegasus to name the DAGMan jobs
+        pegasus_name_chars = r"[^0-9A-Za-z_-]"
+        self.job_ids = self._unique_identifiers({task_id: task_id for task_id in self.tasks},
+                                                invalid_chars=pegasus_name_chars, first_char=None)
+        task_names = {task.name: task.name for task in self.tasks.values()}
+        self.transformation_names = self._unique_identifiers(task_names, invalid_chars=pegasus_name_chars,
+                                                             first_char=None)
+
     def translate(self, output_folder: pathlib.Path, tasks_priorities: Optional[Dict[str, int]] = None) -> None:
         """
         Translate a workflow benchmark description (WfFormat) into a Pegasus workflow application.
@@ -60,7 +69,7 @@ class PegasusTranslator(Translator):
                 transformations.append(task.name)
                 self.script += "if transformation_path is None:\n" \
                                f"    raise RuntimeError('Unable to find {task.program}')\n" \
-                               f"transformation = Transformation('{task.name}', site='local',\n" \
+                               f"transformation = Transformation('{self.transformation_names[task.name]}', site='local',\n" \
                                f"                                pfn=transformation_path,\n" \
                                "                                is_stageable=True)\n" \
                                "transformation.add_env(PATH='/usr/bin:/bin:.')\n" \
@@ -111,7 +120,7 @@ class PegasusTranslator(Translator):
         if task_name not in self.parsed_tasks:
             task = self.tasks[task_name]
             job_name = f"job_{self.task_counter}"
-            self.script += f"{job_name} = Job('{task.name}', _id='{task_name}')\n" \
+            self.script += f"{job_name} = Job('{self.transformation_names[task.name]}', _id='{self.job_ids[task_name]}')\n" \
                 f"task_output_files.setdefault('{job_name}', [])\n"
 
             # task priority
@@ -125,7 +134,7 @@ class PegasusTranslator(Translator):
             input_spec = "\"["
             for f in task.input_files:
                 input_spec += f"\\\\\"{f.file_id}\\\\\","
-            input_spec = input_spec[:-1] + "]\""
+            input_spec = input_spec.rstrip(",") + "]\""
 
             # output files
             output_spec = "\"{"
@@ -136,7 +145,7 @@ class PegasusTranslator(Translator):
                     f"task_output_files['{job_name}'].append(out_file_{self.task_counter})\n" \
                     f"{job_name}.add_outputs(out_file_{self.task_counter}, " \
                     f"stage_out={stage_out}, register_replica={stage_out})\n"
-            output_spec = output_spec[:-1] + "}\""
+            output_spec = output_spec.rstrip(",") + "}\""
 
             # arguments
             args = []
@@ -146,7 +155,7 @@ class PegasusTranslator(Translator):
                 elif "--input-files" in a:
                     args.append(f"--input-files {input_spec}")
                 else:
-                    args.append(a)
+                    args.append(self._shell_safe_argument(a))
             args = ", ".join(f"'{a}'" for a in args)
             self.script += f"{job_name}.add_args({args})\n"
 

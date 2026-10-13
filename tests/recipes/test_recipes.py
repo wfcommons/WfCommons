@@ -25,6 +25,7 @@ from wfcommons.wfchef.recipes import EpigenomicsRecipe
 from wfcommons.wfchef.recipes import SrasearchRecipe
 
 from wfcommons import WorkflowGenerator
+from wfcommons.wfinstances import SchemaValidator
 
 class TestRecipes:
 
@@ -52,6 +53,10 @@ class TestRecipes:
                                                  output_file_size_factor=0.8)
         workflows = WorkflowGenerator(recipe).build_workflows(1)
         assert len(workflows) == 1
+
+        # generated instances (including their metrics) must be valid WfFormat instances
+        workflows[0].generate_json()
+        SchemaValidator().validate_instance(workflows[0].workflow_json)
 
 
 

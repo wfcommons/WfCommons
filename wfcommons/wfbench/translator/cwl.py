@@ -80,6 +80,12 @@ class CWLTranslator(Translator):
         for task_name, level in levels.items():
             self.task_level_map[level].append(task_name)
 
+        # task IDs are used as CWL step IDs (and to name workflow inputs and log files): they must
+        # not contain ':' (CURIE), '/' or '#' (URI separators), and must not be parsed as YAML numbers
+        self.step_ids = self._unique_identifiers({task_id: task_id for task_id in self.tasks},
+                                                 invalid_chars=r"[^0-9A-Za-z_.-]",
+                                                 reserved=["compile_output_files", "compile_log_files"])
+
     def translate(self, output_folder: pathlib.Path) -> None:
         # Create output folder
         output_folder.mkdir(parents=True)
@@ -128,7 +134,7 @@ class CWLTranslator(Translator):
                         input_files_arr = [f"{file}" for file in ast.literal_eval(input_files_arr)]
                         input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
                         a = f"{flag} '{input_files_arr}'"
-                    args_array.append(a)
+                    args_array.append(self._shell_safe_argument(a))
 
 
                 cmd = f"{task.program} {' '.join(args_array)}"
@@ -136,16 +142,18 @@ class CWLTranslator(Translator):
                 output_files = [
                     f.file_id for f in task.output_files]
 
+                step_id = self.step_ids[task.task_id]
                 if level == 0:
-                    input_files = [f"      input_files: {task.task_id}_input"]
+                    # root tasks without input files have no workflow input (see _parse_inputs_outputs)
+                    input_files = [f"      input_files: {step_id}_input"] if task.input_files else []
                 else:
                     input_files = [  "      input_files:",
                                      "        linkMerge: merge_flattened",
                                      "        source:"]
-                    input_files += [f"          - {p}/output_files" for p in self.task_parents[task.task_id]]
+                    input_files += [f"          - {self.step_ids[p]}/output_files" for p in self.task_parents[task.task_id]]
 
                 code = [
-                    f"  {task.task_id}:",
+                    f"  {step_id}:",
                     "    run: clt/shell.cwl",
                     "    in:",
                 ]
@@ -155,7 +163,7 @@ class CWLTranslator(Translator):
                 code += [
                     f"      command: {{default: \"{cmd}\"}}",
                      "      step_name:",
-                    f"        valueFrom: \"{task.task_id}\"",
+                    f"        valueFrom: \"{step_id}\"",
                     f"      output_filenames: {{default: {output_files}}}",
                      "    out: [" # Completed below
                 ]
@@ -169,11 +177,11 @@ class CWLTranslator(Translator):
                 code[-1] += "output_files]\n"
 
                 self.cwl_script.extend(code)
-                output_files_sources.append(f"          - {task.task_id}/output_files")
+                output_files_sources.append(f"          - {step_id}/output_files")
                 if self.generate_stdout_files:
-                    log_files_sources.append(f"          - {task.task_id}/out")
+                    log_files_sources.append(f"          - {step_id}/out")
                 if self.generate_stderr_files:
-                    log_files_sources.append(f"          - {task.task_id}/err")
+                    log_files_sources.append(f"          - {step_id}/err")
 
         code = [
              "  compile_output_files:",
@@ -222,15 +230,19 @@ class CWLTranslator(Translator):
             yml_written = False
             for f in task.input_files:
                 if not cwl_written:
-                    self.cwl_script.append(f"  {task.task_id}_input:")
+                    self.cwl_script.append(f"  {self.step_ids[task.task_id]}_input:")
                     self.cwl_script.append("    type: File[]")
                     cwl_written = True
                 if not yml_written:
-                    self.yml_script.append(f"{task.task_id}_input:")
+                    self.yml_script.append(f"{self.step_ids[task.task_id]}_input:")
                     yml_written = True
 
                 self.yml_script.append("  - class: File")
                 self.yml_script.append(f"    path: data/{f.file_id}")
+
+        # A workflow without input files has no inputs
+        if self.cwl_script[-1] == "\ninputs:":
+            self.cwl_script[-1] += " []"
 
         # Appending the output to the cwl script
         code = ["\noutputs:",
@@ -268,14 +280,15 @@ class CWLTranslator(Translator):
                         updates_shell_cwl += line.replace("#OPTIONAL_STDERR_FILE", "")
                 else:
                     updates_shell_cwl += line
-        with open(cwl_folder.joinpath(clt_folder / "shell.cwl"), "w", encoding="utf-8") as f:
+        with open(clt_folder.joinpath("shell.cwl"), "w", encoding="utf-8") as f:
             f.write(updates_shell_cwl)
 
         with open(cwl_folder.joinpath("main.cwl"), "w", encoding="utf-8") as f:
             f.write("\n".join(self.cwl_script))
 
         with (open(cwl_folder.joinpath("config.yml"), "w", encoding="utf-8")) as f:
-            f.write("\n".join(self.yml_script))
+            # a workflow without input files has an empty input object
+            f.write("\n".join(self.yml_script) if self.yml_script else "{}\n")
 
     def _write_readme_file(self, output_folder: pathlib.Path) -> None:
         readme_file_path = output_folder.joinpath("README")
@@ -285,5 +298,5 @@ class CWLTranslator(Translator):
             for task_id in self.workflow.roots():
                 task = self.workflow.tasks[task_id]
                 for input_file in task.input_files:
-                    out.write(f"--{task_id}_input ./data/{input_file} ")
+                    out.write(f"--{self.step_ids[task_id]}_input ./data/{input_file} ")
             out.write("\n")

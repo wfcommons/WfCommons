@@ -39,11 +39,9 @@ class Instance:
     :param input_instance: The JSON instance.
     :type input_instance: pathlib.Path
     :param schema_file: The path to the JSON schema that defines the instance.
-                        If no schema file is provided, it will look for a local
-                        copy of the WfFormat, and if not available it will fetch
-                        the latest schema from the
-                        `WfFormat schema GitHub <https://github.com/wfcommons/wfformat>`_
-                        repository.
+                        If no schema file is provided, it will use the schema of the
+                        `WfFormat release <https://github.com/wfcommons/wfformat>`_
+                        that matches the schema version written by WfCommons.
     :type schema_file: Optional[str]
     :param logger: The logger where to log information/warning or errors.
     :type logger: Optional[Logger]
@@ -67,123 +65,144 @@ class Instance:
         schema_validator = SchemaValidator(schema_file, logger=logger)
         schema_validator.validate_instance(self.instance)
 
-        # Basic global properties
+        # Basic global properties (only name, schemaVersion, and workflow are required)
         self.name: str = self.instance["name"]
-        self.desc: str = self.instance["description"]
-        self.created_at: datetime = dateutil.parser.parse(
-            self.instance["createdAt"])
+        self.desc: Optional[str] = self.instance.get("description", None)
+        self.created_at: Optional[datetime.datetime] = dateutil.parser.parse(
+            self.instance["createdAt"]) if "createdAt" in self.instance else None
         self.schema_version: str = self.instance["schemaVersion"]
 
         # Runtime system properties
-        self.runtime_system: Dict[str, str] = {
-            u: v for u, v in self.instance["runtimeSystem"].items()
-        }
+        self.runtime_system: Dict[str, str] = dict(self.instance.get("runtimeSystem", {}))
 
         # Author properties
-        self.author: Dict[str, str] = {
-            u: v for u, v in self.instance["author"].items()
-        }
+        self.author: Dict[str, str] = dict(self.instance.get("author", {}))
 
         # Workflow properties
+        specification: Dict[str, Any] = self.instance["workflow"]["specification"]
+        execution: Optional[Dict[str, Any]] = self.instance["workflow"].get("execution", None)
+
         # Global properties
-        self.executed_at: datetime = dateutil.parser.parse(
-            self.instance["workflow"]["execution"]["executedAt"])
-        self.makespan: float = self.instance["workflow"]["execution"]["makespanInSeconds"]
+        self.executed_at: Optional[datetime.datetime] = dateutil.parser.parse(
+            execution["executedAt"]) if execution else None
+        self.makespan: float = execution["makespanInSeconds"] if execution else 0.0
 
         # Machines
-        if "machines" in self.instance["workflow"]["execution"].keys():
-            self.machines: Dict[str, Machine] = {
-                machine['nodeName']: Machine(
-                    name=machine['nodeName'],
-                    cpu={k: v for k, v in machine['cpu'].items()},
-                    system=MachineSystem(machine.get('system', None)) if machine.get(
-                        'system', None) else None,
-                    architecture=machine.get('architecture', None),
-                    memory=machine.get('memoryInBytes', None),
-                    release=machine.get('release', None),
-                    hashcode=machine.get('machine_code', None),
-                    logger=self.logger
-                ) for machine in self.instance["workflow"]["execution"]["machines"]
-            }
+        self.machines: Dict[str, Machine] = {
+            machine['nodeName']: Machine(
+                name=machine['nodeName'],
+                cpu=dict(machine.get('cpu', {})),
+                system=MachineSystem(machine['system']) if machine.get('system', None) else None,
+                architecture=machine.get('architecture', None),
+                memory=machine.get('memoryInBytes', None),
+                release=machine.get('release', None),
+                hashcode=machine.get('machine_code', None),
+                logger=self.logger
+            ) for machine in (execution.get("machines", []) if execution else [])
+        }
 
         # Files
-        files_map = {}
-        for file in self.instance["workflow"]["specification"]["files"]:
-            files_map[file["id"]] = file["sizeInBytes"]
+        files_map = {file["id"]: file["sizeInBytes"] for file in specification.get("files", [])}
+        if "files" not in specification and any(
+                "inputFiles" in task or "outputFiles" in task for task in specification["tasks"]):
+            self.logger.warning("The instance declares no list of files: file sizes are set to 0.")
+
+        # Execution information, by task ID
+        execution_tasks: Dict[str, Dict[str, Any]] = {
+            t["id"]: t for t in (execution["tasks"] if execution else [])
+        }
+
+        # Workflow
+        self.workflow: Workflow = Workflow(
+            name=self.name,
+            description=self.desc,
+            created_at=self.instance.get("createdAt", None),
+            executed_at=execution["executedAt"] if execution else None,
+            makespan=self.makespan,
+            runtime_system_name=self.runtime_system.get("name", None),
+            runtime_system_url=self.runtime_system.get("url", None),
+            runtime_system_version=self.runtime_system.get("version", None),
+            author_name=self.author.get("name", None),
+            author_email=self.author.get("email", None),
+            author_institution=self.author.get("institution", None),
+            author_country=self.author.get("country", None),
+            include_execution=execution is not None,
+            logger=self.logger
+        )
+
+        # do not make up the optional properties the instance does not declare
+        if self.desc is None:
+            self.workflow.description = None
+        if self.created_at is None:
+            self.workflow.created_at = None
+        if not self.author:
+            self.workflow.author_name = None
+        if not self.runtime_system:
+            self.workflow.runtime_system_name = None
+        elif "url" not in self.runtime_system:
+            self.workflow.runtime_system_url = None
+        self.workflow.machines = self.machines
 
         # Tasks
-        tasks_map = {}
-        for task in self.instance["workflow"]["specification"]["tasks"]:
-            # Required arguments are defined in the JSON scheme
-            # Here name, type and runtime are required
-            # By default the value is set to None if we do not find the value
-
+        for task in specification["tasks"]:
             # Create the list of files associated to this task
             input_files = [File(
                 file_id=f,
-                size=files_map[f],
+                size=files_map.get(f, 0),
                 logger=self.logger
             ) for f in task.get('inputFiles', [])]
             output_files = [File(
                 file_id=f,
-                size=files_map[f],
+                size=files_map.get(f, 0),
                 logger=self.logger
             ) for f in task.get('outputFiles', [])]
 
-            tasks_map[task['id']] = Task(
+            t = execution_tasks.get(task["id"], {})
+            command = t.get("command", None)
+
+            self.workflow.add_task(Task(
                 name=task['name'],
                 task_id=task['id'],
-                runtime=0,
-                category=task.get('category', None),
+                runtime=t.get('runtimeInSeconds', 0),
+                category=t.get('category', task.get('category', None)),
                 input_files=input_files,
                 output_files=output_files,
+                cores=t.get('coreCount', None),
+                avg_cpu=t.get('avgCPU', None),
+                bytes_read=t.get('readBytes', None),
+                bytes_written=t.get('writtenBytes', None),
+                memory=t.get('memoryInBytes', None),
+                energy=t.get('energyInKWh', None),
+                avg_power=t.get('avgPowerInW', None),
+                priority=t.get('priority', None),
+                machines=[self._get_machine(machine) for machine in t.get("machines", [])],
+                program=command.get('program', None) if command else None,
+                args=command.get('arguments', None) if command else None,
+                launch_dir=t.get('launchDir', None),
+                executed_at=t.get('executedAt', None),
                 logger=self.logger
-            )
+            ))
 
-        # Workflow
-        self.workflow: Workflow = Workflow(
-            name=self.name, 
-            makespan=self.makespan,
-            runtime_system_name=self.runtime_system["name"],
-            runtime_system_url=self.runtime_system["url"],
-            runtime_system_version=self.runtime_system["version"],
-            author_name=self.author["name"],
-            author_email=self.author["email"]
-        )
-
-        for t in self.instance["workflow"]["execution"]["tasks"]:
-            task = tasks_map[t["id"]]
-            task.runtime=t['runtimeInSeconds'] if 'runtimeInSeconds' in t else 0
-            task.cores=t.get('coreCount', None)
-            task.avg_cpu=t.get('avgCPU', None)
-            task.bytes_read=t.get('readBytes', None)
-            task.bytes_written=t.get('writtenBytes', None)
-            task.memory=t.get('memoryInBytes', None)
-            task.energy=t.get('energyInMhz', None)
-            task.avg_power=t.get('avgPowerInMhz', None)
-            task.priority=t.get('priority', None)
-            task.start_time=t.get('executedAt', None)
-
-            # Fetch back the machine associated to this task
-            machines_list = t["machines"] if "machines" in t else []
-            machines = []
-            for machine in machines_list:
-                machines.append(self.machines[machine])
-            task.machines = machines
-
-            # Fetch the command associated to this task
-            command = t.get("command", None)
-            task.program=command.get('program', None) if command else None
-            task.args=command.get('arguments', None) if command else None
-
-            self.workflow.add_task(task)
-
-        for task in self.instance["workflow"]["specification"]["tasks"]:
+        for task in specification["tasks"]:
             for parent in task['parents']:
                 self.workflow.add_dependency(parent, task["id"])
 
         self.logger.info(
             f'Parsed an instance with {len(self.workflow.nodes)} tasks')
+
+    def _get_machine(self, machine_name: str) -> Machine:
+        """
+        Get a machine by its node name, creating it if the instance does not declare it.
+
+        :param machine_name: Machine node name.
+        :type machine_name: str
+
+        :return: The machine.
+        :rtype: Machine
+        """
+        if machine_name not in self.machines:
+            self.machines[machine_name] = Machine(name=machine_name, logger=self.logger)
+        return self.machines[machine_name]
 
     def __iter__(self):
         """Produce an iterator based on a topological sort (e.g., scheduling order)"""

@@ -10,24 +10,70 @@
 import warnings
 warnings.filterwarnings('ignore')
 
+import dateutil.parser
 import json
 import logging
 import math
 import pathlib
+import re
 import scipy.stats
 import numpy as np
 import operator as op
 
+from datetime import datetime
 from enum import Enum
 from functools import reduce
 from logging import Logger
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple, Union
 
+# Characters allowed in WfFormat task and file IDs (see "$defs/taskId" in the WfFormat schema)
+WFFORMAT_ID_PATTERN = re.compile(r"^[0-9a-zA-Z_.#:/-]+$")
+_WFFORMAT_ID_INVALID_CHARS = re.compile(r"[^0-9a-zA-Z_.#:/-]")
 
 
 class NoValue(Enum):
     def __repr__(self):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+
+def sanitize_wfformat_id(identifier: Any, replacement: str = "_") -> str:
+    """
+    Replace the characters that are not allowed in WfFormat task and file IDs.
+
+    :param identifier: The raw identifier (e.g., a task name or a file name from a log).
+    :type identifier: Any
+    :param replacement: The string used in place of each invalid character.
+    :type replacement: str
+
+    :return: An identifier that matches the WfFormat ID pattern.
+    :rtype: str
+    """
+    sanitized = _WFFORMAT_ID_INVALID_CHARS.sub(replacement, str(identifier))
+    return sanitized if sanitized else replacement
+
+
+def to_rfc3339(timestamp: Union[None, str, int, float, datetime]) -> Optional[str]:
+    """
+    Convert a timestamp into the RFC 3339 date-time format required by WfFormat. Naive
+    timestamps are assumed to be in the local timezone.
+
+    :param timestamp: A datetime, a POSIX timestamp, or a date-time string.
+    :type timestamp: Union[None, str, int, float, datetime]
+
+    :return: The timestamp in the RFC 3339 format, or None if no timestamp is provided.
+    :rtype: Optional[str]
+    """
+    if timestamp is None or timestamp == "":
+        return None
+    if isinstance(timestamp, datetime):
+        dt = timestamp
+    elif isinstance(timestamp, (int, float)):
+        dt = datetime.fromtimestamp(timestamp)
+    else:
+        dt = dateutil.parser.parse(str(timestamp))
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    return dt.isoformat()
 
 
 def read_json(instance_filename: pathlib.Path) -> Dict[str, Any]:

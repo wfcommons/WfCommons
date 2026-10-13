@@ -114,7 +114,7 @@ class DaskTranslator(Translator):
                     input_files_arr = [str(output_folder.joinpath(f"data/{file}")) for file in ast.literal_eval(input_files_arr)]
                     a = f"{flag} '{json.dumps(input_files_arr)}'"
                 else:
-                    a = a.replace("'", "\"") 
+                    a = self._shell_safe_argument(a.replace("'", "\""))
                 args.append(a)
 
             code = [f"WorkflowTask(dag_id = '{task.task_id}',",

@@ -128,7 +128,7 @@ class TaskVineTranslator(Translator):
                                    f"t_{self.task_counter}.add_input(in_{self.task_counter}_f_{f_counter}, '{file}')\n"
                 f_counter += 1
                 input_spec += f"\\\\\"{file.file_id}\\\\\","
-            input_spec = input_spec[:-1] + "]\""
+            input_spec = input_spec.rstrip(",") + "]\""
 
             # output files
             f_counter = 1
@@ -139,7 +139,7 @@ class TaskVineTranslator(Translator):
                                f"t_{self.task_counter}.add_output(out_{self.task_counter}_f_{f_counter}, '{file}')\n"
                 self.output_files_map[file.file_id] = f"out_{self.task_counter}_f_{f_counter}"
                 f_counter += 1
-            output_spec = output_spec[:-1] + "}\""
+            output_spec = output_spec.rstrip(",") + "}\""
 
             task_script += f"m.submit(t_{self.task_counter})\n" \
                            f"print(f'submitted task {{t_{self.task_counter}.id}}: {{t_{self.task_counter}.command}}')\n\n"
@@ -152,7 +152,7 @@ class TaskVineTranslator(Translator):
                 elif "--input-files" in a:
                     args.append(f"--input-files {input_spec}")
                 else:
-                    args.append(a)
+                    args.append(self._shell_safe_argument(a))
             args = " ".join(f"{a}" for a in args)
 
             # write task

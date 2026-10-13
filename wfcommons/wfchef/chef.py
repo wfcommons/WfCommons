@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import json
+import logging
 import argparse
 import math
 import sys
@@ -154,12 +155,19 @@ def analyzer_summary(path_to_instances: pathlib.Path) -> Dict:
     analyzer = InstanceAnalyzer()
     task_types = set()
 
-    for path in path_to_instances.glob("*.json"):
+    for path in pathlib.Path(path_to_instances).glob("*.json"):
         instance = Instance(input_instance=path)
+        # task statistics are built from execution data, which is optional in WfFormat
+        if "execution" not in instance.instance["workflow"]:
+            logging.getLogger(__name__).warning(f"Skipping instance without execution data: {path}")
+            continue
         analyzer.append_instance(instance)
         graph = create_graph(path)
         for node in graph.nodes:
             task_types.add(graph.nodes[node]["type"])
+
+    if not analyzer.instances:
+        raise ValueError(f"No workflow instance with execution data found in: {path_to_instances}")
 
     stats_dict = analyzer.build_summary(task_types - {"DST", "SRC"}, include_raw_data=False)
 
@@ -336,6 +344,13 @@ def create_recipe(path_to_instances: Union[str, pathlib.Path],
     # Note: You'll need to define these paths in your actual code
     # skeleton_path = pathlib.Path(__file__).parent.joinpath("skeleton")
 
+    # Analyze the task statistics first, so that invalid instances are reported before
+    # any file of the recipe is written
+    if verbose:
+        print(f"Analyzing Workflow Statistics")
+
+    stats = analyzer_summary(path_to_instances)
+
     camelname = wf_name[:1].upper() + wf_name[1:]
 
     # Create a standalone package name
@@ -473,10 +488,6 @@ recipe = Recipe()
     if verbose:
         print(f"Created pyproject.toml with entry point: {wf_name}_recipe")
 
-    if verbose:
-        print(f"Analyzing Workflow Statistics")
-
-    stats = analyzer_summary(path_to_instances)
     recipe_dir.joinpath("task_type_stats.json").write_text(json.dumps(stats))
 
     if verbose:

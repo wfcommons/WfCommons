@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import keyword
 import logging
 from typing import Union, Optional
 from collections import defaultdict, deque
@@ -62,6 +63,14 @@ class ParslTranslator(Translator):
 
         for task_name, level in levels.items():
             self.task_level_map[level].append(task_name)
+
+        # task IDs are used as Python variable names in the generated code, which must not
+        # shadow the names used by the generated code itself
+        reserved = set(keyword.kwlist) | {"parsl", "generic_shell_app", "get_parsl_files", "file_map",
+                                          "current_workdir", "File", "Path", "task_arr", "print",
+                                          "Exception"}
+        self.task_varnames = self._unique_identifiers({task_id: task_id for task_id in self.tasks},
+                                                      reserved=reserved)
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -120,25 +129,28 @@ class ParslTranslator(Translator):
                         flag, input_files_arr = a.split(" ", 1)
                         input_files_arr = json.dumps(ast.literal_eval(input_files_arr)).replace('"', '\\"')
                         a = f"{flag} '{input_files_arr}'"
-                    args.append(a)
+                    args.append(self._shell_safe_argument(a))
 
                 args = " ".join(args)
 
+                varname = self.task_varnames[task.task_id]
                 input_files = [f"{i.file_id}" for i in task.input_files]
-                dependency = [f"{p}.outputs" for p in self.task_parents[task.task_id]]
+                # a parent without output files is a dependency through its app future
+                dependency = [f"{self.task_varnames[p]}.outputs" if self.tasks[p].output_files
+                              else f"[{self.task_varnames[p]}]" for p in self.task_parents[task.task_id]]
                 if len(dependency) == 0:
                     dependency.append(f"get_parsl_files({input_files})")
                 dependency = " + ".join(dependency)
                 output_files = [f"{o.file_id}" for o in task.output_files]
 
                 code = [
-                    f"{task.task_id} = generic_shell_app(\"bin/{task.program} {args}\",",
+                    f"{varname} = generic_shell_app(\"bin/{task.program} {args}\",",
                     f"                                 inputs={dependency},",
                     f"                                 outputs=get_parsl_files({output_files},",
                      "                                                         True),",
-                    f"                                 stdout=\"logs/{task.task_id}_stdout.txt\",",
-                    f"                                 stderr=\"logs/{task.task_id}_stderr.txt\")",
-                    f"task_arr.append({task.task_id})\n",
+                    f"                                 stdout=\"logs/{varname}_stdout.txt\",",
+                    f"                                 stderr=\"logs/{varname}_stderr.txt\")",
+                    f"task_arr.append({varname})\n",
                 ]
 
                 codelines.extend(code)

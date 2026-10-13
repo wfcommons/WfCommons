@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import keyword
 import pathlib
 import shutil
 
@@ -69,16 +70,26 @@ class SnakemakeTranslator(Translator):
                     "rule all_wfbench_tasks:\n"
                     "\tinput:\n")
 
+        # task IDs are used as rule names, which must be valid Python identifiers
+        rule_names = self._unique_identifiers({task_id: task_id for task_id in self.workflow.tasks},
+                                              reserved=set(keyword.kwlist) | {"all_wfbench_tasks"})
+
         self._script = "\n# WfBench task rules\n"
         for task_name, task in self.workflow.tasks.items():
-            rule = f"rule {task_name}:\n"
+            # Snakemake infers task dependencies from files: the input/output files include
+            # dependency marker files when some dependencies are not expressed by files
+            input_files = self._task_input_files(task)
+            output_files = self._task_output_files(task)
+
+            rule = f"rule {rule_names[task_name]}:\n"
             # input files
-            rule += "\tinput:\n"
-            for input_file in task.input_files:
+            if input_files:
+                rule += "\tinput:\n"
+            for input_file in input_files:
                 rule += f"\t\t\"data/{input_file.file_id}\",\n"
             # output files
             rule += "\toutput:\n"
-            for output_file in task.output_files:
+            for output_file in output_files:
                 all_rule += f"\t\t\"data/{output_file.file_id}\",\n"
                 rule += f"\t\t\"data/{output_file.file_id}\",\n"
             # shell
@@ -86,14 +97,14 @@ class SnakemakeTranslator(Translator):
             rule += "\t\t'" + task.program + " '\n"
 
             input_spec = "\\'["
-            for file in task.input_files:
+            for file in input_files:
                 input_spec += f"\"data/{file.file_id}\","
-            input_spec = input_spec[:-1] + "]\\'"
+            input_spec = input_spec.rstrip(",") + "]\\'"
 
             output_spec = "\\'{{"
-            for file in task.output_files:
+            for file in output_files:
                 output_spec += f"\"data/{file.file_id}\":{str(file.size)},"
-            output_spec = output_spec[:-1] + "}}\\'"
+            output_spec = output_spec.rstrip(",") + "}}\\'"
 
             args = []
             for a in task.args:
@@ -102,7 +113,10 @@ class SnakemakeTranslator(Translator):
                 elif "--input-files" in a:
                     args.append(f"--input-files {input_spec}")
                 else:
-                    args.append(a)
+                    args.append(self._shell_safe_argument(a))
+            # output files (e.g., dependency marker files) are created by wfbench
+            if output_files and not any("--output-files" in a for a in task.args):
+                args.append(f"--output-files {output_spec}")
 
             for a in args:
                 rule += "\t\t'" + a + " '\n"

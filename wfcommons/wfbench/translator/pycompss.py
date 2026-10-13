@@ -8,6 +8,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import keyword
 import pathlib
 import ast
 from logging import Logger
@@ -37,6 +38,16 @@ class PyCompssTranslator(Translator):
         self.task_counter = 1
         self.output_files_map = {}
         self.output_folder = pathlib.Path("")
+
+        # task names (followed by a task number) are used as Python function names
+        function_names = {task.task_id: f"{task.name}{task_number}"
+                          for task_number, task in enumerate(self.tasks.values(), start=1)}
+        reserved = set(keyword.kwlist) | {"os", "task", "constraint", "binary", "mpi", "compss_open",
+                                          "compss_wait_on", "compss_barrier", "main_program"}
+        self.function_names = self._unique_identifiers(function_names, reserved=reserved)
+
+        # task dependencies are inferred from files
+        self._warn_dependencies_without_files("PyCOMPSs")
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -72,7 +83,7 @@ class PyCompssTranslator(Translator):
         all_pycompss_tasks_as_functions = {}
         task_number = 1
         for task in self.tasks.values():
-            function_name = f"{task.name}{task_number}"
+            function_name = self.function_names[task.task_id]
             task_number += 1
             is_root_task = True if task.task_id in self.root_task_names else False
             all_input_files_name = []
@@ -157,7 +168,7 @@ class PyCompssTranslator(Translator):
                         all_task_args += "--input-files "
                         all_task_args += "\\\'["
                         i = 0
-                        for input_param in function_parameter_names_file_in.replace(' ', '').split(','):
+                        for input_param in [param for param in function_parameter_names_file_in.replace(' ', '').split(',') if param]:
                             if i == 0:
                                 all_task_args += "\\\\\\\"" + "{{"+ input_param +"}}" + "\\\\\\\""
                             else:
@@ -165,7 +176,7 @@ class PyCompssTranslator(Translator):
                             i += 1
                         all_task_args += "]\\\' "
                     else:
-                        all_task_args += f"{task_arg} "
+                        all_task_args += f"{self._shell_safe_argument(task_arg)} "
                 self.script += f", args='{all_task_args}'"
             self.script += f")\n"
 

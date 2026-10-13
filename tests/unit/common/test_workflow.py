@@ -17,8 +17,8 @@ from numbers import Real
 from typing import Any
 
 from datetime import datetime
-from wfcommons.common import Task, Workflow
-from wfcommons.wfinstances import Instance
+from wfcommons.common import File, Task, Workflow
+from wfcommons.wfinstances import Instance, SchemaValidator
 from wfcommons.version import __version__, __schema_version__
 
 
@@ -274,5 +274,98 @@ class TestWorkflow:
         assert(num_dependencies == len(instance.workflow.edges))
 
 
+def _build_workflow(tasks: list[tuple[str, str]], dependencies: list[tuple[str, str]], **kwargs) -> Workflow:
+    """Build a workflow from (name, id) pairs and (parent id, child id) pairs."""
+    workflow = Workflow(name="wfformat_test", makespan=10.0, **kwargs)
+    for name, task_id in tasks:
+        workflow.add_task(Task(name=name, task_id=task_id, runtime=1.0,
+                               output_files=[File(f"{task_id}_out", 10)]))
+    for parent, child in dependencies:
+        workflow.add_dependency(parent, child)
+    workflow.generate_json()
+    return workflow
 
 
+class TestWorkflowWfFormat:
+
+    @pytest.mark.unit
+    def test_metrics_with_shared_task_names(self) -> None:
+        # four tasks sharing the same name fan into a fifth one
+        workflow = _build_workflow(
+            [("split", f"split_ID000000{i}") for i in range(1, 5)] + [("merge", "merge_ID0000005")],
+            [(f"split_ID000000{i}", "merge_ID0000005") for i in range(1, 5)])
+        metrics = workflow.workflow_json["workflow"]["specification"]["metrics"]
+        assert metrics["numberOfLevels"] == 2
+        assert metrics["minimumWidth"] == 1
+        assert metrics["maximumWidth"] == 4
+        SchemaValidator().validate_instance(workflow.workflow_json)
+
+    @pytest.mark.unit
+    def test_metrics_of_a_chain_of_same_name_tasks(self) -> None:
+        ids = [f"step_ID000000{i}" for i in range(1, 5)]
+        workflow = _build_workflow([("step", task_id) for task_id in ids], list(zip(ids, ids[1:])))
+        metrics = workflow.workflow_json["workflow"]["specification"]["metrics"]
+        assert (metrics["numberOfLevels"], metrics["minimumWidth"], metrics["maximumWidth"]) == (4, 1, 1)
+        SchemaValidator().validate_instance(workflow.workflow_json)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize(
+        "task_ids",
+        [
+            ["ID0000001", "ID0000002"],  # as in the WfFormat documentation
+            ["ingest:raw", "proc/a"],  # ':' and '/' are allowed from WfFormat 1.6
+            ["main.cwl#step-1", "main.cwl#step-2"],
+            ["stage_in_local_local_0_0", "get_IDs_ID0000003"],
+        ]
+    )
+    def test_task_ids_allowed_by_wfformat(self, task_ids: list[str]) -> None:
+        workflow = _build_workflow([("task", task_id) for task_id in task_ids], [(task_ids[0], task_ids[1])])
+        SchemaValidator().validate_instance(workflow.workflow_json)
+
+    @pytest.mark.unit
+    def test_byte_metrics_are_integers(self) -> None:
+        workflow = Workflow(name="bytes_test")
+        workflow.add_task(Task(name="a", task_id="a", runtime=0, bytes_read=2, bytes_written=3))
+        workflow.add_task(Task(name="b", task_id="b", runtime=0, bytes_read=4, bytes_written=0.5))
+        workflow.generate_json()
+        metrics = workflow.workflow_json["workflow"]["execution"]["metrics"]
+        # totals do not depend on runtimes, and fractional totals are omitted
+        assert metrics == {"totalNumBytesRead": 6}
+        assert isinstance(metrics["totalNumBytesRead"], int)
+        SchemaValidator().validate_instance(workflow.workflow_json)
+
+    @pytest.mark.unit
+    def test_execution_fields(self) -> None:
+        task = Task(name="a", task_id="a", runtime=1.0, cores=0, args=["-x", "", 3],
+                    executed_at="2025-03-01 10:00:01.000000")
+        execution = task.execution_as_dict()
+        assert "coreCount" not in execution
+        assert execution["command"] == {"arguments": ["-x", "3"]}
+        assert datetime.fromisoformat(execution["executedAt"]).tzinfo is not None
+        assert "command" not in Task(name="b", task_id="b", runtime=1.0).execution_as_dict()
+
+    @pytest.mark.unit
+    def test_specification_only_workflow(self) -> None:
+        workflow = _build_workflow([("a", "a"), ("b", "b")], [("a", "b")], include_execution=False)
+        assert "execution" not in workflow.workflow_json["workflow"]
+        SchemaValidator().validate_instance(workflow.workflow_json)
+
+    @pytest.mark.unit
+    def test_instance_properties(self) -> None:
+        workflow = _build_workflow([("a", "a")], [], author_name="Jane Doe", author_email="jane@example.org",
+                                   author_institution="Example University", author_country="US",
+                                   created_at="2026-08-04T15:19:28-08:00", executed_at="2026-08-04T15:20:00-08:00")
+        assert workflow.workflow_json["author"] == {"name": "Jane Doe", "email": "jane@example.org",
+                                                   "institution": "Example University", "country": "US"}
+        assert workflow.workflow_json["createdAt"] == "2026-08-04T15:19:28-08:00"
+        assert workflow.workflow_json["workflow"]["execution"]["executedAt"] == "2026-08-04T15:20:00-08:00"
+
+    @pytest.mark.unit
+    def test_duplicate_file_ids(self) -> None:
+        workflow = Workflow(name="files_test")
+        workflow.add_task(Task(name="a", task_id="a", runtime=1.0, output_files=[File("f.txt", 10)]))
+        workflow.add_task(Task(name="b", task_id="b", runtime=1.0, input_files=[File("f.txt", 20)]))
+        workflow.add_dependency("a", "b")
+        workflow.generate_json()
+        assert workflow.workflow_json["workflow"]["specification"]["files"] == [{"id": "f.txt", "sizeInBytes": 10}]
+        SchemaValidator().validate_instance(workflow.workflow_json)

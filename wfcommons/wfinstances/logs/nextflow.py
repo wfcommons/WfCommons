@@ -11,7 +11,7 @@
 import glob
 import json
 import pathlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 import csv
 
 
@@ -101,7 +101,8 @@ class NextflowLogsParser(LogsParser):
         # Parse the Nextflow (most recent) execution trace file to create a dict of task runtimes
         nextflow_execution_trace_file: pathlib.Path = max(self.nextflow_execution_trace_files,
                                                           key=lambda p: p.stat().st_mtime)
-        nextflow_task_runtimes = self._load_nextflow_trace(nextflow_execution_trace_file)
+        nextflow_task_runtimes = self._load_nextflow_trace(nextflow_execution_trace_file,
+                                                           self._get_run_timezone())
 
 
         # Create an RO-Create parser
@@ -119,9 +120,29 @@ class NextflowLogsParser(LogsParser):
         return ro_crate_parser.build_workflow(workflow_name)
 
 
-    def _load_nextflow_trace(self, trace_file: pathlib.Path) -> dict[str, tuple[str, str]]:
+    def _get_run_timezone(self) -> Optional[tzinfo]:
         """
-        Parse a Nextflow execution trace file.
+        Get the timezone of the workflow run from the start time of the (nf-prov generated) RO-Crate
+        workflow run, since the execution trace timestamps are in the local time of the Nextflow host.
+
+        :return: The timezone of the workflow run, or None if unknown.
+        :rtype: Optional[tzinfo]
+        """
+        try:
+            with open(self.execution_dir / 'ro-crate-metadata.json') as f:
+                graph = json.load(f).get('@graph', [])
+            for item in graph:
+                if item.get('@type') == 'CreateAction' and 'Nextflow workflow run' in item.get('name', '') \
+                        and item.get('startTime'):
+                    return datetime.fromisoformat(item['startTime']).tzinfo
+        except (OSError, ValueError, AttributeError, TypeError) as e:
+            self.logger.debug(f"Unable to determine the timezone of the workflow run: {e}")
+        return None
+
+    def _load_nextflow_trace(self, trace_file: pathlib.Path,
+                             timezone: Optional[tzinfo] = None) -> dict[str, tuple[str, str]]:
+        """
+        Parse a Nextflow execution trace file (whose timestamps are in the given timezone, if any).
         Returns dict of task_name -> (start_iso, end_iso).
         """
         times = {}
@@ -134,7 +155,7 @@ class NextflowLogsParser(LogsParser):
                 if not submit_str or not duration_str:
                     continue
                 try:
-                    start = datetime.strptime(submit_str, '%Y-%m-%d %H:%M:%S.%f')
+                    start = datetime.strptime(submit_str, '%Y-%m-%d %H:%M:%S.%f').replace(tzinfo=timezone)
                     duration_sec = self._parse_duration(duration_str)
                     end = start + timedelta(seconds=duration_sec)
                     # Store as ISO strings to match _time_diff expectations
@@ -143,13 +164,17 @@ class NextflowLogsParser(LogsParser):
                     continue
         return times
 
-    def _parse_duration(self, duration_str: str) -> float:
-        """Parse Nextflow duration strings like '2m 40s', '519ms', '1h 3m 2s'."""
+    @staticmethod
+    def _parse_duration(duration_str: str) -> float:
+        """Parse Nextflow duration strings like '2m 40s', '519ms', '1h 3m 2s', '1d 2h 3m'."""
         import re
         total = 0.0
-        for value, unit in re.findall(r'(\d+(?:\.\d+)?)\s*(h|m|s|ms)', duration_str):
+        # 'ms' must be matched before 'm' (otherwise '519ms' would be read as 519 minutes)
+        for value, unit in re.findall(r'(\d+(?:\.\d+)?)\s*(ms|d|h|m|s)', duration_str):
             value = float(value)
-            if unit == 'h':
+            if unit == 'd':
+                total += value * 86400
+            elif unit == 'h':
                 total += value * 3600
             elif unit == 'm':
                 total += value * 60

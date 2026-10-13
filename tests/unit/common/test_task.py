@@ -76,7 +76,7 @@ class TestTask:
             "writtenBytes": 54321,
             "memoryInBytes": 10,
             "energyInKWh": 100,
-            "avgPowerInKWh": 1.0,
+            "avgPowerInW": 1.0,
             "priority": 100,
             "machines": ["machine_1"],
             "executedAt": "2024-09-15T08:59:33.699321-04:00",

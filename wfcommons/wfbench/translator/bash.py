@@ -109,7 +109,7 @@ class BashTranslator(Translator):
                         input_files_arr = json.dumps(input_files_arr).replace('"', '\\"')
                         a = f"{flag} '{input_files_arr}'"
 
-                    args.append(a)
+                    args.append(self._shell_safe_argument(a))
 
                 code = f"bin/{task.program} {' '.join(args)}"
 

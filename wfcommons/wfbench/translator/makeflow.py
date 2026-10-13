@@ -15,7 +15,7 @@ from logging import Logger
 from typing import Optional, Union
 
 from .abstract_translator import Translator
-from ...common import Workflow
+from ...common import File, Workflow
 
 this_dir = pathlib.Path(__file__).resolve().parent
 
@@ -67,28 +67,33 @@ class MakeflowTranslator(Translator):
         """
         self._script = "# Makeflow workflow specification\n\n"
         for task_name, task in self.workflow.tasks.items():
+            # Makeflow infers task dependencies from files: the input/output files include
+            # dependency marker files when some dependencies are not expressed by files
+            input_files = self._task_input_files(task)
+            output_files = self._task_output_files(task)
+
             make_clause = ""
             # output files
-            for output_file in task.output_files:
-                make_clause += f"data/{output_file.file_id} "
+            for output_file in output_files:
+                make_clause += f"{self._makeflow_file_name(output_file)} "
             make_clause += ": "
             # input files
-            for input_file in task.input_files:
-                make_clause += f"data/{input_file.file_id} "
+            for input_file in input_files:
+                make_clause += f"{self._makeflow_file_name(input_file)} "
             make_clause += "\n"
             # Command
             make_clause += "\t"
             make_clause += task.program + " "
 
             input_spec = "\"["
-            for file in task.input_files:
+            for file in input_files:
                 input_spec += f"\\\\\"data/{file.file_id}\\\\\","
-            input_spec = input_spec[:-1] + "]\""
+            input_spec = input_spec.rstrip(",") + "]\""
 
             output_spec = "\"{"
-            for file in task.output_files:
+            for file in output_files:
                 output_spec += f"\\\\\"data/{file.file_id}\\\\\":{str(file.size)},"
-            output_spec = output_spec[:-1] + "}\""
+            output_spec = output_spec.rstrip(",") + "}\""
 
             args = []
             for a in task.args:
@@ -97,12 +102,47 @@ class MakeflowTranslator(Translator):
                 elif "--input-files" in a:
                     args.append(f"--input-files {input_spec}")
                 else:
-                    args.append(a)
+                    args.append(self._makeflow_argument(a))
+            # output files (e.g., dependency marker files) are created by wfbench
+            if output_files and not any("--output-files" in a for a in task.args):
+                args.append(f"--output-files {output_spec}")
 
             args = " ".join(f"{a}" for a in args)
             make_clause += args + "\n"
             self._script += make_clause + "\n\n"
         return
+
+    @staticmethod
+    def _makeflow_file_name(file: File) -> str:
+        """
+        Get the name of a file in a Makeflow rule. An unquoted '#' starts a comment anywhere in a
+        Makeflow file, and ':' separates the targets of a rule from its sources.
+
+        :param file: The file.
+        :type file: File
+
+        :return: The (quoted, if needed) file name.
+        :rtype: str
+        """
+        file_name = f"data/{file.file_id}"
+        return f"\"{file_name}\"" if "#" in file_name or ":" in file_name else file_name
+
+    def _makeflow_argument(self, argument: str) -> str:
+        """
+        Get a task argument for a Makeflow command. An unquoted '#' starts a comment anywhere in a
+        Makeflow command (e.g., in a '--name' value), and quotes are passed to the shell.
+
+        :param argument: A task argument.
+        :type argument: str
+
+        :return: The (quoted, if needed) argument.
+        :rtype: str
+        """
+        argument = self._shell_safe_argument(argument)
+        if "#" in argument:
+            flag, separator, value = argument.partition(" ")
+            argument = f"{flag} '{value}'" if separator else f"'{argument}'"
+        return argument
 
     def _write_readme_file(self, output_folder: pathlib.Path) -> None:
         """

@@ -8,11 +8,13 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
+import ast
 import glob
 import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 import time
 import shortuuid
@@ -119,6 +121,9 @@ class WorkflowBenchmark:
         """
 
         self.workflow = workflow
+        # the benchmark tasks (i.e., their commands) are part of the execution section
+        self.workflow.include_execution = True
+        self.workflow.makespan = 0.0
 
         save_dir = save_dir.resolve()
         save_dir.mkdir(exist_ok=True, parents=True)
@@ -126,54 +131,57 @@ class WorkflowBenchmark:
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
+        # tasks are grouped by category (or by name, as tasks often do not have a category)
+        task_max_runtimes = {}
+        for task in self.workflow.tasks.values():
+            task_type = self._task_type(task)
+            if task_type not in task_max_runtimes or task.runtime > task_max_runtimes[task_type]:
+                task_max_runtimes[task_type] = task.runtime
+        max_runtime = max(task_max_runtimes.values(), default=0)
+
         # if no cpu_work is provided, use the maximum runtime of each task as a reference
         if cpu_work is None:
-            cpu_work = {}
-            for task in self.workflow.tasks.values():
-                if task.category not in cpu_work or task.runtime > cpu_work[task.category]:
-                    cpu_work[task.category] = task.runtime
-            for key in cpu_work.keys():
-                cpu_work[key] *= 1000
+            cpu_work = {task_type: runtime * 1000 for task_type, runtime in task_max_runtimes.items()}
+            if not max_runtime:
+                self.logger.warning("The workflow tasks have no runtimes (e.g., the workflow instance has no "
+                                    "execution data): the benchmark tasks will not perform any CPU work "
+                                    "unless cpu_work is provided.")
 
         cores, lock = self._creating_lock_files(lock_files_folder)
 
-        task_max_runtimes = {}
         for task in self.workflow.tasks.values():
-            if task.category not in task_max_runtimes or task.runtime > task_max_runtimes[task.category]:
-                task_max_runtimes[task.category] = task.runtime
-        max_runtime = max(runtime for runtime in task_max_runtimes.values())
-
-        for task in self.workflow.tasks.values():
-            runtime_factor = task.runtime / max_runtime
-            task_runtime_factor = task.runtime / task_max_runtimes[task.category]
+            # all runtimes are zero if the workflow has no execution data
+            runtime_factor = task.runtime / max_runtime if max_runtime else 1
+            task_max_runtime = task_max_runtimes[self._task_type(task)]
+            task_runtime_factor = task.runtime / task_max_runtime if task_max_runtime else 1
             # scale argument parameters to achieve a runtime distribution
-            task_percent_cpu = percent_cpu[task.category] * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
+            task_percent_cpu = self._task_value(percent_cpu, task) * task_runtime_factor if isinstance(percent_cpu, dict) else percent_cpu * runtime_factor
             task_cores = int(10 * task_percent_cpu)  # set number of cores to cpu threads in wfbench
             task_percent_cpu = max(0.1, task_percent_cpu)  # set minimum to 0.1 which is equivalent to 1 thread in wfbench
             task_percent_cpu = round(task_percent_cpu, 2)
             if cpu_work is not None:
-                task_cpu_work = cpu_work[task.category] * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
+                task_cpu_work = self._task_value(cpu_work, task) * task_runtime_factor if isinstance(cpu_work, dict) else cpu_work * runtime_factor
                 task_cpu_work = int(task_cpu_work)
             else:
                 task_cpu_work = None
             if gpu_work is not None:
-                task_gpu_work = gpu_work[task.category] * task_runtime_factor if isinstance(gpu_work, dict) else gpu_work * runtime_factor
+                task_gpu_work = self._task_value(gpu_work, task) * task_runtime_factor if isinstance(gpu_work, dict) else gpu_work * runtime_factor
                 task_gpu_work = int(task_gpu_work)
             else:
                 task_gpu_work = None
             task_memory = int(mem * runtime_factor) if mem else None
             self._set_argument_parameters(
                 task,
-                task_percent_cpu,
-                task_cpu_work,
-                task_gpu_work,
-                num_chunks,
-                time,
-                task_memory,
-                lock_files_folder,
-                cores,
-                lock,
-                rundir
+                percent_cpu=task_percent_cpu,
+                cpu_work=task_cpu_work,
+                gpu_work=task_gpu_work,
+                time=time,
+                num_chunks=num_chunks,
+                mem=task_memory,
+                lock_files_folder=lock_files_folder,
+                cores=cores,
+                lock=lock,
+                rundir=rundir
             )
             task.cores = task_cores + 1
             if task_memory:
@@ -213,10 +221,13 @@ class WorkflowBenchmark:
         :rtype: List[File]
         """
         new_file_names: Dict = {}
+        renamed_files: Set[int] = set()
         task_output_counter = 0
         workflow_inputs: List[File] = []
     
         for task in self.workflow.tasks.values():
+            # task IDs may contain characters that are not safe in file names (e.g., '/' or ':')
+            file_prefix = re.sub(r"[^0-9A-Za-z_.-]", "_", task.task_id)
             output_files = sorted(task.output_files, key=lambda x: -len(x.file_id))
             for file in output_files:
                 if file.file_id in new_file_names:
@@ -224,19 +235,20 @@ class WorkflowBenchmark:
                 
                 task_output_counter += 1
                 # extension = ''.join(pathlib.Path(file.file_id).suffixes)
-                new_name = f"{task.task_id}_outfile_{task_output_counter:04d}" #{extension}
+                new_name = f"{file_prefix}_outfile_{task_output_counter:04d}" #{extension}
                 new_file_names[file.file_id] = new_name
-                for i, item in enumerate(task.args):
-                    if file.file_id in item:
-                        task.args[i] = task.args[i].replace(file.file_id, new_name)
                 file.file_id = new_name
+                renamed_files.add(id(file))
 
         for task in self.workflow.tasks.values():
             input_files = sorted(task.input_files, key=lambda x: -len(x.file_id))
             for file in input_files:
-                org_name = file.file_id
+                if id(file) in renamed_files:
+                    # file object shared with the task that produces it, already renamed
+                    continue
                 if file.file_id in new_file_names:
-                    # file is an output file of another task and receives the corresponding name
+                    # file is an output file of another task (or an input file for the workflow
+                    # used by another task) and receives the corresponding name
                     file.file_id = new_file_names[file.file_id]
                 else:
                     # file is an input file for the workflow and needs to be generated
@@ -245,11 +257,72 @@ class WorkflowBenchmark:
                     new_name = f"workflow_infile_{len(workflow_inputs):04d}"#{extension}
                     new_file_names[file.file_id] = new_name
                     file.file_id = new_name
-                for i, item in enumerate(task.args):
-                    if org_name in item:
-                        task.args[i] = task.args[i].replace(org_name, file.file_id)
+                renamed_files.add(id(file))
+
+        # rename the files in the input/output files arguments of the tasks (only)
+        for task in self.workflow.tasks.values():
+            task.args = [self._rename_files_in_argument(arg, new_file_names) for arg in task.args]
     
         return workflow_inputs
+
+    @staticmethod
+    def _rename_files_in_argument(argument: str, new_file_names: Dict[str, str]) -> str:
+        """
+        Rename the files listed in an '--input-files' or '--output-files' task argument.
+
+        :param argument: A task argument.
+        :type argument: str
+        :param new_file_names: The new names of the files, indexed by their current names.
+        :type new_file_names: Dict[str, str]
+
+        :return: The argument with the renamed files (other arguments are returned unchanged).
+        :rtype: str
+        """
+        if argument.startswith("--output-files "):
+            output_files = ast.literal_eval(argument[len("--output-files "):])
+            output_files = {new_file_names.get(file_name, file_name): size for file_name, size in output_files.items()}
+            return f"--output-files {output_files}"
+        if argument.startswith("--input-files "):
+            input_files = ast.literal_eval(argument[len("--input-files "):])
+            input_files = [new_file_names.get(file_name, file_name) for file_name in input_files]
+            return f"--input-files {input_files}"
+        return argument
+
+    @staticmethod
+    def _task_type(task: Task) -> str:
+        """
+        Get the type of a task, i.e., its category, or its name if the task has no category.
+
+        :param task: The task.
+        :type task: Task
+
+        :return: The task type.
+        :rtype: str
+        """
+        return task.category if task.category is not None else task.name
+
+    @staticmethod
+    def _task_value(values: Union[float, Dict[str, float]], task: Task) -> float:
+        """
+        Get the value of a benchmark parameter for a task, if values are provided per task
+        category (or per task name, as tasks often do not have a category).
+
+        :param values: A value, or values indexed by task category or task name.
+        :type values: Union[float, Dict[str, float]]
+        :param task: The task.
+        :type task: Task
+
+        :return: The value of the parameter for the task.
+        :rtype: float
+        """
+        if not isinstance(values, dict):
+            return values
+        if task.category is not None and task.category in values:
+            return values[task.category]
+        if task.name in values:
+            return values[task.name]
+        raise KeyError(f"No value provided for task '{task.task_id}' (category: '{task.category}', "
+                       f"name: '{task.name}').")
 
     def create_benchmark(self,
                          save_dir: pathlib.Path,
@@ -301,6 +374,9 @@ class WorkflowBenchmark:
                 self.recipe.from_num_tasks(self.num_tasks))
             self.workflow = generator.build_workflow()
             self.workflow.name = f"{self.workflow.name.split('-')[0]}-Benchmark"
+        # the benchmark tasks (i.e., their commands) are part of the execution section
+        self.workflow.include_execution = True
+        self.workflow.makespan = 0.0
         json_path = save_dir.joinpath(
             f"{self.workflow.name.lower()}-{self.num_tasks}").with_suffix(".json")
 
@@ -311,16 +387,16 @@ class WorkflowBenchmark:
         for task in self.workflow.tasks.values():
             self._set_argument_parameters(
                 task,
-                percent_cpu,
-                cpu_work,
-                gpu_work,
-                time,
-                num_chunks,
-                mem,
-                lock_files_folder,
-                cores,
-                lock,
-                rundir,
+                percent_cpu=percent_cpu,
+                cpu_work=cpu_work,
+                gpu_work=gpu_work,
+                time=time,
+                num_chunks=num_chunks,
+                mem=mem,
+                lock_files_folder=lock_files_folder,
+                cores=cores,
+                lock=lock,
+                rundir=rundir,
             )
             task.input_files = []
             task.output_files = []
@@ -407,7 +483,15 @@ class WorkflowBenchmark:
             if self.workflow.workflow_id:
                 params.extend([f"--workflow_id {self.workflow.workflow_id}"])
 
+        # the benchmark has not been executed yet: clear the measured execution data of the task
         task.runtime = 0
+        task.avg_cpu = None
+        task.bytes_read = None
+        task.bytes_written = None
+        task.memory = None
+        task.energy = None
+        task.avg_power = None
+        task.machines = None
 
         task.program = "wfbench"
         task.args = [f"--name {task.task_id}"]
@@ -426,10 +510,8 @@ class WorkflowBenchmark:
         if not cpu_work:
             return []
 
-        _percent_cpu = percent_cpu[task.category] if isinstance(
-            percent_cpu, dict) else percent_cpu
-        _cpu_work = cpu_work[task.category] if isinstance(
-            cpu_work, dict) else cpu_work
+        _percent_cpu = self._task_value(percent_cpu, task)
+        _cpu_work = self._task_value(cpu_work, task)
 
         params = [f"--percent-cpu {_percent_cpu}", f"--cpu-work {int(_cpu_work)}"]
 
@@ -444,8 +526,7 @@ class WorkflowBenchmark:
         """
         if not gpu_work:
             return []
-        _gpu_work = gpu_work[task.category] if isinstance(
-            gpu_work, dict) else gpu_work
+        _gpu_work = self._task_value(gpu_work, task)
 
         return [f"--gpu-work {_gpu_work}"]
 
@@ -591,7 +672,7 @@ class WorkflowBenchmark:
         }
         for node in workflow.nodes:
             task: Task = workflow.nodes[node]['task']
-            task_type = task.task_id.split("_0")[0]
+            task_type = task.name
 
             for key in inputs.keys():
                 inputs[key].setdefault(task_type, defaults[key])

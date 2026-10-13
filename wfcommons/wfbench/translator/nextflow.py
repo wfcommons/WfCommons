@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 import pathlib
+import re
 import shutil
 
 from logging import Logger
@@ -21,6 +22,18 @@ import json
 
 this_dir = pathlib.Path(__file__).resolve().parent
 nextflow_config_file_name = "nextflow-wfcommons.config"
+
+# Groovy keywords, and names used by the generated Nextflow code
+GROOVY_RESERVED_NAMES = {
+    "abstract", "as", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
+    "continue", "def", "default", "do", "double", "else", "enum", "extends", "false", "final", "finally",
+    "float", "for", "goto", "if", "implements", "import", "in", "instanceof", "int", "interface", "long",
+    "native", "new", "null", "package", "private", "protected", "public", "record", "return", "sealed",
+    "short", "static", "strictfp", "super", "switch", "synchronized", "this", "threadsafe", "throw",
+    "throws", "trait", "transient", "true", "try", "var", "void", "volatile", "while", "yield",
+    "Channel", "channel", "file", "files", "include", "params", "process", "pwd", "workflow", "results",
+    "inputs", "flowcept", "printUsage", "validateParams"
+}
 
 
 class NextflowTranslator(Translator):
@@ -55,6 +68,12 @@ class NextflowTranslator(Translator):
         self.script = ""
         self.out_files = set()
         self.subworkflows: List[List[Task]] = []
+
+        # task IDs are used as process names (Groovy identifiers), and to name the task scripts
+        task_ids = {task_id: task_id for task_id in self.tasks}
+        self.process_names = self._unique_identifiers(task_ids, reserved=GROOVY_RESERVED_NAMES)
+        self.script_names = self._unique_identifiers(task_ids, invalid_chars=r"[^0-9A-Za-z_.-]",
+                                                     first_char=None)
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -116,8 +135,9 @@ class NextflowTranslator(Translator):
                 break
             for potential_task in all_children:
                 num_children = len(self.task_children[potential_task.task_id])
-                if not num_children:
-                    self.out_files.add(f"{self.output_folder.absolute()}/data/{potential_task.output_files[0]}")
+                output_files = self._task_output_files(potential_task)
+                if not num_children and output_files:
+                    self.out_files.add(f"{self.output_folder.absolute()}/data/{output_files[0]}")
                 if all(parent in sorted_tasks for parent in self._find_parents(potential_task.task_id)):
                     tasks_in_current_level.append(potential_task)
             levels[current_level] = tasks_in_current_level
@@ -136,10 +156,10 @@ class NextflowTranslator(Translator):
         file_count_threshold = 10
 
         input_files_list = [
-            f"{self.output_folder.absolute()}/data/{f.file_id}" for f in task.input_files
+            f"{self.output_folder.absolute()}/data/{f.file_id}" for f in self._task_input_files(task)
         ]
         output_files_dict = {
-            f"{self.output_folder.absolute()}/data/{f.file_id}": f.size for f in task.output_files
+            f"{self.output_folder.absolute()}/data/{f.file_id}": f.size for f in self._task_output_files(task)
         }
 
         code = "#!/bin/bash\n"
@@ -164,10 +184,13 @@ class NextflowTranslator(Translator):
             elif "--input-files" in a:
                 code += f"--input-files {input_arg} "
             else:
-                code += f"{a} "
+                code += f"{self._shell_safe_argument(a)} "
+        # output files (e.g., dependency marker files) are created by wfbench
+        if output_files_dict and not any("--output-files" in a for a in task.args):
+            code += f"--output-files {output_arg} "
         code += "\n"
 
-        script_file_path = self.output_folder.joinpath(f"bin/script_{task.task_id}.sh")
+        script_file_path = self.output_folder.joinpath(f"bin/script_{self.script_names[task.task_id]}.sh")
         with open(script_file_path, "w") as out:
             out.write(code)
 
@@ -210,29 +233,34 @@ class NextflowTranslator(Translator):
         code = f"process {function_name}()" + "{\n"
         code += "\tstoreDir \"${params.pwd_abs}/data\"\n"
 
+        # Nextflow infers task dependencies from files: the input/output files include
+        # dependency marker files when some dependencies are not expressed by files
+        input_files = self._task_input_files(task)
+        output_files = self._task_output_files(task)
+
         # Input declaration
         # has_parents = self._find_parents(task.task_id)
         # if has_parents:
-        if len(task.input_files) > 1:
+        if len(input_files) > 1:
             # Fan-in: accept a collected list under a single path alias
             code += "input:\n"
             code += "\tpath \"input_files\"\n"
-        elif len(task.input_files) == 1:
+        elif len(input_files) == 1:
             # Single input: one path variable
             code += "input:\n"
             code += "\tpath input_file\n"
 
         # Output declaration
-        if len(task.output_files) > 0:
+        if len(output_files) > 0:
             code += "\toutput:\n"
-            for output_file in task.output_files:
+            for output_file in output_files:
                 code += f"\t\tpath \"{output_file.file_id}\"\n"
         # code += "\t\tstdout\n"
 
         # Script
         code += "\tscript:\n"
         code += "\t\t\"\"\"\n"
-        code += f"\t\t${{params.simulate ? 'sleep 1' : \"bash ${{params.pwd_abs}}/bin/script_{task.task_id}.sh\"}}\n"
+        code += f"\t\t${{params.simulate ? 'sleep 1' : \"bash ${{params.pwd_abs}}/bin/script_{self.script_names[task.task_id]}.sh\"}}\n"
         # for f in task.output_files:
         #     code += f"\t\techo -n \"${{params.pwd_abs}}/data/{f.file_id}\"\n"
         code += "\t\t\"\"\"\n"
@@ -353,50 +381,68 @@ trace {
         code = ""
         has_parents = self._find_parents(task.task_id)
         has_children = self._find_children(task.task_id)
+        input_files = self._task_input_files(task)
 
         if include_comment:
             root_suffix = " (root)" if not has_parents else ""
             code += f"\t// Task: {task.task_id}{root_suffix}\n"
 
-        if has_parents:
-            if len(task.input_files) > 1:
+        if has_parents and input_files:
+            if len(input_files) > 1:
                 # Fan-in: write dependency keys to a text file and load them at
                 # runtime instead of unrolling one .mix() statement per parent.
                 # This keeps run_module_N's compiled bytecode size independent of
                 # fan-in width, avoiding Groovy's "method too long" (64KB) error.
-                deps_file = self._write_deps_file(function_name, task.input_files)
+                deps_file = self._write_deps_file(function_name, input_files)
                 code += (f"\tdef {function_name}_deps = "
                          f"file(\"${{params.pwd_abs}}/deps/{deps_file.name}\").readLines()\n")
                 code += (f"\tdef {function_name}_input = Channel.empty()"
                          f".mix(*{function_name}_deps.collect {{ {inputs_var}[it] }})\n")
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input.collect())\n"
             else:
-                input_file_id = task.input_files[0].file_id
-                code += f"\tdef {function_name}_output = {function_name}({inputs_var}.{input_file_id})\n"
-        elif len(task.input_files) > 0:
-            if len(task.input_files) > 1:
+                input_file_id = input_files[0].file_id
+                code += f"\tdef {function_name}_output = {function_name}({self._map_entry(inputs_var, input_file_id)})\n"
+        elif len(input_files) > 0:
+            if len(input_files) > 1:
                 code += f"\tdef {function_name}_input = Channel.of(\n"
-                for f in task.input_files:
+                for f in input_files:
                     code += f"\t\tfile(params.pwd_abs + '/data/{f.file_id}'),\n"
                 code += f"\t).collect()\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input)\n"
             else:
-                f = task.input_files[0]
+                f = input_files[0]
                 code += f"\tdef {function_name}_input = Channel.of(file(params.pwd_abs + '/data/{f.file_id}'))\n"
                 code += f"\tdef {function_name}_output = {function_name}({function_name}_input)\n"
         else:
             code += f"\tdef {function_name}_output = {function_name}()\n"
 
         if has_children:
-            output_files = task.output_files
+            output_files = self._task_output_files(task)
             if len(output_files) == 1:
-                code += f"\t{results_var}.{output_files[0].file_id} = {function_name}_output\n"
+                code += f"\t{self._map_entry(results_var, output_files[0].file_id)} = {function_name}_output\n"
             else:
                 for i, f in enumerate(output_files):
-                    code += f"\t{results_var}.{f.file_id} = {function_name}_output.map{{it[{i}]}}\n"
+                    code += f"\t{self._map_entry(results_var, f.file_id)} = {function_name}_output.map{{it[{i}]}}\n"
         code += "\n"
 
         return code
+
+    @staticmethod
+    def _map_entry(map_var: str, key: str) -> str:
+        """
+        Generate the Groovy code to access an entry of a map (e.g., the channel of a file).
+
+        :param map_var: The name of the map variable.
+        :type map_var: str
+        :param key: The key of the entry (e.g., a file ID).
+        :type key: str
+
+        :return: The code, i.e., a property access if the key is a valid identifier, or a subscript otherwise.
+        :rtype: str
+        """
+        if re.fullmatch(r"[A-Za-z_][0-9A-Za-z_]*", key) and key not in GROOVY_RESERVED_NAMES:
+            return f"{map_var}.{key}"
+        return f"{map_var}['{key}']"
 
     def _write_deps_file(self, function_name: str, input_files: List) -> pathlib.Path:
         """
@@ -591,7 +637,16 @@ trace {
         return code
 
     def _sanitize_string(self, string: str) -> str:
-        return string.replace(".", "_").replace("-", "_")
+        """
+        Get the (unique) process name of a task, i.e., its ID as a valid Groovy identifier.
+
+        :param string: The task ID.
+        :type string: str
+
+        :return: The process name.
+        :rtype: str
+        """
+        return self.process_names[string]
 
     # =========================================================================
     # Single-file mode methods

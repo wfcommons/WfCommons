@@ -65,13 +65,24 @@ def generic_shell_app(cmd: str, inputs=None, outputs=None,
     if outputs is None:
         outputs = []
 
+    def replace_file_name(cmd: str, file_path: str) -> str:
+        # File names appear in the command as JSON strings, and may contain '/': replace
+        # the (quoted) longest trailing part of the file path that appears in the command
+        parts = Path(file_path).parts
+        for i in range(1, len(parts)):
+            file_name = '"' + "/".join(parts[i:]) + '"'
+            if file_name in cmd:
+                return cmd.replace(file_name, '"' + file_path + '"')
+        return cmd
+
     for i in inputs:
-        input_path = Path(i.filepath)
-        cmd = cmd.replace(input_path.name, i.filepath)
+        # inputs may also include app futures (dependencies without files)
+        if hasattr(i, "filepath"):
+            cmd = replace_file_name(cmd, i.filepath)
     for o in outputs:
         output_path = Path(o.filepath)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        cmd = cmd.replace(output_path.name, o.filepath)
+        cmd = replace_file_name(cmd, o.filepath)
     return cmd
 
 current_workdir = Path.cwd()

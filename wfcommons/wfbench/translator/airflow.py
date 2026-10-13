@@ -38,6 +38,9 @@ class AirflowTranslator(Translator):
 
         self.sanitized_names = {}
         self.seq_num = 0
+        # Airflow task IDs may only contain alphanumeric characters, '_', '.', and '-'
+        self.airflow_task_ids = self._unique_identifiers({task_id: task_id for task_id in self.tasks},
+                                                         invalid_chars=r"[^0-9A-Za-z_.-]", first_char=None)
         self.script = f"""
 from __future__ import annotations
 
@@ -71,7 +74,7 @@ with DAG(
         for task in self.tasks.values():
             self.script += f"""
     {self._sanitize_varname(task.task_id)} = BashOperator(
-        task_id="{task.task_id}",
+        task_id="{self.airflow_task_ids[task.task_id]}",
         bash_command='{self.task_commands[task.task_id]}',
         )
 """
@@ -133,7 +136,7 @@ with DAG(
                                        ast.literal_eval(input_files_arr)]
                     a = f"{flag} {json.dumps(input_files_arr)}"
                 else:
-                    a = a.replace("'", "\"")
+                    a = self._shell_safe_argument(a.replace("'", "\""))
                 args.append(a)
 
             command_str = " ".join([str(program)] + args)
