@@ -41,9 +41,13 @@ class SwiftTTranslator(Translator):
         self.categories_input = {}
         self.parsed_tasks = set()
         self.files_map = {}
+        self.files_category = {}
         self.tasks_map = {}
         self.cmd_counter = 1
         self.out_files = set()
+
+        # task names (i.e., categories) are used to name Swift/T variables and files
+        self.category_ids = self._unique_identifiers({task.name: task.name for task in self.tasks.values()})
 
         # find applications
         self.apps = set()
@@ -53,13 +57,16 @@ class SwiftTTranslator(Translator):
             
             out_count = 0
             for file in task.output_files:
-                self.files_map[file.file_id] = f"{task.name}__out"
+                self.files_map[file.file_id] = f"{self.category_ids[task.name]}__out"
+                self.files_category[file.file_id] = self.category_ids[task.name]
                 out_count += 1
 
             if out_count > 1:
-                self.logger.error(
-                    "Swift/T does not allow an application to have multiple outputs.")
-                exit(1)
+                raise ValueError(f"Swift/T does not allow an application to have multiple outputs: task "
+                                 f"'{task.task_id}' has {out_count} output files.")
+
+        # task dependencies are inferred from files
+        self._warn_dependencies_without_files("The Swift/T translator")
 
     def translate(self, output_folder: pathlib.Path) -> None:
         """
@@ -87,6 +94,7 @@ class SwiftTTranslator(Translator):
                     self.script += f"root_in_files[{in_count}] = \"{in_file}\";\n"
                     in_count += 1
                 self.files_map[file.file_id] = f"ins[{in_count}]"
+                self.files_category[file.file_id] = f"ins[{in_count}]"
         
         self.script += "\n"
 
@@ -160,20 +168,23 @@ class SwiftTTranslator(Translator):
         num_children = 0
         input_files_cat = {}
         parsed_input_files = set()
+        category_name = category
+        category = self.category_ids[category_name]
         self.script += f"int {category}__out[];\n"
 
         for task in self.tasks.values():
-            if task.name == category:
+            if task.name == category_name:
                 # in/output files
                 num_children = len(self.task_children[task.task_id])
                 input_files = set()
                 prefix = ""
 
+                file_size = 0
                 for file in task.output_files:
                     file_size = file.size
                 
                 for file in task.input_files:
-                    cat_prefix = self.files_map[file.file_id].split("__out")[0]
+                    cat_prefix = self.files_category[file.file_id]
                     if file.file_id not in parsed_input_files:
                         input_files_cat.setdefault(cat_prefix, 0)
                         input_files_cat[cat_prefix] += 1
@@ -209,7 +220,7 @@ class SwiftTTranslator(Translator):
 
         cats = " + ".join(f"{k}__out[{v - 1}]" for k, v in input_files_cat.items())
         in_str = ", ".join(f"{k}_{v - 1}_output.txt" for k, v in input_files_cat.items())
-        if "ins[" in cats:
+        if not cats or "ins[" in cats:
             cats = "0"
             in_str = ""
         self.script += f"int dep_{self.cmd_counter} = {cats};\n"

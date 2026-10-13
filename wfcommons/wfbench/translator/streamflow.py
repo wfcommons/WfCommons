@@ -13,7 +13,7 @@ import logging
 import pathlib
 import ast
 import json
-from typing import Union, Optional
+from typing import Dict, Union, Optional
 from collections import defaultdict, deque
 
 
@@ -62,8 +62,8 @@ class StreamflowTranslator(Translator):
         # Generate the streamflow.yml file
         self._generate_streamflow_file(output_folder)
 
-        # Generate the inputs.yml file
-        self._generate_inputs_file(output_folder)
+        # Generate the inputs.yml file (with the workflow input names of the CWL workflow)
+        self._generate_inputs_file(output_folder, cwl_translator.step_ids)
 
         # Generate the README file
         self._write_readme_file(output_folder)
@@ -71,16 +71,24 @@ class StreamflowTranslator(Translator):
     def _generate_streamflow_file(self, output_folder: pathlib.Path) -> None:
         shutil.copy(this_dir.joinpath("templates/streamflow/streamflow.yml"), output_folder)
 
-    def _generate_inputs_file(self, output_folder: pathlib.Path) -> None:
+    def _generate_inputs_file(self, output_folder: pathlib.Path, step_ids: Dict[str, str]) -> None:
 
         file_path = output_folder.joinpath("inputs.yml")
         with open(file_path, "w") as out:
+            has_inputs = False
             for task_id in self.workflow.roots():
                 task = self.workflow.tasks[task_id]
-                out.write(f"{task.task_id}_input:\n")
+                # root tasks without input files have no workflow input
+                if not task.input_files:
+                    continue
+                has_inputs = True
+                out.write(f"{step_ids[task.task_id]}_input:\n")
                 for f in task.input_files:
                     out.write(f"  - class: File\n")
                     out.write(f"    path: ./data/{f}\n")
+            if not has_inputs:
+                # a workflow without input files has an empty input object
+                out.write("{}\n")
 
 
 
