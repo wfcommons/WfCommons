@@ -47,4 +47,3 @@ graft wfcommons/wfbench/translator/templates
 include Makefile
 include bin/cpu-benchmark.cpp
 include bin/wfbench
-include wfcommons/wfinstances/wfcommons-schema.json

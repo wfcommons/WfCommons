@@ -39,9 +39,9 @@ class Instance:
     :param input_instance: The JSON instance.
     :type input_instance: pathlib.Path
     :param schema_file: The path to the JSON schema that defines the instance.
-                        If no schema file is provided, it will use the copy of the
-                        `WfFormat schema <https://github.com/wfcommons/wfformat>`_
-                        distributed with WfCommons.
+                        If no schema file is provided, it will use the schema of the
+                        `WfFormat release <https://github.com/wfcommons/wfformat>`_
+                        that matches the schema version written by WfCommons.
     :type schema_file: Optional[str]
     :param logger: The logger where to log information/warning or errors.
     :type logger: Optional[Logger]

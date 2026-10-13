@@ -12,7 +12,9 @@ import json
 import jsonschema
 import logging
 import math
+import os
 import pathlib
+import requests
 
 from logging import Logger
 from typing import Any, Dict, List, Optional, Set
@@ -20,8 +22,12 @@ from typing import Any, Dict, List, Optional, Set
 from ..version import __schema_version__
 
 SCHEMA_FILE_NAME = "wfcommons-schema.json"
-SCHEMA_URL = f"https://raw.githubusercontent.com/wfcommons/wfformat/main/{SCHEMA_FILE_NAME}"
+# the schema is fetched from the WfFormat release that matches the version written by WfCommons
+SCHEMA_URL = f"https://raw.githubusercontent.com/wfcommons/WfFormat/v{__schema_version__}/{SCHEMA_FILE_NAME}"
 SCHEMA_FETCH_TIMEOUT_IN_SECONDS = 30
+
+# schemas already loaded by this process, by URL
+_schema_cache: Dict[str, Dict[str, Any]] = {}
 
 # tolerance used when comparing declared metrics against recomputed ones
 METRICS_RELATIVE_TOLERANCE = 1e-9
@@ -30,8 +36,10 @@ METRICS_RELATIVE_TOLERANCE = 1e-9
 class SchemaValidator:
     """
     Validate JSON files against WfCommons schema (WfFormat). If schema file path
-    is not provided, it will use the copy of the WfFormat schema distributed with
-    WfCommons, which matches the schema version written by WfCommons.
+    is not provided, it will use the schema of the
+    `WfFormat release <https://github.com/wfcommons/wfformat>`_ that matches the
+    schema version written by WfCommons, which is fetched once and cached in the
+    user cache directory (e.g., ``~/.cache/wfcommons``).
 
     :param schema_file_path: JSON schema file path.
     :type schema_file_path: Optional[pathlib.Path]
@@ -60,9 +68,9 @@ class SchemaValidator:
 
     def _load_schema(self, schema_file_path: Optional[pathlib.Path] = None) -> Dict[str, Any]:
         """
-        Load the schema file. If schema file path is not provided, it will use the copy of
-        the WfFormat schema distributed with WfCommons, and if not available it will fetch
-        the latest schema from the GitHub repository.
+        Load the schema file. If schema file path is not provided, it will use the schema of the
+        WfFormat release that matches the schema version written by WfCommons, from the user cache
+        directory or, if not available, from the WfFormat GitHub repository.
 
         :param schema_file_path: JSON schema file path.
         :type schema_file_path: Optional[pathlib.Path]
@@ -75,23 +83,41 @@ class SchemaValidator:
             with open(schema_file_path, encoding="utf-8") as f:
                 return json.load(f)
 
-        # copy of the schema distributed with WfCommons
-        schema_path = pathlib.Path(__file__).parent.joinpath(SCHEMA_FILE_NAME)
-        if schema_path.exists():
-            self.logger.debug(f'Using schema file: {schema_path}')
-            with open(schema_path, encoding="utf-8") as f:
-                return json.load(f)
+        if SCHEMA_URL in _schema_cache:
+            return _schema_cache[SCHEMA_URL]
 
-        # fetching latest schema file from GitHub repository
-        import requests
+        # copy of the schema cached by a previous run
+        cache_path = _cache_dir().joinpath(f"wfformat-v{__schema_version__}-{SCHEMA_FILE_NAME}")
+        try:
+            with open(cache_path, encoding="utf-8") as f:
+                schema = json.load(f)
+            if _accepts_schema_version(schema):
+                self.logger.debug(f'Using schema file: {cache_path}')
+                _schema_cache[SCHEMA_URL] = schema
+                return schema
+        except (OSError, ValueError):
+            pass
 
-        response = requests.get(SCHEMA_URL, timeout=SCHEMA_FETCH_TIMEOUT_IN_SECONDS)
-        response.raise_for_status()
-        schema = response.json()
-        self.logger.info(f"Using latest schema file from GitHub repository: {SCHEMA_URL}")
-        if __schema_version__ not in schema.get("properties", {}).get("schemaVersion", {}).get("enum", []):
-            self.logger.warning(f"The latest schema does not accept version {__schema_version__}, "
-                                f"which is the version written by WfCommons.")
+        # fetching the schema file from the WfFormat GitHub repository
+        try:
+            response = requests.get(SCHEMA_URL, timeout=SCHEMA_FETCH_TIMEOUT_IN_SECONDS)
+            response.raise_for_status()
+            schema = response.json()
+        except (requests.RequestException, ValueError) as e:
+            raise RuntimeError(f"Unable to fetch the WfFormat {__schema_version__} schema from {SCHEMA_URL} ({e}). "
+                               f"Provide a local copy of the schema file instead.") from e
+        if not _accepts_schema_version(schema):
+            raise RuntimeError(f"The schema fetched from {SCHEMA_URL} does not accept version {__schema_version__}.")
+        self.logger.info(f"Using WfFormat {__schema_version__} schema from {SCHEMA_URL}")
+
+        try:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(schema, f)
+        except OSError as e:
+            self.logger.debug(f"Unable to cache the schema file into {cache_path}: {e}")
+
+        _schema_cache[SCHEMA_URL] = schema
         return schema
 
     def _error(self, message: str) -> None:
@@ -330,3 +356,24 @@ class SchemaValidator:
                                                    rel_tol=METRICS_RELATIVE_TOLERANCE):
                 self._error(f"The {section} metric \"{key}\" is declared as {metrics[key]}, but the "
                             f"instance data gives {expected_value}.")
+
+
+def _cache_dir() -> pathlib.Path:
+    """
+    :return: The WfCommons directory in the user cache directory.
+    :rtype: pathlib.Path
+    """
+    cache_home = os.environ.get("XDG_CACHE_HOME")
+    base = pathlib.Path(cache_home) if cache_home else pathlib.Path.home().joinpath(".cache")
+    return base.joinpath("wfcommons")
+
+
+def _accepts_schema_version(schema: Dict[str, Any]) -> bool:
+    """
+    :param schema: A WfFormat JSON schema.
+    :type schema: Dict[str, Any]
+
+    :return: Whether the schema accepts the schema version written by WfCommons.
+    :rtype: bool
+    """
+    return __schema_version__ in schema.get("properties", {}).get("schemaVersion", {}).get("enum", [])

@@ -14,6 +14,7 @@ import pytest
 
 from wfcommons.version import __schema_version__
 from wfcommons.wfinstances import Instance, SchemaValidator
+from wfcommons.wfinstances import schema as schema_module
 
 
 class TestInstance:
@@ -220,10 +221,18 @@ class TestInstanceWfFormat:
             _load(original, tmp_path)
 
     @pytest.mark.unit
-    def test_bundled_schema(self, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_schema_of_wfformat_release(self, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
         # a schema file in the working directory (e.g., left by an older WfCommons) is ignored
         (tmp_path / "wfcommons-schema.json").write_text(json.dumps({"type": "object", "required": ["bogus"]}))
         monkeypatch.chdir(tmp_path)
+        # a cached schema that does not accept the current schema version is replaced
+        monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+        monkeypatch.setattr(schema_module, "_schema_cache", {})
+        cache_file = tmp_path / "cache" / "wfcommons" / f"wfformat-v{__schema_version__}-wfcommons-schema.json"
+        cache_file.parent.mkdir(parents=True)
+        cache_file.write_text(json.dumps({"properties": {"schemaVersion": {"enum": ["1.5"]}}}))
+
         validator = SchemaValidator()
         assert validator.schema["properties"]["schemaVersion"]["enum"] == [__schema_version__]
+        assert json.loads(cache_file.read_text()) == validator.schema
         validator.validate_instance(_wfformat_example())

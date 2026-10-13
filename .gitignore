@@ -60,3 +60,6 @@ bin/gpu_benchmark
 coverage.xml
 
 test/
+
+# WfFormat schema (fetched from the WfFormat repository, not versioned here)
+wfcommons-schema.json
